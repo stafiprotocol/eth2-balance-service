@@ -35,3 +35,6 @@ config*.json
 centrifuge-chain/
 /cfgBuilder/*.toml
 reth_log*.json
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
