@@ -13,7 +13,7 @@ import (
 	"github.com/stafiprotocol/reth/shared"
 )
 
-var TestEndpoint = "ws://localhost:8545"
+var TestEndpoint = "wss://goerli.infura.io/ws/v3/a325d28f7dda49ec9190c8cb4b7f90b2"
 var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
 var GasLimit = big.NewInt(shared.DefaultGasLimit)
 var MaxGasPrice = big.NewInt(shared.DefaultMaxGasPrice)
@@ -43,24 +43,5 @@ func TestConnection_SafeEstimateGas(t *testing.T) {
 
 	if price.Cmp(MaxGasPrice) == 0 {
 		t.Fatalf("Gas price should be less than max. Suggested: %s Max: %s", price.String(), MaxGasPrice.String())
-	}
-}
-
-func TestConnection_SafeEstimateGasMax(t *testing.T) {
-	maxPrice := big.NewInt(1)
-	conn := NewConnection(TestEndpoint, false, AliceKp, log15.Root(), GasLimit, maxPrice)
-	err := conn.Connect()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer conn.Close()
-
-	price, err := conn.SafeEstimateGas(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if price.Cmp(maxPrice) != 0 {
-		t.Fatalf("Gas price should equal max. Suggested: %s Max: %s", price.String(), maxPrice.String())
 	}
 }

@@ -12,8 +12,6 @@ import (
 const DefaultGasLimit = 1000000
 const DefaultGasPrice = 20000000000
 
-var ZeroAddress = common.HexToAddress("0x0000000000000000000000000000000000000000")
-
 // Config encapsulates all necessary parameters in ethereum compatible forms
 type ServiceConfig struct {
 	ethEndpoint            string // url for rpc endpoint

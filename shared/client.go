@@ -5,13 +5,11 @@ package shared
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
@@ -66,24 +64,4 @@ func (c *Client) LockNonceAndUpdate() error {
 
 func (c *Client) UnlockNonce() {
 	c.nonceLock.Unlock()
-}
-
-// WaitForTx will query the chain at ExpectedBlockTime intervals, until a receipt is returned.
-// Returns an error if the tx failed.
-func WaitForTx(client *Client, tx *ethtypes.Transaction) error {
-	retry := 10
-	for retry > 0 {
-		receipt, err := client.Client.TransactionReceipt(context.Background(), tx.Hash())
-		if err != nil {
-			retry--
-			time.Sleep(ExpectedBlockTime)
-			continue
-		}
-
-		if receipt.Status != 1 {
-			return fmt.Errorf("transaction failed on chain")
-		}
-		return nil
-	}
-	return nil
 }
