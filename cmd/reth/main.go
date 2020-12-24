@@ -96,9 +96,10 @@ func run(ctx *cli.Context) error {
 		return err
 	}
 
-	s, err := service.New(cfg, srvlog)
+	service.SetLogger(srvlog)
+	s, err := service.NewService(cfg)
 	if err != nil {
-		srvlog.Error("reth", "New service error", err)
+		srvlog.Error("reth", "NewService service error", err)
 		return err
 	}
 	s.Start()

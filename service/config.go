@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"github.com/stafiprotocol/reth/utils"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -20,39 +21,32 @@ type ServiceConfig struct {
 	submitFlag             bool   // flag to decide if submit rate
 	from                   string // address of key to use
 	keystorePath           string // Location of keyfiles
-	managerContract        common.Address
 	settingsContract       common.Address
-	userDepositContract    common.Address
-	rethContract           common.Address
 	networkBalanceContract common.Address
+	dataApiUrl             string
 	blockInterval          *big.Int
 	gasLimit               *big.Int
 	maxGasPrice            *big.Int
 }
 
 func parseConfig(cfg *config.RawConfig) (*ServiceConfig, error) {
+	block, ok := utils.FromString(cfg.BlockInterval)
+	if !ok {
+		return nil, errors.New("unable to parse blockInterval")
+	}
+
 	sc := &ServiceConfig{
 		ethEndpoint:            cfg.EthEndpoint,
 		http:                   cfg.Http,
 		submitFlag:             cfg.SubmitFlag,
 		from:                   cfg.From,
 		keystorePath:           cfg.KeystorePath,
-		managerContract:        common.HexToAddress(cfg.ManagerContract),
 		settingsContract:       common.HexToAddress(cfg.SettingsContract),
-		userDepositContract:    common.HexToAddress(cfg.UserDepositContract),
-		rethContract:           common.HexToAddress(cfg.RethContract),
 		networkBalanceContract: common.HexToAddress(cfg.NetworkBalanceContract),
-		blockInterval:          big.NewInt(0),
+		dataApiUrl:             cfg.DataApiUrl,
+		blockInterval:          block,
 		gasLimit:               big.NewInt(DefaultGasLimit),
 		maxGasPrice:            big.NewInt(DefaultGasPrice),
-	}
-
-	block := big.NewInt(0)
-	_, pass := block.SetString(cfg.BlockInterval, 10)
-	if pass {
-		sc.blockInterval = block
-	} else {
-		return nil, errors.New("unable to parse blockInterval")
 	}
 
 	return sc, nil

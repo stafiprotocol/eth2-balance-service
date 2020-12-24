@@ -11,4 +11,5 @@ require (
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/tools v0.0.0-20201011145850-ed2f50202694
 	google.golang.org/protobuf v1.23.0
+	gotest.tools v2.2.0+incompatible
 )

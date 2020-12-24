@@ -22,12 +22,10 @@ type RawConfig struct {
 	Http                   bool   `json:"http"`                   // Config for type of connection
 	SubmitFlag             bool   `json:"submitFlag"`             //submit rate only if it's true
 	From                   string `json:"from"`                   // address of key to use
-	ManagerContract        string `json:"managerContract"`        // address of pool manager
 	SettingsContract       string `json:"settingsContract"`       // address of settings
-	UserDepositContract    string `json:"userDepositContract"`    // address of user deposit
-	RethContract           string `json:"rethContract"`           // address of reth
 	NetworkBalanceContract string `json:"networkBalanceContract"` // address of rate submit
 	BlockInterval          string `json:"blockInterval"`          // block interval to recalculate rate
+	DataApiUrl             string `json:"dataApiUrl"`             // url to receive data
 	KeystorePath           string `json:"keystorePath,omitempty"`
 }
 
