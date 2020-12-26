@@ -22,7 +22,6 @@ var (
 	TestKeystorePath       = "/Users/fwj/Go/stafi/reth/keys"
 )
 
-
 func TestApi(t *testing.T) {
 	//the password which used to encrypt keystore file, remove it after this test pass
 	password := "123456"

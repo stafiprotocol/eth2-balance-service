@@ -3,13 +3,13 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stafiprotocol/reth/utils"
 	"math/big"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/ChainSafe/log15"
+	"github.com/stafiprotocol/reth/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -105,6 +105,7 @@ func TestCalculateRate(t *testing.T) {
 	}
 
 	fmt.Println(ri)
+	assert.True(t, ri.check())
 }
 
 func loadBalanceJsonFile(path string) []*BalanceRawData {
@@ -123,4 +124,16 @@ func loadBalanceJsonFile(path string) []*BalanceRawData {
 	}
 
 	return list
+}
+
+func TestRateCheck(t *testing.T) {
+	fmt.Println(stopRate)
+	ri := &RateInfo{big.NewInt(100000), big.NewInt(100000), big.NewInt(0), big.NewInt(0)}
+	assert.True(t, ri.check())
+
+	ri.Reth = big.NewInt(100200)
+	assert.True(t, ri.check())
+
+	ri.Reth = big.NewInt(100201)
+	assert.False(t, ri.check())
 }

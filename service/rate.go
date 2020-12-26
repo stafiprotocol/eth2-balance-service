@@ -40,6 +40,7 @@ type RateInfo struct {
 var (
 	OneEth                = big.NewInt(1000000000000000000)
 	StandEffectiveBalance = big.NewInt(32).Mul(big.NewInt(32), OneEth)
+	stopRate              = big.NewInt(0).Div(big.NewInt(1000), big.NewInt(2))
 )
 
 func (rrd *BlockRawData) CalculateRate(pf, nf *big.Int) (*RateInfo, error) {
@@ -123,4 +124,15 @@ func rewardAllocate(eth, cb, ub, nb, pf, nf *big.Int) {
 		eth.Add(eth, ub)
 		eth.Add(eth, reward)
 	}
+}
+
+func (ri *RateInfo) check() bool {
+	if ri.Reth.Cmp(ri.Eth) <= 0 {
+		return true
+	}
+
+	diff := big.NewInt(0).Sub(ri.Reth, ri.Eth)
+	diff.Mul(diff, stopRate)
+
+	return diff.Cmp(ri.Eth) <= 0
 }

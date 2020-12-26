@@ -170,6 +170,11 @@ func (s *Service) dealRate(ctx context.Context, ctr *Contract, sysErr chan<- err
 					continue
 				}
 
+				if !ri.check() {
+					glog.Warn("dealRate", "RateInfo not passed", ri)
+					continue
+				}
+
 				if s.cfg.submitFlag {
 					h, err := ctr.SubmitBalances(ri)
 					if err != nil {
