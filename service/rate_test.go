@@ -51,12 +51,9 @@ func TestRewardAllocate3(t *testing.T) {
 	ub := eth24
 	nb := eth8
 	cb, _ := utils.FromString("32052503982000000000")
-	fmt.Printf("cb=%+v\n", cb)
 	rewardAllocate(eth, cb, ub, nb, pf10, nf10)
-	fmt.Println(eth)
-	//re := big.NewInt(607500000000000000)
-	//re.Add(re, ub)
-	//assert.Equal(t, 0, eth.Cmp(re))
+	re, _ := utils.FromString("24031896169065000000")
+	assert.Equal(t, 0, eth.Cmp(re))
 }
 
 func TestRewardAllocate4(t *testing.T) {
@@ -105,6 +102,8 @@ func TestCalculateRate(t *testing.T) {
 	}
 
 	fmt.Println(ri)
+	re, _ := utils.FromString("4114864418315640625000")
+	assert.Equal(t, 0, ri.Eth.Cmp(re))
 	assert.True(t, ri.check())
 }
 

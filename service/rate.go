@@ -115,12 +115,14 @@ func rewardAllocate(eth, cb, ub, nb, pf, nf *big.Int) {
 		plat := big.NewInt(0).Mul(reward, pf)
 		plat.Div(plat, OneEth)
 		reward.Sub(reward, plat)
-		validator := big.NewInt(0).Mul(reward, nb)
-		validator.Div(validator, ori)
-		reward.Sub(reward, validator)
-		cmi := big.NewInt(0).Mul(reward, nf)
-		cmi.Div(cmi, OneEth)
-		reward.Sub(reward, cmi)
+
+		user := big.NewInt(0).Mul(reward, ub)
+		user.Div(user, ori)
+		fmt.Println("user:", user)
+
+		cmi := big.NewInt(0).Sub(OneEth, nf)
+		reward = big.NewInt(0).Mul(user, cmi)
+		reward.Div(reward, OneEth)
 		eth.Add(eth, ub)
 		eth.Add(eth, reward)
 	}
