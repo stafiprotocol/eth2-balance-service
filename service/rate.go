@@ -118,7 +118,6 @@ func rewardAllocate(eth, cb, ub, nb, pf, nf *big.Int) {
 
 		user := big.NewInt(0).Mul(reward, ub)
 		user.Div(user, ori)
-		fmt.Println("user:", user)
 
 		cmi := big.NewInt(0).Sub(OneEth, nf)
 		reward = big.NewInt(0).Mul(user, cmi)
