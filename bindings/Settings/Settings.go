@@ -27,7 +27,7 @@ var (
 )
 
 // SettingsABI is the input ABI used to generate the binding from.
-const SettingsABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"getNodeConsensusThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeRefundRatio\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getPlatformFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getProcessWithdrawalsEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getSubmitBalancesEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getWithdrawalCredentials\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setNodeConsensusThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setNodeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setNodeRefundRatio\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setPlatformFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setProcessWithdrawalsEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setSubmitBalancesEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_value\",\"type\":\"bytes\"}],\"name\":\"setWithdrawalCredentials\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const SettingsABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"getNodeConsensusThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeRefundRatio\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeTrustedRefundRatio\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getPlatformFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getProcessWithdrawalsEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getSubmitBalancesEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getWithdrawalCredentials\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setNodeConsensusThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setNodeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setNodeRefundRatio\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setNodeTrustedRefundRatio\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setPlatformFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setProcessWithdrawalsEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setSubmitBalancesEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_value\",\"type\":\"bytes\"}],\"name\":\"setWithdrawalCredentials\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // Settings is an auto generated Go binding around an Ethereum contract.
 type Settings struct {
@@ -264,6 +264,37 @@ func (_Settings *SettingsCallerSession) GetNodeRefundRatio() (*big.Int, error) {
 	return _Settings.Contract.GetNodeRefundRatio(&_Settings.CallOpts)
 }
 
+// GetNodeTrustedRefundRatio is a free data retrieval call binding the contract method 0xf4cf0830.
+//
+// Solidity: function getNodeTrustedRefundRatio() view returns(uint256)
+func (_Settings *SettingsCaller) GetNodeTrustedRefundRatio(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Settings.contract.Call(opts, &out, "getNodeTrustedRefundRatio")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetNodeTrustedRefundRatio is a free data retrieval call binding the contract method 0xf4cf0830.
+//
+// Solidity: function getNodeTrustedRefundRatio() view returns(uint256)
+func (_Settings *SettingsSession) GetNodeTrustedRefundRatio() (*big.Int, error) {
+	return _Settings.Contract.GetNodeTrustedRefundRatio(&_Settings.CallOpts)
+}
+
+// GetNodeTrustedRefundRatio is a free data retrieval call binding the contract method 0xf4cf0830.
+//
+// Solidity: function getNodeTrustedRefundRatio() view returns(uint256)
+func (_Settings *SettingsCallerSession) GetNodeTrustedRefundRatio() (*big.Int, error) {
+	return _Settings.Contract.GetNodeTrustedRefundRatio(&_Settings.CallOpts)
+}
+
 // GetPlatformFee is a free data retrieval call binding the contract method 0x6ea8bc10.
 //
 // Solidity: function getPlatformFee() view returns(uint256)
@@ -480,6 +511,27 @@ func (_Settings *SettingsSession) SetNodeRefundRatio(_value *big.Int) (*types.Tr
 // Solidity: function setNodeRefundRatio(uint256 _value) returns()
 func (_Settings *SettingsTransactorSession) SetNodeRefundRatio(_value *big.Int) (*types.Transaction, error) {
 	return _Settings.Contract.SetNodeRefundRatio(&_Settings.TransactOpts, _value)
+}
+
+// SetNodeTrustedRefundRatio is a paid mutator transaction binding the contract method 0x89799aa1.
+//
+// Solidity: function setNodeTrustedRefundRatio(uint256 _value) returns()
+func (_Settings *SettingsTransactor) SetNodeTrustedRefundRatio(opts *bind.TransactOpts, _value *big.Int) (*types.Transaction, error) {
+	return _Settings.contract.Transact(opts, "setNodeTrustedRefundRatio", _value)
+}
+
+// SetNodeTrustedRefundRatio is a paid mutator transaction binding the contract method 0x89799aa1.
+//
+// Solidity: function setNodeTrustedRefundRatio(uint256 _value) returns()
+func (_Settings *SettingsSession) SetNodeTrustedRefundRatio(_value *big.Int) (*types.Transaction, error) {
+	return _Settings.Contract.SetNodeTrustedRefundRatio(&_Settings.TransactOpts, _value)
+}
+
+// SetNodeTrustedRefundRatio is a paid mutator transaction binding the contract method 0x89799aa1.
+//
+// Solidity: function setNodeTrustedRefundRatio(uint256 _value) returns()
+func (_Settings *SettingsTransactorSession) SetNodeTrustedRefundRatio(_value *big.Int) (*types.Transaction, error) {
+	return _Settings.Contract.SetNodeTrustedRefundRatio(&_Settings.TransactOpts, _value)
 }
 
 // SetPlatformFee is a paid mutator transaction binding the contract method 0x12e8e2c3.
