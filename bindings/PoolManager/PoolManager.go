@@ -4,6 +4,7 @@
 package PoolManager
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -26,8 +28,14 @@ var (
 	_ = event.NewSubscription
 )
 
+// PoolManagerMetaData contains all meta data concerning the PoolManager contract.
+var PoolManagerMetaData = &bind.MetaData{
+	ABI: "[{\"inputs\":[],\"name\":\"getStakingPoolCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"}],\"name\":\"getStakingPoolAt\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"}],\"name\":\"getNodeStakingPoolCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"}],\"name\":\"getNodeStakingPoolAt\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"}],\"name\":\"getNodeValidatingStakingPoolCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"}],\"name\":\"getNodeValidatingStakingPoolAt\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_pubkey\",\"type\":\"bytes\"}],\"name\":\"getStakingPoolByPubkey\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stakingPoolAddress\",\"type\":\"address\"}],\"name\":\"getStakingPoolExists\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stakingPoolAddress\",\"type\":\"address\"}],\"name\":\"getStakingPoolPubkey\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stakingPoolAddress\",\"type\":\"address\"}],\"name\":\"getStakingPoolWithdrawalProcessed\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"offset\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"limit\",\"type\":\"uint256\"}],\"name\":\"getPrelaunchStakingpools\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"},{\"internalType\":\"enumDepositType\",\"name\":\"_depositType\",\"type\":\"uint8\"}],\"name\":\"createStakingPool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"destroyStakingPool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_pubkey\",\"type\":\"bytes\"}],\"name\":\"setStakingPoolPubkey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stakingPoolAddress\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"_processed\",\"type\":\"bool\"}],\"name\":\"setStakingPoolWithdrawalProcessed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+}
+
 // PoolManagerABI is the input ABI used to generate the binding from.
-const PoolManagerABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"stakingPool\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"StakingPoolCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"stakingPool\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"StakingPoolDestroyed\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"},{\"internalType\":\"enumDepositType\",\"name\":\"_depositType\",\"type\":\"uint8\"}],\"name\":\"createStakingPool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"destroyStakingPool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"}],\"name\":\"getNodeStakingPoolAt\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"}],\"name\":\"getNodeStakingPoolCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"}],\"name\":\"getNodeValidatingStakingPoolAt\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"}],\"name\":\"getNodeValidatingStakingPoolCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"}],\"name\":\"getStakingPoolAt\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_pubkey\",\"type\":\"bytes\"}],\"name\":\"getStakingPoolByPubkey\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getStakingPoolCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stakingPoolAddress\",\"type\":\"address\"}],\"name\":\"getStakingPoolExists\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stakingPoolAddress\",\"type\":\"address\"}],\"name\":\"getStakingPoolPubkey\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stakingPoolAddress\",\"type\":\"address\"}],\"name\":\"getStakingPoolWithdrawalProcessed\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_pubkey\",\"type\":\"bytes\"}],\"name\":\"setStakingPoolPubkey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stakingPoolAddress\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"_processed\",\"type\":\"bool\"}],\"name\":\"setStakingPoolWithdrawalProcessed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+// Deprecated: Use PoolManagerMetaData.ABI instead.
+var PoolManagerABI = PoolManagerMetaData.ABI
 
 // PoolManager is an auto generated Go binding around an Ethereum contract.
 type PoolManager struct {
@@ -295,6 +303,37 @@ func (_PoolManager *PoolManagerCallerSession) GetNodeValidatingStakingPoolCount(
 	return _PoolManager.Contract.GetNodeValidatingStakingPoolCount(&_PoolManager.CallOpts, _nodeAddress)
 }
 
+// GetPrelaunchStakingpools is a free data retrieval call binding the contract method 0xcc677617.
+//
+// Solidity: function getPrelaunchStakingpools(uint256 offset, uint256 limit) view returns(address[])
+func (_PoolManager *PoolManagerCaller) GetPrelaunchStakingpools(opts *bind.CallOpts, offset *big.Int, limit *big.Int) ([]common.Address, error) {
+	var out []interface{}
+	err := _PoolManager.contract.Call(opts, &out, "getPrelaunchStakingpools", offset, limit)
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
+}
+
+// GetPrelaunchStakingpools is a free data retrieval call binding the contract method 0xcc677617.
+//
+// Solidity: function getPrelaunchStakingpools(uint256 offset, uint256 limit) view returns(address[])
+func (_PoolManager *PoolManagerSession) GetPrelaunchStakingpools(offset *big.Int, limit *big.Int) ([]common.Address, error) {
+	return _PoolManager.Contract.GetPrelaunchStakingpools(&_PoolManager.CallOpts, offset, limit)
+}
+
+// GetPrelaunchStakingpools is a free data retrieval call binding the contract method 0xcc677617.
+//
+// Solidity: function getPrelaunchStakingpools(uint256 offset, uint256 limit) view returns(address[])
+func (_PoolManager *PoolManagerCallerSession) GetPrelaunchStakingpools(offset *big.Int, limit *big.Int) ([]common.Address, error) {
+	return _PoolManager.Contract.GetPrelaunchStakingpools(&_PoolManager.CallOpts, offset, limit)
+}
+
 // GetStakingPoolAt is a free data retrieval call binding the contract method 0x26a71b13.
 //
 // Solidity: function getStakingPoolAt(uint256 _index) view returns(address)
@@ -481,37 +520,6 @@ func (_PoolManager *PoolManagerCallerSession) GetStakingPoolWithdrawalProcessed(
 	return _PoolManager.Contract.GetStakingPoolWithdrawalProcessed(&_PoolManager.CallOpts, _stakingPoolAddress)
 }
 
-// Version is a free data retrieval call binding the contract method 0x54fd4d50.
-//
-// Solidity: function version() view returns(uint8)
-func (_PoolManager *PoolManagerCaller) Version(opts *bind.CallOpts) (uint8, error) {
-	var out []interface{}
-	err := _PoolManager.contract.Call(opts, &out, "version")
-
-	if err != nil {
-		return *new(uint8), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
-
-	return out0, err
-
-}
-
-// Version is a free data retrieval call binding the contract method 0x54fd4d50.
-//
-// Solidity: function version() view returns(uint8)
-func (_PoolManager *PoolManagerSession) Version() (uint8, error) {
-	return _PoolManager.Contract.Version(&_PoolManager.CallOpts)
-}
-
-// Version is a free data retrieval call binding the contract method 0x54fd4d50.
-//
-// Solidity: function version() view returns(uint8)
-func (_PoolManager *PoolManagerCallerSession) Version() (uint8, error) {
-	return _PoolManager.Contract.Version(&_PoolManager.CallOpts)
-}
-
 // CreateStakingPool is a paid mutator transaction binding the contract method 0x6e5da826.
 //
 // Solidity: function createStakingPool(address _nodeAddress, uint8 _depositType) returns(address)
@@ -594,310 +602,4 @@ func (_PoolManager *PoolManagerSession) SetStakingPoolWithdrawalProcessed(_staki
 // Solidity: function setStakingPoolWithdrawalProcessed(address _stakingPoolAddress, bool _processed) returns()
 func (_PoolManager *PoolManagerTransactorSession) SetStakingPoolWithdrawalProcessed(_stakingPoolAddress common.Address, _processed bool) (*types.Transaction, error) {
 	return _PoolManager.Contract.SetStakingPoolWithdrawalProcessed(&_PoolManager.TransactOpts, _stakingPoolAddress, _processed)
-}
-
-// PoolManagerStakingPoolCreatedIterator is returned from FilterStakingPoolCreated and is used to iterate over the raw logs and unpacked data for StakingPoolCreated events raised by the PoolManager contract.
-type PoolManagerStakingPoolCreatedIterator struct {
-	Event *PoolManagerStakingPoolCreated // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *PoolManagerStakingPoolCreatedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(PoolManagerStakingPoolCreated)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(PoolManagerStakingPoolCreated)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *PoolManagerStakingPoolCreatedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *PoolManagerStakingPoolCreatedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// PoolManagerStakingPoolCreated represents a StakingPoolCreated event raised by the PoolManager contract.
-type PoolManagerStakingPoolCreated struct {
-	StakingPool common.Address
-	Node        common.Address
-	Time        *big.Int
-	Raw         types.Log // Blockchain specific contextual infos
-}
-
-// FilterStakingPoolCreated is a free log retrieval operation binding the contract event 0xdfba889e07ceb4b33e759a1015aa4ae7b45c3881d9cf96dbf09b8971a27fc4b7.
-//
-// Solidity: event StakingPoolCreated(address indexed stakingPool, address indexed node, uint256 time)
-func (_PoolManager *PoolManagerFilterer) FilterStakingPoolCreated(opts *bind.FilterOpts, stakingPool []common.Address, node []common.Address) (*PoolManagerStakingPoolCreatedIterator, error) {
-
-	var stakingPoolRule []interface{}
-	for _, stakingPoolItem := range stakingPool {
-		stakingPoolRule = append(stakingPoolRule, stakingPoolItem)
-	}
-	var nodeRule []interface{}
-	for _, nodeItem := range node {
-		nodeRule = append(nodeRule, nodeItem)
-	}
-
-	logs, sub, err := _PoolManager.contract.FilterLogs(opts, "StakingPoolCreated", stakingPoolRule, nodeRule)
-	if err != nil {
-		return nil, err
-	}
-	return &PoolManagerStakingPoolCreatedIterator{contract: _PoolManager.contract, event: "StakingPoolCreated", logs: logs, sub: sub}, nil
-}
-
-// WatchStakingPoolCreated is a free log subscription operation binding the contract event 0xdfba889e07ceb4b33e759a1015aa4ae7b45c3881d9cf96dbf09b8971a27fc4b7.
-//
-// Solidity: event StakingPoolCreated(address indexed stakingPool, address indexed node, uint256 time)
-func (_PoolManager *PoolManagerFilterer) WatchStakingPoolCreated(opts *bind.WatchOpts, sink chan<- *PoolManagerStakingPoolCreated, stakingPool []common.Address, node []common.Address) (event.Subscription, error) {
-
-	var stakingPoolRule []interface{}
-	for _, stakingPoolItem := range stakingPool {
-		stakingPoolRule = append(stakingPoolRule, stakingPoolItem)
-	}
-	var nodeRule []interface{}
-	for _, nodeItem := range node {
-		nodeRule = append(nodeRule, nodeItem)
-	}
-
-	logs, sub, err := _PoolManager.contract.WatchLogs(opts, "StakingPoolCreated", stakingPoolRule, nodeRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(PoolManagerStakingPoolCreated)
-				if err := _PoolManager.contract.UnpackLog(event, "StakingPoolCreated", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseStakingPoolCreated is a log parse operation binding the contract event 0xdfba889e07ceb4b33e759a1015aa4ae7b45c3881d9cf96dbf09b8971a27fc4b7.
-//
-// Solidity: event StakingPoolCreated(address indexed stakingPool, address indexed node, uint256 time)
-func (_PoolManager *PoolManagerFilterer) ParseStakingPoolCreated(log types.Log) (*PoolManagerStakingPoolCreated, error) {
-	event := new(PoolManagerStakingPoolCreated)
-	if err := _PoolManager.contract.UnpackLog(event, "StakingPoolCreated", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// PoolManagerStakingPoolDestroyedIterator is returned from FilterStakingPoolDestroyed and is used to iterate over the raw logs and unpacked data for StakingPoolDestroyed events raised by the PoolManager contract.
-type PoolManagerStakingPoolDestroyedIterator struct {
-	Event *PoolManagerStakingPoolDestroyed // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *PoolManagerStakingPoolDestroyedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(PoolManagerStakingPoolDestroyed)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(PoolManagerStakingPoolDestroyed)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *PoolManagerStakingPoolDestroyedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *PoolManagerStakingPoolDestroyedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// PoolManagerStakingPoolDestroyed represents a StakingPoolDestroyed event raised by the PoolManager contract.
-type PoolManagerStakingPoolDestroyed struct {
-	StakingPool common.Address
-	Node        common.Address
-	Time        *big.Int
-	Raw         types.Log // Blockchain specific contextual infos
-}
-
-// FilterStakingPoolDestroyed is a free log retrieval operation binding the contract event 0x458a7280951da092252cc4009cfcf959d019fef8696665c814ebff7a8d4750ea.
-//
-// Solidity: event StakingPoolDestroyed(address indexed stakingPool, address indexed node, uint256 time)
-func (_PoolManager *PoolManagerFilterer) FilterStakingPoolDestroyed(opts *bind.FilterOpts, stakingPool []common.Address, node []common.Address) (*PoolManagerStakingPoolDestroyedIterator, error) {
-
-	var stakingPoolRule []interface{}
-	for _, stakingPoolItem := range stakingPool {
-		stakingPoolRule = append(stakingPoolRule, stakingPoolItem)
-	}
-	var nodeRule []interface{}
-	for _, nodeItem := range node {
-		nodeRule = append(nodeRule, nodeItem)
-	}
-
-	logs, sub, err := _PoolManager.contract.FilterLogs(opts, "StakingPoolDestroyed", stakingPoolRule, nodeRule)
-	if err != nil {
-		return nil, err
-	}
-	return &PoolManagerStakingPoolDestroyedIterator{contract: _PoolManager.contract, event: "StakingPoolDestroyed", logs: logs, sub: sub}, nil
-}
-
-// WatchStakingPoolDestroyed is a free log subscription operation binding the contract event 0x458a7280951da092252cc4009cfcf959d019fef8696665c814ebff7a8d4750ea.
-//
-// Solidity: event StakingPoolDestroyed(address indexed stakingPool, address indexed node, uint256 time)
-func (_PoolManager *PoolManagerFilterer) WatchStakingPoolDestroyed(opts *bind.WatchOpts, sink chan<- *PoolManagerStakingPoolDestroyed, stakingPool []common.Address, node []common.Address) (event.Subscription, error) {
-
-	var stakingPoolRule []interface{}
-	for _, stakingPoolItem := range stakingPool {
-		stakingPoolRule = append(stakingPoolRule, stakingPoolItem)
-	}
-	var nodeRule []interface{}
-	for _, nodeItem := range node {
-		nodeRule = append(nodeRule, nodeItem)
-	}
-
-	logs, sub, err := _PoolManager.contract.WatchLogs(opts, "StakingPoolDestroyed", stakingPoolRule, nodeRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(PoolManagerStakingPoolDestroyed)
-				if err := _PoolManager.contract.UnpackLog(event, "StakingPoolDestroyed", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseStakingPoolDestroyed is a log parse operation binding the contract event 0x458a7280951da092252cc4009cfcf959d019fef8696665c814ebff7a8d4750ea.
-//
-// Solidity: event StakingPoolDestroyed(address indexed stakingPool, address indexed node, uint256 time)
-func (_PoolManager *PoolManagerFilterer) ParseStakingPoolDestroyed(log types.Log) (*PoolManagerStakingPoolDestroyed, error) {
-	event := new(PoolManagerStakingPoolDestroyed)
-	if err := _PoolManager.contract.UnpackLog(event, "StakingPoolDestroyed", log); err != nil {
-		return nil, err
-	}
-	return event, nil
 }

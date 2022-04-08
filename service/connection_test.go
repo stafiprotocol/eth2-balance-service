@@ -14,12 +14,13 @@ import (
 )
 
 var TestEndpoint = "wss://goerli.infura.io/ws/v3/a325d28f7dda49ec9190c8cb4b7f90b2"
+var TestEndpointEth2 = "wss://goerli.infura.io/ws/v3/a325d28f7dda49ec9190c8cb4b7f90b2"
 var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
 var GasLimit = big.NewInt(shared.DefaultGasLimit)
 var MaxGasPrice = big.NewInt(shared.DefaultMaxGasPrice)
 
 func TestConnect(t *testing.T) {
-	conn := NewConnection(TestEndpoint, false, AliceKp, log15.Root(), GasLimit, MaxGasPrice)
+	conn := NewConnection(TestEndpoint, TestEndpointEth2, false, AliceKp, log15.Root(), GasLimit, MaxGasPrice)
 	err := conn.Connect()
 	if err != nil {
 		t.Fatal(err)
@@ -29,7 +30,7 @@ func TestConnect(t *testing.T) {
 
 func TestConnection_SafeEstimateGas(t *testing.T) {
 	// MaxGasPrice is the constant price on the dev network, so we increase it here by 1 to ensure it adjusts
-	conn := NewConnection(TestEndpoint, false, AliceKp, log15.Root(), GasLimit, MaxGasPrice.Add(MaxGasPrice, big.NewInt(1)))
+	conn := NewConnection(TestEndpoint, TestEndpointEth2, false, AliceKp, log15.Root(), GasLimit, MaxGasPrice.Add(MaxGasPrice, big.NewInt(1)))
 	err := conn.Connect()
 	if err != nil {
 		t.Fatal(err)

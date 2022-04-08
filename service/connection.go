@@ -18,37 +18,41 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
+	"github.com/stafiprotocol/reth/shared/beacon"
+	"github.com/stafiprotocol/reth/shared/beacon/prysm"
 )
 
 var BlockRetryInterval = time.Second * 10
 var ExtraGasPrice = big.NewInt(5000000000)
 
 type Connection struct {
-	endpoint    string
-	http        bool
-	kp          *secp256k1.Keypair
-	gasLimit    *big.Int
-	maxGasPrice *big.Int
-	conn        *ethclient.Client
-	// signer    ethtypes.Signer
-	opts     *bind.TransactOpts
-	callOpts *bind.CallOpts
-	nonce    uint64
-	optsLock sync.Mutex
-	log      log15.Logger
-	stop     chan int // All routines should exit when this channel is closed
+	endpoint     string
+	eth2Endpoint string
+	http         bool
+	kp           *secp256k1.Keypair
+	gasLimit     *big.Int
+	maxGasPrice  *big.Int
+	conn         *ethclient.Client
+	eth2Conn     beacon.Client
+	opts         *bind.TransactOpts
+	callOpts     *bind.CallOpts
+	nonce        uint64
+	optsLock     sync.Mutex
+	log          log15.Logger
+	stop         chan int // All routines should exit when this channel is closed
 }
 
 // NewConnection returns an uninitialized connection, must call Connection.Connect() before using.
-func NewConnection(endpoint string, http bool, kp *secp256k1.Keypair, log log15.Logger, gasLimit, gasPrice *big.Int) *Connection {
+func NewConnection(endpoint, eth2Endpoint string, http bool, kp *secp256k1.Keypair, log log15.Logger, gasLimit, gasPrice *big.Int) *Connection {
 	return &Connection{
-		endpoint:    endpoint,
-		http:        http,
-		kp:          kp,
-		gasLimit:    gasLimit,
-		maxGasPrice: gasPrice,
-		log:         log,
-		stop:        make(chan int),
+		endpoint:     endpoint,
+		eth2Endpoint: eth2Endpoint,
+		http:         http,
+		kp:           kp,
+		gasLimit:     gasLimit,
+		maxGasPrice:  gasPrice,
+		log:          log,
+		stop:         make(chan int),
 	}
 }
 
@@ -67,6 +71,13 @@ func (c *Connection) Connect() error {
 		return err
 	}
 	c.conn = ethclient.NewClient(rpcClient)
+
+	// eth2 client
+	c.eth2Conn = prysm.NewClient(c.eth2Endpoint)
+	_, err = c.eth2Conn.GetBeaconHead()
+	if err != nil {
+		return err
+	}
 
 	// Construct tx opts, call opts, and nonce mechanism
 	opts, _, err := c.newTransactOpts(big.NewInt(0), c.gasLimit, c.maxGasPrice)
@@ -131,6 +142,7 @@ func (c *Connection) LockAndUpdateOpts() error {
 
 	gasPrice, err := c.SafeEstimateGas(context.TODO())
 	if err != nil {
+		c.optsLock.Unlock()
 		return err
 	}
 	c.opts.GasPrice = gasPrice

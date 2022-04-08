@@ -7,26 +7,27 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/ChainSafe/log15"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
 	"github.com/stafiprotocol/chainbridge/utils/keystore"
+
 	"github.com/stafiprotocol/reth/config"
 )
 
 const (
-	BlockRetryLimit   = 5
+	BlockRetryLimit   = 20
 	RateRetryLimit    = 5
 	RateFailLastLimit = 2
 )
 
 var (
-	glog            log15.Logger
-	failLastTimes   = 0
-	BlockDelay      = big.NewInt(10)
-	ErrFatalPolling = errors.New("listener block polling failed")
-	ErrFatalCalRate = errors.New("calculate rate failed")
+	glog                              log15.Logger
+	failLastTimes                     = 0
+	BlockDelay                        = big.NewInt(10)
+	ErrFatalPolling                   = errors.New("listener block polling failed")
+	ErrFatalDealWithdrawalCredentials = errors.New("dealWithdrawalCredentials failed")
+	ErrFatalCalRate                   = errors.New("calculate rate failed")
 )
 
 type Service struct {
@@ -34,11 +35,7 @@ type Service struct {
 	sysErr       chan error
 	currentBlock *big.Int
 	conn         *Connection
-}
-
-type BethBalance struct {
-	UserBalance *big.Int
-	NodeBalance *big.Int
+	contract     *Contract
 }
 
 func NewService(cfg *config.RawConfig) (*Service, error) {
@@ -52,10 +49,11 @@ func NewService(cfg *config.RawConfig) (*Service, error) {
 		return nil, errors.New("blockInterval is 0")
 	}
 
-	return &Service{sc,
-		make(chan error),
-		big.NewInt(0),
-		nil,
+	return &Service{
+		cfg:          sc,
+		sysErr:       make(chan error),
+		currentBlock: big.NewInt(0),
+		conn:         nil,
 	}, nil
 }
 
@@ -67,7 +65,7 @@ func (s *Service) Start() {
 	}
 	kp, _ := kpI.(*secp256k1.Keypair)
 
-	conn := NewConnection(s.cfg.ethEndpoint, s.cfg.http, kp, glog, s.cfg.gasLimit, s.cfg.maxGasPrice)
+	conn := NewConnection(s.cfg.ethEndpoint, s.cfg.eth2Endpoint, s.cfg.http, kp, glog, s.cfg.gasLimit, s.cfg.maxGasPrice)
 	err = conn.Connect()
 	if err != nil {
 		glog.Error("Service", "KeypairFromAddress error", err)
@@ -84,6 +82,7 @@ func (s *Service) Start() {
 	if err != nil {
 		return
 	}
+	s.contract = ctr
 
 	blk, err := s.conn.LatestBlock()
 	if err != nil {
@@ -103,9 +102,16 @@ func (s *Service) Start() {
 	}()
 
 	go func() {
-		err := s.dealRate(ctx, ctr, s.sysErr, ding)
+		err := s.dealRate(ctx, s.sysErr, ding)
 		if err != nil {
 			glog.Error("calculateAndSubmitRate failed", "err", err)
+		}
+	}()
+
+	go func() {
+		err := s.dealWithdrawalCredentials(ctx, s.sysErr)
+		if err != nil {
+			glog.Error("dealWithdrawalCredentials failed", "err", err)
 		}
 	}()
 
@@ -124,126 +130,6 @@ func (s *Service) Start() {
 	cancel()
 }
 
-func (s *Service) dealRate(ctx context.Context, ctr *Contract, sysErr chan<- error, ding <-chan *big.Int) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return errors.New("calculate terminated")
-		case blk := <-ding:
-			glog.Trace("ding", "rateBlock", blk)
-			calFunc := func() (*RateInfo, error) {
-				pf, err := ctr.PlatformFee()
-				if err != nil {
-					glog.Error("dealRate", "PlatformFeeError", err)
-					return nil, err
-				}
-				glog.Trace("dealRate", "PlatformFee", pf)
-
-				nf, err := ctr.NodeFee()
-				if err != nil {
-					glog.Error("dealRate", "NodeFeeError", err)
-					return nil, err
-				}
-				glog.Trace("dealRate", "NodeFee", nf)
-
-				brd, err := ReceiveData(s.cfg.dataApiUrl)
-				if err != nil {
-					glog.Error("dealRate", "ReceiveDataError", err)
-					return nil, err
-				}
-
-				ri, err := brd.CalculateRate(pf, nf)
-				if err != nil {
-					glog.Error("dealRate", "CalculateRateError", err)
-					return nil, err
-				}
-				glog.Trace("dealRate", "RateInfo", ri)
-
-				return ri, nil
-			}
-
-			succeed := false
-			for i := 0; i < RateRetryLimit; i++ {
-				ri, err := calFunc()
-				if err != nil {
-					glog.Error("dealRate", "calFuncError", err)
-					continue
-				}
-
-				if !ri.check() {
-					glog.Warn("dealRate", "RateInfo not passed", ri)
-					continue
-				}
-
-				if s.cfg.submitFlag {
-					h, err := ctr.SubmitBalances(ri)
-					if err != nil {
-						glog.Error("dealRate", "SubmitBalancesError", err)
-						break
-					}
-					glog.Info("dealRate", "SubmitBalancesTx", h)
-				}
-				succeed = true
-				failLastTimes = 0
-				break
-			}
-
-			if !succeed {
-				failLastTimes++
-				if failLastTimes >= RateFailLastLimit {
-					sysErr <- ErrFatalCalRate
-					return nil
-				}
-			}
-		}
-	}
-}
-
-func (s *Service) pollBlocks(ctx context.Context, sysErr chan<- error, ding chan<- *big.Int) error {
-	glog.Info("Polling Blocks...")
-	var retry = BlockRetryLimit
-	for {
-		select {
-		case <-ctx.Done():
-			return errors.New("polling terminated")
-		default:
-			// No more retries, goto next block
-			if retry == 0 {
-				glog.Error("Polling failed, retries exceeded")
-				sysErr <- ErrFatalPolling
-				return nil
-			}
-
-			latestBlock, err := s.conn.LatestBlock()
-			if err != nil {
-				glog.Error("Unable to get latest block", "block", s.currentBlock, "err", err)
-				retry--
-				time.Sleep(BlockRetryInterval)
-				continue
-			}
-
-			// Sleep if the difference is less than BlockDelay; (latest - current) < BlockDelay
-			if big.NewInt(0).Sub(latestBlock, s.currentBlock).Cmp(BlockDelay) == -1 {
-				//s.log.Debug("Block not ready, will retry", "target", s.currentBlock, "latest", latestBlock)
-				time.Sleep(BlockRetryInterval)
-				continue
-			}
-
-			if big.NewInt(0).Mod(s.currentBlock, big.NewInt(15)).Cmp(big.NewInt(0)) == 0 {
-				glog.Debug("pollBlocks", "currentBlock", s.currentBlock)
-			}
-
-			// Goto next block and reset retry counter
-			if s.isTimeToCalculateRate() {
-				blk := big.NewInt(0)
-				ding <- blk.Add(blk, s.currentBlock)
-			}
-			s.currentBlock.Add(s.currentBlock, big.NewInt(1))
-			retry = BlockRetryLimit
-		}
-	}
-}
-
 func (s *Service) checkContracts() error {
 	err := s.conn.EnsureHasBytecode(s.cfg.settingsContract)
 	if err != nil {
@@ -257,14 +143,13 @@ func (s *Service) checkContracts() error {
 		return err
 	}
 
+	err = s.conn.EnsureHasBytecode(s.cfg.stakingPoolManagerContract)
+	if err != nil {
+		glog.Error("Service", "stakingPoolManagerContract ensure error", err)
+		return err
+	}
+
 	return nil
-}
-
-func (s *Service) isTimeToCalculateRate() bool {
-	m := big.NewInt(0)
-
-	big.NewInt(0).DivMod(s.currentBlock, s.cfg.blockInterval, m)
-	return m.Uint64() == 0
 }
 
 func SetLogger(log log15.Logger) {

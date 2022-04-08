@@ -18,15 +18,17 @@ const DefaultKeystorePath = "./keys"
 
 // RawConfig is parsed directly from the config file
 type RawConfig struct {
-	EthEndpoint            string `json:"ethEndpoint"`            // url for rpc endpoint
-	Http                   bool   `json:"http"`                   // Config for type of connection
-	SubmitFlag             bool   `json:"submitFlag"`             //submit rate only if it's true
-	From                   string `json:"from"`                   // address of key to use
-	SettingsContract       string `json:"settingsContract"`       // address of settings
-	NetworkBalanceContract string `json:"networkBalanceContract"` // address of rate submit
-	BlockInterval          string `json:"blockInterval"`          // block interval to recalculate rate
-	DataApiUrl             string `json:"dataApiUrl"`             // url to receive data
-	KeystorePath           string `json:"keystorePath,omitempty"`
+	EthEndpoint                string `json:"ethEndpoint"`                // url for rpc endpoint
+	Eth2Endpoint               string `json:"eth2Endpoint"`               // url for eth2 rpc endpoint
+	Http                       bool   `json:"http"`                       // Config for type of connection
+	SubmitFlag                 bool   `json:"submitFlag"`                 //submit rate only if it's true
+	From                       string `json:"from"`                       // address of key to use
+	SettingsContract           string `json:"settingsContract"`           // address of settings
+	NetworkBalanceContract     string `json:"networkBalanceContract"`     // address of rate submit
+	StakingPoolManagerContract string `json:"stakingPoolManagerContract"` // address of StakingPoolManagerContract
+	BlockInterval              string `json:"blockInterval"`              // block interval to recalculate rate
+	DataApiUrl                 string `json:"dataApiUrl"`                 // url to receive data
+	KeystorePath               string `json:"keystorePath,omitempty"`
 }
 
 func GetConfig(ctx *cli.Context) (*RawConfig, error) {
