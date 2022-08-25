@@ -1,4 +1,4 @@
-package prysm
+package client
 
 import (
 	"encoding/hex"
@@ -65,17 +65,27 @@ type ForkResponse struct {
 		PreviousVersion byteArray `json:"previous_version"`
 		CurrentVersion  byteArray `json:"current_version"`
 		Epoch           uinteger  `json:"epoch"`
-	}
+	} `json:"data"`
+}
+type AttestationsResponse struct {
+	Data []Attestation `json:"data"`
 }
 type BeaconBlockResponse struct {
 	Data struct {
 		Message struct {
-			Body struct {
+			Slot          uinteger `json:"slot"`
+			ProposerIndex uinteger `json:"proposer_index"`
+			Body          struct {
 				Eth1Data struct {
 					DepositRoot  byteArray `json:"deposit_root"`
 					DepositCount uinteger  `json:"deposit_count"`
 					BlockHash    byteArray `json:"block_hash"`
 				} `json:"eth1_data"`
+				Attestations     []Attestation `json:"attestations"`
+				ExecutionPayload *struct {
+					FeeRecipient byteArray `json:"fee_recipient"`
+					BlockNumber  uinteger  `json:"block_number"`
+				} `json:"execution_payload"`
 			} `json:"body"`
 		} `json:"message"`
 	} `json:"data"`
@@ -84,9 +94,9 @@ type ValidatorsResponse struct {
 	Data []Validator `json:"data"`
 }
 type Validator struct {
-	Index   uinteger `json:"index"`
-	Balance uinteger `json:"balance"`
-	//Status string                       `json:"status"`
+	Index     uinteger `json:"index"`
+	Balance   uinteger `json:"balance"`
+	Status    string   `json:"status"`
 	Validator struct {
 		Pubkey                     byteArray `json:"pubkey"`
 		WithdrawalCredentials      byteArray `json:"withdrawal_credentials"`
@@ -111,6 +121,24 @@ type ProposerDutiesResponse struct {
 }
 type ProposerDuty struct {
 	ValidatorIndex uinteger `json:"validator_index"`
+}
+
+type CommitteesResponse struct {
+	Data []Committee `json:"data"`
+}
+
+type Committee struct {
+	Index      uinteger   `json:"index"`
+	Slot       uinteger   `json:"slot"`
+	Validators []uinteger `json:"validators"`
+}
+
+type Attestation struct {
+	AggregationBits string `json:"aggregation_bits"`
+	Data            struct {
+		Slot  uinteger `json:"slot"`
+		Index uinteger `json:"index"`
+	} `json:"data"`
 }
 
 // Unsigned integer type

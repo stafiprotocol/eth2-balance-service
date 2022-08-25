@@ -69,7 +69,7 @@ func (s *Service) checkAndVoteCredentials() error {
 		if match {
 			continue
 		}
-		pubkey, err := s.contract.StafiStakingPoolContract.GetStakingPoolPubkey(s.conn.callOpts, poolAddress)
+		pubkey, err := s.contract.StafiStakingPoolManager.GetStakingPoolPubkey(s.conn.callOpts, poolAddress)
 		if err != nil {
 			return err
 		}
@@ -114,7 +114,7 @@ func (s *Service) voteWithdrawCredentials(stakingPoolContract *StakingPool.Staki
 }
 
 func (s *Service) getPrelaunchStakingpools() ([]common.Address, error) {
-	poolCount, err := s.contract.StafiStakingPoolContract.GetStakingPoolCount(s.conn.callOpts)
+	poolCount, err := s.contract.StafiStakingPoolManager.GetStakingPoolCount(s.conn.callOpts)
 	if err != nil {
 		glog.Error("dealWithdrawalCredentials", "GetStakingPoolCountError", err)
 		return nil, err
@@ -126,7 +126,7 @@ func (s *Service) getPrelaunchStakingpools() ([]common.Address, error) {
 	for i := int64(0); i < totalPools; i += poolPrelaunchBatchSize {
 		// Get a batch of addresses
 		offset := big.NewInt(i)
-		newAddresses, err := s.contract.StafiStakingPoolContract.GetPrelaunchStakingpools(s.conn.callOpts, offset, limit)
+		newAddresses, err := s.contract.StafiStakingPoolManager.GetPrelaunchStakingpools(s.conn.callOpts, offset, limit)
 		if err != nil {
 			return nil, err
 		}

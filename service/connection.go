@@ -19,7 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
 	"github.com/stafiprotocol/reth/shared/beacon"
-	"github.com/stafiprotocol/reth/shared/beacon/prysm"
+	"github.com/stafiprotocol/reth/shared/beacon/client"
 )
 
 var BlockRetryInterval = time.Second * 10
@@ -73,7 +73,7 @@ func (c *Connection) Connect() error {
 	c.conn = ethclient.NewClient(rpcClient)
 
 	// eth2 client
-	c.eth2Conn = prysm.NewClient(c.eth2Endpoint)
+	c.eth2Conn = client.NewStandardHttpClient(c.eth2Endpoint)
 	_, err = c.eth2Conn.GetBeaconHead()
 	if err != nil {
 		return err

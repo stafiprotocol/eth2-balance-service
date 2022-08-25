@@ -10,10 +10,10 @@ import (
 )
 
 type Contract struct {
-	St                       *Settings.Settings
-	Nb                       *NetworkBalance.NetworkBalance
-	StafiStakingPoolContract *PoolManager.PoolManager
-	Conn                     *Connection
+	St                      *Settings.Settings
+	Nb                      *NetworkBalance.NetworkBalance
+	StafiStakingPoolManager *PoolManager.PoolManager
+	Conn                    *Connection
 }
 
 func (s *Service) NewContract() (*Contract, error) {
