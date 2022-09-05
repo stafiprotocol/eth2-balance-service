@@ -1,4 +1,4 @@
-package hex
+package utils
 
 // Add a prefix to a hex string if not present
 func AddPrefix(value string) string {

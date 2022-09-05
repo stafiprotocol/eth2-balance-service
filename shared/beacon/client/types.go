@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
-	hexutil "github.com/stafiprotocol/reth/utils/hex"
+	hexutil "github.com/stafiprotocol/reth/pkg/utils"
 )
 
 // Request types

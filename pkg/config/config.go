@@ -12,8 +12,9 @@ import (
 
 type Config struct {
 	ListenAddr    string
-	EthEndpoint   string `json:"ethEndpoint"`   // url for rpc endpoint
-	Eth2Endpoint  string `json:"eth2Endpoint"`  // url for eth2 rpc endpoint
+	Eth1Endpoint  string `json:"eth1Endpoint"` // url for rpc endpoint
+	Eth2Endpoint  string `json:"eth2Endpoint"` // url for eth2 rpc endpoint
+	StartHeight   uint64
 	Http          bool   `json:"http"`          // Config for type of connection
 	SubmitFlag    bool   `json:"submitFlag"`    //submit rate only if it's true
 	From          string `json:"from"`          // address of key to use

@@ -12,12 +12,7 @@ import (
 	"github.com/stafiprotocol/chainbridge/utils/keystore"
 )
 
-const (
-	flagKeystorePath = "keystore_path"
-	flagLogLevel     = "log_level"
 
-	defaultKeystorePath = "./keys"
-)
 
 func genAccountCmd() *cobra.Command {
 	cmd := &cobra.Command{

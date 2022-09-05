@@ -22,7 +22,7 @@ func SafeGoWithRestart(x func()) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Printf("SafeGoWithRestart method hit panic: %s \nstack:%s \n", err, stack(3))
+				fmt.Printf("SafeGoWithRestart method hit panic: %s \nstack:%s \n", err, Stack(3))
 				time.Sleep(3 * time.Second)
 				SafeGoWithRestart(x)
 			}
@@ -35,14 +35,14 @@ func SafeGo(x func()) {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Printf("SafeGo method hit panic: %s \nstack:%s \n", err, stack(3))
+				fmt.Printf("SafeGo method hit panic: %s \nstack:%s \n", err, Stack(3))
 			}
 		}()
 		x()
 	}()
 }
 
-func stack(skip int) []byte {
+func Stack(skip int) []byte {
 	buf := new(bytes.Buffer) // the returned data
 	// As we loop, we open files and read them. These variables record the currently
 	// loaded file.

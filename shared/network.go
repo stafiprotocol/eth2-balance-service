@@ -14,12 +14,12 @@ import (
 	"github.com/stafiprotocol/reth/bindings/PoolManager"
 )
 
-func StakingPoolCount(client *Client, contract common.Address) (*big.Int, error) {
-	pm, err := PoolManager.NewPoolManager(contract, client.Client)
+func StakingPoolCount(connection *Connection, contract common.Address) (*big.Int, error) {
+	pm, err := PoolManager.NewPoolManager(contract, connection.eth1Client)
 	if err != nil {
 		return nil, err
 	}
-	count, err := pm.GetStakingPoolCount(client.CallOpts)
+	count, err := pm.GetStakingPoolCount(connection.CallOpts())
 	if err != nil {
 		return nil, err
 	}
@@ -27,13 +27,13 @@ func StakingPoolCount(client *Client, contract common.Address) (*big.Int, error)
 	return count, nil
 }
 
-func StakingPoolAt(client *Client, contract common.Address, index *big.Int) (common.Address, error) {
-	pm, err := PoolManager.NewPoolManager(contract, client.Client)
+func StakingPoolAt(connection *Connection, contract common.Address, index *big.Int) (common.Address, error) {
+	pm, err := PoolManager.NewPoolManager(contract, connection.eth1Client)
 	if err != nil {
 		return *new(common.Address), err
 	}
 
-	addr, err := pm.GetStakingPoolAt(client.CallOpts, index)
+	addr, err := pm.GetStakingPoolAt(connection.CallOpts(), index)
 	if err != nil {
 		return *new(common.Address), err
 	}
@@ -41,13 +41,13 @@ func StakingPoolAt(client *Client, contract common.Address, index *big.Int) (com
 	return addr, nil
 }
 
-func Pubkey(client *Client, manager, pool common.Address) ([]byte, error) {
-	pm, err := PoolManager.NewPoolManager(manager, client.Client)
+func Pubkey(connection *Connection, manager, pool common.Address) ([]byte, error) {
+	pm, err := PoolManager.NewPoolManager(manager, connection.eth1Client)
 	if err != nil {
 		return []byte{}, err
 	}
 
-	pk, err := pm.GetStakingPoolPubkey(client.CallOpts, pool)
+	pk, err := pm.GetStakingPoolPubkey(connection.CallOpts(), pool)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -55,27 +55,13 @@ func Pubkey(client *Client, manager, pool common.Address) ([]byte, error) {
 	return pk, nil
 }
 
-func NodeDepositBalance(client *Client, contract common.Address) (*big.Int, error) {
-	pb, err := PoolBalance.NewPoolBalance(contract, client.Client)
+func NodeDepositBalance(connection *Connection, contract common.Address) (*big.Int, error) {
+	pb, err := PoolBalance.NewPoolBalance(contract, connection.eth1Client)
 	if err != nil {
 		return nil, err
 	}
 
-	bal, err := pb.GetNodeDepositBalance(client.CallOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	return bal, nil
-}
-
-func UserDepositBalance(client *Client, contract common.Address) (*big.Int, error) {
-	pb, err := PoolBalance.NewPoolBalance(contract, client.Client)
-	if err != nil {
-		return nil, err
-	}
-
-	bal, err := pb.GetUserDepositBalance(client.CallOpts)
+	bal, err := pb.GetNodeDepositBalance(connection.CallOpts())
 	if err != nil {
 		return nil, err
 	}
@@ -83,12 +69,26 @@ func UserDepositBalance(client *Client, contract common.Address) (*big.Int, erro
 	return bal, nil
 }
 
-func PlatformFee(client *Client, contract common.Address) (*big.Int, error) {
-	s, err := Settings.NewSettings(contract, client.Client)
+func UserDepositBalance(connection *Connection, contract common.Address) (*big.Int, error) {
+	pb, err := PoolBalance.NewPoolBalance(contract, connection.eth1Client)
 	if err != nil {
 		return nil, err
 	}
-	fee, err := s.GetPlatformFee(client.CallOpts)
+
+	bal, err := pb.GetUserDepositBalance(connection.CallOpts())
+	if err != nil {
+		return nil, err
+	}
+
+	return bal, nil
+}
+
+func PlatformFee(connection *Connection, contract common.Address) (*big.Int, error) {
+	s, err := Settings.NewSettings(contract, connection.eth1Client)
+	if err != nil {
+		return nil, err
+	}
+	fee, err := s.GetPlatformFee(connection.CallOpts())
 	if err != nil {
 		return nil, err
 	}
@@ -96,12 +96,12 @@ func PlatformFee(client *Client, contract common.Address) (*big.Int, error) {
 	return fee, nil
 }
 
-func NodeFee(client *Client, contract common.Address) (*big.Int, error) {
-	s, err := Settings.NewSettings(contract, client.Client)
+func NodeFee(connection *Connection, contract common.Address) (*big.Int, error) {
+	s, err := Settings.NewSettings(contract, connection.eth1Client)
 	if err != nil {
 		return nil, err
 	}
-	fee, err := s.GetNodeFee(client.CallOpts)
+	fee, err := s.GetNodeFee(connection.CallOpts())
 	if err != nil {
 		return nil, err
 	}
@@ -109,12 +109,12 @@ func NodeFee(client *Client, contract common.Address) (*big.Int, error) {
 	return fee, nil
 }
 
-func RethTotalSupply(client *Client, contract common.Address) (*big.Int, error) {
-	reth, err := Reth.NewReth(contract, client.Client)
+func RethTotalSupply(connection *Connection, contract common.Address) (*big.Int, error) {
+	reth, err := Reth.NewReth(contract, connection.eth1Client)
 	if err != nil {
 		return nil, err
 	}
-	total, err := reth.TotalSupply(client.CallOpts)
+	total, err := reth.TotalSupply(connection.CallOpts())
 	if err != nil {
 		return nil, err
 	}
@@ -122,12 +122,12 @@ func RethTotalSupply(client *Client, contract common.Address) (*big.Int, error) 
 	return total, nil
 }
 
-func TotalUnstaked(client *Client, contract common.Address) (*big.Int, error) {
-	ud, err := UserDeposit.NewUserDeposit(contract, client.Client)
+func TotalUnstaked(connection *Connection, contract common.Address) (*big.Int, error) {
+	ud, err := UserDeposit.NewUserDeposit(contract, connection.eth1Client)
 	if err != nil {
 		return nil, err
 	}
-	unstaked, err := ud.GetBalance(client.CallOpts)
+	unstaked, err := ud.GetBalance(connection.CallOpts())
 	if err != nil {
 		return nil, err
 	}

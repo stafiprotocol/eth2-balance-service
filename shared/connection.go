@@ -1,15 +1,14 @@
 // Copyright 2020 Stafi Protocol
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package service
+package shared
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -21,35 +20,30 @@ import (
 	"github.com/stafiprotocol/reth/shared/beacon/client"
 )
 
-var BlockRetryInterval = time.Second * 10
-var ExtraGasPrice = big.NewInt(5000000000)
+var ExtraGasPrice = big.NewInt(5e9)
 
 type Connection struct {
-	endpoint     string
+	eth1Endpoint string
 	eth2Endpoint string
-	http         bool
 	kp           *secp256k1.Keypair
 	gasLimit     *big.Int
 	maxGasPrice  *big.Int
-	conn         *ethclient.Client
-	eth2Conn     beacon.Client
+	eth1Client   *ethclient.Client
+	eth2Client   beacon.Client
 	opts         *bind.TransactOpts
 	callOpts     *bind.CallOpts
 	nonce        uint64
 	optsLock     sync.Mutex
-	stop         chan int // All routines should exit when this channel is closed
 }
 
 // NewConnection returns an uninitialized connection, must call Connection.Connect() before using.
-func NewConnection(endpoint, eth2Endpoint string, http bool, kp *secp256k1.Keypair, gasLimit, gasPrice *big.Int) *Connection {
+func NewConnection(endpoint, eth2Endpoint string, kp *secp256k1.Keypair, gasLimit, gasPrice *big.Int) *Connection {
 	return &Connection{
-		endpoint:     endpoint,
+		eth1Endpoint: endpoint,
 		eth2Endpoint: eth2Endpoint,
-		http:         http,
 		kp:           kp,
 		gasLimit:     gasLimit,
 		maxGasPrice:  gasPrice,
-		stop:         make(chan int),
 	}
 }
 
@@ -58,21 +52,23 @@ func (c *Connection) Connect() error {
 	var rpcClient *rpc.Client
 	var err error
 	// Start http or ws client
-	if c.http {
-		rpcClient, err = rpc.DialHTTP(c.endpoint)
+	if strings.Contains(c.eth1Endpoint, "http") {
+		rpcClient, err = rpc.DialHTTP(c.eth1Endpoint)
 	} else {
-		rpcClient, err = rpc.DialWebsocket(context.Background(), c.endpoint, "/ws")
+		rpcClient, err = rpc.DialWebsocket(context.Background(), c.eth1Endpoint, "/ws")
 	}
 	if err != nil {
 		return err
 	}
-	c.conn = ethclient.NewClient(rpcClient)
+	c.eth1Client = ethclient.NewClient(rpcClient)
 
 	// eth2 client
-	c.eth2Conn = client.NewStandardHttpClient(c.eth2Endpoint)
-	_, err = c.eth2Conn.GetBeaconHead()
-	if err != nil {
-		return err
+	if len(c.eth2Endpoint) != 0 {
+		c.eth2Client = client.NewStandardHttpClient(c.eth2Endpoint)
+		_, err = c.eth2Client.GetBeaconHead()
+		if err != nil {
+			return err
+		}
 	}
 
 	// Construct tx opts, call opts, and nonce mechanism
@@ -91,11 +87,11 @@ func (c *Connection) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.
 	privateKey := c.kp.PrivateKey()
 	address := ethcrypto.PubkeyToAddress(privateKey.PublicKey)
 
-	nonce, err := c.conn.PendingNonceAt(context.Background(), address)
+	nonce, err := c.eth1Client.PendingNonceAt(context.Background(), address)
 	if err != nil {
 		return nil, 0, err
 	}
-	chainId, err := c.conn.ChainID(context.Background())
+	chainId, err := c.eth1Client.ChainID(context.Background())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -119,7 +115,7 @@ func (c *Connection) Keypair() *secp256k1.Keypair {
 }
 
 func (c *Connection) Client() *ethclient.Client {
-	return c.conn
+	return c.eth1Client
 }
 
 func (c *Connection) Opts() *bind.TransactOpts {
@@ -131,7 +127,7 @@ func (c *Connection) CallOpts() *bind.CallOpts {
 }
 
 func (c *Connection) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
-	gasPrice, err := c.conn.SuggestGasPrice(context.TODO())
+	gasPrice, err := c.eth1Client.SuggestGasPrice(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -144,14 +140,14 @@ func (c *Connection) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 func (c *Connection) LockAndUpdateOpts() error {
 	c.optsLock.Lock()
 
-	gasPrice, err := c.SafeEstimateGas(context.TODO())
+	gasPrice, err := c.SafeEstimateGas(context.Background())
 	if err != nil {
 		c.optsLock.Unlock()
 		return err
 	}
 	c.opts.GasPrice = gasPrice
 
-	nonce, err := c.conn.PendingNonceAt(context.Background(), c.opts.From)
+	nonce, err := c.eth1Client.PendingNonceAt(context.Background(), c.opts.From)
 	if err != nil {
 		c.optsLock.Unlock()
 		return err
@@ -166,7 +162,7 @@ func (c *Connection) UnlockOpts() {
 
 // LatestBlock returns the latest block from the current chain
 func (c *Connection) LatestBlock() (*big.Int, error) {
-	header, err := c.conn.HeaderByNumber(context.Background(), nil)
+	header, err := c.eth1Client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +171,7 @@ func (c *Connection) LatestBlock() (*big.Int, error) {
 
 // EnsureHasBytecode asserts if contract code exists at the specified address
 func (c *Connection) EnsureHasBytecode(addr ethcommon.Address) error {
-	code, err := c.conn.CodeAt(context.Background(), addr, nil)
+	code, err := c.eth1Client.CodeAt(context.Background(), addr, nil)
 	if err != nil {
 		return err
 	}
@@ -184,34 +180,4 @@ func (c *Connection) EnsureHasBytecode(addr ethcommon.Address) error {
 		return fmt.Errorf("no bytecode found at %s", addr.Hex())
 	}
 	return nil
-}
-
-// WaitForBlock will poll for the block number until the current block is equal or greater than
-func (c *Connection) WaitForBlock(block *big.Int) error {
-	for {
-		select {
-		case <-c.stop:
-			return errors.New("connection terminated")
-		default:
-			currBlock, err := c.LatestBlock()
-			if err != nil {
-				return err
-			}
-
-			// Greater than target
-			if currBlock.Cmp(block) >= 1 {
-				return nil
-			}
-			time.Sleep(BlockRetryInterval)
-			continue
-		}
-	}
-}
-
-// Close terminates the client connection and stops any running routines
-func (c *Connection) Close() {
-	if c.conn != nil {
-		c.conn.Close()
-	}
-	close(c.stop)
 }

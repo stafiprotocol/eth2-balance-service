@@ -5,8 +5,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/stafiprotocol/reth/config"
-	"github.com/stafiprotocol/reth/service"
+	"github.com/stafiprotocol/reth/dao"
+	"github.com/stafiprotocol/reth/pkg/config"
+	"github.com/stafiprotocol/reth/pkg/db"
+	"github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/reth/server"
 )
 
 const defaultConfigPath = "./config.json"
@@ -39,7 +42,44 @@ func startCmd() *cobra.Command {
 				return err
 			}
 
-			s, err := service.NewService(cfg)
+			// log.InitLogFile(cfg.LogFilePath + "/api")
+			// logrus.Infof("api config info:\ntaskTicker: %d\nlogFilePath: %s\nlogLevel: %s\nlistenAddress: %s\n",
+			// 	cfg.TaskTicker, cfg.LogFilePath, logLevelStr, cfg.ListenAddr)
+
+			//init db
+			db, err := db.NewDB(&db.Config{
+				Host:     cfg.Db.Host,
+				Port:     cfg.Db.Port,
+				User:     cfg.Db.User,
+				Pass:     cfg.Db.Pwd,
+				DBName:   cfg.Db.Name,
+				LogLevel: logLevelStr})
+			if err != nil {
+				logrus.Errorf("db err: %s", err)
+				return err
+			}
+			logrus.Infof("db connect success")
+
+			//interrupt signal
+			ctx := utils.ShutdownListener()
+
+			defer func() {
+				sqlDb, err := db.DB.DB()
+				if err != nil {
+					logrus.Errorf("db.DB() err: %s", err)
+					return
+				}
+				logrus.Infof("shutting down the db ...")
+				sqlDb.Close()
+			}()
+
+			err = dao.AutoMigrate(db)
+			if err != nil {
+				logrus.Errorf("dao autoMigrate err: %s", err)
+				return err
+			}
+
+			s, err := server.NewServer(cfg, db)
 			if err != nil {
 				logrus.WithFields(logrus.Fields{
 					"err": err,
@@ -47,7 +87,17 @@ func startCmd() *cobra.Command {
 
 				return err
 			}
-			s.Start()
+			err = s.Start()
+			if err != nil {
+				logrus.Errorf("server start err: %s", err)
+				return err
+			}
+			defer func() {
+				logrus.Infof("shutting down server ...")
+				s.Stop()
+			}()
+
+			<-ctx.Done()
 
 			return nil
 		},

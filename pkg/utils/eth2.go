@@ -1,4 +1,4 @@
-package eth2
+package utils
 
 import (
 	"github.com/stafiprotocol/reth/shared/beacon"

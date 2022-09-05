@@ -17,9 +17,9 @@ import (
 	eth2types "github.com/wealdtech/go-eth2-types/v2"
 	"golang.org/x/sync/errgroup"
 
+	eth2 "github.com/stafiprotocol/reth/pkg/utils"
+	hexutil "github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared/beacon"
-	"github.com/stafiprotocol/reth/utils/eth2"
-	 hexutil "github.com/stafiprotocol/reth/utils/hex"
 )
 
 // Config
