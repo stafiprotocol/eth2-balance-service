@@ -1,30 +1,28 @@
 package service
 
 import (
-	"context"
-	"errors"
 	"math/big"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stafiprotocol/reth/utils"
 )
 
-func (s *Service) pollBlocks(ctx context.Context, sysErr chan<- error, ding chan<- *big.Int) error {
-	glog.Info("Polling Blocks...")
-	var retry = BlockRetryLimit
+func (s *Service) pollBlocks(ding chan<- *big.Int) error {
+	var retry = 0
 	for {
 		select {
-		case <-ctx.Done():
-			return errors.New("polling terminated")
+		case <-s.stop:
+			return nil
 		default:
 			// No more retries, goto next block
-			if retry == 0 {
-				glog.Error("Polling failed, retries exceeded")
-				sysErr <- ErrFatalPolling
+			if retry > BlockRetryLimit {
+				utils.ShutdownRequestChannel <- struct{}{}
 				return nil
 			}
 
 			latestBlock, err := s.conn.LatestBlock()
 			if err != nil {
-				glog.Error("Unable to get latest block", "block", s.currentBlock, "err", err)
 				retry--
 				time.Sleep(BlockRetryInterval)
 				continue
@@ -38,7 +36,7 @@ func (s *Service) pollBlocks(ctx context.Context, sysErr chan<- error, ding chan
 			}
 
 			if big.NewInt(0).Mod(s.currentBlock, big.NewInt(15)).Cmp(big.NewInt(0)) == 0 {
-				glog.Debug("pollBlocks", "currentBlock", s.currentBlock)
+				logrus.Debug("pollBlocks", "currentBlock", s.currentBlock)
 			}
 
 			// Goto next block and reset retry counter

@@ -1,75 +1,61 @@
-// Copyright 2020 Stafi Protocol
+// Copyright 2021 stafiprotocol
 // SPDX-License-Identifier: LGPL-3.0-only
 
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/urfave/cli/v2"
+	"github.com/BurntSushi/toml"
 )
 
-const DefaultConfigPath = "../config.json"
-const DefaultKeystorePath = "./keys"
+type Config struct {
+	ListenAddr    string
+	EthEndpoint   string `json:"ethEndpoint"`   // url for rpc endpoint
+	Eth2Endpoint  string `json:"eth2Endpoint"`  // url for eth2 rpc endpoint
+	Http          bool   `json:"http"`          // Config for type of connection
+	SubmitFlag    bool   `json:"submitFlag"`    //submit rate only if it's true
+	From          string `json:"from"`          // address of key to use
+	BlockInterval string `json:"blockInterval"` // block interval to recalculate rate
+	DataApiUrl    string `json:"dataApiUrl"`    // url to receive data
+	KeystorePath  string `json:"keystorePath,omitempty"`
+	Contracts     Contracts
 
-// RawConfig is parsed directly from the config file
-type RawConfig struct {
-	EthEndpoint                string `json:"ethEndpoint"`                // url for rpc endpoint
-	Eth2Endpoint               string `json:"eth2Endpoint"`               // url for eth2 rpc endpoint
-	Http                       bool   `json:"http"`                       // Config for type of connection
-	SubmitFlag                 bool   `json:"submitFlag"`                 //submit rate only if it's true
-	From                       string `json:"from"`                       // address of key to use
+	Db Db
+}
+
+type Contracts struct {
 	SettingsContract           string `json:"settingsContract"`           // address of settings
 	NetworkBalanceContract     string `json:"networkBalanceContract"`     // address of rate submit
 	StakingPoolManagerContract string `json:"stakingPoolManagerContract"` // address of StakingPoolManagerContract
-	BlockInterval              string `json:"blockInterval"`              // block interval to recalculate rate
-	DataApiUrl                 string `json:"dataApiUrl"`                 // url to receive data
-	KeystorePath               string `json:"keystorePath,omitempty"`
 }
 
-func GetConfig(ctx *cli.Context) (*RawConfig, error) {
-	var fig RawConfig
-	path := DefaultConfigPath
-	if file := ctx.String(ConfigFileFlag.Name); file != "" {
-		path = file
-	}
-	err := loadConfig(path, &fig)
-	if err != nil {
-		log.Warn("err loading json file", "err", err.Error())
-		return &fig, err
-	}
-	if ksPath := ctx.String(KeystorePathFlag.Name); ksPath != "" {
-		fig.KeystorePath = ksPath
-	}
-	log.Debug("Loaded config", "path", path)
-	return &fig, nil
+type Db struct {
+	Host string
+	Port string
+	User string
+	Pwd  string
+	Name string
 }
 
-func loadConfig(file string, config *RawConfig) error {
-	ext := filepath.Ext(file)
-	fp, err := filepath.Abs(file)
+func Load(configFilePath string) (*Config, error) {
+	var cfg = Config{}
+	if err := loadSysConfig(configFilePath, &cfg); err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
+}
+
+func loadSysConfig(path string, config *Config) error {
+	_, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-
-	log.Debug("Loading configuration", "path", filepath.Clean(fp))
-
-	f, err := os.Open(filepath.Clean(fp))
-	if err != nil {
+	if _, err := toml.DecodeFile(path, config); err != nil {
 		return err
 	}
-
-	if ext == ".json" {
-		if err = json.NewDecoder(f).Decode(&config); err != nil {
-			return err
-		}
-	} else {
-		return fmt.Errorf("unrecognized extention: %s", ext)
-	}
-
+	fmt.Println("load config success")
 	return nil
 }

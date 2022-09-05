@@ -8,7 +8,6 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ChainSafe/log15"
 	"github.com/stafiprotocol/chainbridge/utils/keystore"
 	"github.com/stafiprotocol/reth/shared"
 )
@@ -20,7 +19,7 @@ var GasLimit = big.NewInt(shared.DefaultGasLimit)
 var MaxGasPrice = big.NewInt(shared.DefaultMaxGasPrice)
 
 func TestConnect(t *testing.T) {
-	conn := NewConnection(TestEndpoint, TestEndpointEth2, false, AliceKp, log15.Root(), GasLimit, MaxGasPrice)
+	conn := NewConnection(TestEndpoint, TestEndpointEth2, false, AliceKp, GasLimit, MaxGasPrice)
 	err := conn.Connect()
 	if err != nil {
 		t.Fatal(err)
@@ -30,7 +29,7 @@ func TestConnect(t *testing.T) {
 
 func TestConnection_SafeEstimateGas(t *testing.T) {
 	// MaxGasPrice is the constant price on the dev network, so we increase it here by 1 to ensure it adjusts
-	conn := NewConnection(TestEndpoint, TestEndpointEth2, false, AliceKp, log15.Root(), GasLimit, MaxGasPrice.Add(MaxGasPrice, big.NewInt(1)))
+	conn := NewConnection(TestEndpoint, TestEndpointEth2, false, AliceKp, GasLimit, MaxGasPrice.Add(MaxGasPrice, big.NewInt(1)))
 	err := conn.Connect()
 	if err != nil {
 		t.Fatal(err)

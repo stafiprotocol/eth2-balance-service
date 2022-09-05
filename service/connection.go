@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ChainSafe/log15"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -38,12 +37,11 @@ type Connection struct {
 	callOpts     *bind.CallOpts
 	nonce        uint64
 	optsLock     sync.Mutex
-	log          log15.Logger
 	stop         chan int // All routines should exit when this channel is closed
 }
 
 // NewConnection returns an uninitialized connection, must call Connection.Connect() before using.
-func NewConnection(endpoint, eth2Endpoint string, http bool, kp *secp256k1.Keypair, log log15.Logger, gasLimit, gasPrice *big.Int) *Connection {
+func NewConnection(endpoint, eth2Endpoint string, http bool, kp *secp256k1.Keypair, gasLimit, gasPrice *big.Int) *Connection {
 	return &Connection{
 		endpoint:     endpoint,
 		eth2Endpoint: eth2Endpoint,
@@ -51,14 +49,12 @@ func NewConnection(endpoint, eth2Endpoint string, http bool, kp *secp256k1.Keypa
 		kp:           kp,
 		gasLimit:     gasLimit,
 		maxGasPrice:  gasPrice,
-		log:          log,
 		stop:         make(chan int),
 	}
 }
 
 // Connect starts the ethereum WS connection
 func (c *Connection) Connect() error {
-	c.log.Info("Connecting to ethereum chain...", "url", c.endpoint)
 	var rpcClient *rpc.Client
 	var err error
 	// Start http or ws client
@@ -206,7 +202,6 @@ func (c *Connection) WaitForBlock(block *big.Int) error {
 			if currBlock.Cmp(block) >= 1 {
 				return nil
 			}
-			c.log.Trace("Block not ready, waiting", "target", block, "current", currBlock)
 			time.Sleep(BlockRetryInterval)
 			continue
 		}

@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ChainSafe/log15"
 	"github.com/stafiprotocol/reth/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -79,7 +78,6 @@ func TestRewardAllocate5(t *testing.T) {
 }
 
 func TestCalculateRate(t *testing.T) {
-	SetLogger(log15.Root())
 	path := "./fixtures/balance_data1.json"
 	list := loadBalanceJsonFile(path)
 	//for _, l := range list {

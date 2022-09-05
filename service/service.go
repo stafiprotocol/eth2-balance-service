@@ -1,18 +1,14 @@
 package service
 
 import (
-	"context"
 	"errors"
 	"math/big"
-	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/ChainSafe/log15"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
 	"github.com/stafiprotocol/chainbridge/utils/keystore"
-
 	"github.com/stafiprotocol/reth/config"
+	"github.com/stafiprotocol/reth/utils"
 )
 
 const (
@@ -22,7 +18,6 @@ const (
 )
 
 var (
-	glog                              log15.Logger
 	failLastTimes                     = 0
 	BlockDelay                        = big.NewInt(10)
 	ErrFatalPolling                   = errors.New("listener block polling failed")
@@ -32,18 +27,62 @@ var (
 
 type Service struct {
 	cfg          *ServiceConfig
-	sysErr       chan error
 	currentBlock *big.Int
 	conn         *Connection
-	contract     *Contract
+	contracts    *Contracts
+	stop         chan struct{}
 }
 
-func NewService(cfg *config.RawConfig) (*Service, error) {
+const DefaultGasLimit = 1000000
+const DefaultGasPrice = 20000000000
+
+// Config encapsulates all necessary parameters in ethereum compatible forms
+type ServiceConfig struct {
+	ethEndpoint                string // url for rpc endpoint
+	eth2Endpoint               string // url for rpc endpoint
+	http                       bool   // Config for type of connection
+	submitFlag                 bool   // flag to decide if submit rate
+	from                       string // address of key to use
+	keystorePath               string // Location of keyfiles
+	settingsContract           common.Address
+	networkBalanceContract     common.Address
+	stakingPoolManagerContract common.Address
+	dataApiUrl                 string
+	blockInterval              *big.Int
+	gasLimit                   *big.Int
+	maxGasPrice                *big.Int
+}
+
+func parseConfig(cfg *config.Config) (*ServiceConfig, error) {
+	block, ok := utils.FromString(cfg.BlockInterval)
+	if !ok {
+		return nil, errors.New("unable to parse blockInterval")
+	}
+
+	sc := &ServiceConfig{
+		ethEndpoint:                cfg.EthEndpoint,
+		eth2Endpoint:               cfg.Eth2Endpoint,
+		http:                       cfg.Http,
+		submitFlag:                 cfg.SubmitFlag,
+		from:                       cfg.From,
+		keystorePath:               cfg.KeystorePath,
+		settingsContract:           common.HexToAddress(cfg.Contracts.SettingsContract),
+		networkBalanceContract:     common.HexToAddress(cfg.Contracts.NetworkBalanceContract),
+		stakingPoolManagerContract: common.HexToAddress(cfg.Contracts.StakingPoolManagerContract),
+		dataApiUrl:                 cfg.DataApiUrl,
+		blockInterval:              block,
+		gasLimit:                   big.NewInt(DefaultGasLimit),
+		maxGasPrice:                big.NewInt(DefaultGasPrice),
+	}
+
+	return sc, nil
+}
+
+func NewService(cfg *config.Config) (*Service, error) {
 	sc, err := parseConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
-	glog.Debug("NewService", "ServiceConfig", sc)
 
 	if sc.blockInterval.Uint64() == 0 {
 		return nil, errors.New("blockInterval is 0")
@@ -51,107 +90,84 @@ func NewService(cfg *config.RawConfig) (*Service, error) {
 
 	return &Service{
 		cfg:          sc,
-		sysErr:       make(chan error),
 		currentBlock: big.NewInt(0),
 		conn:         nil,
+		stop:         make(chan struct{}),
 	}, nil
 }
 
-func (s *Service) Start() {
+func (s *Service) Start() error {
 	kpI, err := keystore.KeypairFromAddress(s.cfg.from, keystore.EthChain, s.cfg.keystorePath, false)
 	if err != nil {
-		glog.Error("Service", "KeypairFromAddress error", err)
-		return
+		return err
 	}
 	kp, _ := kpI.(*secp256k1.Keypair)
 
-	conn := NewConnection(s.cfg.ethEndpoint, s.cfg.eth2Endpoint, s.cfg.http, kp, glog, s.cfg.gasLimit, s.cfg.maxGasPrice)
+	conn := NewConnection(s.cfg.ethEndpoint, s.cfg.eth2Endpoint, s.cfg.http, kp, s.cfg.gasLimit, s.cfg.maxGasPrice)
 	err = conn.Connect()
 	if err != nil {
-		glog.Error("Service", "KeypairFromAddress error", err)
-		return
+		return err
 	}
 	s.conn = conn
 
 	err = s.checkContracts()
 	if err != nil {
-		return
+		return err
 	}
 
 	ctr, err := s.NewContract()
 	if err != nil {
-		return
+		return err
 	}
-	s.contract = ctr
+	s.contracts = ctr
 
 	blk, err := s.conn.LatestBlock()
 	if err != nil {
-		glog.Error("Service", "first time to get LatestBlock error", err)
+		return err
 	}
-	glog.Info("Service", "start from", blk)
 	s.currentBlock = blk
 
 	ding := make(chan *big.Int)
-	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
-		err := s.pollBlocks(ctx, s.sysErr, ding)
+		err := s.pollBlocks(ding)
 		if err != nil {
-			glog.Error("Polling blocks failed", "err", err)
 		}
 	}()
 
 	go func() {
-		err := s.dealRate(ctx, s.sysErr, ding)
+		err := s.dealRate(ding)
 		if err != nil {
-			glog.Error("calculateAndSubmitRate failed", "err", err)
 		}
 	}()
 
 	go func() {
-		err := s.dealWithdrawalCredentials(ctx, s.sysErr)
+		err := s.dealWithdrawalCredentials()
 		if err != nil {
-			glog.Error("dealWithdrawalCredentials failed", "err", err)
 		}
 	}()
-
-	sigc := make(chan os.Signal, 1)
-	signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
-	defer signal.Stop(sigc)
-
-	// Block here and wait for a signal
-	select {
-	case err := <-s.sysErr:
-		glog.Error("FATAL ERROR. Shutting down.", "err", err)
-	case <-sigc:
-		glog.Warn("Interrupt received, shutting down now.")
-	}
-
-	cancel()
+	return nil
 }
 
 func (s *Service) checkContracts() error {
 	err := s.conn.EnsureHasBytecode(s.cfg.settingsContract)
 	if err != nil {
-		glog.Error("Service", "settingsContract ensure error", err)
 		return err
 	}
 
 	err = s.conn.EnsureHasBytecode(s.cfg.networkBalanceContract)
 	if err != nil {
-		glog.Error("Service", "networkBalanceContract ensure error", err)
 		return err
 	}
 
 	err = s.conn.EnsureHasBytecode(s.cfg.stakingPoolManagerContract)
 	if err != nil {
-		glog.Error("Service", "stakingPoolManagerContract ensure error", err)
 		return err
 	}
 
 	return nil
 }
 
-func SetLogger(log log15.Logger) {
-	glog = log
+func (s *Service) Stop() {
+	close(s.stop)
 }

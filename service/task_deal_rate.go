@@ -1,11 +1,10 @@
 package service
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"math/big"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/utils"
 )
 
@@ -45,40 +44,39 @@ var (
 	stopRate              = big.NewInt(0).Div(big.NewInt(1000), big.NewInt(2))
 )
 
-func (s *Service) dealRate(ctx context.Context, sysErr chan<- error, ding <-chan *big.Int) error {
+func (s *Service) dealRate(ding <-chan *big.Int) error {
 	for {
 		select {
-		case <-ctx.Done():
-			return errors.New("calculate terminated")
-		case blk := <-ding:
-			glog.Trace("ding", "rateBlock", blk)
+		case <-s.stop:
+			return nil
+		case _ = <-ding:
 			calFunc := func() (*RateInfo, error) {
-				pf, err := s.contract.PlatformFee()
+				pf, err := s.contracts.PlatformFee()
 				if err != nil {
-					glog.Error("dealRate", "PlatformFeeError", err)
+					logrus.Error("dealRate", "PlatformFeeError", err)
 					return nil, err
 				}
-				glog.Trace("dealRate", "PlatformFee", pf)
+				logrus.Trace("dealRate", "PlatformFee", pf)
 
-				nf, err := s.contract.NodeFee()
+				nf, err := s.contracts.NodeFee()
 				if err != nil {
-					glog.Error("dealRate", "NodeFeeError", err)
+					logrus.Error("dealRate", "NodeFeeError", err)
 					return nil, err
 				}
-				glog.Trace("dealRate", "NodeFee", nf)
+				logrus.Trace("dealRate", "NodeFee", nf)
 
 				brd, err := ReceiveData(s.cfg.dataApiUrl)
 				if err != nil {
-					glog.Error("dealRate", "ReceiveDataError", err)
+					logrus.Error("dealRate", "ReceiveDataError", err)
 					return nil, err
 				}
 
 				ri, err := brd.CalculateRate(pf, nf)
 				if err != nil {
-					glog.Error("dealRate", "CalculateRateError", err)
+					logrus.Error("dealRate", "CalculateRateError", err)
 					return nil, err
 				}
-				glog.Trace("dealRate", "RateInfo", ri)
+				logrus.Trace("dealRate", "RateInfo", ri)
 
 				return ri, nil
 			}
@@ -87,22 +85,22 @@ func (s *Service) dealRate(ctx context.Context, sysErr chan<- error, ding <-chan
 			for i := 0; i < RateRetryLimit; i++ {
 				ri, err := calFunc()
 				if err != nil {
-					glog.Error("dealRate", "calFuncError", err)
+					logrus.Error("dealRate", "calFuncError", err)
 					continue
 				}
 
 				if !ri.check() {
-					glog.Warn("dealRate", "RateInfo not passed", ri)
+					logrus.Warn("dealRate", "RateInfo not passed", ri)
 					continue
 				}
 
 				if s.cfg.submitFlag {
-					h, err := s.contract.SubmitBalances(ri)
+					h, err := s.contracts.SubmitBalances(ri)
 					if err != nil {
-						glog.Error("dealRate", "SubmitBalancesError", err)
+						logrus.Error("dealRate", "SubmitBalancesError", err)
 						break
 					}
-					glog.Info("dealRate", "SubmitBalancesTx", h)
+					logrus.Info("dealRate", "SubmitBalancesTx", h)
 				}
 				succeed = true
 				failLastTimes = 0
@@ -112,7 +110,7 @@ func (s *Service) dealRate(ctx context.Context, sysErr chan<- error, ding <-chan
 			if !succeed {
 				failLastTimes++
 				if failLastTimes >= RateFailLastLimit {
-					sysErr <- ErrFatalCalRate
+
 					return nil
 				}
 			}
@@ -121,7 +119,7 @@ func (s *Service) dealRate(ctx context.Context, sysErr chan<- error, ding <-chan
 }
 
 func (rrd *BlockRawData) CalculateRate(pf, nf *big.Int) (*RateInfo, error) {
-	glog.Info("CalculateRate", "UpdateBlock", rrd.UpdateBlock)
+	logrus.Info("CalculateRate", "UpdateBlock", rrd.UpdateBlock)
 
 	eth, ok := utils.FromString(rrd.UnStake)
 	if !ok {

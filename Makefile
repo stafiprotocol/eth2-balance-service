@@ -1,66 +1,33 @@
-PROJECTNAME=$(shell basename "$(PWD)")
-SOL_DIR=./solidity
+VERSION := $(shell git describe --tags)
+COMMIT  := $(shell git log -1 --format='%H')
 
-CENT_EMITTER_ADDR?=0x1
-CENT_CHAIN_ID?=0x1
-CENT_TO?=0x1234567890
-CENT_TOKEN_ID?=0x5
-CENT_METADATA?=0x0
+all: install
 
-.PHONY: help run build install license
-all: help
+LD_FLAGS = -X github.com/stafiprotocol/reth/cmd.Version=$(VERSION) \
+	-X github.com/stafiprotocol/reth/cmd.Commit=$(COMMIT) \
 
-help: Makefile
-	@echo
-	@echo "Choose a make command to run in "$(PROJECTNAME)":"
-	@echo
-	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
-	@echo
+BUILD_FLAGS := -ldflags '$(LD_FLAGS)'
 
 get:
 	@echo "  >  \033[32mDownloading & Installing all the modules...\033[0m "
 	go mod tidy && go mod download
 
-get-lint:
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s latest
-
-.PHONY: lint
-lint:
-	if [ ! -f ./bin/golangci-lint ]; then \
-		$(MAKE) get-lint; \
-	fi;
-	./bin/golangci-lint run ./... --timeout 5m0s
-
-lint-fix:
-	if [ ! -f ./bin/golangci-lint ]; then \
-		$(MAKE) get-lint; \
-	fi;
-	./bin/golangci-lint run ./... --timeout 5m0s --fix
-
 build:
-	@echo "  >  \033[32mBuilding binary...\033[0m "
-	cd cmd/reth && env GOARCH=amd64 go build -o ../../build/reth
+	@echo " > \033[32mBuilding reth...\033[0m "
+	go build -mod readonly $(BUILD_FLAGS) -o build/reth main.go
 
 install:
-	@echo "  >  \033[32mInstalling reth...\033[0m "
-	cd cmd/reth && go install
+	@echo " > \033[32mInstalling reth...\033[0m "
+	go install -mod readonly $(BUILD_FLAGS) ./...
 
-## license: Adds license header to missing files.
-license:
-	@echo "  >  \033[32mAdding license headers...\033[0m "
-	GO111MODULE=off go get -u github.com/google/addlicense
-	addlicense -c "Stafi Protocol" -f ./scripts/header.txt -y 2020 .
-
-## Install dependency subkey
-install-subkey:
-	curl https://getsubstrate.io -sSf | bash -s -- --fast
-	cargo install --force --git https://github.com/paritytech/substrate subkey
-
-## Runs go test for all packages except the solidity bindings
-test:
-	@echo "  >  \033[32mRunning tests...\033[0m "
-	go test `go list ./... | grep -v bindings | grep -v e2e`
-
+build-linux:
+	@GOOS=linux GOARCH=amd64 go build --mod readonly $(BUILD_FLAGS) -o ./build/reth main.go
 
 clean:
-	rm -rf build/
+	@echo " > \033[32mCleanning build files ...\033[0m "
+	rm -rf build
+fmt :
+	@echo " > \033[32mFormatting go files ...\033[0m "
+	go fmt ./...
+
+.PHONY: all lint test race msan tools clean build

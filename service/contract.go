@@ -9,14 +9,14 @@ import (
 	"github.com/stafiprotocol/reth/bindings/Settings"
 )
 
-type Contract struct {
-	St                      *Settings.Settings
-	Nb                      *NetworkBalance.NetworkBalance
+type Contracts struct {
+	Settings                *Settings.Settings
+	NetworkBalance          *NetworkBalance.NetworkBalance
 	StafiStakingPoolManager *PoolManager.PoolManager
 	Conn                    *Connection
 }
 
-func (s *Service) NewContract() (*Contract, error) {
+func (s *Service) NewContract() (*Contracts, error) {
 	c := s.conn.Client()
 
 	st, err := Settings.NewSettings(s.cfg.settingsContract, c)
@@ -33,7 +33,7 @@ func (s *Service) NewContract() (*Contract, error) {
 		return nil, err
 	}
 
-	return &Contract{
+	return &Contracts{
 		st,
 		nb,
 		poolManager,
@@ -41,8 +41,8 @@ func (s *Service) NewContract() (*Contract, error) {
 	}, nil
 }
 
-func (c *Contract) PlatformFee() (*big.Int, error) {
-	fee, err := c.St.GetPlatformFee(c.Conn.callOpts)
+func (c *Contracts) PlatformFee() (*big.Int, error) {
+	fee, err := c.Settings.GetPlatformFee(c.Conn.callOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -50,8 +50,8 @@ func (c *Contract) PlatformFee() (*big.Int, error) {
 	return fee, nil
 }
 
-func (c *Contract) NodeFee() (*big.Int, error) {
-	fee, err := c.St.GetNodeFee(c.Conn.callOpts)
+func (c *Contracts) NodeFee() (*big.Int, error) {
+	fee, err := c.Settings.GetNodeFee(c.Conn.callOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -59,14 +59,14 @@ func (c *Contract) NodeFee() (*big.Int, error) {
 	return fee, nil
 }
 
-func (c *Contract) SubmitBalances(ri *RateInfo) (common.Hash, error) {
+func (c *Contracts) SubmitBalances(ri *RateInfo) (common.Hash, error) {
 	err := c.Conn.LockAndUpdateOpts()
 	if err != nil {
 		return [32]byte{}, err
 	}
 	defer c.Conn.UnlockOpts()
 
-	tx, err := c.Nb.SubmitBalances(c.Conn.opts, ri.Block, ri.Eth, ri.Staking, ri.Reth)
+	tx, err := c.NetworkBalance.SubmitBalances(c.Conn.opts, ri.Block, ri.Eth, ri.Staking, ri.Reth)
 	if err != nil {
 		return [32]byte{}, err
 	}

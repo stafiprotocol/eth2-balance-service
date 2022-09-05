@@ -1,8 +1,6 @@
 package service
 
 import (
-	"context"
-	"errors"
 	"math/big"
 	"strings"
 	"time"
@@ -10,27 +8,25 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stafiprotocol/reth/bindings/StakingPool"
 	"github.com/stafiprotocol/reth/types"
+	"github.com/stafiprotocol/reth/utils"
 )
 
 var poolPrelaunchBatchSize = int64(50)
 
-func (s *Service) dealWithdrawalCredentials(ctx context.Context, sysErr chan<- error) error {
-	glog.Info("dealWithdrawalCredentials...")
-	var retry = BlockRetryLimit
+func (s *Service) dealWithdrawalCredentials() error {
+	var retry = 0
 	for {
 		select {
-		case <-ctx.Done():
-			return errors.New("dealWithdrawalCredentials terminated")
+		case <-s.stop:
+			return nil
 		default:
 			// No more retries
-			if retry <= 0 {
-				glog.Error("dealWithdrawalCredentials failed, retries exceeded")
-				sysErr <- ErrFatalDealWithdrawalCredentials
+			if retry > BlockRetryLimit {
+				utils.ShutdownRequestChannel <- struct{}{}
 				return nil
 			}
 			err := s.checkAndVoteCredentials()
 			if err != nil {
-				glog.Error("dealWithdrawalCredentials failed", "error", err)
 				retry--
 				time.Sleep(BlockRetryInterval)
 				continue
@@ -51,7 +47,7 @@ func (s *Service) checkAndVoteCredentials() error {
 		return nil
 	}
 
-	expectCredentials, err := s.contract.St.GetWithdrawalCredentials(s.conn.callOpts)
+	expectCredentials, err := s.contracts.Settings.GetWithdrawalCredentials(s.conn.callOpts)
 	if err != nil {
 		return err
 	}
@@ -69,7 +65,7 @@ func (s *Service) checkAndVoteCredentials() error {
 		if match {
 			continue
 		}
-		pubkey, err := s.contract.StafiStakingPoolManager.GetStakingPoolPubkey(s.conn.callOpts, poolAddress)
+		pubkey, err := s.contracts.StafiStakingPoolManager.GetStakingPoolPubkey(s.conn.callOpts, poolAddress)
 		if err != nil {
 			return err
 		}
@@ -86,7 +82,6 @@ func (s *Service) checkAndVoteCredentials() error {
 					return err
 				}
 				if tx != "" {
-					glog.Info("VoteWithdrawCredentials", "tx", tx, "poolAddress", poolAddress.Hex())
 				}
 			}
 		}
@@ -96,11 +91,11 @@ func (s *Service) checkAndVoteCredentials() error {
 }
 
 func (s *Service) voteWithdrawCredentials(stakingPoolContract *StakingPool.StakingPool) (string, error) {
-	err := s.contract.Conn.LockAndUpdateOpts()
+	err := s.contracts.Conn.LockAndUpdateOpts()
 	if err != nil {
 		return "", err
 	}
-	defer s.contract.Conn.UnlockOpts()
+	defer s.contracts.Conn.UnlockOpts()
 
 	tx, err := stakingPoolContract.VoteWithdrawCredentials(s.conn.opts)
 	if err != nil {
@@ -114,9 +109,8 @@ func (s *Service) voteWithdrawCredentials(stakingPoolContract *StakingPool.Staki
 }
 
 func (s *Service) getPrelaunchStakingpools() ([]common.Address, error) {
-	poolCount, err := s.contract.StafiStakingPoolManager.GetStakingPoolCount(s.conn.callOpts)
+	poolCount, err := s.contracts.StafiStakingPoolManager.GetStakingPoolCount(s.conn.callOpts)
 	if err != nil {
-		glog.Error("dealWithdrawalCredentials", "GetStakingPoolCountError", err)
 		return nil, err
 	}
 
@@ -126,7 +120,7 @@ func (s *Service) getPrelaunchStakingpools() ([]common.Address, error) {
 	for i := int64(0); i < totalPools; i += poolPrelaunchBatchSize {
 		// Get a batch of addresses
 		offset := big.NewInt(i)
-		newAddresses, err := s.contract.StafiStakingPoolManager.GetPrelaunchStakingpools(s.conn.callOpts, offset, limit)
+		newAddresses, err := s.contracts.StafiStakingPoolManager.GetPrelaunchStakingpools(s.conn.callOpts, offset, limit)
 		if err != nil {
 			return nil, err
 		}
