@@ -8,19 +8,16 @@ import (
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
+	"github.com/stafiprotocol/reth/pkg/log"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/server"
 )
 
-const defaultConfigPath = "./config.json"
-
-const flagConfigPath = "config"
-
-func startCmd() *cobra.Command {
+func startApiCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "start",
+		Use:   "start-api",
 		Args:  cobra.ExactArgs(0),
-		Short: "start service",
+		Short: "Start api server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configPath, err := cmd.Flags().GetString(flagConfigPath)
 			if err != nil {
@@ -42,9 +39,9 @@ func startCmd() *cobra.Command {
 				return err
 			}
 
-			// log.InitLogFile(cfg.LogFilePath + "/api")
-			// logrus.Infof("api config info:\ntaskTicker: %d\nlogFilePath: %s\nlogLevel: %s\nlistenAddress: %s\n",
-			// 	cfg.TaskTicker, cfg.LogFilePath, logLevelStr, cfg.ListenAddr)
+			log.InitLogFile(cfg.LogFilePath + "/api")
+			logrus.Infof("api config info:\nlogFilePath: %s\nlogLevel: %s\nlistenAddress: %s\n",
+				cfg.LogFilePath, logLevelStr, cfg.ListenAddr)
 
 			//init db
 			db, err := db.NewDB(&db.Config{

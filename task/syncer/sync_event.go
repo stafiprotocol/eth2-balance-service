@@ -62,6 +62,9 @@ func (task *Task) syncEvent() error {
 			subEnd = end
 		}
 
+
+		
+
 		logrus.WithFields(logrus.Fields{
 			"start": subStart,
 			"end":   subEnd,

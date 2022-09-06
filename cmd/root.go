@@ -14,8 +14,10 @@ var (
 const (
 	flagKeystorePath = "keystore_path"
 	flagLogLevel     = "log_level"
+	flagConfigPath   = "config"
 
 	defaultKeystorePath = "./keys"
+	defaultConfigPath   = "./config.json"
 )
 
 // NewRootCmd returns the root command.
@@ -32,6 +34,8 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	rootCmd.AddCommand(
+		startApiCmd(),
+		startSyncerCmd(),
 		genAccountCmd(),
 		versionCmd(),
 	)

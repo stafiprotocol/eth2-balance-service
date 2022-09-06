@@ -10,7 +10,7 @@ type MetaData struct {
 }
 
 func (f MetaData) TableName() string {
-	return "eth2_meta_datas"
+	return "reth_meta_datas"
 }
 
 func UpOrInMetaData(db *db.WrapDb, c *MetaData) error {

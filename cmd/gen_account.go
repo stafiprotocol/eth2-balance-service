@@ -12,8 +12,6 @@ import (
 	"github.com/stafiprotocol/chainbridge/utils/keystore"
 )
 
-
-
 func genAccountCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gen-account",

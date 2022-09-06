@@ -123,7 +123,7 @@ package server
 // // 	logrus.Info("CalculateRate", "UpdateBlock", rrd.UpdateBlock)
 
 // // 	// eth, ok := utils.FromString(rrd.UnStake)
-	
+
 // // 	eth, ok := decimal.NewFromString(rrd.UnStake)
 // // 	if !ok {
 // // 		return nil, fmt.Errorf("parse unStake error: %s", rrd.UnStake)
