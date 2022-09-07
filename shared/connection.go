@@ -37,9 +37,9 @@ type Connection struct {
 }
 
 // NewConnection returns an uninitialized connection, must call Connection.Connect() before using.
-func NewConnection(endpoint, eth2Endpoint string, kp *secp256k1.Keypair, gasLimit, gasPrice *big.Int) *Connection {
+func NewConnection(eth1Endpoint, eth2Endpoint string, kp *secp256k1.Keypair, gasLimit, gasPrice *big.Int) *Connection {
 	return &Connection{
-		eth1Endpoint: endpoint,
+		eth1Endpoint: eth1Endpoint,
 		eth2Endpoint: eth2Endpoint,
 		kp:           kp,
 		gasLimit:     gasLimit,
@@ -96,7 +96,6 @@ func (c *Connection) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.
 		return nil, 0, err
 	}
 
-	// auth := bind.NewKeyedTransactor(privateKey)
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
 	if err != nil {
 		return nil, 0, err

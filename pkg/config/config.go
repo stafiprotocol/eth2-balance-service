@@ -22,6 +22,8 @@ type Config struct {
 	BlockInterval string `json:"blockInterval"` // block interval to recalculate rate
 	DataApiUrl    string `json:"dataApiUrl"`    // url to receive data
 	KeystorePath  string `json:"keystorePath,omitempty"`
+	GasLimit      string
+	GasPrice      string
 	Contracts     Contracts
 
 	Db Db
