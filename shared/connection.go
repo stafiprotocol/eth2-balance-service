@@ -113,7 +113,7 @@ func (c *Connection) Keypair() *secp256k1.Keypair {
 	return c.kp
 }
 
-func (c *Connection) Client() *ethclient.Client {
+func (c *Connection) Eth1Client() *ethclient.Client {
 	return c.eth1Client
 }
 

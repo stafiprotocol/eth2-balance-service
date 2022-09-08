@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package StakingPool
+package staking_pool
 
 import (
 	"errors"
@@ -30,7 +30,7 @@ var (
 
 // StakingPoolMetaData contains all meta data concerning the StakingPool contract.
 var StakingPoolMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"},{\"internalType\":\"enumDepositType\",\"name\":\"_depositType\",\"type\":\"uint8\"}],\"name\":\"initialise\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getStatus\",\"outputs\":[{\"internalType\":\"enumStakingPoolStatus\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getStatusBlock\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getStatusTime\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getWithdrawalCredentialsMatch\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDepositType\",\"outputs\":[{\"internalType\":\"enumDepositType\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeDepositBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeRefundBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeDepositAssigned\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeCommonlyRefunded\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeTrustedRefunded\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getUserDepositBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getUserDepositAssigned\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getUserDepositAssignedTime\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getPlatformDepositBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_validatorPubkey\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_validatorSignature\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"_depositDataRoot\",\"type\":\"bytes32\"}],\"name\":\"nodeDeposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"userDeposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_validatorSignature\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"_depositDataRoot\",\"type\":\"bytes32\"}],\"name\":\"stake\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"refund\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dissolve\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"close\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"voteWithdrawCredentials\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"EtherDeposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"stakingPool\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"EtherRefunded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"EtherWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint8\",\"name\":\"status\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"StatusUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"}],\"name\":\"VoteWithdrawalCredentials\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"close\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dissolve\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDepositType\",\"outputs\":[{\"internalType\":\"enumDepositType\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeCommonlyRefunded\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeDepositAssigned\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeDepositBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeRefundBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNodeTrustedRefunded\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getPlatformDepositBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getStatus\",\"outputs\":[{\"internalType\":\"enumStakingPoolStatus\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getStatusBlock\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getStatusTime\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getUserDepositAssigned\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getUserDepositAssignedTime\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getUserDepositBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getWithdrawalCredentialsMatch\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"},{\"internalType\":\"enumDepositType\",\"name\":\"_depositType\",\"type\":\"uint8\"}],\"name\":\"initialise\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_validatorPubkey\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_validatorSignature\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"_depositDataRoot\",\"type\":\"bytes32\"}],\"name\":\"nodeDeposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"refund\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_validatorSignature\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"_depositDataRoot\",\"type\":\"bytes32\"}],\"name\":\"stake\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"userDeposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"voteWithdrawCredentials\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // StakingPoolABI is the input ABI used to generate the binding from.
@@ -841,4 +841,730 @@ func (_StakingPool *StakingPoolSession) VoteWithdrawCredentials() (*types.Transa
 // Solidity: function voteWithdrawCredentials() returns()
 func (_StakingPool *StakingPoolTransactorSession) VoteWithdrawCredentials() (*types.Transaction, error) {
 	return _StakingPool.Contract.VoteWithdrawCredentials(&_StakingPool.TransactOpts)
+}
+
+// StakingPoolEtherDepositedIterator is returned from FilterEtherDeposited and is used to iterate over the raw logs and unpacked data for EtherDeposited events raised by the StakingPool contract.
+type StakingPoolEtherDepositedIterator struct {
+	Event *StakingPoolEtherDeposited // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *StakingPoolEtherDepositedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(StakingPoolEtherDeposited)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(StakingPoolEtherDeposited)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *StakingPoolEtherDepositedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *StakingPoolEtherDepositedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// StakingPoolEtherDeposited represents a EtherDeposited event raised by the StakingPool contract.
+type StakingPoolEtherDeposited struct {
+	From   common.Address
+	Amount *big.Int
+	Time   *big.Int
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterEtherDeposited is a free log retrieval operation binding the contract event 0xef51b4c870b8b0100eae2072e91db01222a303072af3728e58c9d4d2da33127f.
+//
+// Solidity: event EtherDeposited(address indexed from, uint256 amount, uint256 time)
+func (_StakingPool *StakingPoolFilterer) FilterEtherDeposited(opts *bind.FilterOpts, from []common.Address) (*StakingPoolEtherDepositedIterator, error) {
+
+	var fromRule []interface{}
+	for _, fromItem := range from {
+		fromRule = append(fromRule, fromItem)
+	}
+
+	logs, sub, err := _StakingPool.contract.FilterLogs(opts, "EtherDeposited", fromRule)
+	if err != nil {
+		return nil, err
+	}
+	return &StakingPoolEtherDepositedIterator{contract: _StakingPool.contract, event: "EtherDeposited", logs: logs, sub: sub}, nil
+}
+
+// WatchEtherDeposited is a free log subscription operation binding the contract event 0xef51b4c870b8b0100eae2072e91db01222a303072af3728e58c9d4d2da33127f.
+//
+// Solidity: event EtherDeposited(address indexed from, uint256 amount, uint256 time)
+func (_StakingPool *StakingPoolFilterer) WatchEtherDeposited(opts *bind.WatchOpts, sink chan<- *StakingPoolEtherDeposited, from []common.Address) (event.Subscription, error) {
+
+	var fromRule []interface{}
+	for _, fromItem := range from {
+		fromRule = append(fromRule, fromItem)
+	}
+
+	logs, sub, err := _StakingPool.contract.WatchLogs(opts, "EtherDeposited", fromRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(StakingPoolEtherDeposited)
+				if err := _StakingPool.contract.UnpackLog(event, "EtherDeposited", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseEtherDeposited is a log parse operation binding the contract event 0xef51b4c870b8b0100eae2072e91db01222a303072af3728e58c9d4d2da33127f.
+//
+// Solidity: event EtherDeposited(address indexed from, uint256 amount, uint256 time)
+func (_StakingPool *StakingPoolFilterer) ParseEtherDeposited(log types.Log) (*StakingPoolEtherDeposited, error) {
+	event := new(StakingPoolEtherDeposited)
+	if err := _StakingPool.contract.UnpackLog(event, "EtherDeposited", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// StakingPoolEtherRefundedIterator is returned from FilterEtherRefunded and is used to iterate over the raw logs and unpacked data for EtherRefunded events raised by the StakingPool contract.
+type StakingPoolEtherRefundedIterator struct {
+	Event *StakingPoolEtherRefunded // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *StakingPoolEtherRefundedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(StakingPoolEtherRefunded)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(StakingPoolEtherRefunded)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *StakingPoolEtherRefundedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *StakingPoolEtherRefundedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// StakingPoolEtherRefunded represents a EtherRefunded event raised by the StakingPool contract.
+type StakingPoolEtherRefunded struct {
+	Node        common.Address
+	StakingPool common.Address
+	Amount      *big.Int
+	Time        *big.Int
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterEtherRefunded is a free log retrieval operation binding the contract event 0x37f8368ca39a6817f494e987de3f73f1ac827f067858005fb2ba18553cfce131.
+//
+// Solidity: event EtherRefunded(address indexed node, address indexed stakingPool, uint256 amount, uint256 time)
+func (_StakingPool *StakingPoolFilterer) FilterEtherRefunded(opts *bind.FilterOpts, node []common.Address, stakingPool []common.Address) (*StakingPoolEtherRefundedIterator, error) {
+
+	var nodeRule []interface{}
+	for _, nodeItem := range node {
+		nodeRule = append(nodeRule, nodeItem)
+	}
+	var stakingPoolRule []interface{}
+	for _, stakingPoolItem := range stakingPool {
+		stakingPoolRule = append(stakingPoolRule, stakingPoolItem)
+	}
+
+	logs, sub, err := _StakingPool.contract.FilterLogs(opts, "EtherRefunded", nodeRule, stakingPoolRule)
+	if err != nil {
+		return nil, err
+	}
+	return &StakingPoolEtherRefundedIterator{contract: _StakingPool.contract, event: "EtherRefunded", logs: logs, sub: sub}, nil
+}
+
+// WatchEtherRefunded is a free log subscription operation binding the contract event 0x37f8368ca39a6817f494e987de3f73f1ac827f067858005fb2ba18553cfce131.
+//
+// Solidity: event EtherRefunded(address indexed node, address indexed stakingPool, uint256 amount, uint256 time)
+func (_StakingPool *StakingPoolFilterer) WatchEtherRefunded(opts *bind.WatchOpts, sink chan<- *StakingPoolEtherRefunded, node []common.Address, stakingPool []common.Address) (event.Subscription, error) {
+
+	var nodeRule []interface{}
+	for _, nodeItem := range node {
+		nodeRule = append(nodeRule, nodeItem)
+	}
+	var stakingPoolRule []interface{}
+	for _, stakingPoolItem := range stakingPool {
+		stakingPoolRule = append(stakingPoolRule, stakingPoolItem)
+	}
+
+	logs, sub, err := _StakingPool.contract.WatchLogs(opts, "EtherRefunded", nodeRule, stakingPoolRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(StakingPoolEtherRefunded)
+				if err := _StakingPool.contract.UnpackLog(event, "EtherRefunded", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseEtherRefunded is a log parse operation binding the contract event 0x37f8368ca39a6817f494e987de3f73f1ac827f067858005fb2ba18553cfce131.
+//
+// Solidity: event EtherRefunded(address indexed node, address indexed stakingPool, uint256 amount, uint256 time)
+func (_StakingPool *StakingPoolFilterer) ParseEtherRefunded(log types.Log) (*StakingPoolEtherRefunded, error) {
+	event := new(StakingPoolEtherRefunded)
+	if err := _StakingPool.contract.UnpackLog(event, "EtherRefunded", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// StakingPoolEtherWithdrawnIterator is returned from FilterEtherWithdrawn and is used to iterate over the raw logs and unpacked data for EtherWithdrawn events raised by the StakingPool contract.
+type StakingPoolEtherWithdrawnIterator struct {
+	Event *StakingPoolEtherWithdrawn // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *StakingPoolEtherWithdrawnIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(StakingPoolEtherWithdrawn)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(StakingPoolEtherWithdrawn)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *StakingPoolEtherWithdrawnIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *StakingPoolEtherWithdrawnIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// StakingPoolEtherWithdrawn represents a EtherWithdrawn event raised by the StakingPool contract.
+type StakingPoolEtherWithdrawn struct {
+	To     common.Address
+	Amount *big.Int
+	Time   *big.Int
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterEtherWithdrawn is a free log retrieval operation binding the contract event 0xd5ca65e1ec4f4864fea7b9c5cb1ec3087a0dbf9c74641db3f6458edf445c4051.
+//
+// Solidity: event EtherWithdrawn(address indexed to, uint256 amount, uint256 time)
+func (_StakingPool *StakingPoolFilterer) FilterEtherWithdrawn(opts *bind.FilterOpts, to []common.Address) (*StakingPoolEtherWithdrawnIterator, error) {
+
+	var toRule []interface{}
+	for _, toItem := range to {
+		toRule = append(toRule, toItem)
+	}
+
+	logs, sub, err := _StakingPool.contract.FilterLogs(opts, "EtherWithdrawn", toRule)
+	if err != nil {
+		return nil, err
+	}
+	return &StakingPoolEtherWithdrawnIterator{contract: _StakingPool.contract, event: "EtherWithdrawn", logs: logs, sub: sub}, nil
+}
+
+// WatchEtherWithdrawn is a free log subscription operation binding the contract event 0xd5ca65e1ec4f4864fea7b9c5cb1ec3087a0dbf9c74641db3f6458edf445c4051.
+//
+// Solidity: event EtherWithdrawn(address indexed to, uint256 amount, uint256 time)
+func (_StakingPool *StakingPoolFilterer) WatchEtherWithdrawn(opts *bind.WatchOpts, sink chan<- *StakingPoolEtherWithdrawn, to []common.Address) (event.Subscription, error) {
+
+	var toRule []interface{}
+	for _, toItem := range to {
+		toRule = append(toRule, toItem)
+	}
+
+	logs, sub, err := _StakingPool.contract.WatchLogs(opts, "EtherWithdrawn", toRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(StakingPoolEtherWithdrawn)
+				if err := _StakingPool.contract.UnpackLog(event, "EtherWithdrawn", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseEtherWithdrawn is a log parse operation binding the contract event 0xd5ca65e1ec4f4864fea7b9c5cb1ec3087a0dbf9c74641db3f6458edf445c4051.
+//
+// Solidity: event EtherWithdrawn(address indexed to, uint256 amount, uint256 time)
+func (_StakingPool *StakingPoolFilterer) ParseEtherWithdrawn(log types.Log) (*StakingPoolEtherWithdrawn, error) {
+	event := new(StakingPoolEtherWithdrawn)
+	if err := _StakingPool.contract.UnpackLog(event, "EtherWithdrawn", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// StakingPoolStatusUpdatedIterator is returned from FilterStatusUpdated and is used to iterate over the raw logs and unpacked data for StatusUpdated events raised by the StakingPool contract.
+type StakingPoolStatusUpdatedIterator struct {
+	Event *StakingPoolStatusUpdated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *StakingPoolStatusUpdatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(StakingPoolStatusUpdated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(StakingPoolStatusUpdated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *StakingPoolStatusUpdatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *StakingPoolStatusUpdatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// StakingPoolStatusUpdated represents a StatusUpdated event raised by the StakingPool contract.
+type StakingPoolStatusUpdated struct {
+	Status uint8
+	Time   *big.Int
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterStatusUpdated is a free log retrieval operation binding the contract event 0x26725881c2a4290b02cd153d6599fd484f0d4e6062c361e740fbbe39e7ad6142.
+//
+// Solidity: event StatusUpdated(uint8 indexed status, uint256 time)
+func (_StakingPool *StakingPoolFilterer) FilterStatusUpdated(opts *bind.FilterOpts, status []uint8) (*StakingPoolStatusUpdatedIterator, error) {
+
+	var statusRule []interface{}
+	for _, statusItem := range status {
+		statusRule = append(statusRule, statusItem)
+	}
+
+	logs, sub, err := _StakingPool.contract.FilterLogs(opts, "StatusUpdated", statusRule)
+	if err != nil {
+		return nil, err
+	}
+	return &StakingPoolStatusUpdatedIterator{contract: _StakingPool.contract, event: "StatusUpdated", logs: logs, sub: sub}, nil
+}
+
+// WatchStatusUpdated is a free log subscription operation binding the contract event 0x26725881c2a4290b02cd153d6599fd484f0d4e6062c361e740fbbe39e7ad6142.
+//
+// Solidity: event StatusUpdated(uint8 indexed status, uint256 time)
+func (_StakingPool *StakingPoolFilterer) WatchStatusUpdated(opts *bind.WatchOpts, sink chan<- *StakingPoolStatusUpdated, status []uint8) (event.Subscription, error) {
+
+	var statusRule []interface{}
+	for _, statusItem := range status {
+		statusRule = append(statusRule, statusItem)
+	}
+
+	logs, sub, err := _StakingPool.contract.WatchLogs(opts, "StatusUpdated", statusRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(StakingPoolStatusUpdated)
+				if err := _StakingPool.contract.UnpackLog(event, "StatusUpdated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseStatusUpdated is a log parse operation binding the contract event 0x26725881c2a4290b02cd153d6599fd484f0d4e6062c361e740fbbe39e7ad6142.
+//
+// Solidity: event StatusUpdated(uint8 indexed status, uint256 time)
+func (_StakingPool *StakingPoolFilterer) ParseStatusUpdated(log types.Log) (*StakingPoolStatusUpdated, error) {
+	event := new(StakingPoolStatusUpdated)
+	if err := _StakingPool.contract.UnpackLog(event, "StatusUpdated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// StakingPoolVoteWithdrawalCredentialsIterator is returned from FilterVoteWithdrawalCredentials and is used to iterate over the raw logs and unpacked data for VoteWithdrawalCredentials events raised by the StakingPool contract.
+type StakingPoolVoteWithdrawalCredentialsIterator struct {
+	Event *StakingPoolVoteWithdrawalCredentials // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *StakingPoolVoteWithdrawalCredentialsIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(StakingPoolVoteWithdrawalCredentials)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(StakingPoolVoteWithdrawalCredentials)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *StakingPoolVoteWithdrawalCredentialsIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *StakingPoolVoteWithdrawalCredentialsIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// StakingPoolVoteWithdrawalCredentials represents a VoteWithdrawalCredentials event raised by the StakingPool contract.
+type StakingPoolVoteWithdrawalCredentials struct {
+	Node common.Address
+	Raw  types.Log // Blockchain specific contextual infos
+}
+
+// FilterVoteWithdrawalCredentials is a free log retrieval operation binding the contract event 0x118af34d618a4d6a9adce426fa0ed61372df160a403849e7e642d93f9e8f22b9.
+//
+// Solidity: event VoteWithdrawalCredentials(address node)
+func (_StakingPool *StakingPoolFilterer) FilterVoteWithdrawalCredentials(opts *bind.FilterOpts) (*StakingPoolVoteWithdrawalCredentialsIterator, error) {
+
+	logs, sub, err := _StakingPool.contract.FilterLogs(opts, "VoteWithdrawalCredentials")
+	if err != nil {
+		return nil, err
+	}
+	return &StakingPoolVoteWithdrawalCredentialsIterator{contract: _StakingPool.contract, event: "VoteWithdrawalCredentials", logs: logs, sub: sub}, nil
+}
+
+// WatchVoteWithdrawalCredentials is a free log subscription operation binding the contract event 0x118af34d618a4d6a9adce426fa0ed61372df160a403849e7e642d93f9e8f22b9.
+//
+// Solidity: event VoteWithdrawalCredentials(address node)
+func (_StakingPool *StakingPoolFilterer) WatchVoteWithdrawalCredentials(opts *bind.WatchOpts, sink chan<- *StakingPoolVoteWithdrawalCredentials) (event.Subscription, error) {
+
+	logs, sub, err := _StakingPool.contract.WatchLogs(opts, "VoteWithdrawalCredentials")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(StakingPoolVoteWithdrawalCredentials)
+				if err := _StakingPool.contract.UnpackLog(event, "VoteWithdrawalCredentials", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseVoteWithdrawalCredentials is a log parse operation binding the contract event 0x118af34d618a4d6a9adce426fa0ed61372df160a403849e7e642d93f9e8f22b9.
+//
+// Solidity: event VoteWithdrawalCredentials(address node)
+func (_StakingPool *StakingPoolFilterer) ParseVoteWithdrawalCredentials(log types.Log) (*StakingPoolVoteWithdrawalCredentials, error) {
+	event := new(StakingPoolVoteWithdrawalCredentials)
+	if err := _StakingPool.contract.UnpackLog(event, "VoteWithdrawalCredentials", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
 }

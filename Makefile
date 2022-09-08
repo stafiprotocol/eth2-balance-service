@@ -20,6 +20,13 @@ install:
 	@echo " > \033[32mInstalling reth...\033[0m "
 	go install -mod readonly $(BUILD_FLAGS) ./...
 
+genabi:
+	@echo " > \033[32mGenabi...\033[0m "
+	abigen --abi ./bindings/NodeDeposit/nodedeposit_abi.json --pkg node_deposit --type NodeDeposit --out ./bindings/NodeDeposit/NodeDeposit.go
+	abigen --abi ./bindings/LightNode/lightnode_abi.json --pkg light_node --type LightNode --out ./bindings/LightNode/LightNode.go
+	abigen --abi ./bindings/SuperNode/supernode_abi.json --pkg super_node --type SuperNode --out ./bindings/SuperNode/SuperNode.go
+	abigen --abi ./bindings/StakingPool/stakingpool_abi.json --pkg staking_pool --type StakingPool --out ./bindings/StakingPool/StakingPool.go
+
 build-linux:
 	@GOOS=linux GOARCH=amd64 go build --mod readonly $(BUILD_FLAGS) -o ./build/reth main.go
 

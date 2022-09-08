@@ -125,13 +125,10 @@ func (task *Task) fetchNodeDepositEvents(start, end uint64) error {
 		}
 
 		validator.NodeAddress = iterDeposited.Event.Node.String()
-		if iterDeposited.Event.DepositType == 5 {
-			validator.NodeDepositAmount = fmt.Sprintf("%d", 0)
-			validator.NodeType = utils.NodeTypeTrust
-		} else {
-			validator.NodeDepositAmount = iterDeposited.Event.Amount.String()
-			validator.NodeType = utils.NodeTypeCommon
-		}
+		validator.NodeDepositAmount = iterDeposited.Event.Amount.String()
+		// only support common node in v2
+		validator.NodeType = utils.NodeTypeCommon
+
 		validator.Status = utils.ValidatorStatusDeposited
 		validator.Pubkey = pubkeyStr
 		validator.DepositTxHash = txHashStr

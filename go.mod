@@ -10,6 +10,7 @@ require (
 	github.com/prysmaticlabs/go-bitfield v0.0.0-20210809151128-385d8c5e3fb7
 	github.com/prysmaticlabs/prysm/v3 v3.0.0
 	github.com/satori/go.uuid v1.2.0
+	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.5.0
 	github.com/stafiprotocol/chainbridge v0.0.0-20201204032253-9b92852c8d66
@@ -70,7 +71,6 @@ require (
 	github.com/prysmaticlabs/gohashtree v0.0.2-alpha // indirect
 	github.com/rjeczalik/notify v0.9.1 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
-	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stafiprotocol/go-substrate-rpc-client v1.0.2 // indirect
 	github.com/supranational/blst v0.3.10 // indirect

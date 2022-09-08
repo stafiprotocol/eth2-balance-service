@@ -30,7 +30,7 @@ var (
 
 // NodeDepositMetaData contains all meta data concerning the NodeDeposit contract.
 var NodeDepositMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"DepositReceived\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"validatorPubkey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"validatorSignature\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"depositDataRoot\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"enumDepositType\",\"name\":\"depositType\",\"type\":\"uint8\"}],\"name\":\"Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"validatorPubkey\",\"type\":\"bytes\"}],\"name\":\"Staked\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"_validatorPubkeys\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_validatorSignatures\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"_depositDataRoots\",\"type\":\"bytes32[]\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCurrentNodeDepositAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDepositEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setCurrentNodeDepositAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setDepositEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"_stakingPools\",\"type\":\"address[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_validatorSignatures\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"_depositDataRoots\",\"type\":\"bytes32[]\"}],\"name\":\"stake\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"DepositReceived\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"validatorPubkey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"validatorSignature\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"validatorPubkey\",\"type\":\"bytes\"}],\"name\":\"Staked\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"_validatorPubkeys\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_validatorSignatures\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"_depositDataRoots\",\"type\":\"bytes32[]\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCurrentNodeDepositAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDepositEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setCurrentNodeDepositAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setDepositEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"_stakingPools\",\"type\":\"address[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_validatorSignatures\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"_depositDataRoots\",\"type\":\"bytes32[]\"}],\"name\":\"stake\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // NodeDepositABI is the input ABI used to generate the binding from.
@@ -575,15 +575,13 @@ type NodeDepositDeposited struct {
 	Pool               common.Address
 	ValidatorPubkey    []byte
 	ValidatorSignature []byte
-	DepositDataRoot    [32]byte
 	Amount             *big.Int
-	DepositType        uint8
 	Raw                types.Log // Blockchain specific contextual infos
 }
 
-// FilterDeposited is a free log retrieval operation binding the contract event 0x4fa4e2666633bd1a90e5908004ae1b730f11f5433c1d93f4d574aafa3d08c1f7.
+// FilterDeposited is a free log retrieval operation binding the contract event 0x2c4863664bc90d75b80d943cf7e8cc0974d20e97b949374d963637af4b80dce6.
 //
-// Solidity: event Deposited(address node, address pool, bytes validatorPubkey, bytes validatorSignature, bytes32 depositDataRoot, uint256 amount, uint8 depositType)
+// Solidity: event Deposited(address node, address pool, bytes validatorPubkey, bytes validatorSignature, uint256 amount)
 func (_NodeDeposit *NodeDepositFilterer) FilterDeposited(opts *bind.FilterOpts) (*NodeDepositDepositedIterator, error) {
 
 	logs, sub, err := _NodeDeposit.contract.FilterLogs(opts, "Deposited")
@@ -593,9 +591,9 @@ func (_NodeDeposit *NodeDepositFilterer) FilterDeposited(opts *bind.FilterOpts) 
 	return &NodeDepositDepositedIterator{contract: _NodeDeposit.contract, event: "Deposited", logs: logs, sub: sub}, nil
 }
 
-// WatchDeposited is a free log subscription operation binding the contract event 0x4fa4e2666633bd1a90e5908004ae1b730f11f5433c1d93f4d574aafa3d08c1f7.
+// WatchDeposited is a free log subscription operation binding the contract event 0x2c4863664bc90d75b80d943cf7e8cc0974d20e97b949374d963637af4b80dce6.
 //
-// Solidity: event Deposited(address node, address pool, bytes validatorPubkey, bytes validatorSignature, bytes32 depositDataRoot, uint256 amount, uint8 depositType)
+// Solidity: event Deposited(address node, address pool, bytes validatorPubkey, bytes validatorSignature, uint256 amount)
 func (_NodeDeposit *NodeDepositFilterer) WatchDeposited(opts *bind.WatchOpts, sink chan<- *NodeDepositDeposited) (event.Subscription, error) {
 
 	logs, sub, err := _NodeDeposit.contract.WatchLogs(opts, "Deposited")
@@ -630,9 +628,9 @@ func (_NodeDeposit *NodeDepositFilterer) WatchDeposited(opts *bind.WatchOpts, si
 	}), nil
 }
 
-// ParseDeposited is a log parse operation binding the contract event 0x4fa4e2666633bd1a90e5908004ae1b730f11f5433c1d93f4d574aafa3d08c1f7.
+// ParseDeposited is a log parse operation binding the contract event 0x2c4863664bc90d75b80d943cf7e8cc0974d20e97b949374d963637af4b80dce6.
 //
-// Solidity: event Deposited(address node, address pool, bytes validatorPubkey, bytes validatorSignature, bytes32 depositDataRoot, uint256 amount, uint8 depositType)
+// Solidity: event Deposited(address node, address pool, bytes validatorPubkey, bytes validatorSignature, uint256 amount)
 func (_NodeDeposit *NodeDepositFilterer) ParseDeposited(log types.Log) (*NodeDepositDeposited, error) {
 	event := new(NodeDepositDeposited)
 	if err := _NodeDeposit.contract.UnpackLog(event, "Deposited", log); err != nil {

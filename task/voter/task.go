@@ -8,6 +8,7 @@ import (
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
+	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared"
 )
 
@@ -59,7 +60,7 @@ func (task *Task) Start() error {
 		return err
 	}
 
-	// utils.SafeGoWithRestart(task.syncHandler)
+	utils.SafeGoWithRestart(task.voteHandler)
 	return nil
 }
 

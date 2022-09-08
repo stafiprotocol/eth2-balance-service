@@ -30,12 +30,6 @@
                 "internalType": "bytes",
                 "name": "validatorSignature",
                 "type": "bytes"
-            },
-            {
-                "indexed": false,
-                "internalType": "bytes32",
-                "name": "depositDataRoot",
-                "type": "bytes32"
             }
         ],
         "name": "Deposited",

@@ -64,21 +64,9 @@
             },
             {
                 "indexed": false,
-                "internalType": "bytes32",
-                "name": "depositDataRoot",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
                 "internalType": "uint256",
                 "name": "amount",
                 "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "enum DepositType",
-                "name": "depositType",
-                "type": "uint8"
             }
         ],
         "name": "Deposited",
