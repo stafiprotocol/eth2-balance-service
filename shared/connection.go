@@ -78,7 +78,7 @@ func (c *Connection) Connect() error {
 	}
 	c.opts = opts
 	c.nonce = 0
-	c.callOpts = &bind.CallOpts{From: c.kp.CommonAddress()}
+	c.callOpts = &bind.CallOpts{Pending: false, From: c.kp.CommonAddress(), BlockNumber: nil, Context: context.Background()}
 	return nil
 }
 

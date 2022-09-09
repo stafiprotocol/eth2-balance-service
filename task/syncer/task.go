@@ -1,6 +1,8 @@
 package task_syncer
 
 import (
+	"fmt"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stafiprotocol/reth/dao"
@@ -18,21 +20,33 @@ type Task struct {
 	eth1Endpoint string
 	eth1Client   *ethclient.Client
 
-	nodeDepositAddress     common.Address
-	lightNodeAddress       common.Address
-	superNodeAddress       common.Address
 	depositContractAddress common.Address
+	lightNodeAddress       common.Address
+	nodeDepositAddress     common.Address
+	superNodeAddress       common.Address
 }
 
-func NewTask(cfg *config.Config, dao *db.WrapDb) *Task {
+func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
+	if !common.IsHexAddress(cfg.Contracts.DepositContractAddress) ||
+		!common.IsHexAddress(cfg.Contracts.LightNodeAddress) ||
+		!common.IsHexAddress(cfg.Contracts.NodeDepositAddress) ||
+		!common.IsHexAddress(cfg.Contracts.SuperNodeAddress) {
+		return nil, fmt.Errorf("contracts address err")
+	}
+
 	s := &Task{
 		taskTicker:   6,
 		stop:         make(chan struct{}),
 		db:           dao,
 		startHeight:  cfg.StartHeight,
 		eth1Endpoint: cfg.Eth1Endpoint,
+
+		depositContractAddress: common.HexToAddress(cfg.Contracts.DepositContractAddress),
+		lightNodeAddress:       common.HexToAddress(cfg.Contracts.LightNodeAddress),
+		nodeDepositAddress:     common.HexToAddress(cfg.Contracts.NodeDepositAddress),
+		superNodeAddress:       common.HexToAddress(cfg.Contracts.SuperNodeAddress),
 	}
-	return s
+	return s, nil
 }
 
 func (task *Task) mabyUpdateStartHeight(configStartHeight uint64) error {

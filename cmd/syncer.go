@@ -43,7 +43,7 @@ func startSyncerCmd() *cobra.Command {
 			}
 
 			log.InitLogFile(cfg.LogFilePath + "/syncer")
-			logrus.Infof("stafihub syncer config info:\nlogFilePath: %s\nlogLevel: %s\nstartHeight: %d\neth1Endpoint: %s\neth2Endpoint: %s",
+			logrus.Infof("syncer config info:\nlogFilePath: %s\nlogLevel: %s\nstartHeight: %d\neth1Endpoint: %s\neth2Endpoint: %s",
 				cfg.LogFilePath, logLevelStr, cfg.StartHeight, cfg.Eth1Endpoint, cfg.Eth2Endpoint)
 			//init db
 			db, err := db.NewDB(&db.Config{
@@ -76,7 +76,10 @@ func startSyncerCmd() *cobra.Command {
 				return err
 			}
 
-			t := task_syncer.NewTask(cfg, db)
+			t, err := task_syncer.NewTask(cfg, db)
+			if err != nil {
+				return err
+			}
 			err = t.Start()
 			if err != nil {
 				logrus.Errorf("task start err: %s", err)

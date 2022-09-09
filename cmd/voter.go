@@ -45,7 +45,7 @@ func startVoterCmd() *cobra.Command {
 			}
 
 			log.InitLogFile(cfg.LogFilePath + "/voter")
-			logrus.Infof("stafihub voter config info:\nlogFilePath: %s\nlogLevel: %s\nstartHeight: %d\neth1Endpoint: %s\neth2Endpoint: %s",
+			logrus.Infof("voter config info:\nlogFilePath: %s\nlogLevel: %s\nstartHeight: %d\neth1Endpoint: %s\neth2Endpoint: %s",
 				cfg.LogFilePath, logLevelStr, cfg.StartHeight, cfg.Eth1Endpoint, cfg.Eth2Endpoint)
 			//init db
 			db, err := db.NewDB(&db.Config{

@@ -23,16 +23,17 @@ type Config struct {
 	DataApiUrl    string `json:"dataApiUrl"`    // url to receive data
 	KeystorePath  string `json:"keystorePath,omitempty"`
 	GasLimit      string
-	GasPrice      string
+	MaxGasPrice   string
 	Contracts     Contracts
 
 	Db Db
 }
 
 type Contracts struct {
-	SettingsContract           string `json:"settingsContract"`           // address of settings
-	NetworkBalanceContract     string `json:"networkBalanceContract"`     // address of rate submit
-	StakingPoolManagerContract string `json:"stakingPoolManagerContract"` // address of StakingPoolManagerContract
+	NodeDepositAddress     string
+	LightNodeAddress       string
+	SuperNodeAddress       string
+	DepositContractAddress string
 }
 
 type Db struct {

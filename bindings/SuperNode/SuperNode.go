@@ -30,7 +30,7 @@ var (
 
 // SuperNodeMetaData contains all meta data concerning the SuperNode contract.
 var SuperNodeMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"pubkey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"validatorSignature\",\"type\":\"bytes\"}],\"name\":\"Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"EtherDeposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"pubkey\",\"type\":\"bytes\"}],\"name\":\"Staked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"pubkey\",\"type\":\"bytes\"}],\"name\":\"VoteWithdrawalCredentials\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"PUBKEY_STATUS_INITIAL\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PUBKEY_STATUS_MATCH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PUBKEY_STATUS_STAKING\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PUBKEY_STATUS_UNINITIAL\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PUBKEY_STATUS_UNMATCH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PubkeySetStorage\",\"outputs\":[{\"internalType\":\"contractIPubkeySetStorage\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"_validatorPubkeys\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_validatorSignatures\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"_depositDataRoots\",\"type\":\"bytes32[]\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositEth\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getSuperNodeDepositEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"}],\"name\":\"getSuperNodePubkeyAt\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"}],\"name\":\"getSuperNodePubkeyCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_validatorPubkey\",\"type\":\"bytes\"}],\"name\":\"getSuperNodePubkeyStatus\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setSuperNodeDepositEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_validatorPubkey\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"_status\",\"type\":\"uint256\"}],\"name\":\"setSuperNodePubkeyStatus\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"_validatorPubkeys\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_validatorSignatures\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"_depositDataRoots\",\"type\":\"bytes32[]\"}],\"name\":\"stake\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_pubkey\",\"type\":\"bytes\"},{\"internalType\":\"bool\",\"name\":\"_match\",\"type\":\"bool\"}],\"name\":\"voteWithdrawCredentials\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"pubkey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"validatorSignature\",\"type\":\"bytes\"}],\"name\":\"Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"EtherDeposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"pubkey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"status\",\"type\":\"uint256\"}],\"name\":\"SetPubkeyStatus\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"node\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"pubkey\",\"type\":\"bytes\"}],\"name\":\"Staked\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"PUBKEY_STATUS_INITIAL\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PUBKEY_STATUS_MATCH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PUBKEY_STATUS_STAKING\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PUBKEY_STATUS_UNINITIAL\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PUBKEY_STATUS_UNMATCH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PubkeySetStorage\",\"outputs\":[{\"internalType\":\"contractIPubkeySetStorage\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"_validatorPubkeys\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_validatorSignatures\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"_depositDataRoots\",\"type\":\"bytes32[]\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"depositEth\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_validatorPubkey\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"getPubkeyVoted\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getSuperNodeDepositEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"}],\"name\":\"getSuperNodePubkeyAt\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_nodeAddress\",\"type\":\"address\"}],\"name\":\"getSuperNodePubkeyCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_validatorPubkey\",\"type\":\"bytes\"}],\"name\":\"getSuperNodePubkeyStatus\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setSuperNodeDepositEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_validatorPubkey\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"_status\",\"type\":\"uint256\"}],\"name\":\"setSuperNodePubkeyStatus\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"_validatorPubkeys\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_validatorSignatures\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes32[]\",\"name\":\"_depositDataRoots\",\"type\":\"bytes32[]\"}],\"name\":\"stake\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_pubkey\",\"type\":\"bytes\"},{\"internalType\":\"bool\",\"name\":\"_match\",\"type\":\"bool\"}],\"name\":\"voteWithdrawCredentials\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // SuperNodeABI is the input ABI used to generate the binding from.
@@ -363,6 +363,37 @@ func (_SuperNode *SuperNodeSession) PubkeySetStorage() (common.Address, error) {
 // Solidity: function PubkeySetStorage() view returns(address)
 func (_SuperNode *SuperNodeCallerSession) PubkeySetStorage() (common.Address, error) {
 	return _SuperNode.Contract.PubkeySetStorage(&_SuperNode.CallOpts)
+}
+
+// GetPubkeyVoted is a free data retrieval call binding the contract method 0x18582e28.
+//
+// Solidity: function getPubkeyVoted(bytes _validatorPubkey, address user) view returns(bool)
+func (_SuperNode *SuperNodeCaller) GetPubkeyVoted(opts *bind.CallOpts, _validatorPubkey []byte, user common.Address) (bool, error) {
+	var out []interface{}
+	err := _SuperNode.contract.Call(opts, &out, "getPubkeyVoted", _validatorPubkey, user)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// GetPubkeyVoted is a free data retrieval call binding the contract method 0x18582e28.
+//
+// Solidity: function getPubkeyVoted(bytes _validatorPubkey, address user) view returns(bool)
+func (_SuperNode *SuperNodeSession) GetPubkeyVoted(_validatorPubkey []byte, user common.Address) (bool, error) {
+	return _SuperNode.Contract.GetPubkeyVoted(&_SuperNode.CallOpts, _validatorPubkey, user)
+}
+
+// GetPubkeyVoted is a free data retrieval call binding the contract method 0x18582e28.
+//
+// Solidity: function getPubkeyVoted(bytes _validatorPubkey, address user) view returns(bool)
+func (_SuperNode *SuperNodeCallerSession) GetPubkeyVoted(_validatorPubkey []byte, user common.Address) (bool, error) {
+	return _SuperNode.Contract.GetPubkeyVoted(&_SuperNode.CallOpts, _validatorPubkey, user)
 }
 
 // GetSuperNodeDepositEnabled is a free data retrieval call binding the contract method 0x722ad663.
@@ -928,6 +959,141 @@ func (_SuperNode *SuperNodeFilterer) ParseEtherDeposited(log types.Log) (*SuperN
 	return event, nil
 }
 
+// SuperNodeSetPubkeyStatusIterator is returned from FilterSetPubkeyStatus and is used to iterate over the raw logs and unpacked data for SetPubkeyStatus events raised by the SuperNode contract.
+type SuperNodeSetPubkeyStatusIterator struct {
+	Event *SuperNodeSetPubkeyStatus // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *SuperNodeSetPubkeyStatusIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(SuperNodeSetPubkeyStatus)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(SuperNodeSetPubkeyStatus)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *SuperNodeSetPubkeyStatusIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *SuperNodeSetPubkeyStatusIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// SuperNodeSetPubkeyStatus represents a SetPubkeyStatus event raised by the SuperNode contract.
+type SuperNodeSetPubkeyStatus struct {
+	Pubkey []byte
+	Status *big.Int
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterSetPubkeyStatus is a free log retrieval operation binding the contract event 0xc581330a67ddadcf62d06e14db41c85bb45910369cedad649390e6dd2a9373c8.
+//
+// Solidity: event SetPubkeyStatus(bytes pubkey, uint256 status)
+func (_SuperNode *SuperNodeFilterer) FilterSetPubkeyStatus(opts *bind.FilterOpts) (*SuperNodeSetPubkeyStatusIterator, error) {
+
+	logs, sub, err := _SuperNode.contract.FilterLogs(opts, "SetPubkeyStatus")
+	if err != nil {
+		return nil, err
+	}
+	return &SuperNodeSetPubkeyStatusIterator{contract: _SuperNode.contract, event: "SetPubkeyStatus", logs: logs, sub: sub}, nil
+}
+
+// WatchSetPubkeyStatus is a free log subscription operation binding the contract event 0xc581330a67ddadcf62d06e14db41c85bb45910369cedad649390e6dd2a9373c8.
+//
+// Solidity: event SetPubkeyStatus(bytes pubkey, uint256 status)
+func (_SuperNode *SuperNodeFilterer) WatchSetPubkeyStatus(opts *bind.WatchOpts, sink chan<- *SuperNodeSetPubkeyStatus) (event.Subscription, error) {
+
+	logs, sub, err := _SuperNode.contract.WatchLogs(opts, "SetPubkeyStatus")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(SuperNodeSetPubkeyStatus)
+				if err := _SuperNode.contract.UnpackLog(event, "SetPubkeyStatus", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseSetPubkeyStatus is a log parse operation binding the contract event 0xc581330a67ddadcf62d06e14db41c85bb45910369cedad649390e6dd2a9373c8.
+//
+// Solidity: event SetPubkeyStatus(bytes pubkey, uint256 status)
+func (_SuperNode *SuperNodeFilterer) ParseSetPubkeyStatus(log types.Log) (*SuperNodeSetPubkeyStatus, error) {
+	event := new(SuperNodeSetPubkeyStatus)
+	if err := _SuperNode.contract.UnpackLog(event, "SetPubkeyStatus", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 // SuperNodeStakedIterator is returned from FilterStaked and is used to iterate over the raw logs and unpacked data for Staked events raised by the SuperNode contract.
 type SuperNodeStakedIterator struct {
 	Event *SuperNodeStaked // Event containing the contract specifics and raw log
@@ -1057,141 +1223,6 @@ func (_SuperNode *SuperNodeFilterer) WatchStaked(opts *bind.WatchOpts, sink chan
 func (_SuperNode *SuperNodeFilterer) ParseStaked(log types.Log) (*SuperNodeStaked, error) {
 	event := new(SuperNodeStaked)
 	if err := _SuperNode.contract.UnpackLog(event, "Staked", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// SuperNodeVoteWithdrawalCredentialsIterator is returned from FilterVoteWithdrawalCredentials and is used to iterate over the raw logs and unpacked data for VoteWithdrawalCredentials events raised by the SuperNode contract.
-type SuperNodeVoteWithdrawalCredentialsIterator struct {
-	Event *SuperNodeVoteWithdrawalCredentials // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *SuperNodeVoteWithdrawalCredentialsIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(SuperNodeVoteWithdrawalCredentials)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(SuperNodeVoteWithdrawalCredentials)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *SuperNodeVoteWithdrawalCredentialsIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *SuperNodeVoteWithdrawalCredentialsIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// SuperNodeVoteWithdrawalCredentials represents a VoteWithdrawalCredentials event raised by the SuperNode contract.
-type SuperNodeVoteWithdrawalCredentials struct {
-	Node   common.Address
-	Pubkey []byte
-	Raw    types.Log // Blockchain specific contextual infos
-}
-
-// FilterVoteWithdrawalCredentials is a free log retrieval operation binding the contract event 0x699429707031ed302f8f0578308a86386b2d0cfaed2c1239299c480e63618420.
-//
-// Solidity: event VoteWithdrawalCredentials(address node, bytes pubkey)
-func (_SuperNode *SuperNodeFilterer) FilterVoteWithdrawalCredentials(opts *bind.FilterOpts) (*SuperNodeVoteWithdrawalCredentialsIterator, error) {
-
-	logs, sub, err := _SuperNode.contract.FilterLogs(opts, "VoteWithdrawalCredentials")
-	if err != nil {
-		return nil, err
-	}
-	return &SuperNodeVoteWithdrawalCredentialsIterator{contract: _SuperNode.contract, event: "VoteWithdrawalCredentials", logs: logs, sub: sub}, nil
-}
-
-// WatchVoteWithdrawalCredentials is a free log subscription operation binding the contract event 0x699429707031ed302f8f0578308a86386b2d0cfaed2c1239299c480e63618420.
-//
-// Solidity: event VoteWithdrawalCredentials(address node, bytes pubkey)
-func (_SuperNode *SuperNodeFilterer) WatchVoteWithdrawalCredentials(opts *bind.WatchOpts, sink chan<- *SuperNodeVoteWithdrawalCredentials) (event.Subscription, error) {
-
-	logs, sub, err := _SuperNode.contract.WatchLogs(opts, "VoteWithdrawalCredentials")
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(SuperNodeVoteWithdrawalCredentials)
-				if err := _SuperNode.contract.UnpackLog(event, "VoteWithdrawalCredentials", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseVoteWithdrawalCredentials is a log parse operation binding the contract event 0x699429707031ed302f8f0578308a86386b2d0cfaed2c1239299c480e63618420.
-//
-// Solidity: event VoteWithdrawalCredentials(address node, bytes pubkey)
-func (_SuperNode *SuperNodeFilterer) ParseVoteWithdrawalCredentials(log types.Log) (*SuperNodeVoteWithdrawalCredentials, error) {
-	event := new(SuperNodeVoteWithdrawalCredentials)
-	if err := _SuperNode.contract.UnpackLog(event, "VoteWithdrawalCredentials", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

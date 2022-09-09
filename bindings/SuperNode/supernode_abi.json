@@ -65,18 +65,18 @@
         "inputs": [
             {
                 "indexed": false,
-                "internalType": "address",
-                "name": "node",
-                "type": "address"
-            },
-            {
-                "indexed": false,
                 "internalType": "bytes",
                 "name": "pubkey",
                 "type": "bytes"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "status",
+                "type": "uint256"
             }
         ],
-        "name": "Staked",
+        "name": "SetPubkeyStatus",
         "type": "event"
     },
     {
@@ -95,7 +95,7 @@
                 "type": "bytes"
             }
         ],
-        "name": "VoteWithdrawalCredentials",
+        "name": "Staked",
         "type": "event"
     },
     {
@@ -204,6 +204,30 @@
         "name": "depositEth",
         "outputs": [],
         "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes",
+                "name": "_validatorPubkey",
+                "type": "bytes"
+            },
+            {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "getPubkeyVoted",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {

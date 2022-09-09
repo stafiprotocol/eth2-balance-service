@@ -3,7 +3,10 @@
 
 package dao
 
-import "github.com/stafiprotocol/reth/pkg/db"
+import (
+	"github.com/stafiprotocol/reth/pkg/db"
+	"github.com/stafiprotocol/reth/pkg/utils"
+)
 
 type Validator struct {
 	db.BaseModel
@@ -35,6 +38,6 @@ func GetValidator(db *db.WrapDb, pubkey string) (c *Validator, err error) {
 }
 
 func GetValidatorListNeedVote(db *db.WrapDb) (c []*Validator, err error) {
-	err = db.Find(&c, "status = ?", 1).Error
+	err = db.Find(&c, "status = ?", utils.ValidatorStatusDeposited).Error
 	return
 }

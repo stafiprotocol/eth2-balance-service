@@ -1,6 +1,7 @@
 package task_voter
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -21,23 +22,28 @@ type Task struct {
 	connection   *shared.Connection
 	keyPair      *secp256k1.Keypair
 	gasLimit     *big.Int
-	gasPrice     *big.Int
+	maxGasPrice  *big.Int
 
 	withdrawCredientials string
 
-	nodeDepositAddress     common.Address
-	lightNodeAddress       common.Address
-	superNodeAddress       common.Address
 	depositContractAddress common.Address
+	lightNodeAddress       common.Address
+	nodeDepositAddress     common.Address
+	superNodeAddress       common.Address
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*Task, error) {
-
+	if !common.IsHexAddress(cfg.Contracts.DepositContractAddress) ||
+		!common.IsHexAddress(cfg.Contracts.LightNodeAddress) ||
+		!common.IsHexAddress(cfg.Contracts.NodeDepositAddress) ||
+		!common.IsHexAddress(cfg.Contracts.SuperNodeAddress) {
+		return nil, fmt.Errorf("contracts address err")
+	}
 	gasLimitDeci, err := decimal.NewFromString(cfg.GasLimit)
 	if err != nil {
 		return nil, err
 	}
-	gasPriceDeci, err := decimal.NewFromString(cfg.GasPrice)
+	maxGasPriceDeci, err := decimal.NewFromString(cfg.MaxGasPrice)
 	if err != nil {
 		return nil, err
 	}
@@ -50,13 +56,18 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		eth1Endpoint: cfg.Eth1Endpoint,
 		eth2Endpoint: cfg.Eth2Endpoint,
 		gasLimit:     gasLimitDeci.BigInt(),
-		gasPrice:     gasPriceDeci.BigInt(),
+		maxGasPrice:  maxGasPriceDeci.BigInt(),
+
+		depositContractAddress: common.HexToAddress(cfg.Contracts.DepositContractAddress),
+		lightNodeAddress:       common.HexToAddress(cfg.Contracts.LightNodeAddress),
+		nodeDepositAddress:     common.HexToAddress(cfg.Contracts.NodeDepositAddress),
+		superNodeAddress:       common.HexToAddress(cfg.Contracts.SuperNodeAddress),
 	}
 	return s, nil
 }
 
 func (task *Task) Start() error {
-	task.connection = shared.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.keyPair, task.gasLimit, task.gasPrice)
+	task.connection = shared.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.keyPair, task.gasLimit, task.maxGasPrice)
 	err := task.connection.Connect()
 	if err != nil {
 		return err

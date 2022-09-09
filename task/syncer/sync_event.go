@@ -76,11 +76,12 @@ func (task *Task) syncEvent() error {
 			return err
 		}
 
-		err = task.fetchNodeDepositEvents(subStart, subEnd)
+		err = task.fetchLightNodeEvents(subStart, subEnd)
 		if err != nil {
 			return err
 		}
-		err = task.fetchLightNodeEvents(subStart, subEnd)
+
+		err = task.fetchNodeDepositEvents(subStart, subEnd)
 		if err != nil {
 			return err
 		}
@@ -280,6 +281,31 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 		}
 	}
 
+	iterSetPubkeyStatus, err := lightNodeContract.FilterSetPubkeyStatus(&bind.FilterOpts{
+		Start:   start,
+		End:     &end,
+		Context: context.Background(),
+	})
+	if err != nil {
+		return err
+	}
+
+	for iterSetPubkeyStatus.Next() {
+		pubkeyStr := hexutil.Encode(iterSetPubkeyStatus.Event.Pubkey)
+
+		validator, err := dao.GetValidator(task.db, pubkeyStr)
+		if err != nil {
+			return err
+		}
+
+		validator.Status = uint8(iterSetPubkeyStatus.Event.Status.Int64())
+
+		err = dao.UpOrInValidator(task.db, validator)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -341,6 +367,31 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 
 		validator.Status = utils.ValidatorStatusStaked
 		validator.StakeTxHash = txHashStr
+
+		err = dao.UpOrInValidator(task.db, validator)
+		if err != nil {
+			return err
+		}
+	}
+
+	iterSetPubkeyStatus, err := superNodeContract.FilterSetPubkeyStatus(&bind.FilterOpts{
+		Start:   start,
+		End:     &end,
+		Context: context.Background(),
+	})
+	if err != nil {
+		return err
+	}
+
+	for iterSetPubkeyStatus.Next() {
+		pubkeyStr := hexutil.Encode(iterSetPubkeyStatus.Event.Pubkey)
+
+		validator, err := dao.GetValidator(task.db, pubkeyStr)
+		if err != nil {
+			return err
+		}
+
+		validator.Status = uint8(iterSetPubkeyStatus.Event.Status.Int64())
 
 		err = dao.UpOrInValidator(task.db, validator)
 		if err != nil {
