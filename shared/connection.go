@@ -117,6 +117,10 @@ func (c *Connection) Eth1Client() *ethclient.Client {
 	return c.eth1Client
 }
 
+func (c *Connection) Eth2Client() beacon.Client {
+	return c.eth2Client
+}
+
 func (c *Connection) Opts() *bind.TransactOpts {
 	return c.opts
 }

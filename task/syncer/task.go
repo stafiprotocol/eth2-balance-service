@@ -18,9 +18,10 @@ type Task struct {
 	eth1Endpoint string
 	eth1Client   *ethclient.Client
 
-	nodeDepositAddress common.Address
-	lightNodeAddress   common.Address
-	superNodeAddress   common.Address
+	nodeDepositAddress     common.Address
+	lightNodeAddress       common.Address
+	superNodeAddress       common.Address
+	depositContractAddress common.Address
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb) *Task {

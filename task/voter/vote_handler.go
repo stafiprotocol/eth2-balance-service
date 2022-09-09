@@ -3,6 +3,7 @@ package task_voter
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -13,6 +14,7 @@ import (
 	"github.com/stafiprotocol/reth/bindings/SuperNode"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/reth/types"
 )
 
 func (task *Task) voteHandler() {
@@ -58,20 +60,48 @@ func (task *Task) vote() error {
 		return err
 	}
 	for _, validator := range validatorListNeedVote {
+		list, err := dao.GetDepositListByPubkey(task.db, validator.Pubkey)
+		if err != nil {
+			return err
+		}
+		if len(list) == 0 {
+			return fmt.Errorf("GetDepositListByPubkey empty, pubkey: %s", validator.Pubkey)
+		}
+
+		match := true
+		for _, l := range list {
+			if l.WithdrawalCredentials != task.withdrawCredientials {
+				match = false
+			}
+		}
+
+		validatorPubkey, err := types.HexToValidatorPubkey(validator.Pubkey[1:])
+		if err != nil {
+			return err
+		}
+		validatorStatus, err := task.connection.Eth2Client().GetValidatorStatus(validatorPubkey, nil)
+		if err != nil {
+			return err
+		}
+
+		if validatorStatus.Exists && validatorStatus.WithdrawalCredentials.String() != task.withdrawCredientials {
+			match = false
+		}
+
 		switch validator.NodeType {
 
 		case utils.NodeTypeCommon:
-			err := task.voteForCommonNode(validator)
+			err := task.voteForCommonNode(validator, match)
 			if err != nil {
 				return err
 			}
 		case utils.NodeTypeLight:
-			err := task.voteForLightNode(validator, lightNodeContract, true)
+			err := task.voteForLightNode(validator, lightNodeContract, match)
 			if err != nil {
 				return err
 			}
 		case utils.NodeTypeSuper:
-			err := task.voteForSuperNode(validator, superNodeContract, true)
+			err := task.voteForSuperNode(validator, superNodeContract, match)
 			if err != nil {
 				return err
 			}
@@ -82,7 +112,7 @@ func (task *Task) vote() error {
 	return nil
 }
 
-func (task *Task) voteForCommonNode(validator *dao.Validator) error {
+func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error {
 	logrus.WithFields(logrus.Fields{
 		"nodeAddress": validator.NodeAddress,
 		"poolAddress": validator.PoolAddress,

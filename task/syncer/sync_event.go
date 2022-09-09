@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/sirupsen/logrus"
+	"github.com/stafiprotocol/reth/bindings/DepositContract"
 	"github.com/stafiprotocol/reth/bindings/LightNode"
 	"github.com/stafiprotocol/reth/bindings/NodeDeposit"
 	"github.com/stafiprotocol/reth/bindings/SuperNode"
@@ -68,6 +69,11 @@ func (task *Task) syncEvent() error {
 		subEnd := i + uint64(limit) - 1
 		if end < i+uint64(limit) {
 			subEnd = end
+		}
+
+		err = task.fetchDepositContractEvents(subStart, subEnd)
+		if err != nil {
+			return err
 		}
 
 		err = task.fetchNodeDepositEvents(subStart, subEnd)
@@ -161,6 +167,46 @@ func (task *Task) fetchNodeDepositEvents(start, end uint64) error {
 		validator.StakeTxHash = txHashStr
 
 		err = dao.UpOrInValidator(task.db, validator)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (task *Task) fetchDepositContractEvents(start, end uint64) error {
+	depositContract, err := deposit_contract.NewDepositContract(task.depositContractAddress, task.eth1Client)
+	if err != nil {
+		return err
+	}
+	iterDeposited, err := depositContract.FilterDepositEvent(&bind.FilterOpts{
+		Start:   start,
+		End:     &end,
+		Context: context.Background(),
+	})
+	if err != nil {
+		return err
+	}
+
+	for iterDeposited.Next() {
+		txHashStr := iterDeposited.Event.Raw.TxHash.String()
+		logIndex := uint32(iterDeposited.Event.Raw.Index)
+		deposit, err := dao.GetDeposit(task.db, txHashStr, logIndex)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return err
+		}
+		if err == nil {
+			continue
+		}
+		pubkeyStr := hexutil.Encode(iterDeposited.Event.Pubkey)
+		withdrawCredentialsStr := hexutil.Encode(iterDeposited.Event.WithdrawalCredentials)
+		deposit.LogIndex = logIndex
+		deposit.Pubkey = pubkeyStr
+		deposit.TxHash = txHashStr
+		deposit.WithdrawalCredentials = withdrawCredentialsStr
+
+		err = dao.UpOrInDeposit(task.db, deposit)
 		if err != nil {
 			return err
 		}

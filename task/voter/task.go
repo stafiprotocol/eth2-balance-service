@@ -23,6 +23,8 @@ type Task struct {
 	gasLimit     *big.Int
 	gasPrice     *big.Int
 
+	withdrawCredientials string
+
 	nodeDepositAddress     common.Address
 	lightNodeAddress       common.Address
 	superNodeAddress       common.Address
