@@ -58,6 +58,16 @@ func (task *Task) vote() error {
 	if err != nil {
 		return err
 	}
+
+	commonValidators := make([]*dao.Validator, 0)
+	commonValidatorMatchs := make([]bool, 0)
+
+	lightValidatorPubkeys := make([][]byte, 0)
+	lightValidatorMatchs := make([]bool, 0)
+
+	superValidatorPubkeys := make([][]byte, 0)
+	superValidatorMatchs := make([]bool, 0)
+
 	for _, validator := range validatorListNeedVote {
 		list, err := dao.GetDepositListByPubkey(task.db, validator.Pubkey)
 		if err != nil {
@@ -90,24 +100,79 @@ func (task *Task) vote() error {
 		switch validator.NodeType {
 
 		case utils.NodeTypeCommon:
-			err := task.voteForCommonNode(validator, match)
-			if err != nil {
-				return err
-			}
+			commonValidators = append(commonValidators, validator)
+			commonValidatorMatchs = append(commonValidatorMatchs, match)
 		case utils.NodeTypeLight:
-			err := task.voteForLightNode(validator, lightNodeContract, match)
+			pubkeyBts, err := hexutil.Decode(validator.Pubkey)
 			if err != nil {
 				return err
 			}
-		case utils.NodeTypeSuper:
-			err := task.voteForSuperNode(validator, superNodeContract, match)
-			if err != nil {
-				return err
-			}
-		}
 
+			alreadyVote, err := lightNodeContract.GetPubkeyVoted(task.connection.CallOpts(), pubkeyBts, task.connection.CallOpts().From)
+			if err != nil {
+				return err
+			}
+			if alreadyVote {
+				continue
+			}
+			lightValidatorPubkeys = append(lightValidatorPubkeys, validatorPubkey[:])
+			lightValidatorMatchs = append(lightValidatorMatchs, match)
+		case utils.NodeTypeSuper:
+			pubkeyBts, err := hexutil.Decode(validator.Pubkey)
+			if err != nil {
+				return err
+			}
+
+			alreadyVote, err := superNodeContract.GetPubkeyVoted(task.connection.CallOpts(), pubkeyBts, task.connection.CallOpts().From)
+			if err != nil {
+				return err
+			}
+			if alreadyVote {
+				continue
+			}
+			superValidatorPubkeys = append(superValidatorPubkeys, validatorPubkey[:])
+			superValidatorMatchs = append(superValidatorMatchs, match)
+		}
 	}
 
+	dealLimit := 30
+	if len(commonValidators) > dealLimit {
+		commonValidators = commonValidators[:dealLimit]
+		commonValidatorMatchs = commonValidatorMatchs[:dealLimit]
+	}
+
+	if len(lightValidatorPubkeys) > dealLimit {
+		lightValidatorPubkeys = lightValidatorPubkeys[:dealLimit]
+		lightValidatorMatchs = lightValidatorMatchs[:dealLimit]
+	}
+
+	if len(superValidatorPubkeys) > dealLimit {
+		superValidatorPubkeys = superValidatorPubkeys[:dealLimit]
+		superValidatorMatchs = superValidatorMatchs[:dealLimit]
+	}
+
+	err = task.voteForCommonNodes(commonValidators, commonValidatorMatchs)
+	if err != nil {
+		return err
+	}
+	err = task.voteForLightNode(lightNodeContract, lightValidatorPubkeys, lightValidatorMatchs)
+	if err != nil {
+		return err
+	}
+	err = task.voteForSuperNode(superNodeContract, superValidatorPubkeys, superValidatorMatchs)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (task *Task) voteForCommonNodes(validators []*dao.Validator, matchs []bool) error {
+	for i, v := range validators {
+		err := task.voteForCommonNode(v, matchs[i])
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -196,29 +261,16 @@ func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error 
 	return dao.UpOrInValidator(task.db, validator)
 }
 
-func (task *Task) voteForLightNode(validator *dao.Validator, lightNodeContract *light_node.LightNode, match bool) error {
+func (task *Task) voteForLightNode(lightNodeContract *light_node.LightNode, validatorPubkeys [][]byte, matchs []bool) error {
 	logrus.WithFields(logrus.Fields{
-		"nodeAddress": validator.NodeAddress,
-		"pubkey":      validator.Pubkey,
+		"nodeAddress": validatorPubkeys,
+		"matchs":      matchs,
 	}).Debug("voteForLightNode")
-
-	pubkeyBts, err := hexutil.Decode(validator.Pubkey)
-	if err != nil {
-		return err
-	}
-
-	alreadyVote, err := lightNodeContract.GetPubkeyVoted(task.connection.CallOpts(), pubkeyBts, task.connection.CallOpts().From)
-	if err != nil {
-		return err
-	}
-	if alreadyVote {
-		return nil
-	}
 
 	task.connection.LockAndUpdateOpts()
 	defer task.connection.UnlockOpts()
 
-	tx, err := lightNodeContract.VoteWithdrawCredentials(task.connection.Opts(), pubkeyBts, match)
+	tx, err := lightNodeContract.VoteWithdrawCredentials(task.connection.Opts(), validatorPubkeys, matchs)
 	if err != nil {
 		return err
 	}
@@ -254,29 +306,16 @@ func (task *Task) voteForLightNode(validator *dao.Validator, lightNodeContract *
 	return nil
 }
 
-func (task *Task) voteForSuperNode(validator *dao.Validator, superNodeContract *super_node.SuperNode, match bool) error {
+func (task *Task) voteForSuperNode(superNodeContract *super_node.SuperNode, validatorPubkeys [][]byte, matchs []bool) error {
 	logrus.WithFields(logrus.Fields{
-		"nodeAddress": validator.NodeAddress,
-		"pubkey":      validator.Pubkey,
+		"nodeAddress": validatorPubkeys,
+		"pubkey":      matchs,
 	}).Debug("voteForSuperNode")
-
-	pubkeyBts, err := hexutil.Decode(validator.Pubkey)
-	if err != nil {
-		return err
-	}
-
-	alreadyVote, err := superNodeContract.GetPubkeyVoted(task.connection.CallOpts(), pubkeyBts, task.connection.CallOpts().From)
-	if err != nil {
-		return err
-	}
-	if alreadyVote {
-		return nil
-	}
 
 	task.connection.LockAndUpdateOpts()
 	defer task.connection.UnlockOpts()
 
-	tx, err := superNodeContract.VoteWithdrawCredentials(task.connection.Opts(), pubkeyBts, match)
+	tx, err := superNodeContract.VoteWithdrawCredentials(task.connection.Opts(), validatorPubkeys, matchs)
 	if err != nil {
 		return err
 	}

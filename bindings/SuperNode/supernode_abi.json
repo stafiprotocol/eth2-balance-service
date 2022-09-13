@@ -375,14 +375,14 @@
     {
         "inputs": [
             {
-                "internalType": "bytes",
-                "name": "_pubkey",
-                "type": "bytes"
+                "internalType": "bytes[]",
+                "name": "_pubkeys",
+                "type": "bytes[]"
             },
             {
-                "internalType": "bool",
-                "name": "_match",
-                "type": "bool"
+                "internalType": "bool[]",
+                "name": "_matchs",
+                "type": "bool[]"
             }
         ],
         "name": "voteWithdrawCredentials",
