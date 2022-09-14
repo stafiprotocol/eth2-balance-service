@@ -16,36 +16,7 @@ import (
 	"github.com/stafiprotocol/reth/types"
 )
 
-func (task *Task) voteHandler() {
-	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
-	defer ticker.Stop()
-	retry := 0
-	for {
-		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return
-		}
-
-		select {
-		case <-task.stop:
-			logrus.Info("task has stopped")
-			return
-		case <-ticker.C:
-			logrus.Debug("vote start -----------")
-			err := task.vote()
-			if err != nil {
-				logrus.Warnf("vote err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			}
-			logrus.Debug("vote end -----------")
-			retry = 0
-		}
-	}
-}
-
-func (task *Task) vote() error {
+func (task *Task) voteWithdrawal() error {
 	lightNodeContract, err := light_node.NewLightNode(task.lightNodeAddress, task.connection.Eth1Client())
 	if err != nil {
 		return err

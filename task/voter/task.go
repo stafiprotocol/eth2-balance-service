@@ -3,9 +3,11 @@ package task_voter
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
@@ -79,4 +81,43 @@ func (task *Task) Start() error {
 
 func (task *Task) Stop() {
 	close(task.stop)
+}
+
+func (task *Task) voteHandler() {
+	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
+	defer ticker.Stop()
+	retry := 0
+	for {
+		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
+			return
+		}
+
+		select {
+		case <-task.stop:
+			logrus.Info("task has stopped")
+			return
+		case <-ticker.C:
+			logrus.Debug("vote start -----------")
+
+			err := task.voteWithdrawal()
+			if err != nil {
+				logrus.Warnf("vote withdrawal err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+
+			err = task.voteRate()
+			if err != nil {
+				logrus.Warnf("vote rate err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+
+			logrus.Debug("vote end -----------")
+			retry = 0
+		}
+	}
 }

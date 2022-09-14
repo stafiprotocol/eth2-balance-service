@@ -11,20 +11,17 @@ import (
 )
 
 type Config struct {
-	ListenAddr    string
-	Eth1Endpoint  string `json:"eth1Endpoint"` // url for rpc endpoint
-	Eth2Endpoint  string `json:"eth2Endpoint"` // url for eth2 rpc endpoint
-	StartHeight   uint64
-	LogFilePath   string
-	Http          bool   `json:"http"`          // Config for type of connection
-	SubmitFlag    bool   `json:"submitFlag"`    //submit rate only if it's true
-	From          string `json:"from"`          // address of key to use
-	BlockInterval string `json:"blockInterval"` // block interval to recalculate rate
-	DataApiUrl    string `json:"dataApiUrl"`    // url to receive data
-	KeystorePath  string `json:"keystorePath,omitempty"`
-	GasLimit      string
-	MaxGasPrice   string
-	Contracts     Contracts
+	ListenAddr   string
+	Eth1Endpoint string // url for rpc endpoint
+	Eth2Endpoint string // url for eth2 rpc endpoint
+	StartHeight  uint64
+	LogFilePath  string
+	From         string // address of key to use
+	RateInterval int64  // block interval to recalculate rate
+	KeystorePath string
+	GasLimit     string
+	MaxGasPrice  string
+	Contracts    Contracts
 
 	Db Db
 }

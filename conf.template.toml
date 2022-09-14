@@ -1,0 +1,23 @@
+eth1Endpoint = "https://goerli.infura.io/v3/4cb873af07a84e42a952189eff3a6954"
+eth2Endpoint = "https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-prater.infura.io"
+from = "0x7e7a38868A176894Bd44f668179209710ECd8052"
+gasLimit = "3000000000000000"
+keystorePath = ""
+listenAddr = ":80"
+logFilePath = ""
+maxGasPrice = "30000000"
+rateInterval = 7200
+startHeight = 7583640
+
+[contracts]
+depositContractAddress = "0x0039EE378F3aA8A38CaF785e3F182555664d3a0b"
+lightNodeAddress = "0x10797A9B9Aa030Aa8D30f477D201C47cfaC98977"
+nodeDepositAddress = "0xf381512BE548B1BdA00c439c93c784bBd9f50192"
+superNodeAddress = "0xc4d4ec8fBe43C1b762b5c6Ce966205642AA1579F"
+
+[db]
+host = "127.0.0.1" # mysql host ip
+name = "eth2" # the database this server used
+port = "3306" 
+pwd = "123456" # mysql password
+user = "root" # mysql username
