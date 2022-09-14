@@ -62,6 +62,13 @@ func generateKeyFileByPrivateKey(keypath string) error {
 		return fmt.Errorf("invalid filepath: %s", err)
 	}
 
+	if _, err := os.Stat(fp); err != nil {
+		err := os.MkdirAll(filepath.Dir(fp), 0700)
+		if err != nil {
+			return err
+		}
+	}
+
 	file, err := os.OpenFile(filepath.Clean(fp), os.O_EXCL|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return err

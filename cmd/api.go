@@ -38,10 +38,10 @@ func startApiCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			log.InitLogFile(cfg.LogFilePath + "./log_file/api")
 			logrus.Infof("api config info:\nlogFilePath: %s\nlogLevel: %s\nlistenAddress: %s\n",
 				cfg.LogFilePath, logLevelStr, cfg.ListenAddr)
+
+			log.InitLogFile(cfg.LogFilePath + "./log_file/api")
 
 			//init db
 			db, err := db.NewDB(&db.Config{

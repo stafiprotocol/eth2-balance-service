@@ -1,19 +1,20 @@
-eth1Endpoint = "https://goerli.infura.io/v3/4cb873af07a84e42a952189eff3a6954"
-eth2Endpoint = "https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-prater.infura.io"
-from = "0x7e7a38868A176894Bd44f668179209710ECd8052"
-gasLimit = "3000000000000000"
-keystorePath = ""
+eth1Endpoint = "http://127.0.0.1:8545"
+eth2Endpoint = "https://xxxx:xxxx@eth2-beacon-prater.infura.io"
+from = "0xB20e8393C07FC446D17277c80b8E3f82Cd857A50"
+gasLimit = "3000000"
+keystorePath = "./keys"
 listenAddr = ":80"
 logFilePath = ""
-maxGasPrice = "30000000"
+maxGasPrice = "30000000000"
 rateInterval = 7200
-startHeight = 7583640
+startHeight = 0
 
 [contracts]
-depositContractAddress = "0x0039EE378F3aA8A38CaF785e3F182555664d3a0b"
-lightNodeAddress = "0x10797A9B9Aa030Aa8D30f477D201C47cfaC98977"
-nodeDepositAddress = "0xf381512BE548B1BdA00c439c93c784bBd9f50192"
-superNodeAddress = "0xc4d4ec8fBe43C1b762b5c6Ce966205642AA1579F"
+depositContractAddress = "0xF81579Adcaf53102710D99c4116C5348C83b7C33"
+lightNodeAddress = "0x4e352E4D55742C273FdE1EBf4ca5cDF4820558ac"
+networkSettingsAddress = "0x7842fAc79ED6fD77D23D2F979c18a4D4Db2Bdad2"
+nodeDepositAddress = "0x87B548DaC0e170268b7c91b8A4a202F5A67B91a5"
+superNodeAddress = "0x9b8DEDD2e0A6aEBa7a0704a88B52E9Ae15A19d4C"
 
 [db]
 host = "127.0.0.1" # mysql host ip

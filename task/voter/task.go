@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
+	"github.com/stafiprotocol/reth/bindings/Settings"
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
@@ -32,13 +34,15 @@ type Task struct {
 	lightNodeAddress       common.Address
 	nodeDepositAddress     common.Address
 	superNodeAddress       common.Address
+	networkSettingsAddress common.Address
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.DepositContractAddress) ||
 		!common.IsHexAddress(cfg.Contracts.LightNodeAddress) ||
 		!common.IsHexAddress(cfg.Contracts.NodeDepositAddress) ||
-		!common.IsHexAddress(cfg.Contracts.SuperNodeAddress) {
+		!common.IsHexAddress(cfg.Contracts.SuperNodeAddress) ||
+		!common.IsHexAddress(cfg.Contracts.NetworkSettingsAddress) {
 		return nil, fmt.Errorf("contracts address err")
 	}
 	gasLimitDeci, err := decimal.NewFromString(cfg.GasLimit)
@@ -64,6 +68,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		lightNodeAddress:       common.HexToAddress(cfg.Contracts.LightNodeAddress),
 		nodeDepositAddress:     common.HexToAddress(cfg.Contracts.NodeDepositAddress),
 		superNodeAddress:       common.HexToAddress(cfg.Contracts.SuperNodeAddress),
+		networkSettingsAddress: common.HexToAddress(cfg.Contracts.NetworkSettingsAddress),
 	}
 	return s, nil
 }
@@ -74,6 +79,16 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
+	networkSettingsContract, err := network_settings.NewNetworkSettings(task.networkSettingsAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+
+	credentials, err := networkSettingsContract.GetWithdrawalCredentials(task.connection.CallOpts())
+	if err != nil {
+		return err
+	}
+	task.withdrawCredientials = hexutil.Encode(credentials)
 
 	utils.SafeGoWithRestart(task.voteHandler)
 	return nil

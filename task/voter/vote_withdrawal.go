@@ -17,15 +17,19 @@ import (
 )
 
 func (task *Task) voteWithdrawal() error {
+	validatorListNeedVote, err := dao.GetValidatorListNeedVote(task.db)
+	if err != nil {
+		return err
+	}
+	if len(validatorListNeedVote) == 0 {
+		return nil
+	}
+
 	lightNodeContract, err := light_node.NewLightNode(task.lightNodeAddress, task.connection.Eth1Client())
 	if err != nil {
 		return err
 	}
 	superNodeContract, err := super_node.NewSuperNode(task.superNodeAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
-	}
-	validatorListNeedVote, err := dao.GetValidatorListNeedVote(task.db)
 	if err != nil {
 		return err
 	}
@@ -55,7 +59,7 @@ func (task *Task) voteWithdrawal() error {
 			}
 		}
 
-		validatorPubkey, err := types.HexToValidatorPubkey(validator.Pubkey[1:])
+		validatorPubkey, err := types.HexToValidatorPubkey(validator.Pubkey[2:])
 		if err != nil {
 			return err
 		}
@@ -63,10 +67,17 @@ func (task *Task) voteWithdrawal() error {
 		if err != nil {
 			return err
 		}
+		logrus.WithFields(logrus.Fields{
+			"status": validatorStatus,
+		}).Debug("validator beacon status")
 
 		if validatorStatus.Exists && validatorStatus.WithdrawalCredentials.String() != task.withdrawCredientials {
 			match = false
 		}
+		logrus.WithFields(logrus.Fields{
+			"pubkey": validator.Pubkey,
+			"match":  match,
+		}).Debug("match info")
 
 		switch validator.NodeType {
 
@@ -138,6 +149,12 @@ func (task *Task) voteWithdrawal() error {
 }
 
 func (task *Task) voteForCommonNodes(validators []*dao.Validator, matchs []bool) error {
+	if len(validators) == 0 {
+		return nil
+	}
+	if len(validators) != len(matchs) {
+		return fmt.Errorf("validators and matchs len not match")
+	}
 	for i, v := range validators {
 		err := task.voteForCommonNode(v, matchs[i])
 		if err != nil {
@@ -151,7 +168,8 @@ func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error 
 	logrus.WithFields(logrus.Fields{
 		"nodeAddress": validator.NodeAddress,
 		"poolAddress": validator.PoolAddress,
-	}).Debug("voteForCommonNode")
+		"match":       match,
+	}).Info("voteForCommonNode")
 
 	if !match {
 		validator.Status = toStatus(match)
@@ -162,16 +180,27 @@ func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error 
 		return fmt.Errorf("pool address err, address: %s", validator.PoolAddress)
 	}
 	poolAddr := common.HexToAddress(validator.PoolAddress)
+
 	task.connection.LockAndUpdateOpts()
 	defer task.connection.UnlockOpts()
+
+	logrus.WithFields(logrus.Fields{
+		"gasPrice": task.connection.Opts().GasPrice.String(),
+		"gasLimit": task.connection.Opts().GasLimit,
+	}).Debug("tx opts")
 
 	stakingPoolContract, err := staking_pool.NewStakingPool(poolAddr, task.connection.Eth1Client())
 	if err != nil {
 		return err
 	}
-	tx, err := stakingPoolContract.VoteWithdrawCredentials(task.connection.Opts())
+	nodeAddr, err := stakingPoolContract.GetNodeAddress(task.connection.CallOpts())
 	if err != nil {
 		return err
+	}
+	logrus.Info("-----", nodeAddr)
+	tx, err := stakingPoolContract.VoteWithdrawCredentials(task.connection.Opts())
+	if err != nil {
+		return fmt.Errorf("stakingPoolContract.VoteWithdrawCredentials, err: %s", err)
 	}
 	logrus.Info("send vote tx hash: ", tx.Hash().String())
 
@@ -233,17 +262,28 @@ func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error 
 }
 
 func (task *Task) voteForLightNode(lightNodeContract *light_node.LightNode, validatorPubkeys [][]byte, matchs []bool) error {
+	if len(validatorPubkeys) == 0 {
+		return nil
+	}
+	if len(validatorPubkeys) != len(matchs) {
+		return fmt.Errorf("validators and matchs len not match")
+	}
 	logrus.WithFields(logrus.Fields{
-		"nodeAddress": validatorPubkeys,
-		"matchs":      matchs,
-	}).Debug("voteForLightNode")
+		"pubkeys": pubkeyToHex(validatorPubkeys),
+		"matchs":  matchs,
+	}).Info("voteForLightNode")
 
 	task.connection.LockAndUpdateOpts()
 	defer task.connection.UnlockOpts()
 
+	logrus.WithFields(logrus.Fields{
+		"gasPrice": task.connection.Opts().GasPrice.String(),
+		"gasLimit": task.connection.Opts().GasLimit,
+	}).Debug("tx opts")
+
 	tx, err := lightNodeContract.VoteWithdrawCredentials(task.connection.Opts(), validatorPubkeys, matchs)
 	if err != nil {
-		return err
+		return fmt.Errorf("lightNodeContract.VoteWithdrawCredentials err: %s", err)
 	}
 	logrus.Info("send vote tx hash: ", tx.Hash().String())
 
@@ -278,13 +318,25 @@ func (task *Task) voteForLightNode(lightNodeContract *light_node.LightNode, vali
 }
 
 func (task *Task) voteForSuperNode(superNodeContract *super_node.SuperNode, validatorPubkeys [][]byte, matchs []bool) error {
+	if len(validatorPubkeys) == 0 {
+		return nil
+	}
+	if len(validatorPubkeys) != len(matchs) {
+		return fmt.Errorf("validators and matchs len not match")
+	}
+
 	logrus.WithFields(logrus.Fields{
-		"nodeAddress": validatorPubkeys,
-		"pubkey":      matchs,
-	}).Debug("voteForSuperNode")
+		"pubkeys": pubkeyToHex(validatorPubkeys),
+		"matchs":  matchs,
+	}).Info("voteForSuperNode")
 
 	task.connection.LockAndUpdateOpts()
 	defer task.connection.UnlockOpts()
+
+	logrus.WithFields(logrus.Fields{
+		"gasPrice": task.connection.Opts().GasPrice.String(),
+		"gasLimit": task.connection.Opts().GasLimit,
+	}).Debug("tx opts")
 
 	tx, err := superNodeContract.VoteWithdrawCredentials(task.connection.Opts(), validatorPubkeys, matchs)
 	if err != nil {
@@ -327,4 +379,12 @@ func toStatus(match bool) uint8 {
 		return utils.ValidatorStatusWithdrawMatch
 	}
 	return utils.ValidatorStatusWithdrawUnmatch
+}
+
+func pubkeyToHex(pubkeys [][]byte) []string {
+	ret := make([]string, len(pubkeys))
+	for i, pubkey := range pubkeys {
+		ret[i] = hexutil.Encode(pubkey)
+	}
+	return ret
 }

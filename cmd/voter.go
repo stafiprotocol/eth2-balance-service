@@ -43,10 +43,10 @@ func startVoterCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			log.InitLogFile(cfg.LogFilePath + "./log_file/voter")
 			logrus.Infof("voter config info:\nlogFilePath: %s\nlogLevel: %s\nstartHeight: %d\neth1Endpoint: %s\neth2Endpoint: %s",
 				cfg.LogFilePath, logLevelStr, cfg.StartHeight, cfg.Eth1Endpoint, cfg.Eth2Endpoint)
+
+			log.InitLogFile(cfg.LogFilePath + "./log_file/voter")
 			//init db
 			db, err := db.NewDB(&db.Config{
 				Host:     cfg.Db.Host,
@@ -87,6 +87,7 @@ func startVoterCmd() *cobra.Command {
 				return fmt.Errorf("keypair err")
 			}
 
+			logrus.Info("voter task starting...")
 			t, err := task_voter.NewTask(cfg, db, kp)
 			if err != nil {
 				return err
@@ -96,6 +97,7 @@ func startVoterCmd() *cobra.Command {
 				logrus.Errorf("task start err: %s", err)
 				return err
 			}
+			logrus.Info("voter task started.")
 			defer func() {
 				logrus.Infof("shutting down task ...")
 				t.Stop()

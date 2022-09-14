@@ -84,7 +84,7 @@ func UserDepositBalance(connection *Connection, contract common.Address) (*big.I
 }
 
 func PlatformFee(connection *Connection, contract common.Address) (*big.Int, error) {
-	s, err := Settings.NewSettings(contract, connection.eth1Client)
+	s, err := network_settings.NewNetworkSettings(contract, connection.eth1Client)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func PlatformFee(connection *Connection, contract common.Address) (*big.Int, err
 }
 
 func NodeFee(connection *Connection, contract common.Address) (*big.Int, error) {
-	s, err := Settings.NewSettings(contract, connection.eth1Client)
+	s, err := network_settings.NewNetworkSettings(contract, connection.eth1Client)
 	if err != nil {
 		return nil, err
 	}

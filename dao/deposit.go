@@ -10,7 +10,7 @@ type Deposit struct {
 	db.BaseModel
 	TxHash                string `gorm:"type:varchar(80) not null;default:'';column:tx_hash;uniqueIndex:uni_idx_hash_log"`       //hex string
 	LogIndex              uint32 `gorm:"type:int(11) unsigned not null;default:0;column:log_index;uniqueIndex:uni_idx_hash_log"` //log index
-	Pubkey                string `gorm:"type:varchar(80) not null;default:'';column:pubkey;index"`                               //hex with 0x prefix
+	Pubkey                string `gorm:"type:varchar(100) not null;default:'';column:pubkey;index"`                              //hex with 0x prefix
 	WithdrawalCredentials string `gorm:"type:varchar(80) not null;default:'';column:withdrawal_credentials"`                     //hex with 0x prefix
 
 }

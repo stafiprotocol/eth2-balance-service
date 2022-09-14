@@ -14,9 +14,9 @@ type Validator struct {
 	StakeTxHash   string `gorm:"type:varchar(80) not null;default:'';column:stake_tx_hash"`   //hex with 0x prefix
 
 	NodeAddress       string `gorm:"type:varchar(80) not null;default:'';column:node_address"`         //hex with 0x prefix
-	Pubkey            string `gorm:"type:varchar(80) not null;default:'';column:pubkey;uniqueIndex"`   //hex with 0x prefix
+	Pubkey            string `gorm:"type:varchar(100) not null;default:'';column:pubkey;uniqueIndex"`  //hex with 0x prefix
 	PoolAddress       string `gorm:"type:varchar(80) not null;default:'';column:pool_address"`         //hex with 0x prefix, used in common nodes
-	Signature         string `gorm:"type:varchar(160) not null;default:'';column:signature"`           //hex with 0x prefix
+	Signature         string `gorm:"type:varchar(200) not null;default:'';column:signature"`           //hex with 0x prefix
 	NodeDepositAmount string `gorm:"type:varchar(40) not null;default:'0';column:node_deposit_amount"` //decimal format
 
 	NodeType uint8 `gorm:"type:tinyint(3) unsigned not null;default:0;column:node_type"` // 1 common node 2 trust node(used in v1) 3 light node 4 super node

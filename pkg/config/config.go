@@ -31,6 +31,7 @@ type Contracts struct {
 	LightNodeAddress       string
 	SuperNodeAddress       string
 	DepositContractAddress string
+	NetworkSettingsAddress string
 }
 
 type Db struct {
