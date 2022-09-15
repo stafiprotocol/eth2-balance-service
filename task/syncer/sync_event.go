@@ -14,6 +14,8 @@ import (
 	"github.com/stafiprotocol/reth/bindings/SuperNode"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/reth/shared/beacon"
+	"github.com/stafiprotocol/reth/types"
 	"gorm.io/gorm"
 )
 
@@ -36,6 +38,13 @@ func (task *Task) syncHandler() {
 			err := task.syncEvent()
 			if err != nil {
 				logrus.Warnf("syncEvent err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			err = task.syncValidatorInfo()
+			if err != nil {
+				logrus.Warnf("syncValidatorInfo err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
@@ -247,6 +256,7 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 		validator.Pubkey = pubkeyStr
 		validator.Status = utils.ValidatorStatusDeposited
 		validator.DepositTxHash = txHashStr
+		validator.DepositBlockHeight = iterDeposited.Event.Raw.BlockNumber
 
 		err = dao.UpOrInValidator(task.db, validator)
 		if err != nil {
@@ -340,6 +350,7 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 		validator.Pubkey = pubkeyStr
 		validator.Status = utils.ValidatorStatusDeposited
 		validator.DepositTxHash = txHashStr
+		validator.DepositBlockHeight = iterDeposited.Event.Raw.BlockNumber
 
 		err = dao.UpOrInValidator(task.db, validator)
 		if err != nil {
@@ -400,4 +411,59 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 	}
 
 	return nil
+}
+
+// get validator balance/effective balance
+func (task *Task) syncValidatorInfo() error {
+	latestBlockNumber, err := task.eth1Client.BlockNumber(context.Background())
+	if err != nil {
+		return err
+	}
+
+	metaData, err := dao.GetMetaData(task.db)
+	if err != nil {
+		return err
+	}
+
+	targetHeight := (latestBlockNumber / task.rateInterval) * task.rateInterval
+
+	if targetHeight <= metaData.BalanceBlockHeight {
+		return nil
+	}
+
+	validatorList, err := dao.GetValidatorListBefore(task.db, targetHeight)
+	if err != nil {
+		return err
+	}
+	pubkeys := make([]types.ValidatorPubkey, 0)
+	for _, validator := range validatorList {
+		pubkey, err := types.HexToValidatorPubkey(validator.Pubkey[2:])
+		if err != nil {
+			return err
+		}
+		pubkeys = append(pubkeys, pubkey)
+	}
+
+	validatorStatusMap, err := task.eth2Client.GetValidatorStatuses(pubkeys, &beacon.ValidatorStatusOptions{
+		Slot: &targetHeight,
+	})
+	if err != nil {
+		return err
+	}
+	for pubkey, status := range validatorStatusMap {
+		pubkeyStr := hexutil.Encode(pubkey.Bytes())
+		validator, err := dao.GetValidator(task.db, pubkeyStr)
+		if err != nil {
+			return err
+		}
+		validator.Balance = status.Balance
+		validator.EffectiveBalance = status.EffectiveBalance
+
+		err = dao.UpOrInValidator(task.db, validator)
+		if err != nil {
+			return err
+		}
+	}
+	metaData.BalanceBlockHeight = targetHeight
+	return dao.UpOrInMetaData(task.db, metaData)
 }

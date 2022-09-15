@@ -110,7 +110,7 @@ func NodeFee(connection *Connection, contract common.Address) (*big.Int, error) 
 }
 
 func RethTotalSupply(connection *Connection, contract common.Address) (*big.Int, error) {
-	reth, err := Reth.NewReth(contract, connection.eth1Client)
+	reth, err := reth.NewReth(contract, connection.eth1Client)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func RethTotalSupply(connection *Connection, contract common.Address) (*big.Int,
 }
 
 func TotalUnstaked(connection *Connection, contract common.Address) (*big.Int, error) {
-	ud, err := UserDeposit.NewUserDeposit(contract, connection.eth1Client)
+	ud, err := user_deposit.NewUserDeposit(contract, connection.eth1Client)
 	if err != nil {
 		return nil, err
 	}

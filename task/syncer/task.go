@@ -9,6 +9,8 @@ import (
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/reth/shared/beacon"
+	"github.com/stafiprotocol/reth/shared/beacon/client"
 	"gorm.io/gorm"
 )
 
@@ -18,7 +20,11 @@ type Task struct {
 	db           *db.WrapDb
 	startHeight  uint64
 	eth1Endpoint string
+	eth2Endpoint string
 	eth1Client   *ethclient.Client
+	eth2Client   beacon.Client
+
+	rateInterval uint64
 
 	depositContractAddress common.Address
 	lightNodeAddress       common.Address
@@ -40,6 +46,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		db:           dao,
 		startHeight:  cfg.StartHeight,
 		eth1Endpoint: cfg.Eth1Endpoint,
+		rateInterval: cfg.RateInterval,
 
 		depositContractAddress: common.HexToAddress(cfg.Contracts.DepositContractAddress),
 		lightNodeAddress:       common.HexToAddress(cfg.Contracts.LightNodeAddress),
@@ -83,6 +90,8 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
+	task.eth2Client = client.NewStandardHttpClient(task.eth2Endpoint)
+
 	utils.SafeGoWithRestart(task.syncHandler)
 	return nil
 }

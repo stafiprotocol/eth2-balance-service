@@ -27,6 +27,9 @@ genabi:
 	abigen --abi ./bindings/SuperNode/supernode_abi.json --pkg super_node --type SuperNode --out ./bindings/SuperNode/SuperNode.go
 	abigen --abi ./bindings/StakingPool/stakingpool_abi.json --pkg staking_pool --type StakingPool --out ./bindings/StakingPool/StakingPool.go
 	abigen --abi ./bindings/Settings/networksettings_abi.json --pkg network_settings --type NetworkSettings --out ./bindings/Settings/NetworkSettings.go
+	abigen --abi ./bindings/NetworkBalances/networkbalances_abi.json --pkg network_balances --type NetworkBalances --out ./bindings/NetworkBalances/NetworkBalances.go
+	abigen --abi ./bindings/Reth/reth_abi.json --pkg reth --type Reth --out ./bindings/Reth/Reth.go
+	abigen --abi ./bindings/UserDeposit/userdeposit_abi.json --pkg user_deposit --type UserDeposit --out ./bindings/UserDeposit/UserDeposit.go
 
 build-linux:
 	@GOOS=linux GOARCH=amd64 go build --mod readonly $(BUILD_FLAGS) -o ./build/reth main.go

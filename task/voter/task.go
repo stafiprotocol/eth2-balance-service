@@ -27,6 +27,7 @@ type Task struct {
 	keyPair      *secp256k1.Keypair
 	gasLimit     *big.Int
 	maxGasPrice  *big.Int
+	rateInterval uint64
 
 	withdrawCredientials string
 
@@ -35,6 +36,9 @@ type Task struct {
 	nodeDepositAddress     common.Address
 	superNodeAddress       common.Address
 	networkSettingsAddress common.Address
+	networkBalancesAddress common.Address
+	rethAddress            common.Address
+	userDepositAddress     common.Address
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*Task, error) {
@@ -42,16 +46,30 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		!common.IsHexAddress(cfg.Contracts.LightNodeAddress) ||
 		!common.IsHexAddress(cfg.Contracts.NodeDepositAddress) ||
 		!common.IsHexAddress(cfg.Contracts.SuperNodeAddress) ||
-		!common.IsHexAddress(cfg.Contracts.NetworkSettingsAddress) {
+		!common.IsHexAddress(cfg.Contracts.NetworkSettingsAddress) ||
+		!common.IsHexAddress(cfg.Contracts.NetworkBalanceAddress) ||
+		!common.IsHexAddress(cfg.Contracts.RethAddress) ||
+		!common.IsHexAddress(cfg.Contracts.UserDepositAddress) {
 		return nil, fmt.Errorf("contracts address err")
 	}
+	if cfg.RateInterval == 0 {
+		return nil, fmt.Errorf("rate interval is zero")
+	}
+
 	gasLimitDeci, err := decimal.NewFromString(cfg.GasLimit)
 	if err != nil {
 		return nil, err
 	}
+
+	if gasLimitDeci.LessThanOrEqual(decimal.Zero) {
+		return nil, fmt.Errorf("gas limit is zero")
+	}
 	maxGasPriceDeci, err := decimal.NewFromString(cfg.MaxGasPrice)
 	if err != nil {
 		return nil, err
+	}
+	if maxGasPriceDeci.LessThanOrEqual(decimal.Zero) {
+		return nil, fmt.Errorf("max gas price is zero")
 	}
 
 	s := &Task{
@@ -63,12 +81,16 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		eth2Endpoint: cfg.Eth2Endpoint,
 		gasLimit:     gasLimitDeci.BigInt(),
 		maxGasPrice:  maxGasPriceDeci.BigInt(),
+		rateInterval: cfg.RateInterval,
 
 		depositContractAddress: common.HexToAddress(cfg.Contracts.DepositContractAddress),
 		lightNodeAddress:       common.HexToAddress(cfg.Contracts.LightNodeAddress),
 		nodeDepositAddress:     common.HexToAddress(cfg.Contracts.NodeDepositAddress),
 		superNodeAddress:       common.HexToAddress(cfg.Contracts.SuperNodeAddress),
 		networkSettingsAddress: common.HexToAddress(cfg.Contracts.NetworkSettingsAddress),
+		networkBalancesAddress: common.HexToAddress(cfg.Contracts.NetworkBalanceAddress),
+		rethAddress:            common.HexToAddress(cfg.Contracts.RethAddress),
+		userDepositAddress:     common.HexToAddress(cfg.Contracts.UserDepositAddress),
 	}
 	return s, nil
 }

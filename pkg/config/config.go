@@ -17,7 +17,7 @@ type Config struct {
 	StartHeight  uint64
 	LogFilePath  string
 	From         string // address of key to use
-	RateInterval int64  // block interval to recalculate rate
+	RateInterval uint64 // block interval to recalculate rate
 	KeystorePath string
 	GasLimit     string
 	MaxGasPrice  string
@@ -32,6 +32,9 @@ type Contracts struct {
 	SuperNodeAddress       string
 	DepositContractAddress string
 	NetworkSettingsAddress string
+	NetworkBalanceAddress  string
+	RethAddress            string
+	UserDepositAddress     string
 }
 
 type Db struct {

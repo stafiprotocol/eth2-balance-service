@@ -1,13 +1,13 @@
-eth1Endpoint = "http://127.0.0.1:8545"
-eth2Endpoint = "https://xxxx:xxxx@eth2-beacon-prater.infura.io"
-from = "0xB20e8393C07FC446D17277c80b8E3f82Cd857A50"
-gasLimit = "3000000"
-keystorePath = "./keys"
-listenAddr = ":80"
-logFilePath = ""
-maxGasPrice = "30000000000"
-rateInterval = 7200
-startHeight = 0
+eth1Endpoint = "http://127.0.0.1:8545" 
+eth2Endpoint = "https://xxxx:xxxx@eth2-beacon-prater.infura.io" 
+from = "0xB20e8393C07FC446D17277c80b8E3f82Cd857A50" 
+gasLimit = "3000000" 
+keystorePath = "./keys" 
+listenAddr = ":80" 
+logFilePath = "" 
+maxGasPrice = "30000000000" #wei
+rateInterval = 7200 
+startHeight = 0 
 
 [contracts]
 depositContractAddress = "0xF81579Adcaf53102710D99c4116C5348C83b7C33"

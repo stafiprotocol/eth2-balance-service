@@ -1,9 +1,10 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package UserDeposit
+package user_deposit
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -26,8 +28,14 @@ var (
 	_ = event.NewSubscription
 )
 
+// UserDepositMetaData contains all meta data concerning the UserDeposit contract.
+var UserDepositMetaData = &bind.MetaData{
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"stakingPool\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"DepositAssigned\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"DepositReceived\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"DepositRecycled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"ExcessWithdrawn\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"assignDeposits\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAssignDepositsEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDepositEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getExcessBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMaximumDepositAssignments\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinimumDeposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"receiveEtherWithdrawal\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"recycleDissolvedDeposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"recycleDistributorDeposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"recycleWithdrawnDeposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setAssignDepositsEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setDepositEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setMaximumDepositAssignments\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setMinimumDeposit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"withdrawExcessBalance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"withdrawExcessBalanceForLightNode\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"withdrawExcessBalanceForSuperNode\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+}
+
 // UserDepositABI is the input ABI used to generate the binding from.
-const UserDepositABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"stakingPool\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"DepositAssigned\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"DepositReceived\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"DepositRecycled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"time\",\"type\":\"uint256\"}],\"name\":\"ExcessWithdrawn\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"assignDeposits\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAssignDepositsEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDepositEnabled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getExcessBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMaximumDepositAssignments\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinimumDeposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"receiveEtherWithdrawal\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"recycleDissolvedDeposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"recycleWithdrawnDeposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setAssignDepositsEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_value\",\"type\":\"bool\"}],\"name\":\"setDepositEnabled\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setMaximumDepositAssignments\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setMinimumDeposit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"withdrawExcessBalance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+// Deprecated: Use UserDepositMetaData.ABI instead.
+var UserDepositABI = UserDepositMetaData.ABI
 
 // UserDeposit is an auto generated Go binding around an Ethereum contract.
 type UserDeposit struct {
@@ -472,6 +480,27 @@ func (_UserDeposit *UserDepositTransactorSession) RecycleDissolvedDeposit() (*ty
 	return _UserDeposit.Contract.RecycleDissolvedDeposit(&_UserDeposit.TransactOpts)
 }
 
+// RecycleDistributorDeposit is a paid mutator transaction binding the contract method 0x7c697e74.
+//
+// Solidity: function recycleDistributorDeposit() payable returns()
+func (_UserDeposit *UserDepositTransactor) RecycleDistributorDeposit(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _UserDeposit.contract.Transact(opts, "recycleDistributorDeposit")
+}
+
+// RecycleDistributorDeposit is a paid mutator transaction binding the contract method 0x7c697e74.
+//
+// Solidity: function recycleDistributorDeposit() payable returns()
+func (_UserDeposit *UserDepositSession) RecycleDistributorDeposit() (*types.Transaction, error) {
+	return _UserDeposit.Contract.RecycleDistributorDeposit(&_UserDeposit.TransactOpts)
+}
+
+// RecycleDistributorDeposit is a paid mutator transaction binding the contract method 0x7c697e74.
+//
+// Solidity: function recycleDistributorDeposit() payable returns()
+func (_UserDeposit *UserDepositTransactorSession) RecycleDistributorDeposit() (*types.Transaction, error) {
+	return _UserDeposit.Contract.RecycleDistributorDeposit(&_UserDeposit.TransactOpts)
+}
+
 // RecycleWithdrawnDeposit is a paid mutator transaction binding the contract method 0xe44ad24c.
 //
 // Solidity: function recycleWithdrawnDeposit() payable returns()
@@ -596,6 +625,48 @@ func (_UserDeposit *UserDepositSession) WithdrawExcessBalance(_amount *big.Int) 
 // Solidity: function withdrawExcessBalance(uint256 _amount) returns()
 func (_UserDeposit *UserDepositTransactorSession) WithdrawExcessBalance(_amount *big.Int) (*types.Transaction, error) {
 	return _UserDeposit.Contract.WithdrawExcessBalance(&_UserDeposit.TransactOpts, _amount)
+}
+
+// WithdrawExcessBalanceForLightNode is a paid mutator transaction binding the contract method 0xcc88c3c8.
+//
+// Solidity: function withdrawExcessBalanceForLightNode(uint256 _amount) returns()
+func (_UserDeposit *UserDepositTransactor) WithdrawExcessBalanceForLightNode(opts *bind.TransactOpts, _amount *big.Int) (*types.Transaction, error) {
+	return _UserDeposit.contract.Transact(opts, "withdrawExcessBalanceForLightNode", _amount)
+}
+
+// WithdrawExcessBalanceForLightNode is a paid mutator transaction binding the contract method 0xcc88c3c8.
+//
+// Solidity: function withdrawExcessBalanceForLightNode(uint256 _amount) returns()
+func (_UserDeposit *UserDepositSession) WithdrawExcessBalanceForLightNode(_amount *big.Int) (*types.Transaction, error) {
+	return _UserDeposit.Contract.WithdrawExcessBalanceForLightNode(&_UserDeposit.TransactOpts, _amount)
+}
+
+// WithdrawExcessBalanceForLightNode is a paid mutator transaction binding the contract method 0xcc88c3c8.
+//
+// Solidity: function withdrawExcessBalanceForLightNode(uint256 _amount) returns()
+func (_UserDeposit *UserDepositTransactorSession) WithdrawExcessBalanceForLightNode(_amount *big.Int) (*types.Transaction, error) {
+	return _UserDeposit.Contract.WithdrawExcessBalanceForLightNode(&_UserDeposit.TransactOpts, _amount)
+}
+
+// WithdrawExcessBalanceForSuperNode is a paid mutator transaction binding the contract method 0x8554913b.
+//
+// Solidity: function withdrawExcessBalanceForSuperNode(uint256 _amount) returns()
+func (_UserDeposit *UserDepositTransactor) WithdrawExcessBalanceForSuperNode(opts *bind.TransactOpts, _amount *big.Int) (*types.Transaction, error) {
+	return _UserDeposit.contract.Transact(opts, "withdrawExcessBalanceForSuperNode", _amount)
+}
+
+// WithdrawExcessBalanceForSuperNode is a paid mutator transaction binding the contract method 0x8554913b.
+//
+// Solidity: function withdrawExcessBalanceForSuperNode(uint256 _amount) returns()
+func (_UserDeposit *UserDepositSession) WithdrawExcessBalanceForSuperNode(_amount *big.Int) (*types.Transaction, error) {
+	return _UserDeposit.Contract.WithdrawExcessBalanceForSuperNode(&_UserDeposit.TransactOpts, _amount)
+}
+
+// WithdrawExcessBalanceForSuperNode is a paid mutator transaction binding the contract method 0x8554913b.
+//
+// Solidity: function withdrawExcessBalanceForSuperNode(uint256 _amount) returns()
+func (_UserDeposit *UserDepositTransactorSession) WithdrawExcessBalanceForSuperNode(_amount *big.Int) (*types.Transaction, error) {
+	return _UserDeposit.Contract.WithdrawExcessBalanceForSuperNode(&_UserDeposit.TransactOpts, _amount)
 }
 
 // UserDepositDepositAssignedIterator is returned from FilterDepositAssigned and is used to iterate over the raw logs and unpacked data for DepositAssigned events raised by the UserDeposit contract.
@@ -740,6 +811,7 @@ func (_UserDeposit *UserDepositFilterer) ParseDepositAssigned(log types.Log) (*U
 	if err := _UserDeposit.contract.UnpackLog(event, "DepositAssigned", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -885,6 +957,7 @@ func (_UserDeposit *UserDepositFilterer) ParseDepositReceived(log types.Log) (*U
 	if err := _UserDeposit.contract.UnpackLog(event, "DepositReceived", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1030,6 +1103,7 @@ func (_UserDeposit *UserDepositFilterer) ParseDepositRecycled(log types.Log) (*U
 	if err := _UserDeposit.contract.UnpackLog(event, "DepositRecycled", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1175,5 +1249,6 @@ func (_UserDeposit *UserDepositFilterer) ParseExcessWithdrawn(log types.Log) (*U
 	if err := _UserDeposit.contract.UnpackLog(event, "ExcessWithdrawn", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

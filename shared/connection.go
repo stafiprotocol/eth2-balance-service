@@ -31,7 +31,7 @@ type Connection struct {
 	eth1Client   *ethclient.Client
 	eth2Client   beacon.Client
 	opts         *bind.TransactOpts
-	callOpts     *bind.CallOpts
+	callOpts     bind.CallOpts
 	nonce        uint64
 	optsLock     sync.Mutex
 }
@@ -78,7 +78,7 @@ func (c *Connection) Connect() error {
 	}
 	c.opts = opts
 	c.nonce = 0
-	c.callOpts = &bind.CallOpts{Pending: false, From: c.kp.CommonAddress(), BlockNumber: nil, Context: context.Background()}
+	c.callOpts = bind.CallOpts{Pending: false, From: c.kp.CommonAddress(), BlockNumber: nil, Context: context.Background()}
 	return nil
 }
 
@@ -126,7 +126,9 @@ func (c *Connection) Opts() *bind.TransactOpts {
 }
 
 func (c *Connection) CallOpts() *bind.CallOpts {
-	return c.callOpts
+	var copyCallOpts bind.CallOpts = c.callOpts
+
+	return &copyCallOpts
 }
 
 func (c *Connection) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
