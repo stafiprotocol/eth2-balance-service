@@ -12,9 +12,12 @@ startHeight = 0
 [contracts]
 depositContractAddress = "0xF81579Adcaf53102710D99c4116C5348C83b7C33"
 lightNodeAddress = "0x4e352E4D55742C273FdE1EBf4ca5cDF4820558ac"
+networkBalanceAddress = ""
 networkSettingsAddress = "0x7842fAc79ED6fD77D23D2F979c18a4D4Db2Bdad2"
 nodeDepositAddress = "0x87B548DaC0e170268b7c91b8A4a202F5A67B91a5"
+rethAddress = ""
 superNodeAddress = "0x9b8DEDD2e0A6aEBa7a0704a88B52E9Ae15A19d4C"
+userDepositAddress = ""
 
 [db]
 host = "127.0.0.1" # mysql host ip

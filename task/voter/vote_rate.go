@@ -37,7 +37,7 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return err
 	}
-	// already vote, no need vote
+	// already update this height, no need vote
 	if latestBlockNumber <= balancesBlock.Uint64() || latestBlockNumber-balancesBlock.Uint64() < task.rateInterval {
 		return nil
 	}
@@ -65,6 +65,7 @@ func (task *Task) voteRate() error {
 		return err
 	}
 
+	// get al validator before targetHeight
 	validatorList, err := dao.GetValidatorListBefore(task.db, targetHeight)
 	if err != nil {
 		return err
@@ -102,6 +103,9 @@ func (task *Task) voteRate() error {
 		totalUserEth,
 		totalStakingeth,
 		rethTotalSupply)
+	if err != nil {
+		return err
+	}
 
 	logrus.Info("send submitBalances tx hash: ", tx.Hash().String())
 
@@ -156,5 +160,5 @@ func (task *Task) getEthInfoOfValidator(validator *dao.Validator) (stakingEth ui
 
 	case utils.ValidatorStatusStaked:
 	}
-	return 0, 0, nil
+	return 28e9, 28e9, nil
 }

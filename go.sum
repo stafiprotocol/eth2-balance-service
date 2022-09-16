@@ -78,8 +78,8 @@ github.com/edsrzf/mmap-go v0.0.0-20160512033002-935e0e8a636c/go.mod h1:YO35OhQPt
 github.com/edsrzf/mmap-go v1.0.0 h1:CEBF7HpRnUCSJgGUb5h1Gm7e3VkmVDrR8lvWVLtrOFw=
 github.com/ethereum/go-ethereum v1.9.21/go.mod h1:RXAVzbGrSGmDkDnHymruTAIEjUR3E4TX0EOpaj702sI=
 github.com/ethereum/go-ethereum v1.9.22/go.mod h1:FQjK3ZwD8C5DYn7ukTmFee36rq1dOMESiUfXr5RUc1w=
-github.com/ethereum/go-ethereum v1.10.20 h1:75IW830ClSS40yrQC1ZCMZCt5I+zU16oqId2SiQwdQ4=
-github.com/ethereum/go-ethereum v1.10.20/go.mod h1:LWUN82TCHGpxB3En5HVmLLzPD7YSrEUFmFfN1nKkVN0=
+github.com/ethereum/go-ethereum v1.10.24 h1:16KV6vdc4T4VHn6UgGlTFs0S71YpbUpZd6BmGcxFXag=
+github.com/ethereum/go-ethereum v1.10.24/go.mod h1:EYFyF19u3ezGLD4RqOkLq+ZCXzYbLoNDdZlMt7kyKFg=
 github.com/fatih/color v1.3.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/ferranbt/fastssz v0.0.0-20210905181407-59cf6761a7d5 h1:6dVcS0LktRSyEEgldFY4N9J17WjUoiJStttH+RZj0Wo=
 github.com/ferranbt/fastssz v0.0.0-20210905181407-59cf6761a7d5/go.mod h1:S8yiDeAXy8f88W4Ul+0dBMPx49S05byYbmZD6Uv94K4=
@@ -309,8 +309,8 @@ github.com/prysmaticlabs/go-bitfield v0.0.0-20210809151128-385d8c5e3fb7 h1:0tVE4
 github.com/prysmaticlabs/go-bitfield v0.0.0-20210809151128-385d8c5e3fb7/go.mod h1:wmuf/mdK4VMD+jA9ThwcUKjg3a2XWM9cVfFYjDyY4j4=
 github.com/prysmaticlabs/gohashtree v0.0.2-alpha h1:hk5ZsDQuSkyUMhTd55qB396P1+dtyIKiSwMmYE/hyEU=
 github.com/prysmaticlabs/gohashtree v0.0.2-alpha/go.mod h1:4pWaT30XoEx1j8KNJf3TV+E3mQkaufn7mf+jRNb/Fuk=
-github.com/prysmaticlabs/prysm/v3 v3.0.0 h1:g8a0sM/4X33bedJg+I2AQeHhVB2uquGEX8TcH19w94I=
-github.com/prysmaticlabs/prysm/v3 v3.0.0/go.mod h1:v2Gqsy2mfCT0XDyKxQcoSTvAhj1Xa89CvE7VPtG9LUY=
+github.com/prysmaticlabs/prysm/v3 v3.1.1 h1:N7cggeyZhHku6efPIU66RUtqq9bTpF7nlHQ3TUCyIcg=
+github.com/prysmaticlabs/prysm/v3 v3.1.1/go.mod h1:+v+em7rOykPs93APGWCX/95/3uxU8bSVmbZ4+YNJzdA=
 github.com/rjeczalik/notify v0.9.1 h1:CLCKso/QK1snAlnhNR/CNvNiFU2saUtjV0bx3EwNeCE=
 github.com/rjeczalik/notify v0.9.1/go.mod h1:rKwnCoCGeuQnwBtTSPL9Dad03Vh2n40ePRrjvIXnJho=
 github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=

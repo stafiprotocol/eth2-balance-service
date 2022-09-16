@@ -9,17 +9,21 @@ func EpochAt(config beacon.Eth2Config, time uint64) uint64 {
 	return config.GenesisEpoch + (time-config.GenesisTime)/config.SecondsPerEpoch
 }
 
-// 1 deposited 2 withdrawl match 3 withdrawl unmatch 4 staked 5 exited
+// 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch 5 offboard 6 can withdraw 7 withdrawed 8 exit 9 staking
 
 const (
-	ValidatorStatusDeposited       = uint8(1)
-	ValidatorStatusWithdrawMatch   = uint8(2)
-	ValidatorStatusStaked          = uint8(3)
+	ValidatorStatusDeposited     = uint8(1)
+	ValidatorStatusWithdrawMatch = uint8(2)
+	ValidatorStatusStaked        = uint8(3)
+
+	// lightnode related
 	ValidatorStatusWithdrawUnmatch = uint8(4)
 	ValidatorStatusOffBoard        = uint8(5)
 	ValidatorStatusCanWithdraw     = uint8(6)
 	ValidatorStatusWithdrawed      = uint8(7)
-	ValidatorStatusExit            = uint8(8)
+
+	ValidatorStatusExit   = uint8(8)
+	ValidatorStatusActive = uint8(9)
 )
 
 // 1 common node 2 trust node 3 light node 4 super node

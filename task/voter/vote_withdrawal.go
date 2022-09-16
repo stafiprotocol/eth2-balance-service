@@ -16,6 +16,8 @@ import (
 	"github.com/stafiprotocol/reth/types"
 )
 
+const batchVoteLimit = 30
+
 func (task *Task) voteWithdrawal() error {
 	validatorListNeedVote, err := dao.GetValidatorListNeedVote(task.db)
 	if err != nil {
@@ -117,20 +119,19 @@ func (task *Task) voteWithdrawal() error {
 		}
 	}
 
-	dealLimit := 30
-	if len(commonValidators) > dealLimit {
-		commonValidators = commonValidators[:dealLimit]
-		commonValidatorMatchs = commonValidatorMatchs[:dealLimit]
+	if len(commonValidators) > batchVoteLimit {
+		commonValidators = commonValidators[:batchVoteLimit]
+		commonValidatorMatchs = commonValidatorMatchs[:batchVoteLimit]
 	}
 
-	if len(lightValidatorPubkeys) > dealLimit {
-		lightValidatorPubkeys = lightValidatorPubkeys[:dealLimit]
-		lightValidatorMatchs = lightValidatorMatchs[:dealLimit]
+	if len(lightValidatorPubkeys) > batchVoteLimit {
+		lightValidatorPubkeys = lightValidatorPubkeys[:batchVoteLimit]
+		lightValidatorMatchs = lightValidatorMatchs[:batchVoteLimit]
 	}
 
-	if len(superValidatorPubkeys) > dealLimit {
-		superValidatorPubkeys = superValidatorPubkeys[:dealLimit]
-		superValidatorMatchs = superValidatorMatchs[:dealLimit]
+	if len(superValidatorPubkeys) > batchVoteLimit {
+		superValidatorPubkeys = superValidatorPubkeys[:batchVoteLimit]
+		superValidatorMatchs = superValidatorMatchs[:batchVoteLimit]
 	}
 
 	err = task.voteForCommonNodes(commonValidators, commonValidatorMatchs)

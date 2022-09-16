@@ -1,8 +1,12 @@
 package client_test
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stafiprotocol/reth/shared/beacon"
 	"github.com/stafiprotocol/reth/shared/beacon/client"
 	"github.com/stafiprotocol/reth/types"
@@ -22,4 +26,22 @@ func TestStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("%+v", status)
+}
+
+func TestTx(t *testing.T) {
+	ethClient, err := ethclient.Dial("https://test-eth-node.stafi.io")
+	if err != nil {
+		t.Fatal(err)
+	}
+	blockNumber, err := ethClient.BlockNumber(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(blockNumber)
+	receipt, err := ethClient.TransactionReceipt(context.Background(), common.HexToHash("0x06456bdf80482c3e0b59e53720438630f152f4fbcc7e02ab614e83198b1805be"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(fmt.Printf("%+v", receipt))
+
 }

@@ -4,11 +4,11 @@ go 1.18
 
 require (
 	github.com/BurntSushi/toml v1.2.0
-	github.com/ethereum/go-ethereum v1.10.20
+	github.com/ethereum/go-ethereum v1.10.24
 	github.com/gin-gonic/gin v1.8.1
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/prysmaticlabs/go-bitfield v0.0.0-20210809151128-385d8c5e3fb7
-	github.com/prysmaticlabs/prysm/v3 v3.0.0
+	github.com/prysmaticlabs/prysm/v3 v3.1.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.8.1
