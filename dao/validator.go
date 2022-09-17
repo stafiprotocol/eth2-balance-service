@@ -8,23 +8,27 @@ import (
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
+// all validators info, update by syncer
 type Validator struct {
 	db.BaseModel
-	DepositTxHash      string `gorm:"type:varchar(80) not null;default:'';column:deposit_tx_hash"`             //hex with 0x prefix
-	StakeTxHash        string `gorm:"type:varchar(80) not null;default:'';column:stake_tx_hash"`               //hex with 0x prefix
-	DepositBlockHeight uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:deposit_block_height"` //block height when deposit
+	Pubkey string `gorm:"type:varchar(100) not null;default:'';column:pubkey;uniqueIndex"` // hex with 0x prefix
 
-	NodeAddress       string `gorm:"type:varchar(80) not null;default:'';column:node_address"`         //hex with 0x prefix
-	Pubkey            string `gorm:"type:varchar(100) not null;default:'';column:pubkey;uniqueIndex"`  //hex with 0x prefix
-	PoolAddress       string `gorm:"type:varchar(80) not null;default:'';column:pool_address"`         //hex with 0x prefix, used in common nodes
-	Signature         string `gorm:"type:varchar(200) not null;default:'';column:signature"`           //hex with 0x prefix
-	NodeDepositAmount string `gorm:"type:varchar(40) not null;default:'0';column:node_deposit_amount"` //decimal format
-	ActiveEpoch       uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:active_epoch"`
-	Balance           uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance"`
-	EffectiveBalance  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:effective_balance"`
+	NodeAddress        string `gorm:"type:varchar(80) not null;default:'';column:node_address"`                // hex with 0x prefix
+	DepositSignature   string `gorm:"type:varchar(200) not null;default:'';column:deposit_signature"`          // hex with 0x prefix
+	DepositTxHash      string `gorm:"type:varchar(80) not null;default:'';column:deposit_tx_hash"`             // hex with 0x prefix
+	StakeTxHash        string `gorm:"type:varchar(80) not null;default:'';column:stake_tx_hash"`               // hex with 0x prefix
+	DepositBlockHeight uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:deposit_block_height"` // eth1 block height when deposit
+	StakeBlockHeight   uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:stake_block_height"`   // eth1 block height when stake
+	NodeDepositAmount  uint64 `gorm:"type:bigint(20) not null;default:'0';column:node_deposit_amount"`         // Gwei
+	ActiveEpoch        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:active_epoch"`
+
+	PoolAddress string `gorm:"type:varchar(80) not null;default:'';column:pool_address"` // hex with 0x prefix, used in common nodes
+
+	Balance          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance"`           // balance on new target epoch, Gwei
+	EffectiveBalance uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:effective_balance"` // balance on new target epoch, Gwei
 
 	NodeType uint8 `gorm:"type:tinyint(3) unsigned not null;default:0;column:node_type"` // 1 common node 2 trust node(used in v1) 3 light node 4 super node
-	Status   uint8 `gorm:"type:tinyint(3) unsigned not null;default:0;column:status"`    // // 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch 5 offboard 6 can withdraw 7 withdrawed 8 exit 9 active
+	Status   uint8 `gorm:"type:tinyint(3) unsigned not null;default:0;column:status"`    // 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 exit 9 active}
 }
 
 func (f Validator) TableName() string {
@@ -46,11 +50,11 @@ func GetValidatorListNeedVote(db *db.WrapDb) (c []*Validator, err error) {
 	return
 }
 
-func GetValidatorListBefore(db *db.WrapDb, height uint64) (c []*Validator, err error) {
+func GetValidatorDepositedListBefore(db *db.WrapDb, height uint64) (c []*Validator, err error) {
 	err = db.Find(&c, "deposit_block_height <= ?", height).Error
 	return
 }
-func GetStakedValidatorListBefore(db *db.WrapDb, height uint64) (c []*Validator, err error) {
-	err = db.Find(&c, "status = ? and deposit_block_height <= ?", utils.ValidatorStatusStaked, height).Error
+func GetStakedAndActiveValidatorList(db *db.WrapDb) (c []*Validator, err error) {
+	err = db.Find(&c, "status = ? or status = ?", utils.ValidatorStatusStaked, utils.ValidatorStatusActive).Error
 	return
 }

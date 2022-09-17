@@ -2,8 +2,6 @@ package task_syncer
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stafiprotocol/reth/bindings/SuperNode"
@@ -38,7 +36,7 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 		}
 
 		validator.NodeAddress = iterDeposited.Event.Node.String()
-		validator.NodeDepositAmount = fmt.Sprintf("%d", 0)
+		validator.NodeDepositAmount = 0
 		validator.NodeType = utils.NodeTypeSuper
 		validator.Pubkey = pubkeyStr
 		validator.Status = utils.ValidatorStatusDeposited
@@ -71,6 +69,7 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 
 		validator.Status = utils.ValidatorStatusStaked
 		validator.StakeTxHash = txHashStr
+		validator.StakeBlockHeight = iterDeposited.Event.Raw.BlockNumber
 
 		err = dao.UpOrInValidator(task.db, validator)
 		if err != nil {

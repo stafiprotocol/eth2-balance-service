@@ -37,14 +37,14 @@ func (task *Task) fetchNodeDepositEvents(start, end uint64) error {
 		}
 
 		validator.NodeAddress = iterDeposited.Event.Node.String()
-		validator.NodeDepositAmount = iterDeposited.Event.Amount.String()
+		validator.NodeDepositAmount = iterDeposited.Event.Amount.Uint64()
 		// only support common node in v2
 		validator.NodeType = utils.NodeTypeCommon
 
 		validator.Status = utils.ValidatorStatusDeposited
 		validator.Pubkey = pubkeyStr
 		validator.DepositTxHash = txHashStr
-		validator.Signature = hexutil.Encode(iterDeposited.Event.ValidatorSignature)
+		validator.DepositSignature = hexutil.Encode(iterDeposited.Event.ValidatorSignature)
 		validator.PoolAddress = iterDeposited.Event.Pool.String()
 
 		err = dao.UpOrInValidator(task.db, validator)
@@ -71,6 +71,7 @@ func (task *Task) fetchNodeDepositEvents(start, end uint64) error {
 		}
 		validator.Status = utils.ValidatorStatusStaked
 		validator.StakeTxHash = txHashStr
+		validator.StakeBlockHeight = iterDeposited.Event.Raw.BlockNumber
 
 		err = dao.UpOrInValidator(task.db, validator)
 		if err != nil {

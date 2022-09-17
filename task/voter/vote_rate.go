@@ -24,6 +24,16 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return err
 	}
+	balancesBlock, err := networkBalancesContract.GetBalancesBlock(task.connection.CallOpts())
+	if err != nil {
+		return err
+	}
+	// already update this height, no need vote
+	if latestBlockNumber <= balancesBlock.Uint64() || latestBlockNumber-balancesBlock.Uint64() < task.rateInterval {
+		return nil
+	}
+	targetHeight := (latestBlockNumber / task.rateInterval) * task.rateInterval
+
 	rethContract, err := reth.NewReth(task.rethAddress, task.connection.Eth1Client())
 	if err != nil {
 		return err
@@ -33,23 +43,12 @@ func (task *Task) voteRate() error {
 		return err
 	}
 
-	balancesBlock, err := networkBalancesContract.GetBalancesBlock(task.connection.CallOpts())
-	if err != nil {
-		return err
-	}
-	// already update this height, no need vote
-	if latestBlockNumber <= balancesBlock.Uint64() || latestBlockNumber-balancesBlock.Uint64() < task.rateInterval {
-		return nil
-	}
-
-	targetHeight := (latestBlockNumber / task.rateInterval) * task.rateInterval
-
 	meta, err := dao.GetMetaData(task.db)
 	if err != nil {
 		return err
 	}
-	// ensure all pubkey balance info synced
-	if meta.BalanceBlockHeight != targetHeight {
+	// ensure all event synced
+	if meta.DealedBlockHeight < targetHeight {
 		return nil
 	}
 
@@ -65,16 +64,16 @@ func (task *Task) voteRate() error {
 		return err
 	}
 
-	// get al validator before targetHeight
-	validatorList, err := dao.GetValidatorListBefore(task.db, targetHeight)
+	// get all validator deposited before targetHeight
+	validatorDepositedList, err := dao.GetValidatorDepositedListBefore(task.db, targetHeight)
 	if err != nil {
 		return err
 	}
 
 	totalUserEthFromValidator := uint64(0)
 	totalStakingEthFromValidator := uint64(0)
-	for _, validator := range validatorList {
-		stakingEth, userEth, err := task.getEthInfoOfValidator(validator)
+	for _, validator := range validatorDepositedList {
+		stakingEth, userEth, err := task.getEthInfoOfValidator(validator, targetHeight)
 		if err != nil {
 			return err
 		}
@@ -85,7 +84,9 @@ func (task *Task) voteRate() error {
 	task.connection.LockAndUpdateOpts()
 	defer task.connection.UnlockOpts()
 
-	totalUserEth := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(decimal.NewFromInt(1e9)).Add(decimal.NewFromBigInt(userDepositBalance, 0)).BigInt()
+	totalUserEth := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(decimal.NewFromInt(1e9)).
+		Add(decimal.NewFromBigInt(userDepositBalance, 0)).BigInt()
+
 	block := big.NewInt(int64(targetHeight))
 	totalStakingeth := big.NewInt(int64(totalStakingEthFromValidator))
 
@@ -141,24 +142,118 @@ func (task *Task) voteRate() error {
 }
 
 // Gwei
-func (task *Task) getEthInfoOfValidator(validator *dao.Validator) (stakingEth uint64, userEth uint64, err error) {
+func (task *Task) getEthInfoOfValidator(validator *dao.Validator, targetHeight uint64) (stakingEth uint64, userEth uint64, err error) {
 	switch validator.NodeType {
 	case utils.NodeTypeCommon:
+		return task.getEthInfoOfCommonNodeValidator(validator, targetHeight)
 	case utils.NodeTypeTrust:
+		return task.getEthInfoOfTrustNodeValidator(validator, targetHeight)
 	case utils.NodeTypeLight:
+		return task.getEthInfoOfLightNodeValidator(validator, targetHeight)
 	case utils.NodeTypeSuper:
-
+		return task.getEthInfoOfSuperNodeValidator(validator, targetHeight)
+	default:
+		return 0, 0, fmt.Errorf("unknow node type: %d", validator.NodeType)
 	}
+}
 
+func (task *Task) getEthInfoOfCommonNodeValidator(validator *dao.Validator, targetHeight uint64) (stakingEth uint64, userEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited:
+		fallthrough
 	case utils.ValidatorStatusWithdrawMatch:
+		fallthrough
 	case utils.ValidatorStatusWithdrawUnmatch:
+		fallthrough
 	case utils.ValidatorStatusOffBoard:
+		fallthrough
 	case utils.ValidatorStatusCanWithdraw:
+		fallthrough
 	case utils.ValidatorStatusWithdrawed:
+		return 0, 0, nil
 
+	case utils.ValidatorStatusExit:
+		fallthrough
 	case utils.ValidatorStatusStaked:
+		fallthrough
+	case utils.ValidatorStatusActive:
+		return validator.EffectiveBalance - 4e9, validator.Balance - 4e9, nil
+
+	case utils.ValidatorStatusDistribute:
+		return 0, 0, nil
+	default:
+		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
 	}
-	return 28e9, 28e9, nil
+}
+func (task *Task) getEthInfoOfTrustNodeValidator(validator *dao.Validator, targetHeight uint64) (stakingEth uint64, userEth uint64, err error) {
+	switch validator.Status {
+	case utils.ValidatorStatusDeposited:
+		fallthrough
+	case utils.ValidatorStatusWithdrawMatch:
+		fallthrough
+	case utils.ValidatorStatusWithdrawUnmatch:
+		return 0, 0, nil
+
+	case utils.ValidatorStatusExit:
+		fallthrough
+	case utils.ValidatorStatusStaked:
+		fallthrough
+	case utils.ValidatorStatusActive:
+		return validator.EffectiveBalance, validator.Balance, nil
+
+	case utils.ValidatorStatusDistribute:
+		return 0, 0, nil
+	default:
+		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
+	}
+}
+func (task *Task) getEthInfoOfLightNodeValidator(validator *dao.Validator, targetHeight uint64) (stakingEth uint64, userEth uint64, err error) {
+	switch validator.Status {
+	case utils.ValidatorStatusDeposited:
+		fallthrough
+	case utils.ValidatorStatusWithdrawMatch:
+		fallthrough
+	case utils.ValidatorStatusWithdrawUnmatch:
+		fallthrough
+	case utils.ValidatorStatusOffBoard:
+		fallthrough
+	case utils.ValidatorStatusCanWithdraw:
+		fallthrough
+	case utils.ValidatorStatusWithdrawed:
+		return 0, 0, nil
+
+	case utils.ValidatorStatusExit:
+		fallthrough
+	case utils.ValidatorStatusStaked:
+		fallthrough
+	case utils.ValidatorStatusActive:
+		return validator.EffectiveBalance - 4e9, validator.Balance - 4e9, nil
+
+	case utils.ValidatorStatusDistribute:
+		return 0, 0, nil
+	default:
+		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
+	}
+}
+func (task *Task) getEthInfoOfSuperNodeValidator(validator *dao.Validator, targetHeight uint64) (stakingEth uint64, userEth uint64, err error) {
+	switch validator.Status {
+	case utils.ValidatorStatusDeposited:
+		fallthrough
+	case utils.ValidatorStatusWithdrawMatch:
+		fallthrough
+	case utils.ValidatorStatusWithdrawUnmatch:
+		return 1e9, 1e9, nil
+
+	case utils.ValidatorStatusExit:
+		fallthrough
+	case utils.ValidatorStatusStaked:
+		fallthrough
+	case utils.ValidatorStatusActive:
+		return validator.EffectiveBalance, validator.Balance, nil
+
+	case utils.ValidatorStatusDistribute:
+		return 0, 0, nil
+	default:
+		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
+	}
 }

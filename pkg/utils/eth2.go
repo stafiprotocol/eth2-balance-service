@@ -22,8 +22,9 @@ const (
 	ValidatorStatusCanWithdraw     = uint8(6)
 	ValidatorStatusWithdrawed      = uint8(7)
 
-	ValidatorStatusExit   = uint8(8)
-	ValidatorStatusActive = uint8(9)
+	ValidatorStatusExit       = uint8(8)
+	ValidatorStatusActive     = uint8(9)
+	ValidatorStatusDistribute = uint8(10)
 )
 
 // 1 common node 2 trust node 3 light node 4 super node

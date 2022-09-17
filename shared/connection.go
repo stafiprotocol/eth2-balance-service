@@ -126,7 +126,12 @@ func (c *Connection) Opts() *bind.TransactOpts {
 }
 
 func (c *Connection) CallOpts() *bind.CallOpts {
-	var copyCallOpts bind.CallOpts = c.callOpts
+	var copyCallOpts bind.CallOpts
+
+	copyCallOpts.BlockNumber = big.NewInt(c.callOpts.BlockNumber.Int64())
+	copyCallOpts.Context = context.Background()
+	copyCallOpts.From = c.callOpts.From
+	copyCallOpts.Pending = c.callOpts.Pending
 
 	return &copyCallOpts
 }

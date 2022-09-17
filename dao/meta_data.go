@@ -6,8 +6,8 @@ import "github.com/stafiprotocol/reth/pkg/db"
 type MetaData struct {
 	db.BaseModel
 
-	DealedBlockHeight  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:dealed_block_height"`  //latest block height have dealed
-	BalanceBlockHeight uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance_block_height"` // validator balance/effective balance on height
+	DealedBlockHeight uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:dealed_block_height"` // latest block height have dealed
+	BalanceEpoch      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance_epoch"`       // validator balance/effective balance on this epoch
 }
 
 func (f MetaData) TableName() string {

@@ -7,7 +7,8 @@ import (
 	"github.com/stafiprotocol/reth/pkg/db"
 )
 
-type RewardInfo struct {
+// balance info  of actived validators
+type ValidatorBalance struct {
 	db.BaseModel
 	Pubkey string `gorm:"type:varchar(100) not null;default:'';column:pubkey;uniqueIndex:uni_idx_pubkey_epoch"` //hex with 0x prefix
 	Epoch  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:epoch;uniqueIndex:uni_idx_pubkey_epoch"`
@@ -17,16 +18,16 @@ type RewardInfo struct {
 	Timestamp        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
 }
 
-func (f RewardInfo) TableName() string {
-	return "reth_reward_infos"
+func (f ValidatorBalance) TableName() string {
+	return "reth_validator_balances"
 }
 
-func UpOrRewardInfo(db *db.WrapDb, c *Validator) error {
+func UpOrInValidatorBalance(db *db.WrapDb, c *ValidatorBalance) error {
 	return db.Save(c).Error
 }
 
-func GetRewardInfo(db *db.WrapDb, pubkey string) (c *Validator, err error) {
-	c = &Validator{}
-	err = db.Take(c, "pubkey = ?", pubkey).Error
+func GetValidatorBalance(db *db.WrapDb, pubkey string, epoch uint64) (c *ValidatorBalance, err error) {
+	c = &ValidatorBalance{}
+	err = db.Take(c, "pubkey = ? and epoch = ?", pubkey, epoch).Error
 	return
 }

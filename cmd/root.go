@@ -37,6 +37,7 @@ func NewRootCmd() *cobra.Command {
 		startApiCmd(),
 		startSyncerCmd(),
 		startVoterCmd(),
+		startCollectorCmd(),
 		genAccountCmd(),
 		versionCmd(),
 	)

@@ -1,8 +1,6 @@
 package task_syncer
 
 import (
-	"context"
-
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
@@ -10,9 +8,12 @@ import (
 	"github.com/stafiprotocol/reth/types"
 )
 
-// get staked validator info from beacon, and update balance/effective balance
-func (task *Task) syncValidatorInfo() error {
-	latestBlockNumber, err := task.eth1Client.BlockNumber(context.Background())
+const balanceInterval = uint64(10)
+
+// get staked validator info from beacon, update balance/effective balance
+func (task *Task) syncValidatorTargetEpochBalance() error {
+
+	beaconHead, err := task.eth2Client.GetBeaconHead()
 	if err != nil {
 		return err
 	}
@@ -22,17 +23,18 @@ func (task *Task) syncValidatorInfo() error {
 		return err
 	}
 
-	targetHeight := (latestBlockNumber / task.rateInterval) * task.rateInterval
-	if targetHeight <= metaData.BalanceBlockHeight {
+	targetEpoch := (beaconHead.FinalizedEpoch / balanceInterval) * balanceInterval
+	// no need fetch new balance
+	if targetEpoch <= metaData.BalanceEpoch {
 		return nil
 	}
 
-	validatorList, err := dao.GetStakedValidatorListBefore(task.db, targetHeight)
+	validatorList, err := dao.GetStakedAndActiveValidatorList(task.db)
 	if err != nil {
 		return err
 	}
 	logrus.WithFields(logrus.Fields{
-		"targetHeight":  targetHeight,
+		"targetEpoch":   targetEpoch,
 		"validatorList": validatorList,
 	}).Debug("targetHeight")
 
@@ -60,7 +62,7 @@ func (task *Task) syncValidatorInfo() error {
 		willUsePubkeys := pubkeys[start:end]
 
 		validatorStatusMap, err := task.eth2Client.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
-			Slot: &targetHeight,
+			Epoch: &targetEpoch,
 		})
 		if err != nil {
 			return err
@@ -87,6 +89,6 @@ func (task *Task) syncValidatorInfo() error {
 			}
 		}
 	}
-	metaData.BalanceBlockHeight = targetHeight
+	metaData.BalanceEpoch = targetEpoch
 	return dao.UpOrInMetaData(task.db, metaData)
 }

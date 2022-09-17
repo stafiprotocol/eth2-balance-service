@@ -9,6 +9,7 @@ import (
 )
 
 const getValidatorStatusLimit = 50
+const fetchEventBlockLimit = uint64(4900)
 
 func (task *Task) syncHandler() {
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
@@ -25,31 +26,31 @@ func (task *Task) syncHandler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
-			logrus.Debug("syncEvent start -----------")
-			err := task.syncEvent()
+			logrus.Debug("syncEth1Event start -----------")
+			err := task.syncEth1Event()
 			if err != nil {
-				logrus.Warnf("syncEvent err %s", err)
+				logrus.Warnf("syncEth1Event err: %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("syncEvent end -----------")
+			logrus.Debug("syncEth1Event end -----------")
 
-			logrus.Debug("syncValidatorInfo start -----------")
-			err = task.syncValidatorInfo()
+			logrus.Debug("syncValidatorTargetEpochBalance start -----------")
+			err = task.syncValidatorTargetEpochBalance()
 			if err != nil {
-				logrus.Warnf("syncValidatorInfo err %s", err)
+				logrus.Warnf("syncValidatorTargetEpochBalance err: %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("syncValidatorInfo end -----------")
+			logrus.Debug("syncValidatorTargetEpochBalance end -----------")
 			retry = 0
 		}
 	}
 }
 
-func (task *Task) syncEvent() error {
+func (task *Task) syncEth1Event() error {
 	latestBlockNumber, err := task.eth1Client.BlockNumber(context.Background())
 	if err != nil {
 		return err
@@ -66,11 +67,10 @@ func (task *Task) syncEvent() error {
 	start := uint64(metaData.DealedBlockHeight + 1)
 	end := latestBlockNumber
 
-	limit := 4900
-	for i := start; i <= end; i += uint64(limit) {
+	for i := start; i <= end; i += fetchEventBlockLimit {
 		subStart := i
-		subEnd := i + uint64(limit) - 1
-		if end < i+uint64(limit) {
+		subEnd := i + fetchEventBlockLimit - 1
+		if end < i+fetchEventBlockLimit {
 			subEnd = end
 		}
 

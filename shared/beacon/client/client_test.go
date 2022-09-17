@@ -3,6 +3,7 @@ package client_test
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -14,11 +15,11 @@ import (
 
 func TestStatus(t *testing.T) {
 	c := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
-	pubkey, err := types.HexToValidatorPubkey("a06aaf5586589ee0953fe3345303d4193636ffcf9f87e1c39090171d6a47c12c0909868ebf4894b9278451ddb796c8c3")
+	pubkey, err := types.HexToValidatorPubkey("af93696b857fb621048539d0f9ee7722d801e05cf3be3039decd17b937dd9d69f4450c407f5ae4e96d875cb754840c1c")
 	if err != nil {
 		t.Fatal(err)
 	}
-	slot := uint64(4684154)
+	slot := uint64(30000)
 	status, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
 		Slot: &slot,
 	})
@@ -43,5 +44,24 @@ func TestTx(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(fmt.Printf("%+v", receipt))
+
+}
+
+func TestBlock(t *testing.T) {
+	ethClient, err := ethclient.Dial("https://mainnet.infura.io/v3/4d058381a4d64d31b00a4e15df3ddb94")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// blockNumber, err := ethClient.BlockNumber(context.Background())
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	blockNumber := 15541242
+	t.Log(blockNumber)
+	block, err := ethClient.BlockByNumber(context.Background(), big.NewInt(int64(blockNumber)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(fmt.Sprintf("%+v", block.Header()))
 
 }
