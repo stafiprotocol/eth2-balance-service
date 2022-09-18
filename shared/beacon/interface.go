@@ -33,7 +33,9 @@ type Eth2DepositContract struct {
 }
 type BeaconHead struct {
 	Epoch                  uint64
+	Slot                   uint64
 	FinalizedEpoch         uint64
+	FinalizedSlot          uint64
 	JustifiedEpoch         uint64
 	PreviousJustifiedEpoch uint64
 }

@@ -5,17 +5,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/stafiprotocol/reth/bindings/DepositContract"
 	"github.com/stafiprotocol/reth/dao"
 	"gorm.io/gorm"
 )
 
 func (task *Task) fetchDepositContractEvents(start, end uint64) error {
-	depositContract, err := deposit_contract.NewDepositContract(task.depositContractAddress, task.eth1Client)
-	if err != nil {
-		return err
-	}
-	iterDeposited, err := depositContract.FilterDepositEvent(&bind.FilterOpts{
+	iterDeposited, err := task.depositContract.FilterDepositEvent(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,
 		Context: context.Background(),

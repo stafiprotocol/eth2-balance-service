@@ -4,18 +4,14 @@ import (
 	"context"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/stafiprotocol/reth/bindings/SuperNode"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"gorm.io/gorm"
 )
 
 func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
-	superNodeContract, err := super_node.NewSuperNode(task.superNodeAddress, task.eth1Client)
-	if err != nil {
-		return err
-	}
-	iterDeposited, err := superNodeContract.FilterDeposited(&bind.FilterOpts{
+	// deposit event
+	iterDeposited, err := task.superNodeContract.FilterDeposited(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,
 		Context: context.Background(),
@@ -31,6 +27,7 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
+		// already synced
 		if err == nil {
 			continue
 		}
@@ -49,7 +46,8 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 		}
 	}
 
-	iterStaked, err := superNodeContract.FilterStaked(&bind.FilterOpts{
+	// stake event
+	iterStaked, err := task.superNodeContract.FilterStaked(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,
 		Context: context.Background(),
@@ -77,7 +75,8 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 		}
 	}
 
-	iterSetPubkeyStatus, err := superNodeContract.FilterSetPubkeyStatus(&bind.FilterOpts{
+	// status update
+	iterSetPubkeyStatus, err := task.superNodeContract.FilterSetPubkeyStatus(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,
 		Context: context.Background(),

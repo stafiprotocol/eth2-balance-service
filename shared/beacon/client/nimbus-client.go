@@ -7,10 +7,14 @@ type NimbusClient struct {
 }
 
 // Create a new client instance
-func NewNimbusClient(providerAddress string) *NimbusClient {
-	return &NimbusClient{
-		StandardHttpClient: *NewStandardHttpClient(providerAddress),
+func NewNimbusClient(providerAddress string) (*NimbusClient, error) {
+	client, err := NewStandardHttpClient(providerAddress)
+	if err != nil {
+		return nil, err
 	}
+	return &NimbusClient{
+		StandardHttpClient: *client,
+	}, nil
 }
 
 func (n *NimbusClient) GetClientType() (beacon.BeaconClientType, error) {

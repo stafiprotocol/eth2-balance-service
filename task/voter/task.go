@@ -1,6 +1,7 @@
 package task_voter
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"time"
@@ -10,7 +11,13 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
+	light_node "github.com/stafiprotocol/reth/bindings/LightNode"
+	network_balances "github.com/stafiprotocol/reth/bindings/NetworkBalances"
+	reth "github.com/stafiprotocol/reth/bindings/Reth"
 	"github.com/stafiprotocol/reth/bindings/Settings"
+	storage "github.com/stafiprotocol/reth/bindings/Storage"
+	super_node "github.com/stafiprotocol/reth/bindings/SuperNode"
+	user_deposit "github.com/stafiprotocol/reth/bindings/UserDeposit"
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
@@ -18,42 +25,35 @@ import (
 )
 
 type Task struct {
-	taskTicker   int64
-	stop         chan struct{}
-	db           *db.WrapDb
-	eth1Endpoint string
-	eth2Endpoint string
-	connection   *shared.Connection
-	keyPair      *secp256k1.Keypair
-	gasLimit     *big.Int
-	maxGasPrice  *big.Int
-	rateInterval uint64
+	taskTicker             int64
+	stop                   chan struct{}
+	eth1Endpoint           string
+	eth2Endpoint           string
+	keyPair                *secp256k1.Keypair
+	gasLimit               *big.Int
+	maxGasPrice            *big.Int
+	rateSlotInterval       uint64
+	storageContractAddress common.Address
+	FakeBeaconNode         bool
 
-	withdrawCredientials string
-
-	depositContractAddress common.Address
-	lightNodeAddress       common.Address
-	nodeDepositAddress     common.Address
-	superNodeAddress       common.Address
-	networkSettingsAddress common.Address
-	networkBalancesAddress common.Address
-	rethAddress            common.Address
-	userDepositAddress     common.Address
+	// need init on start
+	connection              *shared.Connection
+	db                      *db.WrapDb
+	withdrawCredientials    string
+	lightNodeContract       *light_node.LightNode
+	superNodeContract       *super_node.SuperNode
+	networkSettingsContract *network_settings.NetworkSettings
+	networkBalancesContract *network_balances.NetworkBalances
+	rethContract            *reth.Reth
+	userDepositContract     *user_deposit.UserDeposit
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*Task, error) {
-	if !common.IsHexAddress(cfg.Contracts.DepositContractAddress) ||
-		!common.IsHexAddress(cfg.Contracts.LightNodeAddress) ||
-		!common.IsHexAddress(cfg.Contracts.NodeDepositAddress) ||
-		!common.IsHexAddress(cfg.Contracts.SuperNodeAddress) ||
-		!common.IsHexAddress(cfg.Contracts.NetworkSettingsAddress) ||
-		!common.IsHexAddress(cfg.Contracts.NetworkBalanceAddress) ||
-		!common.IsHexAddress(cfg.Contracts.RethAddress) ||
-		!common.IsHexAddress(cfg.Contracts.UserDepositAddress) {
+	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("contracts address err")
 	}
-	if cfg.RateInterval == 0 {
-		return nil, fmt.Errorf("rate interval is zero")
+	if cfg.RateSlotInterval == 0 {
+		return nil, fmt.Errorf("rate slot interval is zero")
 	}
 
 	gasLimitDeci, err := decimal.NewFromString(cfg.GasLimit)
@@ -73,40 +73,35 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 	}
 
 	s := &Task{
-		taskTicker:   6,
-		stop:         make(chan struct{}),
-		db:           dao,
-		keyPair:      keyPair,
-		eth1Endpoint: cfg.Eth1Endpoint,
-		eth2Endpoint: cfg.Eth2Endpoint,
-		gasLimit:     gasLimitDeci.BigInt(),
-		maxGasPrice:  maxGasPriceDeci.BigInt(),
-		rateInterval: cfg.RateInterval,
+		taskTicker:       6,
+		stop:             make(chan struct{}),
+		db:               dao,
+		keyPair:          keyPair,
+		eth1Endpoint:     cfg.Eth1Endpoint,
+		eth2Endpoint:     cfg.Eth2Endpoint,
+		gasLimit:         gasLimitDeci.BigInt(),
+		maxGasPrice:      maxGasPriceDeci.BigInt(),
+		rateSlotInterval: cfg.RateSlotInterval,
+		FakeBeaconNode:   cfg.FakeBeaconNode,
 
-		depositContractAddress: common.HexToAddress(cfg.Contracts.DepositContractAddress),
-		lightNodeAddress:       common.HexToAddress(cfg.Contracts.LightNodeAddress),
-		nodeDepositAddress:     common.HexToAddress(cfg.Contracts.NodeDepositAddress),
-		superNodeAddress:       common.HexToAddress(cfg.Contracts.SuperNodeAddress),
-		networkSettingsAddress: common.HexToAddress(cfg.Contracts.NetworkSettingsAddress),
-		networkBalancesAddress: common.HexToAddress(cfg.Contracts.NetworkBalanceAddress),
-		rethAddress:            common.HexToAddress(cfg.Contracts.RethAddress),
-		userDepositAddress:     common.HexToAddress(cfg.Contracts.UserDepositAddress),
+		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 	}
 	return s, nil
 }
 
 func (task *Task) Start() error {
-	task.connection = shared.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.keyPair, task.gasLimit, task.maxGasPrice)
-	err := task.connection.Connect()
-	if err != nil {
-		return err
-	}
-	networkSettingsContract, err := network_settings.NewNetworkSettings(task.networkSettingsAddress, task.connection.Eth1Client())
+	var err error
+	task.connection, err = shared.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.keyPair, task.gasLimit, task.maxGasPrice)
 	if err != nil {
 		return err
 	}
 
-	credentials, err := networkSettingsContract.GetWithdrawalCredentials(task.connection.CallOpts())
+	err = task.initContract()
+	if err != nil {
+		return err
+	}
+
+	credentials, err := task.networkSettingsContract.GetWithdrawalCredentials(task.connection.CallOpts(nil))
 	if err != nil {
 		return err
 	}
@@ -135,7 +130,7 @@ func (task *Task) voteHandler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
-			logrus.Debug("vote start -----------")
+			logrus.Debug("voteWithdrawal start -----------")
 
 			err := task.voteWithdrawal()
 			if err != nil {
@@ -144,7 +139,9 @@ func (task *Task) voteHandler() {
 				retry++
 				continue
 			}
+			logrus.Debug("voteWithdrawal end -----------")
 
+			logrus.Debug("voteRate start -----------")
 			err = task.voteRate()
 			if err != nil {
 				logrus.Warnf("vote rate err %s", err)
@@ -153,8 +150,82 @@ func (task *Task) voteHandler() {
 				continue
 			}
 
-			logrus.Debug("vote end -----------")
+			logrus.Debug("voteRate end -----------")
 			retry = 0
 		}
 	}
+}
+
+func (task *Task) initContract() error {
+
+	storageContract, err := storage.NewStorage(task.storageContractAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+
+	lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
+	if err != nil {
+		return err
+	}
+	task.lightNodeContract, err = light_node.NewLightNode(lightNodeAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+
+	superNodeAddress, err := task.getContractAddress(storageContract, "stafiSuperNode")
+	if err != nil {
+		return err
+	}
+	task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+
+	networkBalancesAddress, err := task.getContractAddress(storageContract, "stafiNetworkBalances")
+	if err != nil {
+		return err
+	}
+	task.networkBalancesContract, err = network_balances.NewNetworkBalances(networkBalancesAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+
+	rethAddress, err := task.getContractAddress(storageContract, "rETHToken")
+	if err != nil {
+		return err
+	}
+	task.rethContract, err = reth.NewReth(rethAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+
+	userDepositAddress, err := task.getContractAddress(storageContract, "stafiUserDeposit")
+	if err != nil {
+		return err
+	}
+	task.userDepositContract, err = user_deposit.NewUserDeposit(userDepositAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+
+	networkSettingsAddress, err := task.getContractAddress(storageContract, "stafiNetworkSettings")
+	if err != nil {
+		return err
+	}
+	task.networkSettingsContract, err = network_settings.NewNetworkSettings(networkSettingsAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (task *Task) getContractAddress(storage *storage.Storage, name string) (common.Address, error) {
+	address, err := storage.GetAddress(task.connection.CallOpts(nil), utils.ContractStorageKey(name))
+	if err != nil {
+		return common.Address{}, err
+	}
+	if bytes.Equal(address.Bytes(), common.Address{}.Bytes()) {
+		return common.Address{}, fmt.Errorf("address empty")
+	}
+	return address, nil
 }

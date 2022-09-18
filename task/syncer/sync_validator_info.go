@@ -4,28 +4,27 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
+	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared/beacon"
 	"github.com/stafiprotocol/reth/types"
 )
 
-const balanceInterval = uint64(10)
+// get staked validator info from beacon on target slot, and update balance/effective balance
+func (task *Task) syncValidatorTargetSlotBalance() error {
 
-// get staked validator info from beacon, update balance/effective balance
-func (task *Task) syncValidatorTargetEpochBalance() error {
-
-	beaconHead, err := task.eth2Client.GetBeaconHead()
+	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {
 		return err
 	}
 
-	metaData, err := dao.GetMetaData(task.db)
+	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeSyncer)
 	if err != nil {
 		return err
 	}
 
-	targetEpoch := (beaconHead.FinalizedEpoch / balanceInterval) * balanceInterval
+	targetSlot := (beaconHead.FinalizedSlot / task.rateSlotInterval) * task.rateSlotInterval
 	// no need fetch new balance
-	if targetEpoch <= metaData.BalanceEpoch {
+	if targetSlot <= metaData.BalanceSlot {
 		return nil
 	}
 
@@ -34,7 +33,7 @@ func (task *Task) syncValidatorTargetEpochBalance() error {
 		return err
 	}
 	logrus.WithFields(logrus.Fields{
-		"targetEpoch":   targetEpoch,
+		"targetSlot":    targetSlot,
 		"validatorList": validatorList,
 	}).Debug("targetHeight")
 
@@ -61,8 +60,8 @@ func (task *Task) syncValidatorTargetEpochBalance() error {
 
 		willUsePubkeys := pubkeys[start:end]
 
-		validatorStatusMap, err := task.eth2Client.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
-			Epoch: &targetEpoch,
+		validatorStatusMap, err := task.connection.Eth2Client().GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
+			Slot: &targetSlot,
 		})
 		if err != nil {
 			return err
@@ -89,6 +88,6 @@ func (task *Task) syncValidatorTargetEpochBalance() error {
 			}
 		}
 	}
-	metaData.BalanceEpoch = targetEpoch
+	metaData.BalanceSlot = targetSlot
 	return dao.UpOrInMetaData(task.db, metaData)
 }

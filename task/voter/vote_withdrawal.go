@@ -27,15 +27,6 @@ func (task *Task) voteWithdrawal() error {
 		return nil
 	}
 
-	lightNodeContract, err := light_node.NewLightNode(task.lightNodeAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
-	}
-	superNodeContract, err := super_node.NewSuperNode(task.superNodeAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
-	}
-
 	commonValidators := make([]*dao.Validator, 0)
 	commonValidatorMatchs := make([]bool, 0)
 
@@ -92,7 +83,7 @@ func (task *Task) voteWithdrawal() error {
 				return err
 			}
 
-			alreadyVote, err := lightNodeContract.GetPubkeyVoted(task.connection.CallOpts(), pubkeyBts, task.connection.CallOpts().From)
+			alreadyVote, err := task.lightNodeContract.GetPubkeyVoted(task.connection.CallOpts(nil), pubkeyBts, task.connection.CallOpts(nil).From)
 			if err != nil {
 				return err
 			}
@@ -107,7 +98,7 @@ func (task *Task) voteWithdrawal() error {
 				return err
 			}
 
-			alreadyVote, err := superNodeContract.GetPubkeyVoted(task.connection.CallOpts(), pubkeyBts, task.connection.CallOpts().From)
+			alreadyVote, err := task.superNodeContract.GetPubkeyVoted(task.connection.CallOpts(nil), pubkeyBts, task.connection.CallOpts(nil).From)
 			if err != nil {
 				return err
 			}
@@ -138,11 +129,11 @@ func (task *Task) voteWithdrawal() error {
 	if err != nil {
 		return err
 	}
-	err = task.voteForLightNode(lightNodeContract, lightValidatorPubkeys, lightValidatorMatchs)
+	err = task.voteForLightNode(task.lightNodeContract, lightValidatorPubkeys, lightValidatorMatchs)
 	if err != nil {
 		return err
 	}
-	err = task.voteForSuperNode(superNodeContract, superValidatorPubkeys, superValidatorMatchs)
+	err = task.voteForSuperNode(task.superNodeContract, superValidatorPubkeys, superValidatorMatchs)
 	if err != nil {
 		return err
 	}
@@ -182,24 +173,27 @@ func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error 
 	}
 	poolAddr := common.HexToAddress(validator.PoolAddress)
 
-	task.connection.LockAndUpdateOpts()
-	defer task.connection.UnlockOpts()
+	err := task.connection.LockAndUpdateTxOpts()
+	if err != nil {
+		return err
+	}
+	defer task.connection.UnlockTxOpts()
 
 	logrus.WithFields(logrus.Fields{
-		"gasPrice": task.connection.Opts().GasPrice.String(),
-		"gasLimit": task.connection.Opts().GasLimit,
+		"gasPrice": task.connection.TxOpts().GasPrice.String(),
+		"gasLimit": task.connection.TxOpts().GasLimit,
 	}).Debug("tx opts")
 
 	stakingPoolContract, err := staking_pool.NewStakingPool(poolAddr, task.connection.Eth1Client())
 	if err != nil {
 		return err
 	}
-	nodeAddr, err := stakingPoolContract.GetNodeAddress(task.connection.CallOpts())
+	nodeAddr, err := stakingPoolContract.GetNodeAddress(task.connection.CallOpts(nil))
 	if err != nil {
 		return err
 	}
 	logrus.Info("-----", nodeAddr)
-	tx, err := stakingPoolContract.VoteWithdrawCredentials(task.connection.Opts())
+	tx, err := stakingPoolContract.VoteWithdrawCredentials(task.connection.TxOpts())
 	if err != nil {
 		return fmt.Errorf("stakingPoolContract.VoteWithdrawCredentials, err: %s", err)
 	}
@@ -238,7 +232,7 @@ func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error 
 		if retry > utils.RetryLimit {
 			return fmt.Errorf("stakingPoolContract.VoteWithdrawCredentials tx reach retry limit")
 		}
-		match, err := stakingPoolContract.GetWithdrawalCredentialsMatch(task.connection.CallOpts())
+		match, err := stakingPoolContract.GetWithdrawalCredentialsMatch(task.connection.CallOpts(nil))
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"err":      err.Error(),
@@ -274,15 +268,18 @@ func (task *Task) voteForLightNode(lightNodeContract *light_node.LightNode, vali
 		"matchs":  matchs,
 	}).Info("voteForLightNode")
 
-	task.connection.LockAndUpdateOpts()
-	defer task.connection.UnlockOpts()
+	err := task.connection.LockAndUpdateTxOpts()
+	if err != nil {
+		return err
+	}
+	defer task.connection.UnlockTxOpts()
 
 	logrus.WithFields(logrus.Fields{
-		"gasPrice": task.connection.Opts().GasPrice.String(),
-		"gasLimit": task.connection.Opts().GasLimit,
+		"gasPrice": task.connection.TxOpts().GasPrice.String(),
+		"gasLimit": task.connection.TxOpts().GasLimit,
 	}).Debug("tx opts")
 
-	tx, err := lightNodeContract.VoteWithdrawCredentials(task.connection.Opts(), validatorPubkeys, matchs)
+	tx, err := lightNodeContract.VoteWithdrawCredentials(task.connection.TxOpts(), validatorPubkeys, matchs)
 	if err != nil {
 		return fmt.Errorf("lightNodeContract.VoteWithdrawCredentials err: %s", err)
 	}
@@ -331,15 +328,18 @@ func (task *Task) voteForSuperNode(superNodeContract *super_node.SuperNode, vali
 		"matchs":  matchs,
 	}).Info("voteForSuperNode")
 
-	task.connection.LockAndUpdateOpts()
-	defer task.connection.UnlockOpts()
+	err := task.connection.LockAndUpdateTxOpts()
+	if err != nil {
+		return err
+	}
+	defer task.connection.UnlockTxOpts()
 
 	logrus.WithFields(logrus.Fields{
-		"gasPrice": task.connection.Opts().GasPrice.String(),
-		"gasLimit": task.connection.Opts().GasLimit,
+		"gasPrice": task.connection.TxOpts().GasPrice.String(),
+		"gasLimit": task.connection.TxOpts().GasLimit,
 	}).Debug("tx opts")
 
-	tx, err := superNodeContract.VoteWithdrawCredentials(task.connection.Opts(), validatorPubkeys, matchs)
+	tx, err := superNodeContract.VoteWithdrawCredentials(task.connection.TxOpts(), validatorPubkeys, matchs)
 	if err != nil {
 		return err
 	}

@@ -2,19 +2,20 @@ package client_test
 
 import (
 	"context"
-	"fmt"
-	"math/big"
-	"testing"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stafiprotocol/reth/shared/beacon"
 	"github.com/stafiprotocol/reth/shared/beacon/client"
 	"github.com/stafiprotocol/reth/types"
+	"math/big"
+	"testing"
 )
 
 func TestStatus(t *testing.T) {
-	c := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
+	c, err := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
+	if err != nil {
+		t.Fatal(err)
+	}
 	pubkey, err := types.HexToValidatorPubkey("af93696b857fb621048539d0f9ee7722d801e05cf3be3039decd17b937dd9d69f4450c407f5ae4e96d875cb754840c1c")
 	if err != nil {
 		t.Fatal(err)
@@ -43,7 +44,7 @@ func TestTx(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(fmt.Printf("%+v", receipt))
+	t.Logf("%+v", receipt)
 
 }
 
@@ -62,6 +63,23 @@ func TestBlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(fmt.Sprintf("%+v", block.Header()))
+	t.Logf("%+v", block.Header())
 
+}
+func TestBeaconBlock(t *testing.T) {
+	c, err := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// block, _, err := c.GetBeaconBlock("4712832")
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// t.Log(block.ExecutionBlockNumber)
+
+	head, err := c.GetBeaconHead()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(head.FinalizedEpoch, head.FinalizedSlot)
 }

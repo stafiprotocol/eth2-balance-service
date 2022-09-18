@@ -5,18 +5,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/stafiprotocol/reth/bindings/NodeDeposit"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"gorm.io/gorm"
 )
 
 func (task *Task) fetchNodeDepositEvents(start, end uint64) error {
-	nodeDepositContract, err := node_deposit.NewNodeDeposit(task.nodeDepositAddress, task.eth1Client)
-	if err != nil {
-		return err
-	}
-	iterDeposited, err := nodeDepositContract.FilterDeposited(&bind.FilterOpts{
+	iterDeposited, err := task.nodeDepositContract.FilterDeposited(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,
 		Context: context.Background(),
@@ -32,6 +27,7 @@ func (task *Task) fetchNodeDepositEvents(start, end uint64) error {
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
+		// already synced
 		if err == nil {
 			continue
 		}
@@ -53,7 +49,7 @@ func (task *Task) fetchNodeDepositEvents(start, end uint64) error {
 		}
 	}
 
-	iterStaked, err := nodeDepositContract.FilterStaked(&bind.FilterOpts{
+	iterStaked, err := task.nodeDepositContract.FilterStaked(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,
 		Context: context.Background(),

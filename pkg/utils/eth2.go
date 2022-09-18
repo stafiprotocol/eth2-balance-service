@@ -9,6 +9,11 @@ func EpochAt(config beacon.Eth2Config, time uint64) uint64 {
 	return config.GenesisEpoch + (time-config.GenesisTime)/config.SecondsPerEpoch
 }
 
+// Get an eth2 slot number by epoch
+func SlotAt(config beacon.Eth2Config, epoch uint64) uint64 {
+	return config.GenesisEpoch + config.SlotsPerEpoch*epoch
+}
+
 // 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch 5 offboard 6 can withdraw 7 withdrawed 8 exit 9 staking
 
 const (
@@ -33,4 +38,9 @@ const (
 	NodeTypeTrust  = uint8(2)
 	NodeTypeLight  = uint8(3)
 	NodeTypeSuper  = uint8(4)
+)
+
+const (
+	MetaTypeSyncer    = uint8(1)
+	MetaTypeCollector = uint8(2)
 )

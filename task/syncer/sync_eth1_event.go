@@ -1,7 +1,6 @@
 package task_syncer
 
 import (
-	"context"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
@@ -37,7 +36,7 @@ func (task *Task) syncHandler() {
 			logrus.Debug("syncEth1Event end -----------")
 
 			logrus.Debug("syncValidatorTargetEpochBalance start -----------")
-			err = task.syncValidatorTargetEpochBalance()
+			err = task.syncValidatorTargetSlotBalance()
 			if err != nil {
 				logrus.Warnf("syncValidatorTargetEpochBalance err: %s", err)
 				time.Sleep(utils.RetryInterval)
@@ -51,12 +50,12 @@ func (task *Task) syncHandler() {
 }
 
 func (task *Task) syncEth1Event() error {
-	latestBlockNumber, err := task.eth1Client.BlockNumber(context.Background())
+	latestBlockNumber, err := task.connection.Eth1LatestBlock()
 	if err != nil {
 		return err
 	}
 
-	metaData, err := dao.GetMetaData(task.db)
+	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeSyncer)
 	if err != nil {
 		return err
 	}
@@ -79,12 +78,12 @@ func (task *Task) syncEth1Event() error {
 			return err
 		}
 
-		err = task.fetchLightNodeEvents(subStart, subEnd)
+		err = task.fetchNodeDepositEvents(subStart, subEnd)
 		if err != nil {
 			return err
 		}
 
-		err = task.fetchNodeDepositEvents(subStart, subEnd)
+		err = task.fetchLightNodeEvents(subStart, subEnd)
 		if err != nil {
 			return err
 		}

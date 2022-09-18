@@ -5,18 +5,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/stafiprotocol/reth/bindings/LightNode"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"gorm.io/gorm"
 )
 
 func (task *Task) fetchLightNodeEvents(start, end uint64) error {
-	lightNodeContract, err := light_node.NewLightNode(task.lightNodeAddress, task.eth1Client)
-	if err != nil {
-		return err
-	}
-	iterDeposited, err := lightNodeContract.FilterDeposited(&bind.FilterOpts{
+	// deposit event
+	iterDeposited, err := task.lightNodeContract.FilterDeposited(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,
 		Context: context.Background(),
@@ -32,6 +28,7 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
+		// already synced this event
 		if err == nil {
 			continue
 		}
@@ -50,7 +47,8 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 		}
 	}
 
-	iterStaked, err := lightNodeContract.FilterStaked(&bind.FilterOpts{
+	// stake event
+	iterStaked, err := task.lightNodeContract.FilterStaked(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,
 		Context: context.Background(),
@@ -78,7 +76,8 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 		}
 	}
 
-	iterSetPubkeyStatus, err := lightNodeContract.FilterSetPubkeyStatus(&bind.FilterOpts{
+	// status update
+	iterSetPubkeyStatus, err := task.lightNodeContract.FilterSetPubkeyStatus(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,
 		Context: context.Background(),

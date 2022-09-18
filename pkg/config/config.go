@@ -11,30 +11,26 @@ import (
 )
 
 type Config struct {
-	ListenAddr   string
-	Eth1Endpoint string // url for rpc endpoint
-	Eth2Endpoint string // url for eth2 rpc endpoint
-	StartHeight  uint64
-	LogFilePath  string
-	From         string // address of key to use
-	RateInterval uint64 // block interval to recalculate rate
-	KeystorePath string
-	GasLimit     string
-	MaxGasPrice  string
-	Contracts    Contracts
+	ListenAddr       string
+	Eth1Endpoint     string // url for eth1 rpc endpoint
+	Eth2Endpoint     string // url for eth2 rpc endpoint
+	StartHeight      uint64 // eth1 height, used for fetch contract events by syncer
+	StartEpoch       uint64 // used for fetch history balance info by syncer
+	LogFilePath      string
+	From             string // address of voter
+	RateSlotInterval uint64 // slot interval to recalculate rate
+	KeystorePath     string
+	GasLimit         string
+	MaxGasPrice      string
+	FakeBeaconNode   bool
+
+	Contracts Contracts
 
 	Db Db
 }
 
 type Contracts struct {
-	NodeDepositAddress     string
-	LightNodeAddress       string
-	SuperNodeAddress       string
-	DepositContractAddress string
-	NetworkSettingsAddress string
-	NetworkBalanceAddress  string
-	RethAddress            string
-	UserDepositAddress     string
+	StorageContractAddress string
 }
 
 type Db struct {

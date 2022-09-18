@@ -19,7 +19,7 @@ type Validator struct {
 	StakeTxHash        string `gorm:"type:varchar(80) not null;default:'';column:stake_tx_hash"`               // hex with 0x prefix
 	DepositBlockHeight uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:deposit_block_height"` // eth1 block height when deposit
 	StakeBlockHeight   uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:stake_block_height"`   // eth1 block height when stake
-	NodeDepositAmount  uint64 `gorm:"type:bigint(20) not null;default:'0';column:node_deposit_amount"`         // Gwei
+	NodeDepositAmount  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:node_deposit_amount"`  // Gwei
 	ActiveEpoch        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:active_epoch"`
 
 	PoolAddress string `gorm:"type:varchar(80) not null;default:'';column:pool_address"` // hex with 0x prefix, used in common nodes

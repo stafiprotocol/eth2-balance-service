@@ -171,3 +171,8 @@ func SymbolValid(symbol string) bool {
 func PriceSymbolValid(symbol string) bool {
 	return priceSymbolMap[symbol]
 }
+
+func ContractStorageKey(name string) [32]byte {
+	// keccak256(abi.encodePacked("contract.address", _contractName))
+	return crypto.Keccak256Hash([]byte("contract.address"), []byte(name))
+}

@@ -17,8 +17,7 @@ import (
 	eth2types "github.com/wealdtech/go-eth2-types/v2"
 	"golang.org/x/sync/errgroup"
 
-	eth2 "github.com/stafiprotocol/reth/pkg/utils"
-	hexutil "github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared/beacon"
 )
 
@@ -47,13 +46,21 @@ const (
 // Beacon client using the standard Beacon HTTP REST API (https://ethereum.github.io/beacon-APIs/)
 type StandardHttpClient struct {
 	providerAddress string
+	eth2Config      beacon.Eth2Config
 }
 
 // Create a new client instance
-func NewStandardHttpClient(providerAddress string) *StandardHttpClient {
-	return &StandardHttpClient{
+func NewStandardHttpClient(providerAddress string) (*StandardHttpClient, error) {
+
+	client := &StandardHttpClient{
 		providerAddress: providerAddress,
 	}
+	config, err := client.GetEth2Config()
+	if err != nil {
+		return nil, err
+	}
+	client.eth2Config = config
+	return client, nil
 }
 
 // Close the client connection
@@ -146,34 +153,20 @@ func (c *StandardHttpClient) GetEth2DepositContract() (beacon.Eth2DepositContrac
 // Get the beacon head
 func (c *StandardHttpClient) GetBeaconHead() (beacon.BeaconHead, error) {
 
-	// Data
-	var wg errgroup.Group
-	var eth2Config beacon.Eth2Config
 	var finalityCheckpoints FinalityCheckpointsResponse
+	finalityCheckpoints, err := c.getFinalityCheckpoints("head")
 
-	// Get eth2 config
-	wg.Go(func() error {
-		var err error
-		eth2Config, err = c.GetEth2Config()
-		return err
-	})
-
-	// Get finality checkpoints
-	wg.Go(func() error {
-		var err error
-		finalityCheckpoints, err = c.getFinalityCheckpoints("head")
-		return err
-	})
-
-	// Wait for data
-	if err := wg.Wait(); err != nil {
+	if err != nil {
 		return beacon.BeaconHead{}, err
 	}
 
+	epoch := utils.EpochAt(c.eth2Config, uint64(time.Now().Unix()))
 	// Return response
 	return beacon.BeaconHead{
-		Epoch:                  eth2.EpochAt(eth2Config, uint64(time.Now().Unix())),
+		Epoch:                  epoch,
+		Slot:                   utils.SlotAt(c.eth2Config, epoch),
 		FinalizedEpoch:         uint64(finalityCheckpoints.Data.Finalized.Epoch),
+		FinalizedSlot:          utils.SlotAt(c.eth2Config, uint64(finalityCheckpoints.Data.Finalized.Epoch)),
 		JustifiedEpoch:         uint64(finalityCheckpoints.Data.CurrentJustified.Epoch),
 		PreviousJustifiedEpoch: uint64(finalityCheckpoints.Data.PreviousJustified.Epoch),
 	}, nil
@@ -183,7 +176,7 @@ func (c *StandardHttpClient) GetBeaconHead() (beacon.BeaconHead, error) {
 // Get a validator's status
 func (c *StandardHttpClient) GetValidatorStatus(pubkey types.ValidatorPubkey, opts *beacon.ValidatorStatusOptions) (beacon.ValidatorStatus, error) {
 
-	return c.getValidatorStatus(hexutil.AddPrefix(pubkey.Hex()), opts)
+	return c.getValidatorStatus(utils.AddPrefix(pubkey.Hex()), opts)
 
 }
 func (c *StandardHttpClient) GetValidatorStatusByIndex(index string, opts *beacon.ValidatorStatusOptions) (beacon.ValidatorStatus, error) {
@@ -251,7 +244,7 @@ func (c *StandardHttpClient) GetValidatorStatuses(pubkeys []types.ValidatorPubke
 	// Convert pubkeys into hex strings
 	pubkeysHex := make([]string, len(pubkeys))
 	for vi := 0; vi < len(pubkeys); vi++ {
-		pubkeysHex[vi] = hexutil.AddPrefix(pubkeys[vi].Hex())
+		pubkeysHex[vi] = utils.AddPrefix(pubkeys[vi].Hex())
 	}
 
 	// Get validators
@@ -373,7 +366,7 @@ func (c *StandardHttpClient) GetValidatorProposerDuties(indices []uint64, epoch 
 func (c *StandardHttpClient) GetValidatorIndex(pubkey types.ValidatorPubkey) (uint64, error) {
 
 	// Get validator
-	pubkeyString := hexutil.AddPrefix(pubkey.Hex())
+	pubkeyString := utils.AddPrefix(pubkey.Hex())
 	validators, err := c.getValidatorsByOpts([]string{pubkeyString}, nil)
 	if err != nil {
 		return 0, err
@@ -474,7 +467,7 @@ func (c *StandardHttpClient) GetAttestations(blockId string) ([]beacon.Attestati
 	// Add attestation info
 	attestationInfo := make([]beacon.AttestationInfo, len(attestations.Data))
 	for i, attestation := range attestations.Data {
-		bitString := hexutil.RemovePrefix(attestation.AggregationBits)
+		bitString := utils.RemovePrefix(attestation.AggregationBits)
 		attestationInfo[i].SlotIndex = uint64(attestation.Data.Slot)
 		attestationInfo[i].CommitteeIndex = uint64(attestation.Data.Index)
 		attestationInfo[i].AggregationBits, err = hex.DecodeString(bitString)
@@ -511,7 +504,7 @@ func (c *StandardHttpClient) GetBeaconBlock(blockId string) (beacon.BeaconBlock,
 
 	// Add attestation info
 	for i, attestation := range block.Data.Message.Body.Attestations {
-		bitString := hexutil.RemovePrefix(attestation.AggregationBits)
+		bitString := utils.RemovePrefix(attestation.AggregationBits)
 		info := beacon.AttestationInfo{
 			SlotIndex:      uint64(attestation.Data.Slot),
 			CommitteeIndex: uint64(attestation.Data.Index),

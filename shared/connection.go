@@ -30,25 +30,29 @@ type Connection struct {
 	maxGasPrice  *big.Int
 	eth1Client   *ethclient.Client
 	eth2Client   beacon.Client
-	opts         *bind.TransactOpts
+	txOpts       *bind.TransactOpts
 	callOpts     bind.CallOpts
-	nonce        uint64
 	optsLock     sync.Mutex
 }
 
 // NewConnection returns an uninitialized connection, must call Connection.Connect() before using.
-func NewConnection(eth1Endpoint, eth2Endpoint string, kp *secp256k1.Keypair, gasLimit, gasPrice *big.Int) *Connection {
-	return &Connection{
+func NewConnection(eth1Endpoint, eth2Endpoint string, kp *secp256k1.Keypair, gasLimit, gasPrice *big.Int) (*Connection, error) {
+	c := &Connection{
 		eth1Endpoint: eth1Endpoint,
 		eth2Endpoint: eth2Endpoint,
 		kp:           kp,
 		gasLimit:     gasLimit,
 		maxGasPrice:  gasPrice,
 	}
+	err := c.connect()
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
 // Connect starts the ethereum WS connection
-func (c *Connection) Connect() error {
+func (c *Connection) connect() error {
 	var rpcClient *rpc.Client
 	var err error
 	// Start http or ws client
@@ -63,42 +67,42 @@ func (c *Connection) Connect() error {
 	c.eth1Client = ethclient.NewClient(rpcClient)
 
 	// eth2 client
-	if len(c.eth2Endpoint) != 0 {
-		c.eth2Client = client.NewStandardHttpClient(c.eth2Endpoint)
-		_, err = c.eth2Client.GetBeaconHead()
-		if err != nil {
-			return err
-		}
-	}
-
-	// Construct tx opts, call opts, and nonce mechanism
-	opts, _, err := c.newTransactOpts(big.NewInt(0), c.gasLimit, c.maxGasPrice)
+	c.eth2Client, err = client.NewStandardHttpClient(c.eth2Endpoint)
 	if err != nil {
 		return err
 	}
-	c.opts = opts
-	c.nonce = 0
-	c.callOpts = bind.CallOpts{Pending: false, From: c.kp.CommonAddress(), BlockNumber: nil, Context: context.Background()}
+
+	if c.kp != nil {
+		// Construct tx opts, call opts, and nonce mechanism
+		opts, err := c.newTransactOpts(big.NewInt(0), c.gasLimit, c.maxGasPrice)
+		if err != nil {
+			return err
+		}
+		c.txOpts = opts
+		c.callOpts = bind.CallOpts{Pending: false, From: c.kp.CommonAddress(), BlockNumber: nil, Context: context.Background()}
+	} else {
+		c.callOpts = bind.CallOpts{Pending: false, From: ethcommon.Address{}, BlockNumber: nil, Context: context.Background()}
+	}
 	return nil
 }
 
 // newTransactOpts builds the TransactOpts for the connection's keypair.
-func (c *Connection) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.TransactOpts, uint64, error) {
+func (c *Connection) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.TransactOpts, error) {
 	privateKey := c.kp.PrivateKey()
 	address := ethcrypto.PubkeyToAddress(privateKey.PublicKey)
 
 	nonce, err := c.eth1Client.PendingNonceAt(context.Background(), address)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	chainId, err := c.eth1Client.ChainID(context.Background())
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = value
@@ -106,7 +110,7 @@ func (c *Connection) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.
 	auth.GasPrice = gasPrice
 	auth.Context = context.Background()
 
-	return auth, nonce, nil
+	return auth, nil
 }
 
 func (c *Connection) Keypair() *secp256k1.Keypair {
@@ -121,19 +125,14 @@ func (c *Connection) Eth2Client() beacon.Client {
 	return c.eth2Client
 }
 
-func (c *Connection) Opts() *bind.TransactOpts {
-	return c.opts
+func (c *Connection) TxOpts() *bind.TransactOpts {
+	return c.txOpts
 }
 
-func (c *Connection) CallOpts() *bind.CallOpts {
-	var copyCallOpts bind.CallOpts
-
-	copyCallOpts.BlockNumber = big.NewInt(c.callOpts.BlockNumber.Int64())
-	copyCallOpts.Context = context.Background()
-	copyCallOpts.From = c.callOpts.From
-	copyCallOpts.Pending = c.callOpts.Pending
-
-	return &copyCallOpts
+func (c *Connection) CallOpts(blocknumber *big.Int) *bind.CallOpts {
+	newCallOpts := c.callOpts
+	newCallOpts.BlockNumber = blocknumber
+	return &newCallOpts
 }
 
 func (c *Connection) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
@@ -147,7 +146,7 @@ func (c *Connection) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 
 // LockAndUpdateOpts acquires a lock on the opts before updating the nonce
 // and gas price.
-func (c *Connection) LockAndUpdateOpts() error {
+func (c *Connection) LockAndUpdateTxOpts() error {
 	c.optsLock.Lock()
 
 	gasPrice, err := c.SafeEstimateGas(context.Background())
@@ -155,28 +154,28 @@ func (c *Connection) LockAndUpdateOpts() error {
 		c.optsLock.Unlock()
 		return err
 	}
-	c.opts.GasPrice = gasPrice
+	c.txOpts.GasPrice = gasPrice
 
-	nonce, err := c.eth1Client.PendingNonceAt(context.Background(), c.opts.From)
+	nonce, err := c.eth1Client.PendingNonceAt(context.Background(), c.txOpts.From)
 	if err != nil {
 		c.optsLock.Unlock()
 		return err
 	}
-	c.opts.Nonce.SetUint64(nonce)
+	c.txOpts.Nonce.SetUint64(nonce)
 	return nil
 }
 
-func (c *Connection) UnlockOpts() {
+func (c *Connection) UnlockTxOpts() {
 	c.optsLock.Unlock()
 }
 
 // LatestBlock returns the latest block from the current chain
-func (c *Connection) LatestBlock() (*big.Int, error) {
-	header, err := c.eth1Client.HeaderByNumber(context.Background(), nil)
+func (c *Connection) Eth1LatestBlock() (uint64, error) {
+	header, err := c.eth1Client.BlockNumber(context.Background())
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	return header.Number, nil
+	return header, nil
 }
 
 // EnsureHasBytecode asserts if contract code exists at the specified address
@@ -190,4 +189,8 @@ func (c *Connection) EnsureHasBytecode(addr ethcommon.Address) error {
 		return fmt.Errorf("no bytecode found at %s", addr.Hex())
 	}
 	return nil
+}
+
+func (c *Connection) Eth2BeaconHead() (beacon.BeaconHead, error) {
+	return c.eth2Client.GetBeaconHead()
 }
