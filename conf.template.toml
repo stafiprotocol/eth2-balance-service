@@ -1,14 +1,15 @@
-eth1Endpoint = "" 
-eth2Endpoint = "" 
+RewardEpochInterval = 2 
+RewardStartEpoch = 147650
+eth1Endpoint = "xxxxx" 
+eth2Endpoint = "https://xxxxxx@eth2-beacon-mainnet.infura.io" 
 fakeBeaconNode = true 
 from = "0xB20e8393C07FC446D17277c80b8E3f82Cd857A50" 
 gasLimit = "3000000" 
 keystorePath = "./keys" 
-listenAddr = ":80" 
+listenAddr = ":8083" 
 logFilePath = "" 
 maxGasPrice = "30000000000" #wei
 rateSlotInterval = 10 
-startEpoch = 0 
 startHeight = 0 
 
 [contracts]
