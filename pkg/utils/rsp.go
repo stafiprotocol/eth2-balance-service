@@ -35,3 +35,13 @@ func Err(c *gin.Context, status, msg string) {
 		"data":    struct{}{},
 	})
 }
+
+const (
+	CodeParamParseErr     = "80001"
+	CodeSymbolErr         = "80002"
+	CodeInternalErr       = "80003"
+	CodeParamErr          = "80004"
+	CodePriceEmptyErr     = "80005"
+	CodeAddressNotExist   = "80005"
+	CodeValidatorNotExist = "80006"
+)

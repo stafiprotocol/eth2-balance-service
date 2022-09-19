@@ -2,6 +2,7 @@ package task_syncer
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -33,7 +34,7 @@ func (task *Task) fetchNodeDepositEvents(start, end uint64) error {
 		}
 
 		validator.NodeAddress = iterDeposited.Event.Node.String()
-		validator.NodeDepositAmount = iterDeposited.Event.Amount.Uint64()
+		validator.NodeDepositAmount = new(big.Int).Div(iterDeposited.Event.Amount, big.NewInt(1e9)).Uint64()
 		// only support common node in v2
 		validator.NodeType = utils.NodeTypeCommon
 

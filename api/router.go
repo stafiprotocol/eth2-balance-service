@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/stafiprotocol/reth/api/info_handlers"
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -20,6 +21,12 @@ func InitRouters(db *db.WrapDb) http.Handler {
 	router.Use(Cors())
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	infoHandler := info_handlers.NewHandler(db)
+	router.POST("/reth/v1/nodeInfo", infoHandler.HandlePostNodeInfo)
+	router.POST("/reth/v1/rewardInfo", infoHandler.HandlePostRewardInfo)
+	router.POST("/reth/v1/pubkeyDetail", infoHandler.HandlePostPubkeyDetail)
+	router.GET("/reth/v1/poolData", infoHandler.HandleGetPoolData)
 
 	return router
 

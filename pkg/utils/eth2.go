@@ -1,12 +1,17 @@
 package utils
 
 import (
+	"github.com/shopspring/decimal"
 	"github.com/stafiprotocol/reth/shared/beacon"
 )
 
 // Get an eth2 epoch number by time
 func EpochAt(config beacon.Eth2Config, time uint64) uint64 {
 	return config.GenesisEpoch + (time-config.GenesisTime)/config.SecondsPerEpoch
+}
+
+func EpochTime(config beacon.Eth2Config, epoch uint64) uint64 {
+	return (epoch-config.GenesisEpoch)*config.SecondsPerEpoch + config.GenesisTime
 }
 
 // Get an eth2 slot number by epoch
@@ -41,6 +46,34 @@ const (
 )
 
 const (
-	MetaTypeSyncer    = uint8(1)
-	MetaTypeCollector = uint8(2)
+	MetaTypeSyncer       = uint8(1)
+	MetaTypeSyncBalances = uint8(2)
+	MetaTypeCollector    = uint8(3)
 )
+
+var DecimalGwei = decimal.NewFromInt(1e9)
+
+func GetNodeReward(balance, effectiveBalance uint64, nodeType uint8) uint64 {
+	return 0
+}
+
+func GetNodeManagedEth(nodeDeposit, balance uint64, status uint8) uint64 {
+	switch status {
+	case ValidatorStatusDeposited:
+		fallthrough
+	case ValidatorStatusWithdrawMatch:
+		fallthrough
+	case ValidatorStatusWithdrawUnmatch:
+		return nodeDeposit
+
+	case ValidatorStatusExit:
+		fallthrough
+	case ValidatorStatusStaked:
+		fallthrough
+	case ValidatorStatusActive:
+		return balance
+
+	default:
+		return balance
+	}
+}

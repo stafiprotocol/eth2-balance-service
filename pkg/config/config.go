@@ -11,18 +11,19 @@ import (
 )
 
 type Config struct {
-	ListenAddr       string
-	Eth1Endpoint     string // url for eth1 rpc endpoint
-	Eth2Endpoint     string // url for eth2 rpc endpoint
-	StartHeight      uint64 // eth1 height, used for fetch contract events by syncer
-	StartEpoch       uint64 // used for fetch history balance info by syncer
-	LogFilePath      string
-	From             string // address of voter
-	RateSlotInterval uint64 // slot interval to recalculate rate
-	KeystorePath     string
-	GasLimit         string
-	MaxGasPrice      string
-	FakeBeaconNode   bool
+	ListenAddr          string
+	Eth1Endpoint        string // url for eth1 rpc endpoint
+	Eth2Endpoint        string // url for eth2 rpc endpoint
+	StartHeight         uint64 // eth1 height, used for fetch contract events by syncer
+	LogFilePath         string
+	From                string // address of voter
+	RateSlotInterval    uint64 // slot interval to recalculate rate
+	KeystorePath        string
+	GasLimit            string
+	MaxGasPrice         string
+	FakeBeaconNode      bool
+	RewardStartEpoch    uint64 // used for fetch history balance info by syncer
+	RewardEpochInterval uint64
 
 	Contracts Contracts
 

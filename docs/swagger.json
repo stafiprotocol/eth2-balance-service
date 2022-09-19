@@ -1,0 +1,425 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "reth api document.",
+        "title": "reth API",
+        "contact": {
+            "name": "tpkeeper",
+            "email": "tpkeeper.me@gmail.com"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8083",
+    "basePath": "/reth",
+    "paths": {
+        "/v1/nodeInfo": {
+            "post": {
+                "description": "node info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "node info",
+                "parameters": [
+                    {
+                        "description": "node info",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqNodeInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspNodeInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/poolData": {
+            "get": {
+                "description": "pool data",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "pool data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspPoolData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/pubkeyDetail": {
+            "post": {
+                "description": "pubkey detail",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "pubkey detail",
+                "parameters": [
+                    {
+                        "description": "pubkey detail",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqPubkeyDetail"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspPubkeyDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/rewardInfo": {
+            "post": {
+                "description": "reward info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "reward info",
+                "parameters": [
+                    {
+                        "description": "reward info",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqRewardInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspRewardInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "info_handlers.ReqNodeInfo": {
+            "type": "object",
+            "properties": {
+                "nodeAddress": {
+                    "description": "bech32 string",
+                    "type": "string"
+                },
+                "pageCount": {
+                    "type": "integer"
+                },
+                "pageIndex": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "info_handlers.ReqPubkeyDetail": {
+            "type": "object",
+            "properties": {
+                "chartDuSeconds": {
+                    "type": "integer"
+                },
+                "pubkey": {
+                    "description": "hex string",
+                    "type": "string"
+                }
+            }
+        },
+        "info_handlers.ReqRewardInfo": {
+            "type": "object",
+            "properties": {
+                "chartDuSeconds": {
+                    "type": "integer"
+                },
+                "nodeAddress": {
+                    "description": "hex string",
+                    "type": "string"
+                },
+                "pageCount": {
+                    "type": "integer"
+                },
+                "pageIndex": {
+                    "type": "integer"
+                }
+            }
+        },
+        "info_handlers.ResPubkey": {
+            "type": "object",
+            "properties": {
+                "pubkey": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "info_handlers.ResReward": {
+            "type": "object",
+            "properties": {
+                "commission": {
+                    "type": "integer"
+                },
+                "selfEraRewardEth": {
+                    "type": "string"
+                },
+                "selfStakedEth": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                },
+                "totalEraRewardEth": {
+                    "type": "string"
+                },
+                "totalStakedEth": {
+                    "type": "string"
+                }
+            }
+        },
+        "info_handlers.RspNodeInfo": {
+            "type": "object",
+            "properties": {
+                "ethPrice": {
+                    "type": "number"
+                },
+                "pubkeyList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/info_handlers.ResPubkey"
+                    }
+                },
+                "selfDepositedEth": {
+                    "type": "string"
+                },
+                "selfRewardEth": {
+                    "type": "string"
+                },
+                "totalCount": {
+                    "type": "integer"
+                },
+                "totalManagedEth": {
+                    "type": "string"
+                }
+            }
+        },
+        "info_handlers.RspPoolData": {
+            "type": "object",
+            "properties": {
+                "depositedEth": {
+                    "type": "string"
+                },
+                "ethPrice": {
+                    "type": "number"
+                },
+                "matchedValidators": {
+                    "type": "integer"
+                },
+                "mintedREth": {
+                    "type": "string"
+                },
+                "poolEth": {
+                    "type": "string"
+                },
+                "stakeApr": {
+                    "type": "number"
+                },
+                "stakedEth": {
+                    "type": "string"
+                },
+                "unmatchedEth": {
+                    "type": "string"
+                },
+                "validatorApr": {
+                    "type": "number"
+                }
+            }
+        },
+        "info_handlers.RspPubkeyDetail": {
+            "type": "object",
+            "properties": {
+                "activeDays": {
+                    "type": "integer"
+                },
+                "activeEpoch": {
+                    "type": "integer"
+                },
+                "apr": {
+                    "type": "number"
+                },
+                "chartXData": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "chartYData": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "currentBalance": {
+                    "type": "string"
+                },
+                "depositBalance": {
+                    "type": "string"
+                },
+                "effectiveBalance": {
+                    "type": "string"
+                },
+                "eligibleDays": {
+                    "type": "integer"
+                },
+                "eligibleEpoch": {
+                    "type": "integer"
+                },
+                "ethPrice": {
+                    "type": "number"
+                },
+                "last24hRewardEth": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "info_handlers.RspRewardInfo": {
+            "type": "object",
+            "properties": {
+                "chartXData": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "chartYData": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ethPrice": {
+                    "type": "number"
+                },
+                "lastEraRewardEth": {
+                    "type": "string"
+                },
+                "rewardList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/info_handlers.ResReward"
+                    }
+                },
+                "totalCount": {
+                    "type": "integer"
+                },
+                "totalStakedEth": {
+                    "type": "string"
+                }
+            }
+        },
+        "utils.Rsp": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

@@ -2,13 +2,15 @@ package client_test
 
 import (
 	"context"
+	"math/big"
+	"testing"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared/beacon"
 	"github.com/stafiprotocol/reth/shared/beacon/client"
 	"github.com/stafiprotocol/reth/types"
-	"math/big"
-	"testing"
 )
 
 func TestStatus(t *testing.T) {
@@ -16,7 +18,8 @@ func TestStatus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pubkey, err := types.HexToValidatorPubkey("af93696b857fb621048539d0f9ee7722d801e05cf3be3039decd17b937dd9d69f4450c407f5ae4e96d875cb754840c1c")
+	// pubkey, err := types.HexToValidatorPubkey("af93696b857fb621048539d0f9ee7722d801e05cf3be3039decd17b937dd9d69f4450c407f5ae4e96d875cb754840c1c")
+	pubkey, err := types.HexToValidatorPubkey("91b92af1781da257d3564a03f10c1f3b572695e1b4de50709096cf960260570768c17cd69c5a4ce6be9ae7e7f8e86f1f")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,6 +31,12 @@ func TestStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("%+v", status)
+
+	config, err := c.GetEth2Config()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(config.GenesisEpoch, config.GenesisTime, utils.EpochTime(config, 30000))
 }
 
 func TestTx(t *testing.T) {

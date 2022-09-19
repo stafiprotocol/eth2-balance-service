@@ -1,0 +1,267 @@
+basePath: /reth
+definitions:
+  info_handlers.ReqNodeInfo:
+    properties:
+      nodeAddress:
+        description: bech32 string
+        type: string
+      pageCount:
+        type: integer
+      pageIndex:
+        type: integer
+      status:
+        type: integer
+    type: object
+  info_handlers.ReqPubkeyDetail:
+    properties:
+      chartDuSeconds:
+        type: integer
+      pubkey:
+        description: hex string
+        type: string
+    type: object
+  info_handlers.ReqRewardInfo:
+    properties:
+      chartDuSeconds:
+        type: integer
+      nodeAddress:
+        description: hex string
+        type: string
+      pageCount:
+        type: integer
+      pageIndex:
+        type: integer
+    type: object
+  info_handlers.ResPubkey:
+    properties:
+      pubkey:
+        type: string
+      status:
+        type: integer
+    type: object
+  info_handlers.ResReward:
+    properties:
+      commission:
+        type: integer
+      selfEraRewardEth:
+        type: string
+      selfStakedEth:
+        type: string
+      timestamp:
+        type: integer
+      totalEraRewardEth:
+        type: string
+      totalStakedEth:
+        type: string
+    type: object
+  info_handlers.RspNodeInfo:
+    properties:
+      ethPrice:
+        type: number
+      pubkeyList:
+        items:
+          $ref: '#/definitions/info_handlers.ResPubkey'
+        type: array
+      selfDepositedEth:
+        type: string
+      selfRewardEth:
+        type: string
+      totalCount:
+        type: integer
+      totalManagedEth:
+        type: string
+    type: object
+  info_handlers.RspPoolData:
+    properties:
+      depositedEth:
+        type: string
+      ethPrice:
+        type: number
+      matchedValidators:
+        type: integer
+      mintedREth:
+        type: string
+      poolEth:
+        type: string
+      stakeApr:
+        type: number
+      stakedEth:
+        type: string
+      unmatchedEth:
+        type: string
+      validatorApr:
+        type: number
+    type: object
+  info_handlers.RspPubkeyDetail:
+    properties:
+      activeDays:
+        type: integer
+      activeEpoch:
+        type: integer
+      apr:
+        type: number
+      chartXData:
+        items:
+          type: integer
+        type: array
+      chartYData:
+        items:
+          type: string
+        type: array
+      currentBalance:
+        type: string
+      depositBalance:
+        type: string
+      effectiveBalance:
+        type: string
+      eligibleDays:
+        type: integer
+      eligibleEpoch:
+        type: integer
+      ethPrice:
+        type: number
+      last24hRewardEth:
+        type: string
+      status:
+        type: integer
+    type: object
+  info_handlers.RspRewardInfo:
+    properties:
+      chartXData:
+        items:
+          type: integer
+        type: array
+      chartYData:
+        items:
+          type: string
+        type: array
+      ethPrice:
+        type: number
+      lastEraRewardEth:
+        type: string
+      rewardList:
+        items:
+          $ref: '#/definitions/info_handlers.ResReward'
+        type: array
+      totalCount:
+        type: integer
+      totalStakedEth:
+        type: string
+    type: object
+  utils.Rsp:
+    properties:
+      data: {}
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+host: localhost:8083
+info:
+  contact:
+    email: tpkeeper.me@gmail.com
+    name: tpkeeper
+  description: reth api document.
+  title: reth API
+  version: "1.0"
+paths:
+  /v1/nodeInfo:
+    post:
+      consumes:
+      - application/json
+      description: node info
+      parameters:
+      - description: node info
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqNodeInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspNodeInfo'
+              type: object
+      summary: node info
+      tags:
+      - v1
+  /v1/poolData:
+    get:
+      description: pool data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspPoolData'
+              type: object
+      summary: pool data
+      tags:
+      - v1
+  /v1/pubkeyDetail:
+    post:
+      consumes:
+      - application/json
+      description: pubkey detail
+      parameters:
+      - description: pubkey detail
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqPubkeyDetail'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspPubkeyDetail'
+              type: object
+      summary: pubkey detail
+      tags:
+      - v1
+  /v1/rewardInfo:
+    post:
+      consumes:
+      - application/json
+      description: reward info
+      parameters:
+      - description: reward info
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqRewardInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspRewardInfo'
+              type: object
+      summary: reward info
+      tags:
+      - v1
+swagger: "2.0"

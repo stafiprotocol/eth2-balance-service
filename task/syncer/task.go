@@ -3,8 +3,10 @@ package task_syncer
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/sirupsen/logrus"
 	deposit_contract "github.com/stafiprotocol/reth/bindings/DepositContract"
 	light_node "github.com/stafiprotocol/reth/bindings/LightNode"
 	node_deposit "github.com/stafiprotocol/reth/bindings/NodeDeposit"
@@ -15,6 +17,7 @@ import (
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared"
+	"github.com/stafiprotocol/reth/shared/beacon"
 	"gorm.io/gorm"
 )
 
@@ -22,11 +25,13 @@ type Task struct {
 	taskTicker             int64
 	stop                   chan struct{}
 	startHeight            uint64
-	startEpoch             uint64
+	rewardStartEpoch       uint64
 	eth1Endpoint           string
 	eth2Endpoint           string
 	rateSlotInterval       uint64
 	storageContractAddress common.Address
+	FakeBeaconNode         bool
+	RewardEpochInterval    uint64
 
 	// need init on start
 	db                  *db.WrapDb
@@ -35,6 +40,8 @@ type Task struct {
 	lightNodeContract   *light_node.LightNode
 	nodeDepositContract *node_deposit.NodeDeposit
 	superNodeContract   *super_node.SuperNode
+
+	eth2Config beacon.Eth2Config
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
@@ -47,12 +54,14 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		stop:             make(chan struct{}),
 		db:               dao,
 		startHeight:      cfg.StartHeight,
-		startEpoch:       cfg.StartEpoch,
+		rewardStartEpoch: cfg.RewardStartEpoch,
 		eth1Endpoint:     cfg.Eth1Endpoint,
 		eth2Endpoint:     cfg.Eth2Endpoint,
 		rateSlotInterval: cfg.RateSlotInterval,
 
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
+		FakeBeaconNode:         cfg.FakeBeaconNode,
+		RewardEpochInterval:    cfg.RewardEpochInterval,
 	}
 	return s, nil
 }
@@ -72,6 +81,11 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
+	task.eth2Config, err = task.connection.Eth2Client().GetEth2Config()
+	if err != nil {
+		return err
+	}
+
 	utils.SafeGoWithRestart(task.syncHandler)
 	return nil
 }
@@ -137,23 +151,38 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 			meta.DealedBlockHeight = task.startHeight - 1
 		}
 
-		if task.startEpoch == 0 {
-			meta.DealedEpoch = 0
-		} else {
-			meta.DealedEpoch = task.startEpoch - 1
-		}
 		meta.MetaType = utils.MetaTypeSyncer
 
-		return dao.UpOrInMetaData(task.db, meta)
+	} else {
+		// use the bigger height
+		if meta.DealedBlockHeight+1 < task.startHeight {
+			meta.DealedBlockHeight = task.startHeight - 1
+		}
 	}
 
-	// use the bigger height
-	if meta.DealedBlockHeight+1 < task.startHeight {
-		meta.DealedBlockHeight = task.startHeight - 1
+	err = dao.UpOrInMetaData(task.db, meta)
+	if err != nil {
+		return err
 	}
 
-	if meta.DealedEpoch+1 < task.startEpoch {
-		meta.DealedEpoch = task.startEpoch - 1
+	meta, err = dao.GetMetaData(task.db, utils.MetaTypeSyncBalances)
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return err
+		}
+		// will init if meta data not exist
+		if task.rewardStartEpoch == 0 {
+			meta.DealedEpoch = 0
+		} else {
+			meta.DealedEpoch = task.rewardStartEpoch - 1
+		}
+		meta.MetaType = utils.MetaTypeSyncBalances
+
+	} else {
+
+		if meta.DealedEpoch+1 < task.rewardStartEpoch {
+			meta.DealedEpoch = task.rewardStartEpoch - 1
+		}
 	}
 
 	return dao.UpOrInMetaData(task.db, meta)
@@ -168,4 +197,54 @@ func (task *Task) getContractAddress(storage *storage.Storage, name string) (com
 		return common.Address{}, fmt.Errorf("address empty")
 	}
 	return address, nil
+}
+
+func (task *Task) syncHandler() {
+	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
+	defer ticker.Stop()
+	retry := 0
+	for {
+		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
+			return
+		}
+
+		select {
+		case <-task.stop:
+			logrus.Info("task has stopped")
+			return
+		case <-ticker.C:
+			logrus.Debug("syncEth1Event start -----------")
+			err := task.syncEth1Event()
+			if err != nil {
+				logrus.Warnf("syncEth1Event err: %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("syncEth1Event end -----------")
+
+			logrus.Debug("syncValidatorTargetSlotBalance start -----------")
+			err = task.syncValidatorTargetSlotBalance()
+			if err != nil {
+				logrus.Warnf("syncValidatorTargetSlotBalance err: %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("syncValidatorTargetSlotBalance end -----------")
+
+			logrus.Debug("syncValidatorEpochBalances start -----------")
+			err = task.syncValidatorEpochBalances()
+			if err != nil {
+				logrus.Warnf("syncValidatorEpochBalances err: %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("syncValidatorEpochBalances end -----------")
+
+			retry = 0
+		}
+	}
 }

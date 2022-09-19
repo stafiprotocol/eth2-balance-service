@@ -13,7 +13,7 @@ type Validator struct {
 	db.BaseModel
 	Pubkey string `gorm:"type:varchar(100) not null;default:'';column:pubkey;uniqueIndex"` // hex with 0x prefix
 
-	NodeAddress        string `gorm:"type:varchar(80) not null;default:'';column:node_address"`                // hex with 0x prefix
+	NodeAddress        string `gorm:"type:varchar(80) not null;default:'';column:node_address;index"`          // hex with 0x prefix
 	DepositSignature   string `gorm:"type:varchar(200) not null;default:'';column:deposit_signature"`          // hex with 0x prefix
 	DepositTxHash      string `gorm:"type:varchar(80) not null;default:'';column:deposit_tx_hash"`             // hex with 0x prefix
 	StakeTxHash        string `gorm:"type:varchar(80) not null;default:'';column:stake_tx_hash"`               // hex with 0x prefix
@@ -21,6 +21,7 @@ type Validator struct {
 	StakeBlockHeight   uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:stake_block_height"`   // eth1 block height when stake
 	NodeDepositAmount  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:node_deposit_amount"`  // Gwei
 	ActiveEpoch        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:active_epoch"`
+	EligibleEpoch      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:eligible_epoch"`
 
 	PoolAddress string `gorm:"type:varchar(80) not null;default:'';column:pool_address"` // hex with 0x prefix, used in common nodes
 
@@ -54,7 +55,53 @@ func GetValidatorDepositedListBefore(db *db.WrapDb, height uint64) (c []*Validat
 	err = db.Find(&c, "deposit_block_height <= ?", height).Error
 	return
 }
+
+func GetValidatorListActiveEpochBefore(db *db.WrapDb, epoch uint64) (c []*Validator, err error) {
+	err = db.Find(&c, "active_epoch <= ? and active_epoch <> 0", epoch).Error
+	return
+}
+
 func GetStakedAndActiveValidatorList(db *db.WrapDb) (c []*Validator, err error) {
 	err = db.Find(&c, "status = ? or status = ?", utils.ValidatorStatusStaked, utils.ValidatorStatusActive).Error
+	return
+}
+
+func GetValidatorListByNode(db *db.WrapDb, nodeAddress string, status uint8) (c []*Validator, err error) {
+	if status == 0 {
+		err = db.Find(&c, "node_address = ?", nodeAddress).Error
+	} else {
+		err = db.Find(&c, "node_address = ? and status = ?", nodeAddress, status).Error
+	}
+	return
+}
+
+func GetValidatorListByNodeWithPage(db *db.WrapDb, nodeAddress string, status uint8, pageIndex, pageCount int) (c []*Validator, count int64, err error) {
+	if pageIndex <= 0 {
+		pageIndex = 1
+	}
+	if pageCount <= 0 {
+		pageCount = 10
+	}
+	if pageCount > 50 {
+		pageCount = 50
+	}
+
+	if status == 0 {
+		err = db.Model(&Validator{}).Where("node_address = ?", nodeAddress).Count(&count).Error
+		if err != nil {
+			return nil, 0, err
+		}
+	} else {
+		err = db.Model(&Validator{}).Where("node_address = ? and status = ?", nodeAddress, status).Count(&count).Error
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
+	if status == 0 {
+		err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ?", nodeAddress).Error
+	} else {
+		err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ? and status = ?", nodeAddress, status).Error
+	}
 	return
 }
