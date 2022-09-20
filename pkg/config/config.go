@@ -17,7 +17,6 @@ type Config struct {
 	StartHeight         uint64 // eth1 height, used for fetch contract events by syncer
 	LogFilePath         string
 	From                string // address of voter
-	RateSlotInterval    uint64 // slot interval to recalculate rate
 	KeystorePath        string
 	GasLimit            string
 	MaxGasPrice         string

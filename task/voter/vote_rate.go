@@ -12,7 +12,8 @@ import (
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
-const balancesSlotOffset = uint64(1e9)
+const balancesEpochOffset = uint64(1e10)
+const standardEffectiveBalance = 1e9
 
 func (task *Task) voteRate() error {
 
@@ -20,7 +21,16 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return err
 	}
-	targetSlot := (beaconHead.FinalizedSlot / task.rateSlotInterval) * task.rateSlotInterval
+	targetEpoch := (beaconHead.FinalizedEpoch / task.rewardEpochInterval) * task.rewardEpochInterval
+
+	eth2BalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
+	if err != nil {
+		return err
+	}
+	// ensure eth2 balances have synced
+	if eth2BalanceSyncerMetaData.DealedEpoch < targetEpoch {
+		return nil
+	}
 
 	balancesBlockOnChain, err := task.networkBalancesContract.GetBalancesBlock(task.connection.CallOpts(nil))
 	if err != nil {
@@ -28,16 +38,16 @@ func (task *Task) voteRate() error {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"targetSlot":           targetSlot,
+		"targetEpoch":          targetEpoch,
 		"balancesBlockOnChain": balancesBlockOnChain.String(),
-	}).Debug("targetSlot")
+	}).Debug("targetEpoch")
 
 	// already update on this slot, no need vote
-	if targetSlot+balancesSlotOffset <= balancesBlockOnChain.Uint64() || targetSlot+balancesSlotOffset < task.rateSlotInterval+balancesBlockOnChain.Uint64() {
+	if targetEpoch+balancesEpochOffset <= balancesBlockOnChain.Uint64() {
 		return nil
 	}
 
-	targetBeaconBlock, _, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(targetSlot))
+	targetBeaconBlock, _, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(utils.SlotAt(task.eth2Config, targetEpoch)))
 	if err != nil {
 		return err
 	}
@@ -46,16 +56,16 @@ func (task *Task) voteRate() error {
 	}
 	targetEth1BlockHeight := targetBeaconBlock.ExecutionBlockNumber
 
-	meta, err := dao.GetMetaData(task.db, utils.MetaTypeSyncer)
+	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
 	if err != nil {
 		return err
 	}
 
-	if task.FakeBeaconNode {
+	if task.fakeBeaconNode {
 		targetEth1BlockHeight = meta.DealedBlockHeight
 	}
 
-	// ensure all event synced
+	// ensure all eth1 event synced
 	if meta.DealedBlockHeight < targetEth1BlockHeight {
 		return nil
 	}
@@ -80,7 +90,7 @@ func (task *Task) voteRate() error {
 	totalUserEthFromValidator := uint64(0)
 	totalStakingEthFromValidator := uint64(0)
 	for _, validator := range validatorDepositedList {
-		stakingEth, userEth, err := task.getEthInfoOfValidator(validator, targetEth1BlockHeight)
+		stakingEth, userEth, err := task.getEthInfoOfValidator(validator, targetEpoch)
 		if err != nil {
 			return err
 		}
@@ -88,13 +98,13 @@ func (task *Task) voteRate() error {
 		totalStakingEthFromValidator += stakingEth
 	}
 
-	totalUserEth := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(decimal.NewFromInt(1e9)).
-		Add(decimal.NewFromBigInt(userDepositBalance, 0)).BigInt()
+	totalUserEthFromValidatorDeci := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(decimal.NewFromInt(1e9))
+	totalUserEth := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositBalance, 0)).BigInt()
 
 	totalStakingEth := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(decimal.NewFromInt(1e9)).BigInt()
-	balancesSlot := big.NewInt(int64(targetSlot + balancesSlotOffset))
+	balancesEpoch := big.NewInt(int64(targetEpoch + balancesEpochOffset))
 
-	voted, err := task.networkBalancesContract.NodeVoted(task.connection.CallOpts(nil), task.connection.Keypair().CommonAddress(), balancesSlot, totalUserEth, totalStakingEth, rethTotalSupply)
+	voted, err := task.networkBalancesContract.NodeVoted(task.connection.CallOpts(nil), task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEth, totalStakingEth, rethTotalSupply)
 	if err != nil {
 		return err
 	}
@@ -110,15 +120,18 @@ func (task *Task) voteRate() error {
 	defer task.connection.UnlockTxOpts()
 
 	logrus.WithFields(logrus.Fields{
-		"balancesSlot":    balancesSlot,
-		"totalUserEth":    totalUserEth.String(),
-		"totalStakingEth": totalStakingEth.String(),
-		"rethTotalSupply": rethTotalSupply.String(),
+		"targetEpoch":               targetEpoch,
+		"balancesEpoch":             balancesEpoch,
+		"totalUserEthFromValidator": totalUserEthFromValidatorDeci.String(),
+		"userDepositBalance":        userDepositBalance,
+		"totalUserEth":              totalUserEth.String(),
+		"totalStakingEth":           totalStakingEth.String(),
+		"rethTotalSupply":           rethTotalSupply.String(),
 	}).Info("will send submitBalances tx")
 
 	tx, err := task.networkBalancesContract.SubmitBalances(
 		task.connection.TxOpts(),
-		balancesSlot,
+		balancesEpoch,
 		totalUserEth,
 		totalStakingEth,
 		rethTotalSupply)
@@ -160,22 +173,23 @@ func (task *Task) voteRate() error {
 }
 
 // Gwei
-func (task *Task) getEthInfoOfValidator(validator *dao.Validator, targetHeight uint64) (stakingEth uint64, userEth uint64, err error) {
+func (task *Task) getEthInfoOfValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
+
 	switch validator.NodeType {
 	case utils.NodeTypeCommon:
-		return task.getEthInfoOfCommonNodeValidator(validator, targetHeight)
+		return task.getEthInfoOfCommonNodeValidator(validator, targetEpoch)
 	case utils.NodeTypeTrust:
-		return task.getEthInfoOfTrustNodeValidator(validator, targetHeight)
+		return task.getEthInfoOfTrustNodeValidator(validator, targetEpoch)
 	case utils.NodeTypeLight:
-		return task.getEthInfoOfLightNodeValidator(validator, targetHeight)
+		return task.getEthInfoOfLightNodeValidator(validator, targetEpoch)
 	case utils.NodeTypeSuper:
-		return task.getEthInfoOfSuperNodeValidator(validator, targetHeight)
+		return task.getEthInfoOfSuperNodeValidator(validator, targetEpoch)
 	default:
 		return 0, 0, fmt.Errorf("unknow node type: %d", validator.NodeType)
 	}
 }
 
-func (task *Task) getEthInfoOfCommonNodeValidator(validator *dao.Validator, targetHeight uint64) (stakingEth uint64, userEth uint64, err error) {
+func (task *Task) getEthInfoOfCommonNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited:
 		fallthrough
@@ -195,7 +209,32 @@ func (task *Task) getEthInfoOfCommonNodeValidator(validator *dao.Validator, targ
 	case utils.ValidatorStatusStaked:
 		fallthrough
 	case utils.ValidatorStatusActive:
-		return validator.EffectiveBalance - 4e9, validator.Balance - 4e9, nil
+		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
+		if err != nil {
+			return 0, 0, err
+		}
+		userDepositBalance := standardEffectiveBalance - validator.NodeDepositAmount
+
+		switch {
+		case validatorBalance.Balance == standardEffectiveBalance:
+			return userDepositBalance, userDepositBalance, nil
+		case validatorBalance.Balance < standardEffectiveBalance:
+			loss := standardEffectiveBalance - validatorBalance.Balance
+			if loss < validator.NodeDepositAmount {
+				return userDepositBalance, userDepositBalance, nil
+			} else {
+				return validatorBalance.Balance, validatorBalance.Balance, nil
+			}
+		case validatorBalance.Balance > standardEffectiveBalance:
+			reward := validatorBalance.Balance - standardEffectiveBalance
+			nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromInt(1).Sub(task.platformFee))
+			userRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(standardEffectiveBalance))
+			userLeftRewardDeci := userRewardDeci.Mul(decimal.NewFromInt(1).Sub(task.nodeFee))
+
+			return userDepositBalance, userDepositBalance + userLeftRewardDeci.BigInt().Uint64(), nil
+		default:
+			return 0, 0, fmt.Errorf("should not happen")
+		}
 
 	case utils.ValidatorStatusDistribute:
 		return 0, 0, nil
@@ -203,7 +242,8 @@ func (task *Task) getEthInfoOfCommonNodeValidator(validator *dao.Validator, targ
 		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
 	}
 }
-func (task *Task) getEthInfoOfTrustNodeValidator(validator *dao.Validator, targetHeight uint64) (stakingEth uint64, userEth uint64, err error) {
+
+func (task *Task) getEthInfoOfTrustNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited:
 		fallthrough
@@ -217,7 +257,32 @@ func (task *Task) getEthInfoOfTrustNodeValidator(validator *dao.Validator, targe
 	case utils.ValidatorStatusStaked:
 		fallthrough
 	case utils.ValidatorStatusActive:
-		return validator.EffectiveBalance, validator.Balance, nil
+		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
+		if err != nil {
+			return 0, 0, err
+		}
+		userDepositBalance := standardEffectiveBalance - validator.NodeDepositAmount
+
+		switch {
+		case validatorBalance.Balance == standardEffectiveBalance:
+			return userDepositBalance, userDepositBalance, nil
+		case validatorBalance.Balance < standardEffectiveBalance:
+			loss := standardEffectiveBalance - validatorBalance.Balance
+			if loss < validator.NodeDepositAmount {
+				return userDepositBalance, userDepositBalance, nil
+			} else {
+				return validatorBalance.Balance, validatorBalance.Balance, nil
+			}
+		case validatorBalance.Balance > standardEffectiveBalance:
+			reward := validatorBalance.Balance - standardEffectiveBalance
+			nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromInt(1).Sub(task.platformFee))
+			userRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(standardEffectiveBalance))
+			userLeftRewardDeci := userRewardDeci.Mul(decimal.NewFromInt(1).Sub(task.nodeFee))
+
+			return userDepositBalance, userDepositBalance + userLeftRewardDeci.BigInt().Uint64(), nil
+		default:
+			return 0, 0, fmt.Errorf("should not happen")
+		}
 
 	case utils.ValidatorStatusDistribute:
 		return 0, 0, nil
@@ -225,7 +290,7 @@ func (task *Task) getEthInfoOfTrustNodeValidator(validator *dao.Validator, targe
 		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
 	}
 }
-func (task *Task) getEthInfoOfLightNodeValidator(validator *dao.Validator, targetHeight uint64) (stakingEth uint64, userEth uint64, err error) {
+func (task *Task) getEthInfoOfLightNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited:
 		fallthrough
@@ -245,7 +310,32 @@ func (task *Task) getEthInfoOfLightNodeValidator(validator *dao.Validator, targe
 	case utils.ValidatorStatusStaked:
 		fallthrough
 	case utils.ValidatorStatusActive:
-		return validator.EffectiveBalance - 4e9, validator.Balance - 4e9, nil
+		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
+		if err != nil {
+			return 0, 0, err
+		}
+		userDepositBalance := standardEffectiveBalance - validator.NodeDepositAmount
+
+		switch {
+		case validatorBalance.Balance == standardEffectiveBalance:
+			return userDepositBalance, userDepositBalance, nil
+		case validatorBalance.Balance < standardEffectiveBalance:
+			loss := standardEffectiveBalance - validatorBalance.Balance
+			if loss < validator.NodeDepositAmount {
+				return userDepositBalance, userDepositBalance, nil
+			} else {
+				return validatorBalance.Balance, validatorBalance.Balance, nil
+			}
+		case validatorBalance.Balance > standardEffectiveBalance:
+			reward := validatorBalance.Balance - standardEffectiveBalance
+			nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromInt(1).Sub(task.platformFee))
+			userRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(standardEffectiveBalance))
+			userLeftRewardDeci := userRewardDeci.Mul(decimal.NewFromInt(1).Sub(task.nodeFee))
+
+			return userDepositBalance, userDepositBalance + userLeftRewardDeci.BigInt().Uint64(), nil
+		default:
+			return 0, 0, fmt.Errorf("should not happen")
+		}
 
 	case utils.ValidatorStatusDistribute:
 		return 0, 0, nil
@@ -253,7 +343,7 @@ func (task *Task) getEthInfoOfLightNodeValidator(validator *dao.Validator, targe
 		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
 	}
 }
-func (task *Task) getEthInfoOfSuperNodeValidator(validator *dao.Validator, targetHeight uint64) (stakingEth uint64, userEth uint64, err error) {
+func (task *Task) getEthInfoOfSuperNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited:
 		fallthrough
@@ -267,7 +357,32 @@ func (task *Task) getEthInfoOfSuperNodeValidator(validator *dao.Validator, targe
 	case utils.ValidatorStatusStaked:
 		fallthrough
 	case utils.ValidatorStatusActive:
-		return validator.EffectiveBalance, validator.Balance, nil
+		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
+		if err != nil {
+			return 0, 0, err
+		}
+		userDepositBalance := standardEffectiveBalance - validator.NodeDepositAmount
+
+		switch {
+		case validatorBalance.Balance == standardEffectiveBalance:
+			return userDepositBalance, userDepositBalance, nil
+		case validatorBalance.Balance < standardEffectiveBalance:
+			loss := standardEffectiveBalance - validatorBalance.Balance
+			if loss < validator.NodeDepositAmount {
+				return userDepositBalance, userDepositBalance, nil
+			} else {
+				return validatorBalance.Balance, validatorBalance.Balance, nil
+			}
+		case validatorBalance.Balance > standardEffectiveBalance:
+			reward := validatorBalance.Balance - standardEffectiveBalance
+			nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromInt(1).Sub(task.platformFee))
+			userRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(standardEffectiveBalance))
+			userLeftRewardDeci := userRewardDeci.Mul(decimal.NewFromInt(1).Sub(task.nodeFee))
+
+			return userDepositBalance, userDepositBalance + userLeftRewardDeci.BigInt().Uint64(), nil
+		default:
+			return 0, 0, fmt.Errorf("should not happen")
+		}
 
 	case utils.ValidatorStatusDistribute:
 		return 0, 0, nil

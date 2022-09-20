@@ -8,7 +8,7 @@ import (
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
-// all validators info, update by syncer
+// all validators info, update by eth1Syncer and eth2Info syncer
 type Validator struct {
 	db.BaseModel
 	Pubkey string `gorm:"type:varchar(100) not null;default:'';column:pubkey;uniqueIndex"` // hex with 0x prefix
@@ -25,11 +25,12 @@ type Validator struct {
 
 	PoolAddress string `gorm:"type:varchar(80) not null;default:'';column:pool_address"` // hex with 0x prefix, used in common nodes
 
-	Balance          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance"`           // balance on new target epoch, Gwei
-	EffectiveBalance uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:effective_balance"` // balance on new target epoch, Gwei
+	Balance          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance"`           // realtime balance
+	EffectiveBalance uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:effective_balance"` //realtime effectiveBalance
 
-	NodeType uint8 `gorm:"type:tinyint(3) unsigned not null;default:0;column:node_type"` // 1 common node 2 trust node(used in v1) 3 light node 4 super node
-	Status   uint8 `gorm:"type:tinyint(3) unsigned not null;default:0;column:status"`    // 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 exit 9 active}
+	NodeType       uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:node_type"` // 1 common node 2 trust node(used in v1) 3 light node 4 super node
+	Status         uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:status"`    // 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 exit 9 active}
+	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index"`
 }
 
 func (f Validator) TableName() string {
@@ -43,6 +44,12 @@ func UpOrInValidator(db *db.WrapDb, c *Validator) error {
 func GetValidator(db *db.WrapDb, pubkey string) (c *Validator, err error) {
 	c = &Validator{}
 	err = db.Take(c, "pubkey = ?", pubkey).Error
+	return
+}
+
+func GetValidatorByIndex(db *db.WrapDb, validatorIndex uint64) (c *Validator, err error) {
+	c = &Validator{}
+	err = db.Take(c, "validator_index = ?", validatorIndex).Error
 	return
 }
 

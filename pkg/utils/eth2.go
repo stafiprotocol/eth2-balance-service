@@ -14,6 +14,10 @@ func EpochTime(config beacon.Eth2Config, epoch uint64) uint64 {
 	return (epoch-config.GenesisEpoch)*config.SecondsPerEpoch + config.GenesisTime
 }
 
+func SlotInterval(config beacon.Eth2Config, epochInterval uint64) uint64 {
+	return config.SlotsPerEpoch * epochInterval
+}
+
 // Get an eth2 slot number by epoch
 func SlotAt(config beacon.Eth2Config, epoch uint64) uint64 {
 	return config.GenesisEpoch + config.SlotsPerEpoch*epoch
@@ -46,9 +50,9 @@ const (
 )
 
 const (
-	MetaTypeSyncer       = uint8(1)
-	MetaTypeSyncBalances = uint8(2)
-	MetaTypeCollector    = uint8(3)
+	MetaTypeEth1Syncer        = uint8(1)
+	MetaTypeEth2InfoSyncer    = uint8(2)
+	MetaTypeEth2BalanceSyncer = uint8(3)
 )
 
 var DecimalGwei = decimal.NewFromInt(1e9)

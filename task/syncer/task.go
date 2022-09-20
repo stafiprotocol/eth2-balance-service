@@ -28,10 +28,9 @@ type Task struct {
 	rewardStartEpoch       uint64
 	eth1Endpoint           string
 	eth2Endpoint           string
-	rateSlotInterval       uint64
 	storageContractAddress common.Address
-	FakeBeaconNode         bool
-	RewardEpochInterval    uint64
+	fakeBeaconNode         bool
+	rewardEpochInterval    uint64
 
 	// need init on start
 	db                  *db.WrapDb
@@ -41,12 +40,16 @@ type Task struct {
 	nodeDepositContract *node_deposit.NodeDeposit
 	superNodeContract   *super_node.SuperNode
 
-	eth2Config beacon.Eth2Config
+	eth2Config         beacon.Eth2Config
+	rewardSlotInterval uint64
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("contracts address fmt err")
+	}
+	if cfg.RewardEpochInterval == 0 {
+		return nil, fmt.Errorf("reward epoch interval is zero")
 	}
 
 	s := &Task{
@@ -57,11 +60,10 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		rewardStartEpoch: cfg.RewardStartEpoch,
 		eth1Endpoint:     cfg.Eth1Endpoint,
 		eth2Endpoint:     cfg.Eth2Endpoint,
-		rateSlotInterval: cfg.RateSlotInterval,
 
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
-		FakeBeaconNode:         cfg.FakeBeaconNode,
-		RewardEpochInterval:    cfg.RewardEpochInterval,
+		fakeBeaconNode:         cfg.FakeBeaconNode,
+		rewardEpochInterval:    cfg.RewardEpochInterval,
 	}
 	return s, nil
 }
@@ -85,6 +87,8 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
+
+	task.rewardSlotInterval = utils.SlotInterval(task.eth2Config, task.rewardEpochInterval)
 
 	utils.SafeGoWithRestart(task.syncHandler)
 	return nil
@@ -139,7 +143,7 @@ func (task *Task) initContract() error {
 }
 
 func (task *Task) mabyUpdateStartHeightOrEpoch() error {
-	meta, err := dao.GetMetaData(task.db, utils.MetaTypeSyncer)
+	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			return err
@@ -151,7 +155,7 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 			meta.DealedBlockHeight = task.startHeight - 1
 		}
 
-		meta.MetaType = utils.MetaTypeSyncer
+		meta.MetaType = utils.MetaTypeEth1Syncer
 
 	} else {
 		// use the bigger height
@@ -165,7 +169,7 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 		return err
 	}
 
-	meta, err = dao.GetMetaData(task.db, utils.MetaTypeSyncBalances)
+	meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			return err
@@ -176,7 +180,7 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 		} else {
 			meta.DealedEpoch = task.rewardStartEpoch - 1
 		}
-		meta.MetaType = utils.MetaTypeSyncBalances
+		meta.MetaType = utils.MetaTypeEth2InfoSyncer
 
 	} else {
 
@@ -184,8 +188,32 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 			meta.DealedEpoch = task.rewardStartEpoch - 1
 		}
 	}
+	err = dao.UpOrInMetaData(task.db, meta)
+	if err != nil {
+		return err
+	}
 
+	meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return err
+		}
+		// will init if meta data not exist
+		if task.rewardStartEpoch == 0 {
+			meta.DealedEpoch = 0
+		} else {
+			meta.DealedEpoch = task.rewardStartEpoch - 1
+		}
+		meta.MetaType = utils.MetaTypeEth2BalanceSyncer
+
+	} else {
+
+		if meta.DealedEpoch+1 < task.rewardStartEpoch {
+			meta.DealedEpoch = task.rewardStartEpoch - 1
+		}
+	}
 	return dao.UpOrInMetaData(task.db, meta)
+
 }
 
 func (task *Task) getContractAddress(storage *storage.Storage, name string) (common.Address, error) {
@@ -224,15 +252,15 @@ func (task *Task) syncHandler() {
 			}
 			logrus.Debug("syncEth1Event end -----------")
 
-			logrus.Debug("syncValidatorTargetSlotBalance start -----------")
-			err = task.syncValidatorTargetSlotBalance()
+			logrus.Debug("syncValidatorLatestInfo start -----------")
+			err = task.syncValidatorLatestInfo()
 			if err != nil {
-				logrus.Warnf("syncValidatorTargetSlotBalance err: %s", err)
+				logrus.Warnf("syncValidatorLatestInfo err: %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("syncValidatorTargetSlotBalance end -----------")
+			logrus.Debug("syncValidatorLatestInfo end -----------")
 
 			logrus.Debug("syncValidatorEpochBalances start -----------")
 			err = task.syncValidatorEpochBalances()

@@ -6,7 +6,7 @@ import (
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
-const getValidatorStatusLimit = 50
+const fetchValidatorStatusLimit = 50
 const fetchEventBlockLimit = uint64(4900)
 
 func (task *Task) syncEth1Event() error {
@@ -15,7 +15,7 @@ func (task *Task) syncEth1Event() error {
 		return err
 	}
 
-	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeSyncer)
+	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
 	if err != nil {
 		return err
 	}

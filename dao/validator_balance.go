@@ -7,11 +7,11 @@ import (
 	"github.com/stafiprotocol/reth/pkg/db"
 )
 
-// balance info  of actived validators
+// balance info  of actived validators, update by eth2BalanceSyncer
 type ValidatorBalance struct {
 	db.BaseModel
-	Pubkey string `gorm:"type:varchar(100) not null;default:'';column:pubkey;uniqueIndex:uni_idx_pubkey_epoch"` //hex with 0x prefix
-	Epoch  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:epoch;uniqueIndex:uni_idx_pubkey_epoch"`
+	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index;uniqueIndex:uni_idx_val_epoch"`
+	Epoch          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:epoch;uniqueIndex:uni_idx_val_epoch"`
 
 	NodeAddress      string `gorm:"type:varchar(100) not null;default:'';column:node_address;index;"` //hex with 0x prefix
 	Balance          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance"`
@@ -27,9 +27,9 @@ func UpOrInValidatorBalance(db *db.WrapDb, c *ValidatorBalance) error {
 	return db.Save(c).Error
 }
 
-func GetValidatorBalance(db *db.WrapDb, pubkey string, epoch uint64) (c *ValidatorBalance, err error) {
+func GetValidatorBalance(db *db.WrapDb, validatorIndex, epoch uint64) (c *ValidatorBalance, err error) {
 	c = &ValidatorBalance{}
-	err = db.Take(c, "pubkey = ? and epoch = ?", pubkey, epoch).Error
+	err = db.Take(c, "validator_index = ? and epoch = ?", validatorIndex, epoch).Error
 	return
 }
 

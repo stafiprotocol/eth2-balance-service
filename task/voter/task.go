@@ -3,9 +3,6 @@ package task_voter
 import (
 	"bytes"
 	"fmt"
-	"math/big"
-	"time"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/shopspring/decimal"
@@ -22,6 +19,9 @@ import (
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared"
+	"github.com/stafiprotocol/reth/shared/beacon"
+	"math/big"
+	"time"
 )
 
 type Task struct {
@@ -32,9 +32,9 @@ type Task struct {
 	keyPair                *secp256k1.Keypair
 	gasLimit               *big.Int
 	maxGasPrice            *big.Int
-	rateSlotInterval       uint64
 	storageContractAddress common.Address
-	FakeBeaconNode         bool
+	fakeBeaconNode         bool
+	rewardEpochInterval    uint64
 
 	// need init on start
 	connection              *shared.Connection
@@ -46,14 +46,19 @@ type Task struct {
 	networkBalancesContract *network_balances.NetworkBalances
 	rethContract            *reth.Reth
 	userDepositContract     *user_deposit.UserDeposit
+
+	rewardSlotInterval uint64
+	eth2Config         beacon.Eth2Config
+	platformFee        decimal.Decimal // 0.1
+	nodeFee            decimal.Decimal // 0.1
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("contracts address err")
 	}
-	if cfg.RateSlotInterval == 0 {
-		return nil, fmt.Errorf("rate slot interval is zero")
+	if cfg.RewardEpochInterval == 0 {
+		return nil, fmt.Errorf("reward epoch interval is zero")
 	}
 
 	gasLimitDeci, err := decimal.NewFromString(cfg.GasLimit)
@@ -73,18 +78,17 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 	}
 
 	s := &Task{
-		taskTicker:       6,
-		stop:             make(chan struct{}),
-		db:               dao,
-		keyPair:          keyPair,
-		eth1Endpoint:     cfg.Eth1Endpoint,
-		eth2Endpoint:     cfg.Eth2Endpoint,
-		gasLimit:         gasLimitDeci.BigInt(),
-		maxGasPrice:      maxGasPriceDeci.BigInt(),
-		rateSlotInterval: cfg.RateSlotInterval,
-		FakeBeaconNode:   cfg.FakeBeaconNode,
-
+		taskTicker:             6,
+		stop:                   make(chan struct{}),
+		db:                     dao,
+		keyPair:                keyPair,
+		eth1Endpoint:           cfg.Eth1Endpoint,
+		eth2Endpoint:           cfg.Eth2Endpoint,
+		gasLimit:               gasLimitDeci.BigInt(),
+		maxGasPrice:            maxGasPriceDeci.BigInt(),
+		fakeBeaconNode:         cfg.FakeBeaconNode,
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
+		rewardEpochInterval:    cfg.RewardEpochInterval,
 	}
 	return s, nil
 }
@@ -96,6 +100,12 @@ func (task *Task) Start() error {
 		return err
 	}
 
+	task.eth2Config, err = task.connection.Eth2Client().GetEth2Config()
+	if err != nil {
+		return err
+	}
+	task.rewardSlotInterval = utils.SlotInterval(task.eth2Config, task.rewardEpochInterval)
+
 	err = task.initContract()
 	if err != nil {
 		return err
@@ -106,6 +116,18 @@ func (task *Task) Start() error {
 		return err
 	}
 	task.withdrawCredientials = hexutil.Encode(credentials)
+
+	platformFee, err := task.networkSettingsContract.GetPlatformFee(task.connection.CallOpts(nil))
+	if err != nil {
+		return err
+	}
+	task.platformFee = decimal.NewFromBigInt(platformFee, -18)
+
+	nodeFee, err := task.networkSettingsContract.GetNodeFee(task.connection.CallOpts(nil))
+	if err != nil {
+		return err
+	}
+	task.nodeFee = decimal.NewFromBigInt(nodeFee, -18)
 
 	utils.SafeGoWithRestart(task.voteHandler)
 	return nil

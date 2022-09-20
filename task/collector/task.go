@@ -16,18 +16,15 @@ type Task struct {
 	eth2Endpoint string
 	eth1Client   *ethclient.Client
 	eth2Client   beacon.Client
-
-	rateSlotInterval uint64
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 
 	s := &Task{
-		taskTicker:       6,
-		stop:             make(chan struct{}),
-		db:               dao,
-		eth1Endpoint:     cfg.Eth1Endpoint,
-		rateSlotInterval: cfg.RateSlotInterval,
+		taskTicker:   6,
+		stop:         make(chan struct{}),
+		db:           dao,
+		eth1Endpoint: cfg.Eth1Endpoint,
 	}
 	return s, nil
 }

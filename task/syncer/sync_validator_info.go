@@ -2,6 +2,7 @@ package task_syncer
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/sirupsen/logrus"
@@ -11,22 +12,44 @@ import (
 	"github.com/stafiprotocol/reth/types"
 )
 
-// get staked validator info from beacon on target slot, and update balance/effective balance
-func (task *Task) syncValidatorTargetSlotBalance() error {
+// get staked/actived validator info from beacon on target slot, and update
+func (task *Task) syncValidatorLatestInfo() error {
 
 	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {
 		return err
 	}
 
-	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeSyncer)
+	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
+	if err != nil {
+		return err
+	}
+	finalEpoch := beaconHead.FinalizedEpoch
+	// no need fetch, if allready dealed
+	if finalEpoch <= metaData.DealedEpoch {
+		return nil
+	}
+
+	targetBeaconBlock, _, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(utils.SlotAt(task.eth2Config, finalEpoch)))
+	if err != nil {
+		return err
+	}
+	if targetBeaconBlock.ExecutionBlockNumber == 0 {
+		return fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+	}
+	targetEth1BlockHeight := targetBeaconBlock.ExecutionBlockNumber
+
+	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
 	if err != nil {
 		return err
 	}
 
-	targetSlot := (beaconHead.FinalizedSlot / task.rateSlotInterval) * task.rateSlotInterval
-	// no need fetch new balance
-	if targetSlot <= metaData.BalanceSlot {
+	if task.fakeBeaconNode {
+		targetEth1BlockHeight = meta.DealedBlockHeight
+	}
+
+	// ensure all eth1 event synced
+	if meta.DealedBlockHeight < targetEth1BlockHeight {
 		return nil
 	}
 
@@ -35,8 +58,8 @@ func (task *Task) syncValidatorTargetSlotBalance() error {
 		return err
 	}
 	logrus.WithFields(logrus.Fields{
-		"targetSlot":    targetSlot,
-		"validatorList": validatorList,
+		"dealingEpoch":     finalEpoch,
+		"validatorListLen": len(validatorList),
 	}).Debug("targetHeight")
 
 	if len(validatorList) == 0 {
@@ -54,33 +77,31 @@ func (task *Task) syncValidatorTargetSlotBalance() error {
 
 	for i := 0; i < len(pubkeys); {
 		start := i
-		end := i + getValidatorStatusLimit
+		end := i + fetchValidatorStatusLimit
 		if end > len(pubkeys) {
 			end = len(pubkeys)
 		}
 		i = end
 
 		willUsePubkeys := pubkeys[start:end]
-
 		validatorStatusMap := make(map[types.ValidatorPubkey]beacon.ValidatorStatus)
-		if task.FakeBeaconNode {
-			pubkey, err := types.HexToValidatorPubkey("91b92af1781da257d3564a03f10c1f3b572695e1b4de50709096cf960260570768c17cd69c5a4ce6be9ae7e7f8e86f1f")
-			if err != nil {
-				return err
-			}
-			fakeStatus, err := task.connection.Eth2Client().GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
-				Slot: &targetSlot,
-			})
-			if err != nil {
-				return fmt.Errorf("GetValidatorStatus err: %s", err)
-			}
 
+		if task.fakeBeaconNode {
 			for _, pubkey := range willUsePubkeys {
+
+				index := 21100 + int(pubkey.Bytes()[5]) + int(pubkey.Bytes()[25])
+
+				fakeStatus, err := task.connection.Eth2Client().GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
+					Epoch: &finalEpoch,
+				})
+				if err != nil {
+					return fmt.Errorf("GetValidatorStatus err: %s", err)
+				}
 				validatorStatusMap[pubkey] = fakeStatus
 			}
 		} else {
 			validatorStatusMap, err = task.connection.Eth2Client().GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
-				Slot: &targetSlot,
+				Epoch: &finalEpoch,
 			})
 			if err != nil {
 				return err
@@ -94,17 +115,18 @@ func (task *Task) syncValidatorTargetSlotBalance() error {
 
 		for pubkey, status := range validatorStatusMap {
 			pubkeyStr := hexutil.Encode(pubkey.Bytes())
-			if status.Exists {
+			if status.Exists && status.ActivationEpoch != uint64(math.MaxUint64) {
+
 				validator, err := dao.GetValidator(task.db, pubkeyStr)
 				if err != nil {
 					return err
 				}
 
-				validator.Balance = status.Balance
-				validator.EffectiveBalance = status.EffectiveBalance
 				validator.ActiveEpoch = status.ActivationEpoch
 				validator.EligibleEpoch = status.ActivationEligibilityEpoch
-
+				validator.Balance = status.Balance
+				validator.EffectiveBalance = status.EffectiveBalance
+				validator.ValidatorIndex = status.Index
 				validator.Status = utils.ValidatorStatusActive
 
 				err = dao.UpOrInValidator(task.db, validator)
@@ -114,6 +136,6 @@ func (task *Task) syncValidatorTargetSlotBalance() error {
 			}
 		}
 	}
-	metaData.BalanceSlot = targetSlot
+	metaData.DealedEpoch = finalEpoch
 	return dao.UpOrInMetaData(task.db, metaData)
 }

@@ -19,11 +19,11 @@ func TestStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 	// pubkey, err := types.HexToValidatorPubkey("af93696b857fb621048539d0f9ee7722d801e05cf3be3039decd17b937dd9d69f4450c407f5ae4e96d875cb754840c1c")
-	pubkey, err := types.HexToValidatorPubkey("91b92af1781da257d3564a03f10c1f3b572695e1b4de50709096cf960260570768c17cd69c5a4ce6be9ae7e7f8e86f1f")
+	pubkey, err := types.HexToValidatorPubkey("b63774b92182da3c751861524fe657196152b765fefba10550901b01123633376ed1f42a3d12a682057d7b2172f3bc6b")
 	if err != nil {
 		t.Fatal(err)
 	}
-	slot := uint64(30000)
+	slot := uint64(4728928)
 	status, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
 		Slot: &slot,
 	})
