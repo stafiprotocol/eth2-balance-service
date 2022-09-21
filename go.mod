@@ -16,6 +16,7 @@ require (
 	github.com/stafiprotocol/chainbridge v0.0.0-20201204032253-9b92852c8d66
 	github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a
 	github.com/swaggo/gin-swagger v1.5.2
+	github.com/swaggo/swag v1.8.5
 	github.com/wealdtech/go-eth2-types/v2 v2.6.0
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
@@ -74,7 +75,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stafiprotocol/go-substrate-rpc-client v1.0.2 // indirect
 	github.com/supranational/blst v0.3.10 // indirect
-	github.com/swaggo/swag v1.8.5 // indirect
 	github.com/thomaso-mirodin/intmath v0.0.0-20160323211736-5dc6d854e46e // indirect
 	github.com/tklauser/go-sysconf v0.3.5 // indirect
 	github.com/tklauser/numcpus v0.2.2 // indirect

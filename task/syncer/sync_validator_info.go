@@ -30,7 +30,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return nil
 	}
 
-	targetBeaconBlock, _, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(utils.SlotAt(task.eth2Config, finalEpoch)))
+	targetBeaconBlock, _, err := task.connection.GetBeaconBlock(fmt.Sprint(utils.SlotAt(task.eth2Config, finalEpoch)))
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 
 				index := 21100 + int(pubkey.Bytes()[5]) + int(pubkey.Bytes()[25])
 
-				fakeStatus, err := task.connection.Eth2Client().GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
+				fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
 					Epoch: &finalEpoch,
 				})
 				if err != nil {
@@ -100,7 +100,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 				validatorStatusMap[pubkey] = fakeStatus
 			}
 		} else {
-			validatorStatusMap, err = task.connection.Eth2Client().GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
+			validatorStatusMap, err = task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
 				Epoch: &finalEpoch,
 			})
 			if err != nil {

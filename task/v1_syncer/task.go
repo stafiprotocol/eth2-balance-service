@@ -127,6 +127,19 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 		return err
 	}
 
+	meta, err = dao.GetMetaData(task.db, utils.MetaTypeV1ValidatorSyncer)
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return err
+		}
+		// will init if meta data not exist
+		meta.MetaType = utils.MetaTypeV1ValidatorSyncer
+	}
+	err = dao.UpOrInMetaData(task.db, meta)
+	if err != nil {
+		return err
+	}
+
 	meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {

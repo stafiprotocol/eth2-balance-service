@@ -669,14 +669,8 @@ func (c *StandardHttpClient) getValidatorsByOpts(pubkeysOrIndices []string, opts
 		stateId = strconv.FormatInt(int64(*opts.Slot), 10)
 	} else if opts.Epoch != nil {
 
-		// Get eth2 config
-		eth2Config, err := c.getEth2Config()
-		if err != nil {
-			return ValidatorsResponse{}, err
-		}
-
 		// Get slot nuimber
-		slot := *opts.Epoch * uint64(eth2Config.Data.SlotsPerEpoch)
+		slot := *opts.Epoch * uint64(c.eth2Config.SlotsPerEpoch)
 		stateId = strconv.FormatInt(int64(slot), 10)
 
 	} else {

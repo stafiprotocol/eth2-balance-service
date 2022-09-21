@@ -9,18 +9,23 @@ import (
 	"math/big"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
 	"github.com/stafiprotocol/reth/shared/beacon"
 	"github.com/stafiprotocol/reth/shared/beacon/client"
+	"github.com/stafiprotocol/reth/types"
 )
 
 var ExtraGasPrice = big.NewInt(5e9)
+var retryLimit = 100
+var waitInterval = 6 * time.Second
 
 type Connection struct {
 	eth1Endpoint string
@@ -193,4 +198,67 @@ func (c *Connection) EnsureHasBytecode(addr ethcommon.Address) error {
 
 func (c *Connection) Eth2BeaconHead() (beacon.BeaconHead, error) {
 	return c.eth2Client.GetBeaconHead()
+}
+
+func (c *Connection) GetValidatorStatus(pubkey types.ValidatorPubkey, opts *beacon.ValidatorStatusOptions) (beacon.ValidatorStatus, error) {
+	var retErr error
+	for i := 0; i < retryLimit; i++ {
+		status, err := c.eth2Client.GetValidatorStatus(pubkey, opts)
+		if err != nil {
+			retErr = err
+			logrus.Warnf("eth2Client.GetValidatorStatus err: %s", err)
+			time.Sleep(waitInterval)
+			continue
+		}
+		return status, nil
+	}
+	return beacon.ValidatorStatus{}, fmt.Errorf("eth2Client.GetValidatorStatus reach RetryLimit, err: %s", retErr)
+
+}
+
+func (c *Connection) GetValidatorStatuses(pubkeys []types.ValidatorPubkey, opts *beacon.ValidatorStatusOptions) (map[types.ValidatorPubkey]beacon.ValidatorStatus, error) {
+	var retErr error
+	for i := 0; i < retryLimit; i++ {
+		status, err := c.eth2Client.GetValidatorStatuses(pubkeys, opts)
+		if err != nil {
+			retErr = err
+			logrus.Warnf("eth2Client.GetValidatorStatuses err: %s", err)
+			time.Sleep(waitInterval)
+			continue
+		}
+		return status, nil
+	}
+	return nil, fmt.Errorf("eth2Client.GetValidatorStatuses reach RetryLimit, err: %s", retErr)
+
+}
+
+func (c *Connection) GetBeaconBlock(blockId string) (beacon.BeaconBlock, bool, error) {
+	var retErr error
+	for i := 0; i < retryLimit; i++ {
+		status, ok, err := c.eth2Client.GetBeaconBlock(blockId)
+		if err != nil {
+			retErr = err
+			logrus.Warnf("eth2Client.GetBeaconBlock err: %s", err)
+			time.Sleep(waitInterval)
+			continue
+		}
+		return status, ok, nil
+	}
+	return beacon.BeaconBlock{}, false, fmt.Errorf("eth2Client.GetBeaconBlock reach RetryLimit, err: %s", retErr)
+
+}
+
+func (c *Connection) GetValidatorStatusByIndex(index string, opts *beacon.ValidatorStatusOptions) (beacon.ValidatorStatus, error) {
+	var retErr error
+	for i := 0; i < retryLimit; i++ {
+		status, err := c.eth2Client.GetValidatorStatusByIndex(index, opts)
+		if err != nil {
+			retErr = err
+			logrus.Warnf("eth2Client.GetBeaconBlock err: %s", err)
+			time.Sleep(waitInterval)
+			continue
+		}
+		return status, nil
+	}
+	return beacon.ValidatorStatus{}, fmt.Errorf("eth2Client.GetValidatorStatusByIndex reach RetryLimit, err: %s", retErr)
 }

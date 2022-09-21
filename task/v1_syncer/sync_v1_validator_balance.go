@@ -12,22 +12,22 @@ import (
 )
 
 const fetchValidatorStatusLimit = 50
-const v1EndEpoch = uint64(500)
 
 func (task *Task) syncV1ValidatorEpochBalances() error {
-	finalEpoch := v1EndEpoch
+	finalEpoch := utils.V1EndEpoch
 
 	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
 	if err != nil {
 		return err
 	}
-
+	logrus.Debugf("final epoch: %d, dealedEpoch: %s", finalEpoch, metaData.DealedEpoch)
 	// no need fetch new balance
 	if finalEpoch <= metaData.DealedEpoch {
 		return nil
 	}
 
 	for epoch := metaData.DealedEpoch + 1; epoch <= finalEpoch; epoch++ {
+		logrus.Debugf("check epoch: %d", epoch)
 		if epoch%task.rewardEpochInterval != 0 {
 			continue
 		}
@@ -74,7 +74,7 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 
 				for _, pubkey := range willUsePubkeys {
 					index := 21100 + int(pubkey.Bytes()[5]) + int(pubkey.Bytes()[25])
-					fakeStatus, err := task.connection.Eth2Client().GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
+					fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
 						Epoch: &epoch,
 					})
 					if err != nil {
@@ -83,7 +83,7 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 					validatorStatusMap[pubkey] = fakeStatus
 				}
 			} else {
-				validatorStatusMap, err = task.connection.Eth2Client().GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
+				validatorStatusMap, err = task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
 					Epoch: &epoch,
 				})
 				if err != nil {

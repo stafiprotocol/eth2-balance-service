@@ -80,11 +80,11 @@ func TestBeaconBlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// block, _, err := c.GetBeaconBlock("4712832")
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// t.Log(block.ExecutionBlockNumber)
+	block, _, err := c.GetBeaconBlock("4736000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(block.ExecutionBlockNumber)
 
 	head, err := c.GetBeaconHead()
 	if err != nil {

@@ -53,7 +53,11 @@ const (
 	MetaTypeEth1Syncer        = uint8(1)
 	MetaTypeEth2InfoSyncer    = uint8(2)
 	MetaTypeEth2BalanceSyncer = uint8(3)
+	MetaTypeV1ValidatorSyncer = uint8(4)
 )
+
+const V1EndEpoch = uint64(148000)
+const Eth1StartHeight = uint64(15572967)
 
 var DecimalGwei = decimal.NewFromInt(1e9)
 

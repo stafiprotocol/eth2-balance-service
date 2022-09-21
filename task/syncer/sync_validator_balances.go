@@ -85,7 +85,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 
 				for _, pubkey := range willUsePubkeys {
 					index := 21100 + int(pubkey.Bytes()[5]) + int(pubkey.Bytes()[25])
-					fakeStatus, err := task.connection.Eth2Client().GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
+					fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
 						Epoch: &epoch,
 					})
 					if err != nil {
@@ -94,7 +94,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 					validatorStatusMap[pubkey] = fakeStatus
 				}
 			} else {
-				validatorStatusMap, err = task.connection.Eth2Client().GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
+				validatorStatusMap, err = task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
 					Epoch: &epoch,
 				})
 				if err != nil {

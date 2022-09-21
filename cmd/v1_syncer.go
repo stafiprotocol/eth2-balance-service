@@ -5,14 +5,12 @@ package cmd
 
 import (
 	"fmt"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/log"
-	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/task/v1_syncer"
 )
 
@@ -60,7 +58,6 @@ func startV1SyncerCmd() *cobra.Command {
 			logrus.Infof("db connect success")
 
 			//interrupt signal
-			ctx := utils.ShutdownListener()
 			defer func() {
 				sqlDb, err := db.DB.DB()
 				if err != nil {
@@ -90,7 +87,6 @@ func startV1SyncerCmd() *cobra.Command {
 				t.Stop()
 			}()
 
-			<-ctx.Done()
 			return nil
 		},
 	}

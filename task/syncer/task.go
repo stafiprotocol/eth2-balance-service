@@ -25,7 +25,6 @@ type Task struct {
 	taskTicker             int64
 	stop                   chan struct{}
 	startHeight            uint64
-	rewardStartEpoch       uint64
 	eth1Endpoint           string
 	eth2Endpoint           string
 	storageContractAddress common.Address
@@ -52,14 +51,18 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		return nil, fmt.Errorf("reward epoch interval is zero")
 	}
 
+	startHeight := utils.Eth1StartHeight
+	if cfg.FakeBeaconNode {
+		startHeight = 0
+	}
+
 	s := &Task{
-		taskTicker:       6,
-		stop:             make(chan struct{}),
-		db:               dao,
-		startHeight:      cfg.StartHeight,
-		rewardStartEpoch: cfg.RewardStartEpoch,
-		eth1Endpoint:     cfg.Eth1Endpoint,
-		eth2Endpoint:     cfg.Eth2Endpoint,
+		taskTicker:   6,
+		stop:         make(chan struct{}),
+		db:           dao,
+		startHeight:  startHeight,
+		eth1Endpoint: cfg.Eth1Endpoint,
+		eth2Endpoint: cfg.Eth2Endpoint,
 
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		fakeBeaconNode:         cfg.FakeBeaconNode,
@@ -164,55 +167,55 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 		}
 	}
 
-	err = dao.UpOrInMetaData(task.db, meta)
-	if err != nil {
-		return err
-	}
-
-	meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
-	if err != nil {
-		if err != gorm.ErrRecordNotFound {
-			return err
-		}
-		// will init if meta data not exist
-		if task.rewardStartEpoch == 0 {
-			meta.DealedEpoch = 0
-		} else {
-			meta.DealedEpoch = task.rewardStartEpoch - 1
-		}
-		meta.MetaType = utils.MetaTypeEth2InfoSyncer
-
-	} else {
-
-		if meta.DealedEpoch+1 < task.rewardStartEpoch {
-			meta.DealedEpoch = task.rewardStartEpoch - 1
-		}
-	}
-	err = dao.UpOrInMetaData(task.db, meta)
-	if err != nil {
-		return err
-	}
-
-	meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
-	if err != nil {
-		if err != gorm.ErrRecordNotFound {
-			return err
-		}
-		// will init if meta data not exist
-		if task.rewardStartEpoch == 0 {
-			meta.DealedEpoch = 0
-		} else {
-			meta.DealedEpoch = task.rewardStartEpoch - 1
-		}
-		meta.MetaType = utils.MetaTypeEth2BalanceSyncer
-
-	} else {
-
-		if meta.DealedEpoch+1 < task.rewardStartEpoch {
-			meta.DealedEpoch = task.rewardStartEpoch - 1
-		}
-	}
 	return dao.UpOrInMetaData(task.db, meta)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
+	// if err != nil {
+	// 	if err != gorm.ErrRecordNotFound {
+	// 		return err
+	// 	}
+	// 	// will init if meta data not exist
+	// 	if task.rewardStartEpoch == 0 {
+	// 		meta.DealedEpoch = 0
+	// 	} else {
+	// 		meta.DealedEpoch = task.rewardStartEpoch - 1
+	// 	}
+	// 	meta.MetaType = utils.MetaTypeEth2InfoSyncer
+
+	// } else {
+
+	// 	if meta.DealedEpoch+1 < task.rewardStartEpoch {
+	// 		meta.DealedEpoch = task.rewardStartEpoch - 1
+	// 	}
+	// }
+	// err = dao.UpOrInMetaData(task.db, meta)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
+	// if err != nil {
+	// 	if err != gorm.ErrRecordNotFound {
+	// 		return err
+	// 	}
+	// 	// will init if meta data not exist
+	// 	if task.rewardStartEpoch == 0 {
+	// 		meta.DealedEpoch = 0
+	// 	} else {
+	// 		meta.DealedEpoch = task.rewardStartEpoch - 1
+	// 	}
+	// 	meta.MetaType = utils.MetaTypeEth2BalanceSyncer
+
+	// } else {
+
+	// 	if meta.DealedEpoch+1 < task.rewardStartEpoch {
+	// 		meta.DealedEpoch = task.rewardStartEpoch - 1
+	// 	}
+	// }
+	// return dao.UpOrInMetaData(task.db, meta)
 
 }
 
