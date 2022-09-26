@@ -30,9 +30,8 @@ type Task struct {
 	eth1Endpoint           string
 	eth2Endpoint           string
 	storageContractAddress common.Address
-	fakeBeaconNode         bool
 	rewardEpochInterval    uint64
-	v1                     bool
+	Version                string
 
 	// need init on start
 	db                  *db.WrapDb
@@ -56,13 +55,19 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		return nil, fmt.Errorf("reward epoch interval is zero")
 	}
 
+	switch cfg.Version {
+	case utils.V1, utils.V2, utils.Dev:
+	default:
+		return nil, fmt.Errorf("unsupport version: %s", cfg.Version)
+	}
+
 	startHeight := utils.Eth1StartHeight
-	if cfg.FakeBeaconNode {
+	if cfg.Version == utils.Dev {
 		startHeight = 0
 	}
 
 	s := &Task{
-		taskTicker:   6,
+		taskTicker:   10,
 		stop:         make(chan struct{}),
 		db:           dao,
 		startHeight:  startHeight,
@@ -70,9 +75,8 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		eth2Endpoint: cfg.Eth2Endpoint,
 
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
-		fakeBeaconNode:         cfg.FakeBeaconNode,
 		rewardEpochInterval:    cfg.RewardEpochInterval,
-		v1:                     true,
+		Version:                cfg.Version,
 	}
 	return s, nil
 }
@@ -122,7 +126,7 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	if !task.v1 {
+	if task.Version != utils.V1 {
 		lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
 		if err != nil {
 			return err
@@ -172,6 +176,7 @@ func (task *Task) initContract() error {
 }
 
 func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
+	// init eth1Syncer metaData
 	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
@@ -186,19 +191,53 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 
 		meta.MetaType = utils.MetaTypeEth1Syncer
 
-	} else {
-		// use the bigger height
-		if meta.DealedBlockHeight+1 < task.startHeight {
-			meta.DealedBlockHeight = task.startHeight - 1
+		err = dao.UpOrInMetaData(task.db, meta)
+		if err != nil {
+			return err
 		}
 	}
 
-	err = dao.UpOrInMetaData(task.db, meta)
+	// only dev need, v1/v2 will init on v1Syncer
+	if task.Version == utils.Dev {
+		// init eth2InfoSyncer metaData
+		meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
+		if err != nil {
+			if err != gorm.ErrRecordNotFound {
+				return err
+			}
+			// will init if meta data not exist
+			meta.MetaType = utils.MetaTypeEth2InfoSyncer
+			meta.DealedEpoch = 0
+
+			err = dao.UpOrInMetaData(task.db, meta)
+			if err != nil {
+				return err
+			}
+		}
+
+		// init eth2BalanceSyncer metaData
+		meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
+		if err != nil {
+			if err != gorm.ErrRecordNotFound {
+				return err
+			}
+			// will init if meta data not exist
+			meta.MetaType = utils.MetaTypeEth2BalanceSyncer
+			meta.DealedEpoch = utils.V1EndEpoch - 1000
+			err = dao.UpOrInMetaData(task.db, meta)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// init pool info
+	err = task.syncPooInfo()
 	if err != nil {
 		return err
 	}
 
-	return task.syncPooInfo()
+	return nil
 }
 
 func (task *Task) getContractAddress(storage *storage.Storage, name string) (common.Address, error) {
@@ -227,7 +266,7 @@ func (task *Task) syncHandler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
-			if !task.v1 {
+			if task.Version != utils.V1 {
 				logrus.Debug("syncEth1Event start -----------")
 				err := task.syncEth1Event()
 				if err != nil {

@@ -37,10 +37,11 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 		validator.NodeAddress = iterDeposited.Event.Node.String()
 		validator.NodeDepositAmount = new(big.Int).Div(iterDeposited.Event.Amount, big.NewInt(1e9)).Uint64()
 		validator.NodeType = utils.NodeTypeLight
-		validator.Pubkey = pubkeyStr
 		validator.Status = utils.ValidatorStatusDeposited
+		validator.Pubkey = pubkeyStr
 		validator.DepositTxHash = txHashStr
 		validator.DepositBlockHeight = iterDeposited.Event.Raw.BlockNumber
+		validator.DepositSignature = hexutil.Encode(iterDeposited.Event.ValidatorSignature)
 
 		err = dao.UpOrInValidator(task.db, validator)
 		if err != nil {

@@ -14,7 +14,6 @@ import (
 
 // get staked/actived validator info from beacon on latest finalized epoch, and update
 func (task *Task) syncValidatorLatestInfo() error {
-
 	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {
 		return err
@@ -25,6 +24,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return err
 	}
 	finalEpoch := beaconHead.FinalizedEpoch
+
 	// no need fetch, if allready dealed
 	if finalEpoch <= metaData.DealedEpoch {
 		return nil
@@ -44,7 +44,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return err
 	}
 
-	if task.fakeBeaconNode || task.v1 {
+	if task.Version != utils.V2 {
 		targetEth1BlockHeight = meta.DealedBlockHeight
 	}
 
@@ -87,9 +87,8 @@ func (task *Task) syncValidatorLatestInfo() error {
 		willUsePubkeys := pubkeys[start:end]
 		validatorStatusMap := make(map[types.ValidatorPubkey]beacon.ValidatorStatus)
 
-		if task.fakeBeaconNode {
+		if task.Version == utils.Dev {
 			for _, pubkey := range willUsePubkeys {
-
 				index := 21100 + int(pubkey.Bytes()[5])*10 + int(pubkey.Bytes()[25]) + int(pubkey.Bytes()[25])/10
 
 				fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
@@ -107,7 +106,6 @@ func (task *Task) syncValidatorLatestInfo() error {
 			if err != nil {
 				return err
 			}
-
 		}
 
 		logrus.WithFields(logrus.Fields{

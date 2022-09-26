@@ -136,5 +136,11 @@ func (task *Task) syncV1Validators() error {
 		}).Debug("get validator")
 	}
 
+	list, err := dao.GetAllValidatorList(task.db)
+	if err != nil {
+		return err
+	}
+
+	logrus.Info("validators count ", len(list))
 	return nil
 }

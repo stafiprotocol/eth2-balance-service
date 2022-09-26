@@ -14,6 +14,8 @@ import (
 
 const balancesEpochOffset = uint64(1e10)
 
+var maxRateChange = big.NewInt(1e16)
+
 func (task *Task) voteRate() error {
 
 	beaconHead, err := task.connection.Eth2BeaconHead()
@@ -26,6 +28,11 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return err
 	}
+	logrus.WithFields(logrus.Fields{
+		"targetEpoch":                  targetEpoch,
+		"eth2BalanceSyncerDealedEpoch": eth2BalanceSyncerMetaData.DealedEpoch,
+	}).Debug("epocheInfo")
+
 	// ensure eth2 balances have synced
 	if eth2BalanceSyncerMetaData.DealedEpoch < targetEpoch {
 		return nil
@@ -39,7 +46,7 @@ func (task *Task) voteRate() error {
 	logrus.WithFields(logrus.Fields{
 		"targetEpoch":          targetEpoch,
 		"balancesBlockOnChain": balancesBlockOnChain.String(),
-	}).Debug("eopchInfo")
+	}).Debug("epocheInfo")
 
 	// already update on this slot, no need vote
 	if targetEpoch+balancesEpochOffset <= balancesBlockOnChain.Uint64() {
@@ -60,7 +67,7 @@ func (task *Task) voteRate() error {
 		return err
 	}
 
-	if task.fakeBeaconNode || task.v1 {
+	if task.version != utils.V2 {
 		targetEth1BlockHeight = meta.DealedBlockHeight
 	}
 
@@ -100,13 +107,13 @@ func (task *Task) voteRate() error {
 		totalStakingEthFromValidator += stakingEth
 	}
 
-	totalUserEthFromValidatorDeci := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(decimal.NewFromInt(1e9))
+	totalUserEthFromValidatorDeci := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(utils.DecimalGwei)
 	totalUserEth := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).BigInt()
 
-	totalStakingEth := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(decimal.NewFromInt(1e9)).BigInt()
+	totalStakingEth := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(utils.DecimalGwei).BigInt()
 	balancesEpoch := big.NewInt(int64(targetEpoch + balancesEpochOffset))
 
-	if !task.v1 {
+	if task.version != utils.V1 {
 		voted, err := task.networkBalancesContract.NodeVoted(task.connection.CallOpts(nil),
 			task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEth, totalStakingEth, rethTotalSupply)
 		if err != nil {
@@ -147,8 +154,11 @@ func (task *Task) voteRate() error {
 	if newExchangeRate.Cmp(oldExchangeRate) < 0 {
 		return fmt.Errorf("newExchangeRate %s less than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
 	}
-	if newExchangeRate.Cmp(new(big.Int).Add(oldExchangeRate, big.NewInt(1e16))) > 0 {
-		return fmt.Errorf("newExchangeRate %s too big than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
+
+	if task.version != utils.Dev {
+		if newExchangeRate.Cmp(new(big.Int).Add(oldExchangeRate, maxRateChange)) > 0 {
+			return fmt.Errorf("newExchangeRate %s too big than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
+		}
 	}
 
 	tx, err := task.networkBalancesContract.SubmitBalances(

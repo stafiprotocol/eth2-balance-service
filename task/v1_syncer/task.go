@@ -23,7 +23,6 @@ type Task struct {
 	eth1Endpoint           string
 	eth2Endpoint           string
 	storageContractAddress common.Address
-	fakeBeaconNode         bool
 	rewardEpochInterval    uint64
 
 	// need init on start
@@ -44,7 +43,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	}
 
 	s := &Task{
-		taskTicker:       6,
+		taskTicker:       10,
 		stop:             make(chan struct{}),
 		db:               dao,
 		rewardStartEpoch: cfg.RewardStartEpoch,
@@ -52,7 +51,6 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		eth2Endpoint:     cfg.Eth2Endpoint,
 
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
-		fakeBeaconNode:         cfg.FakeBeaconNode,
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 	}
 	return s, nil
@@ -103,6 +101,7 @@ func (task *Task) initContract() error {
 }
 
 func (task *Task) mabyUpdateStartHeightOrEpoch() error {
+	// init eth2Info metaData
 	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
@@ -127,6 +126,7 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 		return err
 	}
 
+	// init v1Syncer metaData
 	meta, err = dao.GetMetaData(task.db, utils.MetaTypeV1ValidatorSyncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
@@ -140,6 +140,7 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 		return err
 	}
 
+	// init eth2BalanceSyncer metaData
 	meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
@@ -154,13 +155,11 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 		meta.MetaType = utils.MetaTypeEth2BalanceSyncer
 
 	} else {
-
 		if meta.DealedEpoch+1 < task.rewardStartEpoch {
 			meta.DealedEpoch = task.rewardStartEpoch - 1
 		}
 	}
 	return dao.UpOrInMetaData(task.db, meta)
-
 }
 
 func (task *Task) getContractAddress(storage *storage.Storage, name string) (common.Address, error) {

@@ -70,6 +70,11 @@ func (task *Task) voteWithdrawal() error {
 
 		if validatorStatus.Exists && validatorStatus.WithdrawalCredentials.String() != task.withdrawCredientials {
 			match = false
+
+			logrus.WithFields(logrus.Fields{
+				"validatorStatus.WithdrawalCredentials": validatorStatus.WithdrawalCredentials.String(),
+				"task.withdrawCredientials":             task.withdrawCredientials,
+			}).Warn("withdrawalCredentials not match")
 		}
 		withdrawBts, err := hexutil.Decode(task.withdrawCredientials)
 		if err != nil {
@@ -79,11 +84,15 @@ func (task *Task) voteWithdrawal() error {
 		if err != nil {
 			return err
 		}
+		nodeDepositAmount := validator.NodeDepositAmount
+		if validator.NodeType == utils.NodeTypeSuper {
+			nodeDepositAmount = 1e9
+		}
 
 		dp := ethpb.Deposit_Data{
 			PublicKey:             validatorPubkey.Bytes(),
 			WithdrawalCredentials: withdrawBts,
-			Amount:                validator.NodeDepositAmount,
+			Amount:                nodeDepositAmount,
 			Signature:             sigBts,
 		}
 
@@ -98,6 +107,11 @@ func (task *Task) voteWithdrawal() error {
 
 		if err := deposit.VerifyDepositSignature(&dp, domain); err != nil {
 			match = false
+
+			logrus.WithFields(logrus.Fields{
+				"task.withdrawCredientials":             task.withdrawCredientials,
+				"validatorStatus.WithdrawalCredentials": validatorStatus.WithdrawalCredentials.String(),
+			}).Warn("signature not match")
 		}
 
 		logrus.WithFields(logrus.Fields{

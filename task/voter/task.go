@@ -33,9 +33,8 @@ type Task struct {
 	gasLimit               *big.Int
 	maxGasPrice            *big.Int
 	storageContractAddress common.Address
-	fakeBeaconNode         bool
 	rewardEpochInterval    uint64
-	v1                     bool
+	version                string
 
 	// need init on start
 	connection              *shared.Connection
@@ -78,8 +77,14 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		return nil, fmt.Errorf("max gas price is zero")
 	}
 
+	switch cfg.Version {
+	case utils.V1, utils.V2, utils.Dev:
+	default:
+		return nil, fmt.Errorf("unsupport version: %s", cfg.Version)
+	}
+
 	s := &Task{
-		taskTicker:             6,
+		taskTicker:             10,
 		stop:                   make(chan struct{}),
 		db:                     dao,
 		keyPair:                keyPair,
@@ -87,10 +92,9 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		eth2Endpoint:           cfg.Eth2Endpoint,
 		gasLimit:               gasLimitDeci.BigInt(),
 		maxGasPrice:            maxGasPriceDeci.BigInt(),
-		fakeBeaconNode:         cfg.FakeBeaconNode,
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:    cfg.RewardEpochInterval,
-		v1:                     true,
+		version:                cfg.Version,
 	}
 	return s, nil
 }
@@ -188,7 +192,7 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
-	if !task.v1 {
+	if task.version != utils.V1 {
 		lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
 		if err != nil {
 			return err

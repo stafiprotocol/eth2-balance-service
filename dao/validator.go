@@ -58,6 +58,11 @@ func GetValidatorListNeedVote(db *db.WrapDb) (c []*Validator, err error) {
 	return
 }
 
+func GetAllValidatorList(db *db.WrapDb) (c []*Validator, err error) {
+	err = db.Find(&c).Error
+	return
+}
+
 func GetValidatorDepositedListBefore(db *db.WrapDb, height uint64) (c []*Validator, err error) {
 	err = db.Find(&c, "deposit_block_height <= ?", height).Error
 	return

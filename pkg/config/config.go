@@ -20,9 +20,9 @@ type Config struct {
 	KeystorePath        string
 	GasLimit            string
 	MaxGasPrice         string
-	FakeBeaconNode      bool
 	RewardStartEpoch    uint64 // used for fetch history balance info by syncer
 	RewardEpochInterval uint64
+	Version             string
 
 	Contracts Contracts
 

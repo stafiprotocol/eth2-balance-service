@@ -6,7 +6,12 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/prysmaticlabs/prysm/v3/beacon-chain/core/signing"
+	"github.com/prysmaticlabs/prysm/v3/config/params"
+	"github.com/prysmaticlabs/prysm/v3/contracts/deposit"
+	ethpb "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared/beacon"
 	"github.com/stafiprotocol/reth/shared/beacon/client"
@@ -94,4 +99,39 @@ func TestBeaconBlock(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(head.FinalizedEpoch, head.FinalizedSlot)
+}
+
+func TestSigs(t *testing.T) {
+	withdrawBts, err := hexutil.Decode("0x003cd051a5757b82bf2c399d7476d1636473969af698377434af1d6c54f2bee9")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sigBts, err := hexutil.Decode("0xaf6a1644b29ed4e8c012804dd1f507828a6001d776c3b026eca4eec8a82aa9d410603906c392891b5a2e53e0d16f0a7505080818eeaaba6f8caecf57ebc99c0b0bfe1a0b756bb3b5b2f4346bfb8d7c1c40e17f515cdca28e5526fda328fc68f4")
+	if err != nil {
+		t.Fatal(err)
+	}
+	validatorPubkey, err := types.HexToValidatorPubkey("b9eb2b1215aa1933d6d7361e7cf1182fef12c5d6643f8bb9fc373c059de7a066d9a6eb893cf355268b39980977331967")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dp := ethpb.Deposit_Data{
+		PublicKey:             validatorPubkey.Bytes(),
+		WithdrawalCredentials: withdrawBts,
+		Amount:                1e9,
+		Signature:             sigBts,
+	}
+
+	domain, err := signing.ComputeDomain(
+		params.BeaconConfig().DomainDeposit,
+		params.BeaconConfig().GenesisForkVersion,
+		params.BeaconConfig().ZeroHash[:],
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := deposit.VerifyDepositSignature(&dp, domain); err != nil {
+		t.Fatal(err)
+	}
 }

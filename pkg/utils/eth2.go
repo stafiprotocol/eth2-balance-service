@@ -51,6 +51,12 @@ const (
 )
 
 const (
+	V1  = "v1"
+	V2  = "v2"
+	Dev = "dev"
+)
+
+const (
 	MetaTypeEth1Syncer        = uint8(1)
 	MetaTypeEth2InfoSyncer    = uint8(2)
 	MetaTypeEth2BalanceSyncer = uint8(3)

@@ -69,27 +69,11 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 
 			willUsePubkeys := pubkeys[start:end]
 
-			validatorStatusMap := make(map[types.ValidatorPubkey]beacon.ValidatorStatus)
-			if task.fakeBeaconNode {
-
-				for _, pubkey := range willUsePubkeys {
-					index := 21100 + int(pubkey.Bytes()[5]) + int(pubkey.Bytes()[25])
-					fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
-						Epoch: &epoch,
-					})
-					if err != nil {
-						return fmt.Errorf("GetValidatorStatus err: %s", err)
-					}
-					validatorStatusMap[pubkey] = fakeStatus
-				}
-			} else {
-				validatorStatusMap, err = task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
-					Epoch: &epoch,
-				})
-				if err != nil {
-					return err
-				}
-
+			validatorStatusMap, err := task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
+				Epoch: &epoch,
+			})
+			if err != nil {
+				return err
 			}
 
 			logrus.WithFields(logrus.Fields{

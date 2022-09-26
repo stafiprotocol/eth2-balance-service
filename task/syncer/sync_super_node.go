@@ -39,6 +39,7 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 		validator.Status = utils.ValidatorStatusDeposited
 		validator.DepositTxHash = txHashStr
 		validator.DepositBlockHeight = iterDeposited.Event.Raw.BlockNumber
+		validator.DepositSignature = hexutil.Encode(iterDeposited.Event.ValidatorSignature)
 
 		err = dao.UpOrInValidator(task.db, validator)
 		if err != nil {
