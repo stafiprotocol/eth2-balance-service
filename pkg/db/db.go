@@ -34,7 +34,7 @@ func NewDB(cfg *Config) (wrapDb *WrapDb, err error) {
 
 	logLevel := logger.Error
 	switch cfg.LogLevel {
-	case "trace", "debug":
+	case "trace":
 		logLevel = logger.Info
 	}
 

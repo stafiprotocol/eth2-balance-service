@@ -5,6 +5,7 @@ package info_handlers
 
 import (
 	"encoding/json"
+	"math/big"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -55,20 +56,21 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	logrus.Debugf("HandlePostPubkeyDetail req parm:\n %s", string(reqBytes))
 
 	rsp := RspPubkeyDetail{
-		Status:           0,
-		CurrentBalance:   "",
-		DepositBalance:   "",
-		EffectiveBalance: "",
-		Last24hRewardEth: "",
+		Last24hRewardEth: "0",
 		Apr:              0,
 		EthPrice:         1400.00,
-		EligibleEpoch:    0,
-		EligibleDays:     0,
-		ActiveEpoch:      0,
-		ActiveDays:       0,
-		ChartXData:       []uint64{1663544335, 1663543335, 1663542335, 1663541335, 1663540335},
-		ChartYData:       []string{"1000000000000000", "1000000000000000", "1000000000000000", "1000000000000000", "1000000000000000"},
+		ChartXData:       []uint64{},
+		ChartYData:       []string{},
 	}
+
+	eth2InfoMetaData, err := dao.GetMetaData(h.db, utils.MetaTypeEth2InfoSyncer)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetMetaData err %s", err)
+		return
+	}
+	finalEpoch := eth2InfoMetaData.DealedEpoch
+
 	validator, err := dao.GetValidator(h.db, req.Pubkey)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -84,10 +86,73 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	rsp.CurrentBalance = decimal.NewFromInt(int64(validator.Balance)).Mul(utils.DecimalGwei).String()
 	rsp.DepositBalance = decimal.NewFromInt(int64(validator.NodeDepositAmount)).Mul(utils.DecimalGwei).String()
 	rsp.EffectiveBalance = decimal.NewFromInt(int64(validator.EffectiveBalance)).Mul(utils.DecimalGwei).String()
+
 	rsp.EligibleEpoch = validator.EligibleEpoch
 	rsp.ActiveEpoch = validator.ActiveEpoch
 
-	// targetTimestamp := time.Now().Unix() - int64(req.ChartDuSeconds)
+	if rsp.EligibleEpoch != 0 {
+		rsp.EligibleDays = (finalEpoch - validator.EligibleEpoch) * 32 * 12 / (60 * 60 * 24)
+	}
+	if rsp.ActiveEpoch != 0 {
+		rsp.ActiveDays = (finalEpoch - validator.ActiveEpoch) * 32 * 12 / (60 * 60 * 24)
+
+		epochBefore24H := finalEpoch - 225
+		validatorBalance, err := dao.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epochBefore24H)
+		if err != nil {
+			utils.Err(c, utils.CodeInternalErr, err.Error())
+			logrus.Errorf("dao.GetValidatorBalance err %s", err)
+			return
+		}
+
+		rsp.Last24hRewardEth = decimal.NewFromBigInt(big.NewInt(int64(validator.Balance-validatorBalance.Balance)), 9).String()
+	}
+
+	// cal chart data
+	if rsp.ActiveEpoch != 0 {
+		chartDataLen := 10
+		if req.ChartDuSeconds == 0 {
+			req.ChartDuSeconds = 1e15 // will return all
+		}
+		chartDuEpoch := req.ChartDuSeconds / (12 * 32)
+		firstValidatorBalance, err := dao.GetFirstValidatorBalance(h.db, validator.ValidatorIndex)
+		if err != nil {
+			utils.Err(c, utils.CodeInternalErr, err.Error())
+			logrus.Errorf("dao.GetFirstValidatorBalance err %s", err)
+			return
+		}
+
+		totalEpoch := finalEpoch - firstValidatorBalance.Epoch
+		if chartDuEpoch > totalEpoch {
+			chartDuEpoch = totalEpoch
+		}
+
+		skip := totalEpoch / uint64(chartDataLen)
+		epoches := make([]uint64, 0)
+		for i := uint64(0); i < uint64(chartDataLen); i++ {
+			epoches = append(epoches, finalEpoch-i*skip)
+		}
+
+		for _, epoch := range epoches {
+			validatorBalance, err := dao.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epoch)
+			if err != nil && err != gorm.ErrRecordNotFound {
+				utils.Err(c, utils.CodeInternalErr, err.Error())
+				logrus.Errorf("dao.dao.GetValidatorBalanceBefore err %s", err)
+				return
+			}
+
+			if err == gorm.ErrRecordNotFound {
+				continue
+			}
+
+			reward := uint64(0)
+			if validatorBalance.Balance > validatorBalance.EffectiveBalance {
+				reward = validatorBalance.Balance - validatorBalance.EffectiveBalance
+			}
+
+			rsp.ChartXData = append(rsp.ChartXData, validatorBalance.Timestamp)
+			rsp.ChartYData = append(rsp.ChartYData, decimal.NewFromBigInt(big.NewInt(int64(reward)), 9).String())
+		}
+	}
 
 	utils.Ok(c, "success", rsp)
 }

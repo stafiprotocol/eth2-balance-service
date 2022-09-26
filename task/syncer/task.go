@@ -10,8 +10,10 @@ import (
 	deposit_contract "github.com/stafiprotocol/reth/bindings/DepositContract"
 	light_node "github.com/stafiprotocol/reth/bindings/LightNode"
 	node_deposit "github.com/stafiprotocol/reth/bindings/NodeDeposit"
+	reth "github.com/stafiprotocol/reth/bindings/Reth"
 	storage "github.com/stafiprotocol/reth/bindings/Storage"
 	super_node "github.com/stafiprotocol/reth/bindings/SuperNode"
+	user_deposit "github.com/stafiprotocol/reth/bindings/UserDeposit"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
@@ -30,6 +32,7 @@ type Task struct {
 	storageContractAddress common.Address
 	fakeBeaconNode         bool
 	rewardEpochInterval    uint64
+	v1                     bool
 
 	// need init on start
 	db                  *db.WrapDb
@@ -38,6 +41,8 @@ type Task struct {
 	lightNodeContract   *light_node.LightNode
 	nodeDepositContract *node_deposit.NodeDeposit
 	superNodeContract   *super_node.SuperNode
+	rethContract        *reth.Reth
+	userDepositContract *user_deposit.UserDeposit
 
 	eth2Config         beacon.Eth2Config
 	rewardSlotInterval uint64
@@ -67,6 +72,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		fakeBeaconNode:         cfg.FakeBeaconNode,
 		rewardEpochInterval:    cfg.RewardEpochInterval,
+		v1:                     true,
 	}
 	return s, nil
 }
@@ -78,11 +84,11 @@ func (task *Task) Start() error {
 		return err
 	}
 
-	err = task.mabyUpdateStartHeightOrEpoch()
+	err = task.initContract()
 	if err != nil {
 		return err
 	}
-	err = task.initContract()
+	err = task.mabyUpdateEth1StartHeightAndPoolInfo()
 	if err != nil {
 		return err
 	}
@@ -116,13 +122,23 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
-	if err != nil {
-		return err
-	}
-	task.lightNodeContract, err = light_node.NewLightNode(lightNodeAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
+	if !task.v1 {
+		lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
+		if err != nil {
+			return err
+		}
+		task.lightNodeContract, err = light_node.NewLightNode(lightNodeAddress, task.connection.Eth1Client())
+		if err != nil {
+			return err
+		}
+		superNodeAddress, err := task.getContractAddress(storageContract, "stafiSuperNode")
+		if err != nil {
+			return err
+		}
+		task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connection.Eth1Client())
+		if err != nil {
+			return err
+		}
 	}
 
 	nodeDepositAddress, err := task.getContractAddress(storageContract, "stafiNodeDeposit")
@@ -134,18 +150,28 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	superNodeAddress, err := task.getContractAddress(storageContract, "stafiSuperNode")
+	rethAddress, err := task.getContractAddress(storageContract, "rETHToken")
 	if err != nil {
 		return err
 	}
-	task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connection.Eth1Client())
+	task.rethContract, err = reth.NewReth(rethAddress, task.connection.Eth1Client())
 	if err != nil {
 		return err
 	}
+
+	userDepositAddress, err := task.getContractAddress(storageContract, "stafiUserDeposit")
+	if err != nil {
+		return err
+	}
+	task.userDepositContract, err = user_deposit.NewUserDeposit(userDepositAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (task *Task) mabyUpdateStartHeightOrEpoch() error {
+func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
@@ -167,56 +193,12 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 		}
 	}
 
-	return dao.UpOrInMetaData(task.db, meta)
-	// if err != nil {
-	// 	return err
-	// }
+	err = dao.UpOrInMetaData(task.db, meta)
+	if err != nil {
+		return err
+	}
 
-	// meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
-	// if err != nil {
-	// 	if err != gorm.ErrRecordNotFound {
-	// 		return err
-	// 	}
-	// 	// will init if meta data not exist
-	// 	if task.rewardStartEpoch == 0 {
-	// 		meta.DealedEpoch = 0
-	// 	} else {
-	// 		meta.DealedEpoch = task.rewardStartEpoch - 1
-	// 	}
-	// 	meta.MetaType = utils.MetaTypeEth2InfoSyncer
-
-	// } else {
-
-	// 	if meta.DealedEpoch+1 < task.rewardStartEpoch {
-	// 		meta.DealedEpoch = task.rewardStartEpoch - 1
-	// 	}
-	// }
-	// err = dao.UpOrInMetaData(task.db, meta)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
-	// if err != nil {
-	// 	if err != gorm.ErrRecordNotFound {
-	// 		return err
-	// 	}
-	// 	// will init if meta data not exist
-	// 	if task.rewardStartEpoch == 0 {
-	// 		meta.DealedEpoch = 0
-	// 	} else {
-	// 		meta.DealedEpoch = task.rewardStartEpoch - 1
-	// 	}
-	// 	meta.MetaType = utils.MetaTypeEth2BalanceSyncer
-
-	// } else {
-
-	// 	if meta.DealedEpoch+1 < task.rewardStartEpoch {
-	// 		meta.DealedEpoch = task.rewardStartEpoch - 1
-	// 	}
-	// }
-	// return dao.UpOrInMetaData(task.db, meta)
-
+	return task.syncPooInfo()
 }
 
 func (task *Task) getContractAddress(storage *storage.Storage, name string) (common.Address, error) {
@@ -245,15 +227,27 @@ func (task *Task) syncHandler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
-			logrus.Debug("syncEth1Event start -----------")
-			err := task.syncEth1Event()
+			if !task.v1 {
+				logrus.Debug("syncEth1Event start -----------")
+				err := task.syncEth1Event()
+				if err != nil {
+					logrus.Warnf("syncEth1Event err: %s", err)
+					time.Sleep(utils.RetryInterval)
+					retry++
+					continue
+				}
+				logrus.Debug("syncEth1Event end -----------\n")
+			}
+
+			logrus.Debug("syncPooInfo start -----------")
+			err := task.syncPooInfo()
 			if err != nil {
-				logrus.Warnf("syncEth1Event err: %s", err)
+				logrus.Warnf("syncPooInfo err: %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("syncEth1Event end -----------")
+			logrus.Debug("syncPooInfo end -----------\n")
 
 			logrus.Debug("syncValidatorLatestInfo start -----------")
 			err = task.syncValidatorLatestInfo()
@@ -263,7 +257,7 @@ func (task *Task) syncHandler() {
 				retry++
 				continue
 			}
-			logrus.Debug("syncValidatorLatestInfo end -----------")
+			logrus.Debug("syncValidatorLatestInfo end -----------\n")
 
 			logrus.Debug("syncValidatorEpochBalances start -----------")
 			err = task.syncValidatorEpochBalances()
@@ -273,7 +267,7 @@ func (task *Task) syncHandler() {
 				retry++
 				continue
 			}
-			logrus.Debug("syncValidatorEpochBalances end -----------")
+			logrus.Debug("syncValidatorEpochBalances end -----------\n")
 
 			retry = 0
 		}

@@ -36,9 +36,10 @@ const (
 	ValidatorStatusCanWithdraw     = uint8(6)
 	ValidatorStatusWithdrawed      = uint8(7)
 
-	ValidatorStatusExit       = uint8(8)
+	ValidatorStatusWaiting    = uint8(8)
 	ValidatorStatusActive     = uint8(9)
-	ValidatorStatusDistribute = uint8(10)
+	ValidatorStatusExit       = uint8(10)
+	ValidatorStatusDistribute = uint8(11)
 )
 
 // 1 common node 2 trust node 3 light node 4 super node
@@ -60,6 +61,8 @@ const V1EndEpoch = uint64(148000)
 const Eth1StartHeight = uint64(15572967)
 
 var DecimalGwei = decimal.NewFromInt(1e9)
+
+const StandardEffectiveBalance = uint64(32e9)
 
 func GetNodeReward(balance, effectiveBalance uint64, nodeType uint8) uint64 {
 	return 0

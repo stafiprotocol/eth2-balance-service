@@ -12,7 +12,7 @@ import (
 	"github.com/stafiprotocol/reth/types"
 )
 
-// get staked/actived validator info from beacon on target slot, and update
+// get staked/actived validator info from beacon on latest finalized epoch, and update
 func (task *Task) syncValidatorLatestInfo() error {
 
 	beaconHead, err := task.connection.Eth2BeaconHead()
@@ -44,11 +44,11 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return err
 	}
 
-	if task.fakeBeaconNode {
+	if task.fakeBeaconNode || task.v1 {
 		targetEth1BlockHeight = meta.DealedBlockHeight
 	}
 
-	// ensure all eth1 event synced
+	// ensure all eth1 event synced before targetEth1BlockHeight
 	if meta.DealedBlockHeight < targetEth1BlockHeight {
 		return nil
 	}
@@ -58,9 +58,10 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return err
 	}
 	logrus.WithFields(logrus.Fields{
-		"dealingEpoch":     finalEpoch,
+		"finalEpoch":       finalEpoch,
+		"willDealEpoch":    finalEpoch,
 		"validatorListLen": len(validatorList),
-	}).Debug("targetHeight")
+	}).Debug("syncValidatorLatestInfo")
 
 	if len(validatorList) == 0 {
 		return nil
@@ -89,7 +90,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		if task.fakeBeaconNode {
 			for _, pubkey := range willUsePubkeys {
 
-				index := 21100 + int(pubkey.Bytes()[5]) + int(pubkey.Bytes()[25])
+				index := 21100 + int(pubkey.Bytes()[5])*10 + int(pubkey.Bytes()[25]) + int(pubkey.Bytes()[25])/10
 
 				fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
 					Epoch: &finalEpoch,
@@ -110,24 +111,26 @@ func (task *Task) syncValidatorLatestInfo() error {
 		}
 
 		logrus.WithFields(logrus.Fields{
-			"validatorStatuses": validatorStatusMap,
+			"validatorStatuses len": len(validatorStatusMap),
 		}).Debug("validator statuses")
 
 		for pubkey, status := range validatorStatusMap {
 			pubkeyStr := hexutil.Encode(pubkey.Bytes())
-			if status.Exists && status.ActivationEpoch != uint64(math.MaxUint64) {
-
+			if status.Exists {
 				validator, err := dao.GetValidator(task.db, pubkeyStr)
 				if err != nil {
 					return err
 				}
-
-				validator.ActiveEpoch = status.ActivationEpoch
-				validator.EligibleEpoch = status.ActivationEligibilityEpoch
-				validator.Balance = status.Balance
-				validator.EffectiveBalance = status.EffectiveBalance
+				validator.Status = utils.ValidatorStatusWaiting
 				validator.ValidatorIndex = status.Index
-				validator.Status = utils.ValidatorStatusActive
+
+				if status.ActivationEpoch != uint64(math.MaxUint64) {
+					validator.ActiveEpoch = status.ActivationEpoch
+					validator.EligibleEpoch = status.ActivationEligibilityEpoch
+					validator.Balance = status.Balance
+					validator.EffectiveBalance = status.EffectiveBalance
+					validator.Status = utils.ValidatorStatusActive
+				}
 
 				err = dao.UpOrInValidator(task.db, validator)
 				if err != nil {

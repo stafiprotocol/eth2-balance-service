@@ -48,9 +48,11 @@ func (task *Task) syncValidatorEpochBalances() error {
 			return err
 		}
 		logrus.WithFields(logrus.Fields{
-			"epoch":         epoch,
-			"validatorList": validatorList,
-		}).Debug("activeValidators")
+			"dealedEpoch":              metaData.DealedEpoch,
+			"willDealEpoch":            epoch,
+			"willDealValidatorListLen": len(validatorList),
+		}).Debug("syncValidatorEpochBalances")
+
 		if len(validatorList) == 0 {
 			return nil
 		}
@@ -104,8 +106,12 @@ func (task *Task) syncValidatorEpochBalances() error {
 			}
 
 			logrus.WithFields(logrus.Fields{
-				"validatorStatuses": validatorStatusMap,
+				"validatorStatuses len": len(validatorStatusMap),
 			}).Debug("validator statuses")
+
+			if len(validatorStatusMap) != len(willUsePubkeys) {
+				return fmt.Errorf("validatorStatusMap len: %d not equal pubkeys len: %d", len(validatorStatusMap), len(willUsePubkeys))
+			}
 
 			for pubkey, status := range validatorStatusMap {
 				pubkeyStr := hexutil.Encode(pubkey.Bytes())

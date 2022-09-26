@@ -33,7 +33,7 @@
 | field       | type   | notice                                                                                                                      |
 | :---------- | :----- | :-------------------------------------------------------------------------------------------------------------------------- |
 | nodeAddress | string | node address, hex string                                                                                                    |
-| status      | number | 0 all 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 exit 9 active} |
+| status      | number | 0 all 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit} |
 | pageIndex   | number | page index                                                                                                                  |
 | pageCount   | number | page count                                                                                                                  |
 
@@ -53,7 +53,7 @@
 |         | ethPrice         | N/A     | number | Yes         | null        | eth price                                                                                                             |
 |         | pubkeyList       | N/A     | list   | Yes         | null        | list                                                                                                                  |
 |         |                  | pubkey  | string | Yes         | null        | hex string                                                                                                            |
-|         |                  | status  | number | Yes         | null        | 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 exit 9 active} |
+|         |                  | status  | number | Yes         | null        | 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit} |
 
 
 ## 2. reward info
@@ -144,7 +144,7 @@
 | status  | N/A              | N/A     | string      | Yes         | null        | status code                                                                                                           |
 | message | N/A              | N/A     | string      | Yes         | null        | status info                                                                                                           |
 | data    | N/A              | N/A     | object      | Yes         | null        | data                                                                                                                  |
-|         | status           | N/A     | number      | Yes         | null        | 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 exit 9 active} |
+|         | status           | N/A     | number      | Yes         | null        | 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit} |
 |         | currentBalance   | N/A     | string      | Yes         | null        | decimal format string                                                                                                 |
 |         | depositBalance   | N/A     | string      | Yes         | null        | decimal format string                                                                                                 |
 |         | effectiveBalance | N/A     | string      | Yes         | null        | decimal format string                                                                                                 |

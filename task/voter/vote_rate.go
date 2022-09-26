@@ -13,7 +13,6 @@ import (
 )
 
 const balancesEpochOffset = uint64(1e10)
-const standardEffectiveBalance = 1e9
 
 func (task *Task) voteRate() error {
 
@@ -40,7 +39,7 @@ func (task *Task) voteRate() error {
 	logrus.WithFields(logrus.Fields{
 		"targetEpoch":          targetEpoch,
 		"balancesBlockOnChain": balancesBlockOnChain.String(),
-	}).Debug("targetEpoch")
+	}).Debug("eopchInfo")
 
 	// already update on this slot, no need vote
 	if targetEpoch+balancesEpochOffset <= balancesBlockOnChain.Uint64() {
@@ -61,7 +60,7 @@ func (task *Task) voteRate() error {
 		return err
 	}
 
-	if task.fakeBeaconNode {
+	if task.fakeBeaconNode || task.v1 {
 		targetEth1BlockHeight = meta.DealedBlockHeight
 	}
 
@@ -76,7 +75,7 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return err
 	}
-	userDepositBalance, err := task.userDepositContract.GetBalance(callOpts)
+	userDepositPoolBalance, err := task.userDepositContract.GetBalance(callOpts)
 	if err != nil {
 		return err
 	}
@@ -86,6 +85,9 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return err
 	}
+	logrus.WithFields(logrus.Fields{
+		"validatorDepositedList len": len(validatorDepositedList),
+	}).Debug("validatorDepositedList")
 
 	totalUserEthFromValidator := uint64(0)
 	totalStakingEthFromValidator := uint64(0)
@@ -99,35 +101,55 @@ func (task *Task) voteRate() error {
 	}
 
 	totalUserEthFromValidatorDeci := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(decimal.NewFromInt(1e9))
-	totalUserEth := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositBalance, 0)).BigInt()
+	totalUserEth := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).BigInt()
 
 	totalStakingEth := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(decimal.NewFromInt(1e9)).BigInt()
 	balancesEpoch := big.NewInt(int64(targetEpoch + balancesEpochOffset))
 
-	voted, err := task.networkBalancesContract.NodeVoted(task.connection.CallOpts(nil), task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEth, totalStakingEth, rethTotalSupply)
-	if err != nil {
-		return err
-	}
-	if voted {
-		return nil
+	if !task.v1 {
+		voted, err := task.networkBalancesContract.NodeVoted(task.connection.CallOpts(nil),
+			task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEth, totalStakingEth, rethTotalSupply)
+		if err != nil {
+			return err
+		}
+		if voted {
+			return nil
+		}
 	}
 
 	// send vote tx
 	err = task.connection.LockAndUpdateTxOpts()
 	if err != nil {
-		return err
+		return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 	}
 	defer task.connection.UnlockTxOpts()
 
+	oldExchangeRate, err := task.rethContract.GetExchangeRate(callOpts)
+	if err != nil {
+		return err
+	}
+
+	newExchangeRate := decimal.NewFromBigInt(totalUserEth, 18).Div(decimal.NewFromBigInt(rethTotalSupply, 0)).BigInt()
+
 	logrus.WithFields(logrus.Fields{
+		"targetEth1Height":          targetEth1BlockHeight,
 		"targetEpoch":               targetEpoch,
 		"balancesEpoch":             balancesEpoch,
 		"totalUserEthFromValidator": totalUserEthFromValidatorDeci.String(),
-		"userDepositBalance":        userDepositBalance,
+		"userDepositPoolBalance":    userDepositPoolBalance,
 		"totalUserEth":              totalUserEth.String(),
 		"totalStakingEth":           totalStakingEth.String(),
 		"rethTotalSupply":           rethTotalSupply.String(),
-	}).Info("will send submitBalances tx")
+		"newExchangeRate":           newExchangeRate.String(),
+		"oldExchangeRate":           oldExchangeRate.String(),
+	}).Info("exchangeInfo")
+
+	if newExchangeRate.Cmp(oldExchangeRate) < 0 {
+		return fmt.Errorf("newExchangeRate %s less than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
+	}
+	if newExchangeRate.Cmp(new(big.Int).Add(oldExchangeRate, big.NewInt(1e16))) > 0 {
+		return fmt.Errorf("newExchangeRate %s too big than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
+	}
 
 	tx, err := task.networkBalancesContract.SubmitBalances(
 		task.connection.TxOpts(),
@@ -213,28 +235,10 @@ func (task *Task) getEthInfoOfCommonNodeValidator(validator *dao.Validator, targ
 		if err != nil {
 			return 0, 0, err
 		}
-		userDepositBalance := standardEffectiveBalance - validator.NodeDepositAmount
+		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
 
-		switch {
-		case validatorBalance.Balance == standardEffectiveBalance:
-			return userDepositBalance, userDepositBalance, nil
-		case validatorBalance.Balance < standardEffectiveBalance:
-			loss := standardEffectiveBalance - validatorBalance.Balance
-			if loss < validator.NodeDepositAmount {
-				return userDepositBalance, userDepositBalance, nil
-			} else {
-				return validatorBalance.Balance, validatorBalance.Balance, nil
-			}
-		case validatorBalance.Balance > standardEffectiveBalance:
-			reward := validatorBalance.Balance - standardEffectiveBalance
-			nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromInt(1).Sub(task.platformFee))
-			userRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(standardEffectiveBalance))
-			userLeftRewardDeci := userRewardDeci.Mul(decimal.NewFromInt(1).Sub(task.nodeFee))
-
-			return userDepositBalance, userDepositBalance + userLeftRewardDeci.BigInt().Uint64(), nil
-		default:
-			return 0, 0, fmt.Errorf("should not happen")
-		}
+		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount)
+		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusDistribute:
 		return 0, 0, nil
@@ -261,28 +265,10 @@ func (task *Task) getEthInfoOfTrustNodeValidator(validator *dao.Validator, targe
 		if err != nil {
 			return 0, 0, err
 		}
-		userDepositBalance := standardEffectiveBalance - validator.NodeDepositAmount
+		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
 
-		switch {
-		case validatorBalance.Balance == standardEffectiveBalance:
-			return userDepositBalance, userDepositBalance, nil
-		case validatorBalance.Balance < standardEffectiveBalance:
-			loss := standardEffectiveBalance - validatorBalance.Balance
-			if loss < validator.NodeDepositAmount {
-				return userDepositBalance, userDepositBalance, nil
-			} else {
-				return validatorBalance.Balance, validatorBalance.Balance, nil
-			}
-		case validatorBalance.Balance > standardEffectiveBalance:
-			reward := validatorBalance.Balance - standardEffectiveBalance
-			nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromInt(1).Sub(task.platformFee))
-			userRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(standardEffectiveBalance))
-			userLeftRewardDeci := userRewardDeci.Mul(decimal.NewFromInt(1).Sub(task.nodeFee))
-
-			return userDepositBalance, userDepositBalance + userLeftRewardDeci.BigInt().Uint64(), nil
-		default:
-			return 0, 0, fmt.Errorf("should not happen")
-		}
+		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount)
+		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusDistribute:
 		return 0, 0, nil
@@ -314,29 +300,10 @@ func (task *Task) getEthInfoOfLightNodeValidator(validator *dao.Validator, targe
 		if err != nil {
 			return 0, 0, err
 		}
-		userDepositBalance := standardEffectiveBalance - validator.NodeDepositAmount
+		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
 
-		switch {
-		case validatorBalance.Balance == standardEffectiveBalance:
-			return userDepositBalance, userDepositBalance, nil
-		case validatorBalance.Balance < standardEffectiveBalance:
-			loss := standardEffectiveBalance - validatorBalance.Balance
-			if loss < validator.NodeDepositAmount {
-				return userDepositBalance, userDepositBalance, nil
-			} else {
-				return validatorBalance.Balance, validatorBalance.Balance, nil
-			}
-		case validatorBalance.Balance > standardEffectiveBalance:
-			reward := validatorBalance.Balance - standardEffectiveBalance
-			nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromInt(1).Sub(task.platformFee))
-			userRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(standardEffectiveBalance))
-			userLeftRewardDeci := userRewardDeci.Mul(decimal.NewFromInt(1).Sub(task.nodeFee))
-
-			return userDepositBalance, userDepositBalance + userLeftRewardDeci.BigInt().Uint64(), nil
-		default:
-			return 0, 0, fmt.Errorf("should not happen")
-		}
-
+		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount)
+		return userDepositBalance, userDepositAndReward, nil
 	case utils.ValidatorStatusDistribute:
 		return 0, 0, nil
 	default:
@@ -361,32 +328,44 @@ func (task *Task) getEthInfoOfSuperNodeValidator(validator *dao.Validator, targe
 		if err != nil {
 			return 0, 0, err
 		}
-		userDepositBalance := standardEffectiveBalance - validator.NodeDepositAmount
+		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
 
-		switch {
-		case validatorBalance.Balance == standardEffectiveBalance:
-			return userDepositBalance, userDepositBalance, nil
-		case validatorBalance.Balance < standardEffectiveBalance:
-			loss := standardEffectiveBalance - validatorBalance.Balance
-			if loss < validator.NodeDepositAmount {
-				return userDepositBalance, userDepositBalance, nil
-			} else {
-				return validatorBalance.Balance, validatorBalance.Balance, nil
-			}
-		case validatorBalance.Balance > standardEffectiveBalance:
-			reward := validatorBalance.Balance - standardEffectiveBalance
-			nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromInt(1).Sub(task.platformFee))
-			userRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(standardEffectiveBalance))
-			userLeftRewardDeci := userRewardDeci.Mul(decimal.NewFromInt(1).Sub(task.nodeFee))
-
-			return userDepositBalance, userDepositBalance + userLeftRewardDeci.BigInt().Uint64(), nil
-		default:
-			return 0, 0, fmt.Errorf("should not happen")
-		}
+		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount)
+		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusDistribute:
 		return 0, 0, nil
 	default:
 		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
+	}
+}
+
+func (task Task) getUserDepositAndReward(validatorBalance, nodeDepositAmount uint64) uint64 {
+	userDepositBalance := utils.StandardEffectiveBalance - nodeDepositAmount
+
+	switch {
+	case validatorBalance == utils.StandardEffectiveBalance:
+		return userDepositBalance
+	case validatorBalance < utils.StandardEffectiveBalance:
+		loss := utils.StandardEffectiveBalance - validatorBalance
+		if loss < nodeDepositAmount {
+			return userDepositBalance
+		} else {
+			return validatorBalance
+		}
+	case validatorBalance > utils.StandardEffectiveBalance:
+		// total staking reward
+		reward := validatorBalance - utils.StandardEffectiveBalance
+		// node+user raw reward
+		nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromInt(1).Sub(task.platformFee))
+		// user raw reward
+		userRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(int64(utils.StandardEffectiveBalance)))
+
+		userLeftRewardDeci := userRewardDeci.Mul(decimal.NewFromInt(1).Sub(task.nodeFee))
+
+		return userDepositBalance + userLeftRewardDeci.BigInt().Uint64()
+	default:
+		// should not happen here
+		return userDepositBalance
 	}
 }

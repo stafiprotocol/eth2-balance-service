@@ -35,6 +35,7 @@ type Task struct {
 	storageContractAddress common.Address
 	fakeBeaconNode         bool
 	rewardEpochInterval    uint64
+	v1                     bool
 
 	// need init on start
 	connection              *shared.Connection
@@ -89,6 +90,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		fakeBeaconNode:         cfg.FakeBeaconNode,
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:    cfg.RewardEpochInterval,
+		v1:                     true,
 	}
 	return s, nil
 }
@@ -122,12 +124,14 @@ func (task *Task) Start() error {
 		return err
 	}
 	task.platformFee = decimal.NewFromBigInt(platformFee, -18)
+	logrus.Infof("platformFee: %s", task.platformFee.String())
 
 	nodeFee, err := task.networkSettingsContract.GetNodeFee(task.connection.CallOpts(nil))
 	if err != nil {
 		return err
 	}
 	task.nodeFee = decimal.NewFromBigInt(nodeFee, -18)
+	logrus.Infof("nodeFee: %s", task.nodeFee.String())
 
 	utils.SafeGoWithRestart(task.voteHandler)
 	return nil
@@ -161,7 +165,7 @@ func (task *Task) voteHandler() {
 				retry++
 				continue
 			}
-			logrus.Debug("voteWithdrawal end -----------")
+			logrus.Debug("voteWithdrawal end -----------\n")
 
 			logrus.Debug("voteRate start -----------")
 			err = task.voteRate()
@@ -172,7 +176,7 @@ func (task *Task) voteHandler() {
 				continue
 			}
 
-			logrus.Debug("voteRate end -----------")
+			logrus.Debug("voteRate end -----------\n")
 			retry = 0
 		}
 	}
@@ -184,23 +188,24 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
+	if !task.v1 {
+		lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
+		if err != nil {
+			return err
+		}
+		task.lightNodeContract, err = light_node.NewLightNode(lightNodeAddress, task.connection.Eth1Client())
+		if err != nil {
+			return err
+		}
 
-	lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
-	if err != nil {
-		return err
-	}
-	task.lightNodeContract, err = light_node.NewLightNode(lightNodeAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
-	}
-
-	superNodeAddress, err := task.getContractAddress(storageContract, "stafiSuperNode")
-	if err != nil {
-		return err
-	}
-	task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
+		superNodeAddress, err := task.getContractAddress(storageContract, "stafiSuperNode")
+		if err != nil {
+			return err
+		}
+		task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connection.Eth1Client())
+		if err != nil {
+			return err
+		}
 	}
 
 	networkBalancesAddress, err := task.getContractAddress(storageContract, "stafiNetworkBalances")

@@ -14,16 +14,18 @@ import (
 )
 
 func TestStatus(t *testing.T) {
-	c, err := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
+	// c, err := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
+	c, err := client.NewStandardHttpClient("https://beaconcha-rpc2.stafi.io")
 	if err != nil {
 		t.Fatal(err)
 	}
 	// pubkey, err := types.HexToValidatorPubkey("af93696b857fb621048539d0f9ee7722d801e05cf3be3039decd17b937dd9d69f4450c407f5ae4e96d875cb754840c1c")
-	pubkey, err := types.HexToValidatorPubkey("b63774b92182da3c751861524fe657196152b765fefba10550901b01123633376ed1f42a3d12a682057d7b2172f3bc6b")
+	// pubkey, err := types.HexToValidatorPubkey("b427ea30366336e4632d327428fac24ac3016534b18e0e39f5c2c4fffaa35656f982fba8e636599ae54b6f148a90a8e9")
+	pubkey, err := types.HexToValidatorPubkey("92ae457d1eabc84a9508354bf4a9d9ecc39cf89ad29051b4269b7e47f6aff103a665557bf235cce05628d846539dad5c")
 	if err != nil {
 		t.Fatal(err)
 	}
-	slot := uint64(4728928)
+	slot := uint64(4028928)
 	status, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
 		Slot: &slot,
 	})
@@ -76,7 +78,8 @@ func TestBlock(t *testing.T) {
 
 }
 func TestBeaconBlock(t *testing.T) {
-	c, err := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
+	// c, err := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
+	c, err := client.NewStandardHttpClient("https://beaconcha-rpc2.stafi.io")
 	if err != nil {
 		t.Fatal(err)
 	}

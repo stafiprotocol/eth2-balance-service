@@ -4,7 +4,12 @@
 package info_handlers
 
 import (
+	"math/big"
+
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
+	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
@@ -29,16 +34,75 @@ type RspPoolData struct {
 func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 	rsp := RspPoolData{
-		DepositedEth:      "234000000000000000000",
-		MintedREth:        "23000000000000000000",
-		StakedEth:         "23000000000000000000",
-		PoolEth:           "123000000000000000000",
-		UnmatchedEth:      "23000000000000000000",
-		MatchedValidators: 100,
-		StakeApr:          6.78,
-		ValidatorApr:      7.89,
-		EthPrice:          1400,
+		DepositedEth: "0",
+		MintedREth:   "0",
+		StakedEth:    "0",
+		PoolEth:      "0",
+		UnmatchedEth: "0",
+		StakeApr:     6.78,
+		ValidatorApr: 7.89,
+		EthPrice:     1400,
 	}
+
+	list, err := dao.GetStakedAndActiveValidatorList(h.db)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetStakedAndActiveValidatorList err %v", err)
+		return
+	}
+	poolInfo, err := dao.GetPoolInfo(h.db)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetPoolInfo err %v", err)
+		return
+	}
+
+	// cal deposit eth
+	poolEthBalanceDeci, err := decimal.NewFromString(poolInfo.PoolEthBalance)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("decimal.NewFromString(poolInfo.PoolEthBalance) err %v", err)
+		return
+	}
+	userDepositFromValidator := uint64(0)
+	for _, l := range list {
+		userDepositFromValidator += (utils.StandardEffectiveBalance - l.NodeDepositAmount)
+	}
+	rsp.DepositedEth = poolEthBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(userDepositFromValidator)), 9)).String()
+	// cal minitedReth
+	rsp.MintedREth = poolInfo.REthSupply
+	//cal stakedEth
+	rsp.StakedEth = decimal.NewFromBigInt(big.NewInt(int64(userDepositFromValidator)), 9).String()
+
+	//pool eth
+	rsp.PoolEth = poolEthBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(userDepositFromValidator)), 9)).String()
+
+	rsp.UnmatchedEth = poolInfo.PoolEthBalance
+	rsp.MatchedValidators = uint64(len(list))
+
+	// cal apr
+	// eth2InfoMeta, err := dao.GetMetaData(h.db, utils.MetaTypeEth2InfoSyncer)
+	// if err != nil {
+	// 	utils.Err(c, utils.CodeInternalErr, err.Error())
+	// 	logrus.Errorf("dao.GetMetaData err %v", err)
+	// 	return
+	// }
+	// finalEpoch := eth2InfoMeta.DealedEpoch
+	// epochBefore7Days := finalEpoch - 7*24*60*60/(32*12)
+
+	// validatorBalanceBefore7Days, err := dao.GetAnyValidatorBalanceBefore(h.db, epochBefore7Days)
+	// if err != nil {
+	// 	utils.Err(c, utils.CodeInternalErr, err.Error())
+	// 	logrus.Errorf("dao.GetAnyValidatorBalanceBefore err %v", err)
+	// 	return
+	// }
+
+	// validatorBalanceBeforeFinal, err := dao.GetValidatorBalanceBefore(h.db, validatorBalanceBefore7Days.ValidatorIndex, finalEpoch)
+	// if err != nil {
+	// 	utils.Err(c, utils.CodeInternalErr, err.Error())
+	// 	logrus.Errorf("dao.GetAnyValidatorBalanceBefore err %v", err)
+	// 	return
+	// }
 
 	utils.Ok(c, "success", rsp)
 }

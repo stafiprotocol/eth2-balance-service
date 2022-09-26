@@ -11,7 +11,7 @@ import (
 type NodeBalance struct {
 	db.BaseModel
 	NodeAddress string `gorm:"type:varchar(100) not null;default:'';column:node_address;index;uniqueIndex:uni_idx_node_epoch"` //hex with 0x prefix
-	Epoch       uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:epoch;uniqueIndex:uni_idx_node_epoch"`
+	Epoch       uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:epoch;uniqueIndex:uni_idx_node_epoch;index"`
 
 	TotalNodeDepositAmount uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_node_deposit_amount"` // Gwei
 	TotalBalance           uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_balance"`             //Gwei
@@ -52,5 +52,17 @@ func GetNodeBalanceListByNodeWithPage(db *db.WrapDb, nodeAddress string, pageInd
 	}
 
 	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ?", nodeAddress).Error
+	return
+}
+
+func GetFirstNodeBalance(db *db.WrapDb, nodeAddress string) (c *NodeBalance, err error) {
+	c = &NodeBalance{}
+	err = db.Order("epoch asc").Take(c, "node_address = ?", nodeAddress).Error
+	return
+}
+
+func GetNodeBalanceBefore(db *db.WrapDb, nodeAddress string, epoch uint64) (c *NodeBalance, err error) {
+	c = &NodeBalance{}
+	err = db.Order("epoch desc").Take(c, "node_address = ? and epoch < ?", nodeAddress, epoch).Error
 	return
 }

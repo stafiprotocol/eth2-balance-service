@@ -7,6 +7,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/prysmaticlabs/prysm/v3/beacon-chain/core/signing"
+	"github.com/prysmaticlabs/prysm/v3/config/params"
+	"github.com/prysmaticlabs/prysm/v3/contracts/deposit"
+	ethpb "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/bindings/LightNode"
 	"github.com/stafiprotocol/reth/bindings/StakingPool"
@@ -67,6 +71,35 @@ func (task *Task) voteWithdrawal() error {
 		if validatorStatus.Exists && validatorStatus.WithdrawalCredentials.String() != task.withdrawCredientials {
 			match = false
 		}
+		withdrawBts, err := hexutil.Decode(task.withdrawCredientials)
+		if err != nil {
+			return err
+		}
+		sigBts, err := hexutil.Decode(validator.DepositSignature)
+		if err != nil {
+			return err
+		}
+
+		dp := ethpb.Deposit_Data{
+			PublicKey:             validatorPubkey.Bytes(),
+			WithdrawalCredentials: withdrawBts,
+			Amount:                validator.NodeDepositAmount,
+			Signature:             sigBts,
+		}
+
+		domain, err := signing.ComputeDomain(
+			params.BeaconConfig().DomainDeposit,
+			params.BeaconConfig().GenesisForkVersion,
+			params.BeaconConfig().ZeroHash[:],
+		)
+		if err != nil {
+			return err
+		}
+
+		if err := deposit.VerifyDepositSignature(&dp, domain); err != nil {
+			match = false
+		}
+
 		logrus.WithFields(logrus.Fields{
 			"pubkey": validator.Pubkey,
 			"match":  match,
