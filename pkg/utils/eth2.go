@@ -70,8 +70,20 @@ var DecimalGwei = decimal.NewFromInt(1e9)
 
 const StandardEffectiveBalance = uint64(32e9)
 
-func GetNodeReward(balance, effectiveBalance uint64, nodeType uint8) uint64 {
-	return 0
+func GetNodeReward(balance, effectiveBalance, nodeDepositAmount uint64) uint64 {
+
+	reward := uint64(0)
+	if balance > effectiveBalance {
+		reward = balance - effectiveBalance
+	}
+
+	rewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromFloat(0.9))
+	nodeRewardDeci := decimal.NewFromInt(int64(nodeDepositAmount)).Mul(rewardDeci).Div(decimal.NewFromInt(int64(effectiveBalance)))
+	stakerRawReard := rewardDeci.Sub(nodeRewardDeci)
+
+	nodeRewardDeci = nodeRewardDeci.Add(stakerRawReard.Mul(decimal.NewFromFloat(0.1)))
+
+	return nodeRewardDeci.BigInt().Uint64()
 }
 
 func GetNodeManagedEth(nodeDeposit, balance uint64, status uint8) uint64 {

@@ -195,7 +195,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "nodeAddress": {
-                    "description": "bech32 string",
                     "type": "string"
                 },
                 "pageCount": {

@@ -63,22 +63,21 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 	rsp := RspRewardInfo{
 		TotalStakedEth:   "0",
 		LastEraRewardEth: "0",
-		EthPrice:         1400.00,
 		ChartXData:       []uint64{},
 		ChartYData:       []string{},
 		List:             []ResReward{},
 	}
 
+	lastEraReward := uint64(0)
 	firstPage, _, err := dao.GetNodeBalanceListByNodeWithPage(h.db, req.NodeAddress, 1, 5)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetNodeBalanceListByNodeWithPage err %v", err)
 		return
 	}
-	if len(firstPage) == 0 {
-		utils.Ok(c, "success", rsp)
+	if len(firstPage) != 0 {
+		lastEraReward = firstPage[0].TotalEraReward
 	}
-	lastEraData := firstPage[0]
 
 	list, totalCount, err := dao.GetNodeBalanceListByNodeWithPage(h.db, req.NodeAddress, req.PageIndex, req.PageCount)
 	if err != nil {
@@ -86,15 +85,41 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 		logrus.Errorf("dao.GetNodeBalanceListByNodeWithPage err %v", err)
 		return
 	}
+	poolInfo, err := dao.GetPoolInfo(h.db)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetPoolInfo err %v", err)
+		return
+	}
+	ethPriceDeci, err := decimal.NewFromString(poolInfo.EthPrice)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("poolInfo.PoolEthBalance to decimal err %v", err)
+		return
+	}
+	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
+
 	logrus.WithFields(logrus.Fields{
 		"list":             list,
 		"TotalStakedEth":   rsp.TotalStakedEth,
 		"LastEraRewardEth": rsp.LastEraRewardEth,
 	}).Debug("rsp info")
 
+	allValidator, err := dao.GetValidatorListByNode(h.db, req.NodeAddress, 0)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetValidatorListByNode err %v", err)
+		return
+	}
+	totalStakedEth := uint64(0)
+	for _, v := range allValidator {
+		totalStakedEth += v.Balance
+	}
+
 	rsp.TotalCount = totalCount
-	rsp.TotalStakedEth = decimal.NewFromInt(int64(lastEraData.TotalEffectiveBalance)).Mul(utils.DecimalGwei).String()
-	rsp.LastEraRewardEth = decimal.NewFromInt(int64(lastEraData.TotalEraReward)).Mul(utils.DecimalGwei).String()
+	rsp.TotalStakedEth = decimal.NewFromInt(int64(totalStakedEth)).Mul(utils.DecimalGwei).String()
+	rsp.LastEraRewardEth = decimal.NewFromInt(int64(lastEraReward)).Mul(utils.DecimalGwei).String()
+	rsp.EthPrice = ethPrice
 
 	for _, l := range list {
 		rsp.List = append(rsp.List, ResReward{
@@ -117,7 +142,7 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 
 	chartDataLen := 10
 	if req.ChartDuSeconds == 0 {
-		req.ChartDuSeconds = 1e15 // will return all
+		req.ChartDuSeconds = 1e15 // large number ensure during all time
 	}
 	chartDuEpoch := req.ChartDuSeconds / (12 * 32)
 	firstNodeBalance, err := dao.GetFirstNodeBalance(h.db, req.NodeAddress)

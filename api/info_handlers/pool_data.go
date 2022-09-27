@@ -41,7 +41,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		UnmatchedEth: "0",
 		StakeApr:     6.78,
 		ValidatorApr: 7.89,
-		EthPrice:     1400,
 	}
 
 	list, err := dao.GetStakedAndActiveValidatorList(h.db)
@@ -64,6 +63,15 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		logrus.Errorf("decimal.NewFromString(poolInfo.PoolEthBalance) err %v", err)
 		return
 	}
+
+	ethPriceDeci, err := decimal.NewFromString(poolInfo.EthPrice)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("poolInfo.PoolEthBalance to decimal err %v", err)
+		return
+	}
+	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
+
 	userDepositFromValidator := uint64(0)
 	for _, l := range list {
 		userDepositFromValidator += (utils.StandardEffectiveBalance - l.NodeDepositAmount)
@@ -79,7 +87,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 	rsp.UnmatchedEth = poolInfo.PoolEthBalance
 	rsp.MatchedValidators = uint64(len(list))
-
+	rsp.EthPrice = ethPrice
 	// cal apr
 	// eth2InfoMeta, err := dao.GetMetaData(h.db, utils.MetaTypeEth2InfoSyncer)
 	// if err != nil {

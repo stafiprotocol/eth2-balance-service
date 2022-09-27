@@ -3,7 +3,6 @@ definitions:
   info_handlers.ReqNodeInfo:
     properties:
       nodeAddress:
-        description: bech32 string
         type: string
       pageCount:
         type: integer

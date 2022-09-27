@@ -44,7 +44,7 @@ func GetPriceFromCoinGecko(url string) (map[string]float64, error) {
 			resPrice[SymbolEth] = value.Usd
 		}
 	}
-	if len(resPrice) != 5 {
+	if len(resPrice) != 1 {
 		return nil, fmt.Errorf("get price from coingecko failed,len:%d ", len(resPrice))
 	}
 	return resPrice, nil

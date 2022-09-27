@@ -14,8 +14,8 @@ import (
 )
 
 type ReqNodeInfo struct {
-	NodeAddress string `json:"nodeAddress"` //bech32 string
-	Status      uint8  `json:"status"`      //80:stafihub
+	NodeAddress string `json:"nodeAddress"`
+	Status      uint8  `json:"status"`
 	PageIndex   int    `json:"pageIndex"`
 	PageCount   int    `json:"pageCount"`
 }
@@ -54,11 +54,9 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	logrus.Debugf("HandlePostNodeInfo req parm:\n %s", string(reqBytes))
 
 	rsp := RspNodeInfo{
-		TotalCount:       0,
 		SelfDepositedEth: "0",
 		SelfRewardEth:    "0",
 		TotalManagedEth:  "0",
-		EthPrice:         1400.00,
 		List:             []ResPubkey{},
 	}
 
@@ -74,7 +72,14 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	totalManagedEth := uint64(0)
 	for _, l := range totalList {
 		selfDepositedEth += l.NodeDepositAmount
-		selfRewardEth += utils.GetNodeReward(l.Balance, l.EffectiveBalance, l.NodeType)
+		selfRewardEth += utils.GetNodeReward(l.Balance, l.EffectiveBalance, l.NodeDepositAmount)
+		logrus.WithFields(logrus.Fields{
+			"balance":           l.Balance,
+			"nodeDepositAmount": l.NodeDepositAmount,
+			"effectiveBalance":  l.EffectiveBalance,
+			"nodeType":          l.NodeType,
+			"selfRewardEth":     selfRewardEth,
+		}).Debug("GetNodeReward")
 		totalManagedEth += utils.GetNodeManagedEth(l.NodeDepositAmount, l.Balance, l.Status)
 	}
 
@@ -84,17 +89,34 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
 		return
 	}
+
+	poolInfo, err := dao.GetPoolInfo(h.db)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetPoolInfo err %v", err)
+		return
+	}
+	ethPriceDeci, err := decimal.NewFromString(poolInfo.EthPrice)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("poolInfo.PoolEthBalance to decimal err %v", err)
+		return
+	}
+	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
+
 	logrus.WithFields(logrus.Fields{
 		"list":             list,
 		"selfDepositedEth": selfDepositedEth,
 		"selfRewardEth":    selfRewardEth,
 		"totalmanagedEth":  totalManagedEth,
+		"ethPrice":         ethPrice,
 	}).Debug("rsp info")
 
 	rsp.TotalCount = count
 	rsp.SelfDepositedEth = decimal.NewFromInt(int64(selfDepositedEth)).Mul(utils.DecimalGwei).String()
 	rsp.SelfRewardEth = decimal.NewFromInt(int64(selfRewardEth)).Mul(utils.DecimalGwei).String()
 	rsp.TotalManagedEth = decimal.NewFromInt(int64(totalManagedEth)).Mul(utils.DecimalGwei).String()
+	rsp.EthPrice = ethPrice
 	for _, l := range list {
 		rsp.List = append(rsp.List, ResPubkey{
 			Status: l.Status,

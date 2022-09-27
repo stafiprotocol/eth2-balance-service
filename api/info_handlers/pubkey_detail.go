@@ -58,7 +58,6 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	rsp := RspPubkeyDetail{
 		Last24hRewardEth: "0",
 		Apr:              0,
-		EthPrice:         1400.00,
 		ChartXData:       []uint64{},
 		ChartYData:       []string{},
 	}
@@ -82,6 +81,20 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		logrus.Errorf("dao.GetNodeBalanceListByNodeWithPage err %v", err)
 		return
 	}
+	poolInfo, err := dao.GetPoolInfo(h.db)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetPoolInfo err %v", err)
+		return
+	}
+	ethPriceDeci, err := decimal.NewFromString(poolInfo.EthPrice)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("poolInfo.PoolEthBalance to decimal err %v", err)
+		return
+	}
+	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
+
 	rsp.Status = validator.Status
 	rsp.CurrentBalance = decimal.NewFromInt(int64(validator.Balance)).Mul(utils.DecimalGwei).String()
 	rsp.DepositBalance = decimal.NewFromInt(int64(validator.NodeDepositAmount)).Mul(utils.DecimalGwei).String()
@@ -89,6 +102,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 
 	rsp.EligibleEpoch = validator.EligibleEpoch
 	rsp.ActiveEpoch = validator.ActiveEpoch
+	rsp.EthPrice = ethPrice
 
 	if rsp.EligibleEpoch != 0 {
 		rsp.EligibleDays = (finalEpoch - validator.EligibleEpoch) * 32 * 12 / (60 * 60 * 24)

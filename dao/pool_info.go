@@ -13,6 +13,7 @@ type PoolInfo struct {
 
 	PoolEthBalance string `gorm:"type:varchar(40) not null;default:'0';column:pool_eth_balance"`
 	REthSupply     string `gorm:"type:varchar(40) not null;default:'0';column:reth_supply"`
+	EthPrice       string `gorm:"type:varchar(40) not null;default:'0';column:eth_price"` //decimals price*1e6
 }
 
 func (f PoolInfo) TableName() string {
