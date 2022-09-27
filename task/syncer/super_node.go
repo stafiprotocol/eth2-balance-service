@@ -65,10 +65,14 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 		if err != nil {
 			return err
 		}
+		// already synced
+		if len(validator.StakeTxHash) != 0 {
+			continue
+		}
 
 		validator.Status = utils.ValidatorStatusStaked
 		validator.StakeTxHash = txHashStr
-		validator.StakeBlockHeight = iterDeposited.Event.Raw.BlockNumber
+		validator.StakeBlockHeight = iterStaked.Event.Raw.BlockNumber
 
 		err = dao.UpOrInValidator(task.db, validator)
 		if err != nil {
@@ -93,7 +97,9 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 		if err != nil {
 			return err
 		}
-
+		if validator.Status > 7 {
+			continue
+		}
 		validator.Status = uint8(iterSetPubkeyStatus.Event.Status.Int64())
 
 		err = dao.UpOrInValidator(task.db, validator)

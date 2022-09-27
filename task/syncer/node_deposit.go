@@ -66,9 +66,14 @@ func (task *Task) fetchNodeDepositEvents(start, end uint64) error {
 		if err != nil {
 			return err
 		}
+
+		if len(validator.StakeTxHash) != 0 {
+			continue
+		}
+
 		validator.Status = utils.ValidatorStatusStaked
 		validator.StakeTxHash = txHashStr
-		validator.StakeBlockHeight = iterDeposited.Event.Raw.BlockNumber
+		validator.StakeBlockHeight = iterStaked.Event.Raw.BlockNumber
 
 		err = dao.UpOrInValidator(task.db, validator)
 		if err != nil {
