@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	deposit_contract "github.com/stafiprotocol/reth/bindings/DepositContract"
 	light_node "github.com/stafiprotocol/reth/bindings/LightNode"
+	network_balances "github.com/stafiprotocol/reth/bindings/NetworkBalances"
 	node_deposit "github.com/stafiprotocol/reth/bindings/NodeDeposit"
 	reth "github.com/stafiprotocol/reth/bindings/Reth"
 	storage "github.com/stafiprotocol/reth/bindings/Storage"
@@ -34,14 +35,15 @@ type Task struct {
 	Version                string
 
 	// need init on start
-	db                  *db.WrapDb
-	connection          *shared.Connection
-	depositContract     *deposit_contract.DepositContract
-	lightNodeContract   *light_node.LightNode
-	nodeDepositContract *node_deposit.NodeDeposit
-	superNodeContract   *super_node.SuperNode
-	rethContract        *reth.Reth
-	userDepositContract *user_deposit.UserDeposit
+	db                      *db.WrapDb
+	connection              *shared.Connection
+	depositContract         *deposit_contract.DepositContract
+	lightNodeContract       *light_node.LightNode
+	nodeDepositContract     *node_deposit.NodeDeposit
+	superNodeContract       *super_node.SuperNode
+	rethContract            *reth.Reth
+	userDepositContract     *user_deposit.UserDeposit
+	networkBalancesContract *network_balances.NetworkBalances
 
 	eth2Config         beacon.Eth2Config
 	rewardSlotInterval uint64
@@ -172,6 +174,14 @@ func (task *Task) initContract() error {
 		return err
 	}
 
+	networkBalancesAddress, err := task.getContractAddress(storageContract, "stafiNetworkBalances")
+	if err != nil {
+		return err
+	}
+	task.networkBalancesContract, err = network_balances.NewNetworkBalances(networkBalancesAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

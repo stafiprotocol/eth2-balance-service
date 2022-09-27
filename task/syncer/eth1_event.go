@@ -53,6 +53,11 @@ func (task *Task) syncEth1Event() error {
 			return err
 		}
 
+		err = task.fetchRateUpdateEvents(subStart, subEnd)
+		if err != nil {
+			return err
+		}
+
 		metaData.DealedBlockHeight = subEnd
 		err = dao.UpOrInMetaData(task.db, metaData)
 		if err != nil {

@@ -39,7 +39,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		StakedEth:    "0",
 		PoolEth:      "0",
 		UnmatchedEth: "0",
-		StakeApr:     6.78,
 		ValidatorApr: 7.89,
 	}
 
@@ -88,29 +87,45 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	rsp.UnmatchedEth = poolInfo.PoolEthBalance
 	rsp.MatchedValidators = uint64(len(list))
 	rsp.EthPrice = ethPrice
+
 	// cal apr
-	// eth2InfoMeta, err := dao.GetMetaData(h.db, utils.MetaTypeEth2InfoSyncer)
-	// if err != nil {
-	// 	utils.Err(c, utils.CodeInternalErr, err.Error())
-	// 	logrus.Errorf("dao.GetMetaData err %v", err)
-	// 	return
-	// }
-	// finalEpoch := eth2InfoMeta.DealedEpoch
-	// epochBefore7Days := finalEpoch - 7*24*60*60/(32*12)
+	rateInfoList, err := dao.GetLatestRateInfoList(h.db)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetLatestRateInfoList err: %s", err)
+		return
+	}
 
-	// validatorBalanceBefore7Days, err := dao.GetAnyValidatorBalanceBefore(h.db, epochBefore7Days)
-	// if err != nil {
-	// 	utils.Err(c, utils.CodeInternalErr, err.Error())
-	// 	logrus.Errorf("dao.GetAnyValidatorBalanceBefore err %v", err)
-	// 	return
-	// }
+	if len(rateInfoList) >= 2 {
+		first := rateInfoList[0]
+		end := rateInfoList[len(rateInfoList)-1]
 
-	// validatorBalanceBeforeFinal, err := dao.GetValidatorBalanceBefore(h.db, validatorBalanceBefore7Days.ValidatorIndex, finalEpoch)
-	// if err != nil {
-	// 	utils.Err(c, utils.CodeInternalErr, err.Error())
-	// 	logrus.Errorf("dao.GetAnyValidatorBalanceBefore err %v", err)
-	// 	return
-	// }
+		firstRateDeci, err := decimal.NewFromString(first.REthRate)
+		if err != nil {
+			utils.Err(c, utils.CodeInternalErr, err.Error())
+			logrus.Errorf("decimal.NewFromString(first.REthRate) err: %s", err)
+			return
+		}
+
+		endRateDeci, err := decimal.NewFromString(end.REthRate)
+		if err != nil {
+			utils.Err(c, utils.CodeInternalErr, err.Error())
+			logrus.Errorf("decimal.NewFromString(end.REthRate) err: %s", err)
+			return
+		}
+
+		du := int64(first.Timestamp - end.Timestamp)
+
+		apyDeci := firstRateDeci.Sub(endRateDeci).
+			Mul(decimal.NewFromInt(365 * 24 * 60 * 60 * 100)).
+			Div(decimal.NewFromInt(du)).
+			Div(endRateDeci)
+		rsp.StakeApr, _ = apyDeci.Float64()
+	}
+	// $ethApy = exp(31556926 / 384 * 64 / 31622 / $stakeAmount ** 0.5) - 1;
+	// $ethApy = $ethApy * 0.75;
+
+	// $apr = (string) round(100 * $ethApy * (1 - $platformFree) * (1 + 3 * $nodeFee), 2);
 
 	utils.Ok(c, "success", rsp)
 }

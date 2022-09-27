@@ -7,7 +7,6 @@ import (
 	"github.com/stafiprotocol/reth/pkg/db"
 )
 
-// total balance info  of actived nodes
 type PoolInfo struct {
 	db.BaseModel
 
