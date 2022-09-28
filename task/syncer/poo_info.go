@@ -33,6 +33,19 @@ func (task *Task) syncPooInfo() error {
 		poolInfo.EthPrice = price
 	}
 
+	base, priority, err := task.getGasPrice()
+	if err != nil {
+		logrus.Warnf("get gas price err: %s", err)
+	} else {
+		if base != 0 {
+			poolInfo.BaseFee = base
+		}
+
+		if priority != 0 {
+			poolInfo.PriorityFee = priority
+		}
+	}
+
 	poolInfo.PoolEthBalance = poolBalance.String()
 	poolInfo.REthSupply = rethSupply.String()
 
@@ -49,4 +62,8 @@ func (task *Task) getEthPrice() (string, error) {
 		return decimal.NewFromFloat(price).Mul(decimal.NewFromInt(1e6)).StringFixed(0), nil
 	}
 	return "", fmt.Errorf("no eth price")
+}
+
+func (task *Task) getGasPrice() (base uint64, priority uint64, err error) {
+	return utils.GetGasprice()
 }

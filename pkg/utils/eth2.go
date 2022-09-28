@@ -1,6 +1,11 @@
 package utils
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/shopspring/decimal"
 	"github.com/stafiprotocol/reth/shared/beacon"
 )
@@ -71,7 +76,9 @@ var DecimalGwei = decimal.NewFromInt(1e9)
 const StandardEffectiveBalance = uint64(32e9)
 
 func GetNodeReward(balance, effectiveBalance, nodeDepositAmount uint64) uint64 {
-
+	if balance == 0 || effectiveBalance == 0 {
+		return 0
+	}
 	reward := uint64(0)
 	if balance > effectiveBalance {
 		reward = balance - effectiveBalance
@@ -105,4 +112,46 @@ func GetNodeManagedEth(nodeDeposit, balance uint64, status uint8) uint64 {
 	default:
 		return balance
 	}
+}
+
+func GetGasprice() (base, priority uint64, err error) {
+	rsp, err := http.Get("https://api.ethgasstation.info/api/fee-estimate")
+	if err != nil {
+		return 0, 0, err
+	}
+	defer rsp.Body.Close()
+	if rsp.StatusCode != http.StatusOK {
+		return 0, 0, fmt.Errorf("status err %d", rsp.StatusCode)
+	}
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		return 0, 0, err
+	}
+	if len(bodyBytes) == 0 {
+		return 0, 0, fmt.Errorf("bodyBytes zero err")
+	}
+	resGasPrice := ResGasPrice{}
+	err = json.Unmarshal(bodyBytes, &resGasPrice)
+	if err != nil {
+		return 0, 0, err
+	}
+	return uint64(resGasPrice.BaseFee), uint64(resGasPrice.PriorityFee.Fast), nil
+
+}
+
+type ResGasPrice struct {
+	BaseFee     int     `json:"baseFee"`
+	BlockNumber int     `json:"blockNumber"`
+	BlockTime   float64 `json:"blockTime"`
+	GasPrice    struct {
+		Fast     int `json:"fast"`
+		Instant  int `json:"instant"`
+		Standard int `json:"standard"`
+	} `json:"gasPrice"`
+	NextBaseFee int `json:"nextBaseFee"`
+	PriorityFee struct {
+		Fast     int `json:"fast"`
+		Instant  int `json:"instant"`
+		Standard int `json:"standard"`
+	} `json:"priorityFee"`
 }

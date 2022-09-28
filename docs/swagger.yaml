@@ -53,6 +53,15 @@ definitions:
       totalStakedEth:
         type: string
     type: object
+  info_handlers.RspGasPrice:
+    properties:
+      baseFee:
+        type: integer
+      ethPrice:
+        type: number
+      priorityFee:
+        type: integer
+    type: object
   info_handlers.RspNodeInfo:
     properties:
       ethPrice:
@@ -164,6 +173,24 @@ info:
   title: reth API
   version: "1.0"
 paths:
+  /v1/gasPrice:
+    get:
+      description: gas price
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspGasPrice'
+              type: object
+      summary: gas price
+      tags:
+      - v1
   /v1/nodeInfo:
     post:
       consumes:

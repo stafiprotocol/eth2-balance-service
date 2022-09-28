@@ -26,7 +26,9 @@ func InitRouters(db *db.WrapDb) http.Handler {
 	router.POST("/reth/v1/nodeInfo", infoHandler.HandlePostNodeInfo)
 	router.POST("/reth/v1/rewardInfo", infoHandler.HandlePostRewardInfo)
 	router.POST("/reth/v1/pubkeyDetail", infoHandler.HandlePostPubkeyDetail)
+
 	router.GET("/reth/v1/poolData", infoHandler.HandleGetPoolData)
+	router.GET("/reth/v1/gasPrice", infoHandler.HandleGetGasPrice)
 
 	return router
 

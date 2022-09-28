@@ -19,6 +19,38 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/v1/gasPrice": {
+            "get": {
+                "description": "gas price",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "gas price",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspGasPrice"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/nodeInfo": {
             "post": {
                 "description": "node info",
@@ -269,6 +301,20 @@ const docTemplate = `{
                 },
                 "totalStakedEth": {
                     "type": "string"
+                }
+            }
+        },
+        "info_handlers.RspGasPrice": {
+            "type": "object",
+            "properties": {
+                "baseFee": {
+                    "type": "integer"
+                },
+                "ethPrice": {
+                    "type": "number"
+                },
+                "priorityFee": {
+                    "type": "integer"
                 }
             }
         },

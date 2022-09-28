@@ -30,29 +30,29 @@
 * data format: application/json
 * data detail:
 
-| field       | type   | notice                                                                                                                      |
-| :---------- | :----- | :-------------------------------------------------------------------------------------------------------------------------- |
-| nodeAddress | string | node address, hex string                                                                                                    |
+| field       | type   | notice                                                                                                                                 |
+| :---------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------- |
+| nodeAddress | string | node address, hex string                                                                                                               |
 | status      | number | 0 all 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit} |
-| pageIndex   | number | page index                                                                                                                  |
-| pageCount   | number | page count                                                                                                                  |
+| pageIndex   | number | page index                                                                                                                             |
+| pageCount   | number | page count                                                                                                                             |
 
 ### (5) response
 * include status、data、message fields
 * status、message must be string format, data must be object
 
 
-| grade 1 | grade 2          | grade 3 | type   | must exist? | encode type | description                                                                                                           |
-| :------ | :--------------- | :------ | :----- | :---------- | :---------- | :-------------------------------------------------------------------------------------------------------------------- |
-| status  | N/A              | N/A     | string | Yes         | null        | status code                                                                                                           |
-| message | N/A              | N/A     | string | Yes         | null        | status info                                                                                                           |
-| data    | N/A              | N/A     | object | Yes         | null        | data                                                                                                                  |
-|         | selfDepositedEth | N/A     | string | Yes         | null        | decimal format string, reward of last era, "" represent no reward                                                     |
-|         | totalManagedEth  | N/A     | string | Yes         | null        | decimal format string, reward of last era, "" represent no reward                                                     |
-|         | selfRewardEth    | N/A     | string | Yes         | null        | decimal format string, reward of last era, "" represent no reward                                                     |
-|         | ethPrice         | N/A     | number | Yes         | null        | eth price                                                                                                             |
-|         | pubkeyList       | N/A     | list   | Yes         | null        | list                                                                                                                  |
-|         |                  | pubkey  | string | Yes         | null        | hex string                                                                                                            |
+| grade 1 | grade 2          | grade 3 | type   | must exist? | encode type | description                                                                                                                      |
+| :------ | :--------------- | :------ | :----- | :---------- | :---------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| status  | N/A              | N/A     | string | Yes         | null        | status code                                                                                                                      |
+| message | N/A              | N/A     | string | Yes         | null        | status info                                                                                                                      |
+| data    | N/A              | N/A     | object | Yes         | null        | data                                                                                                                             |
+|         | selfDepositedEth | N/A     | string | Yes         | null        | decimal format string, reward of last era, "" represent no reward                                                                |
+|         | totalManagedEth  | N/A     | string | Yes         | null        | decimal format string, reward of last era, "" represent no reward                                                                |
+|         | selfRewardEth    | N/A     | string | Yes         | null        | decimal format string, reward of last era, "" represent no reward                                                                |
+|         | ethPrice         | N/A     | number | Yes         | null        | eth price                                                                                                                        |
+|         | pubkeyList       | N/A     | list   | Yes         | null        | list                                                                                                                             |
+|         |                  | pubkey  | string | Yes         | null        | hex string                                                                                                                       |
 |         |                  | status  | number | Yes         | null        | 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit} |
 
 
@@ -139,24 +139,24 @@
 * status、message must be string format, data must be object
 
 
-| grade 1 | grade 2          | grade 3 | type        | must exist? | encode type | description                                                                                                           |
-| :------ | :--------------- | :------ | :---------- | :---------- | :---------- | :-------------------------------------------------------------------------------------------------------------------- |
-| status  | N/A              | N/A     | string      | Yes         | null        | status code                                                                                                           |
-| message | N/A              | N/A     | string      | Yes         | null        | status info                                                                                                           |
-| data    | N/A              | N/A     | object      | Yes         | null        | data                                                                                                                  |
+| grade 1 | grade 2          | grade 3 | type        | must exist? | encode type | description                                                                                                                      |
+| :------ | :--------------- | :------ | :---------- | :---------- | :---------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| status  | N/A              | N/A     | string      | Yes         | null        | status code                                                                                                                      |
+| message | N/A              | N/A     | string      | Yes         | null        | status info                                                                                                                      |
+| data    | N/A              | N/A     | object      | Yes         | null        | data                                                                                                                             |
 |         | status           | N/A     | number      | Yes         | null        | 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit} |
-|         | currentBalance   | N/A     | string      | Yes         | null        | decimal format string                                                                                                 |
-|         | depositBalance   | N/A     | string      | Yes         | null        | decimal format string                                                                                                 |
-|         | effectiveBalance | N/A     | string      | Yes         | null        | decimal format string                                                                                                 |
-|         | last24hRewardEth | N/A     | string      | Yes         | null        | decimal format string, total reward of last 24h                                                                       |
-|         | apr              | N/A     | number      | Yes         | null        | apr                                                                                                                   |
-|         | ethPrice         | N/A     | number      | Yes         | null        | eth price                                                                                                             |
-|         | eligibleEpoch    | N/A     | number      | Yes         | null        | epoch                                                                                                                 |
-|         | eligibleDays     | N/A     | number      | Yes         | null        | eligible for activation                                                                                               |
-|         | activeEpoch      | N/A     | number      | Yes         | null        | epoch                                                                                                                 |
-|         | activeDays       | N/A     | number      | Yes         | null        | acitve since                                                                                                          |
-|         | chartXData       | N/A     | number list | Yes         | null        | timestamp array, chart x data                                                                                         |
-|         | chartYData       | N/A     | string list | Yes         | null        | total reward eth array, chart y data                                                                                  |
+|         | currentBalance   | N/A     | string      | Yes         | null        | decimal format string                                                                                                            |
+|         | depositBalance   | N/A     | string      | Yes         | null        | decimal format string                                                                                                            |
+|         | effectiveBalance | N/A     | string      | Yes         | null        | decimal format string                                                                                                            |
+|         | last24hRewardEth | N/A     | string      | Yes         | null        | decimal format string, total reward of last 24h                                                                                  |
+|         | apr              | N/A     | number      | Yes         | null        | apr                                                                                                                              |
+|         | ethPrice         | N/A     | number      | Yes         | null        | eth price                                                                                                                        |
+|         | eligibleEpoch    | N/A     | number      | Yes         | null        | epoch                                                                                                                            |
+|         | eligibleDays     | N/A     | number      | Yes         | null        | eligible for activation                                                                                                          |
+|         | activeEpoch      | N/A     | number      | Yes         | null        | epoch                                                                                                                            |
+|         | activeDays       | N/A     | number      | Yes         | null        | acitve since                                                                                                                     |
+|         | chartXData       | N/A     | number list | Yes         | null        | timestamp array, chart x data                                                                                                    |
+|         | chartYData       | N/A     | string list | Yes         | null        | total reward eth array, chart y data                                                                                             |
 
 
 ## 4. pool data
@@ -196,4 +196,36 @@ no
 |         | stakeApr          | N/A     | number | Yes         | null        | apr                   |
 |         | validatorApr      | N/A     | number | Yes         | null        | apr                   |
 |         | ethPrice          | N/A     | number | Yes         | null        | eth price             |
+
+## 5. gas price
+
+### (1) description
+
+*  get gas price
+
+### (2) path
+
+* /reth/v1/gasPrice
+
+### (3) request method
+
+* get
+
+### (4) request payload 
+
+no
+
+### (5) response
+* include status、data、message fields
+* status、message must be string format, data must be object
+
+
+| grade 1 | grade 2     | grade 3 | type   | must exist? | encode type | description |
+| :------ | :---------- | :------ | :----- | :---------- | :---------- | :---------- |
+| status  | N/A         | N/A     | string | Yes         | null        | status code |
+| message | N/A         | N/A     | string | Yes         | null        | status info |
+| data    | N/A         | N/A     | object | Yes         | null        | data        |
+|         | baseFee     | N/A     | number | Yes         | null        | number      |
+|         | priorityFee | N/A     | number | Yes         | null        | number      |
+|         | ethPrice    | N/A     | number | Yes         | null        | number      |
 

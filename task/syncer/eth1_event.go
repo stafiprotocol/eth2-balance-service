@@ -26,6 +26,7 @@ func (task *Task) syncEth1Event() error {
 	if err != nil {
 		return err
 	}
+	logrus.Debugf("latestBlockNumber: %d, dealedBlockNumber: %d", latestBlockNumber, metaData.DealedBlockHeight)
 	if latestBlockNumber <= uint64(metaData.DealedBlockHeight) {
 		return nil
 	}
