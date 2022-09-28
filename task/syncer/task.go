@@ -128,6 +128,7 @@ func (task *Task) initContract() error {
 		return err
 	}
 
+	// v1 has no contracts below
 	if task.Version != utils.V1 {
 		lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
 		if err != nil {
@@ -276,20 +277,19 @@ func (task *Task) syncHandler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
-			if task.Version != utils.V1 {
-				logrus.Debug("syncEth1Event start -----------")
-				err := task.syncEth1Event()
-				if err != nil {
-					logrus.Warnf("syncEth1Event err: %s", err)
-					time.Sleep(utils.RetryInterval)
-					retry++
-					continue
-				}
-				logrus.Debug("syncEth1Event end -----------\n")
+
+			logrus.Debug("syncEth1Event start -----------")
+			err := task.syncEth1Event()
+			if err != nil {
+				logrus.Warnf("syncEth1Event err: %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
 			}
+			logrus.Debug("syncEth1Event end -----------\n")
 
 			logrus.Debug("syncPooInfo start -----------")
-			err := task.syncPooInfo()
+			err = task.syncPooInfo()
 			if err != nil {
 				logrus.Warnf("syncPooInfo err: %s", err)
 				time.Sleep(utils.RetryInterval)

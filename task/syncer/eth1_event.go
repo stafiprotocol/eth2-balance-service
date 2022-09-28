@@ -8,11 +8,18 @@ import (
 
 const fetchValidatorStatusLimit = 50
 const fetchEventBlockLimit = uint64(4900)
+const fetchEth1WaitBlockNumbers = uint64(5)
 
 func (task *Task) syncEth1Event() error {
 	latestBlockNumber, err := task.connection.Eth1LatestBlock()
 	if err != nil {
 		return err
+	}
+
+	if task.Version != utils.Dev {
+		if latestBlockNumber > fetchEth1WaitBlockNumbers {
+			latestBlockNumber -= fetchEth1WaitBlockNumbers
+		}
 	}
 
 	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
@@ -37,20 +44,22 @@ func (task *Task) syncEth1Event() error {
 		if err != nil {
 			return err
 		}
+		// v1 has no contracts below
+		if task.Version != utils.V1 {
+			err = task.fetchNodeDepositEvents(subStart, subEnd)
+			if err != nil {
+				return err
+			}
 
-		err = task.fetchNodeDepositEvents(subStart, subEnd)
-		if err != nil {
-			return err
-		}
+			err = task.fetchLightNodeEvents(subStart, subEnd)
+			if err != nil {
+				return err
+			}
 
-		err = task.fetchLightNodeEvents(subStart, subEnd)
-		if err != nil {
-			return err
-		}
-
-		err = task.fetchSuperNodeEvents(subStart, subEnd)
-		if err != nil {
-			return err
+			err = task.fetchSuperNodeEvents(subStart, subEnd)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = task.fetchRateUpdateEvents(subStart, subEnd)
