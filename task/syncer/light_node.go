@@ -100,7 +100,7 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 			return err
 		}
 
-		if validator.Status > 7 {
+		if validator.Status > utils.ValidatorStatusWithdrawed {
 			continue
 		}
 

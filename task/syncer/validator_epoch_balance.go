@@ -167,13 +167,31 @@ func (task *Task) syncValidatorEpochBalances() error {
 				nodeBalance.TotalBalance += l.Balance
 				nodeBalance.TotalEffectiveBalance += l.EffectiveBalance
 
-				nodeBalance.TotalSelfEraReward += utils.GetNodeReward(l.Balance, l.EffectiveBalance, valInfo.NodeDepositAmount)
+				nodeBalance.TotalSelfReward += utils.GetNodeReward(l.Balance, l.EffectiveBalance, valInfo.NodeDepositAmount)
 
 				reward := uint64(0)
 				if l.Balance > l.EffectiveBalance {
 					reward = l.Balance - l.EffectiveBalance
 				}
-				nodeBalance.TotalEraReward += reward
+				nodeBalance.TotalReward += reward
+			}
+
+			preEpochNodeBalance, err := dao.GetNodeBalanceBefore(task.db, node, epoch)
+			if err != nil && err != gorm.ErrRecordNotFound {
+				return err
+			}
+			if err == nil {
+				totalSelfEraReward := uint64(0)
+				if nodeBalance.TotalSelfReward > preEpochNodeBalance.TotalSelfReward {
+					totalSelfEraReward = nodeBalance.TotalSelfReward - preEpochNodeBalance.TotalSelfReward
+				}
+				nodeBalance.TotalSelfEraReward = totalSelfEraReward
+
+				totalEraReward := uint64(0)
+				if nodeBalance.TotalReward > preEpochNodeBalance.TotalReward {
+					totalEraReward = nodeBalance.TotalReward - preEpochNodeBalance.TotalReward
+				}
+				nodeBalance.TotalEraReward = totalEraReward
 			}
 
 			err = dao.UpOrInNodeBalance(task.db, nodeBalance)

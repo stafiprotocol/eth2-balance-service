@@ -97,7 +97,7 @@ func (task *Task) fetchSuperNodeEvents(start, end uint64) error {
 		if err != nil {
 			return err
 		}
-		if validator.Status > 7 {
+		if validator.Status > utils.ValidatorStatusWithdrawed {
 			continue
 		}
 		validator.Status = uint8(iterSetPubkeyStatus.Event.Status.Int64())

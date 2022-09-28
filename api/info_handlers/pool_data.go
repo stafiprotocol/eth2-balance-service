@@ -4,6 +4,7 @@
 package info_handlers
 
 import (
+	"math"
 	"math/big"
 
 	"github.com/gin-gonic/gin"
@@ -72,8 +73,10 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
 
 	userDepositFromValidator := uint64(0)
+	totalStaked := uint64(0)
 	for _, l := range list {
 		userDepositFromValidator += (utils.StandardEffectiveBalance - l.NodeDepositAmount)
+		totalStaked += l.EffectiveBalance
 	}
 	rsp.DepositedEth = poolEthBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(userDepositFromValidator)), 9)).String()
 	// cal minitedReth
@@ -124,8 +127,16 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	}
 	// $ethApy = exp(31556926 / 384 * 64 / 31622 / $stakeAmount ** 0.5) - 1;
 	// $ethApy = $ethApy * 0.75;
+	// $apr = round(100 * $ethApy * (1 - $platformFree) * (1 + 3 * $nodeFee), 2);
 
-	// $apr = (string) round(100 * $ethApy * (1 - $platformFree) * (1 + 3 * $nodeFee), 2);
+	raw, _ := decimal.NewFromBigInt(big.NewInt(int64(totalStaked)), 9).Float64()
+	raw2 := math.Pow(raw, 0.5)
+	raw3, _ := decimal.NewFromInt(31556926 * 64).Div(decimal.NewFromInt(384 * 31622)).Div(decimal.NewFromFloat(raw2)).Float64()
+	raw4 := math.Exp(raw3) - 1
+	raw5 := raw4 * 0.75
+	raw6 := 100 * raw5 * (1 - 0.1) * (1 + 3*0.1)
+
+	rsp.ValidatorApr = raw6
 
 	utils.Ok(c, "success", rsp)
 }
