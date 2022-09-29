@@ -2,6 +2,7 @@ package task_syncer
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -19,6 +20,10 @@ func (task *Task) syncPooInfo() error {
 	rethSupply, err := task.rethContract.TotalSupply(task.connection.CallOpts(nil))
 	if err != nil {
 		return err
+	}
+
+	if task.version == utils.Dev {
+		rethSupply = new(big.Int).Sub(rethSupply, utils.OldRethSupply)
 	}
 
 	poolInfo, err := dao.GetPoolInfo(task.db)

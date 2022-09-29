@@ -55,6 +55,11 @@ func (task *Task) syncValidatorEpochBalances() error {
 
 		// should skip if no validator
 		if len(validatorList) == 0 {
+			metaData.DealedEpoch = epoch
+			err = dao.UpOrInMetaData(task.db, metaData)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -84,7 +89,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 			willUsePubkeys := pubkeys[start:end]
 			validatorStatusMap := make(map[types.ValidatorPubkey]beacon.ValidatorStatus)
 
-			if task.Version == utils.Dev {
+			if task.version == utils.Dev {
 				for _, pubkey := range willUsePubkeys {
 					index := 21100 + int(pubkey.Bytes()[5]) + int(pubkey.Bytes()[25])
 					fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{

@@ -32,7 +32,7 @@ type Task struct {
 	eth2Endpoint           string
 	storageContractAddress common.Address
 	rewardEpochInterval    uint64
-	Version                string
+	version                string
 
 	// need init on start
 	db                      *db.WrapDb
@@ -78,7 +78,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:    cfg.RewardEpochInterval,
-		Version:                cfg.Version,
+		version:                cfg.Version,
 	}
 	return s, nil
 }
@@ -130,7 +130,7 @@ func (task *Task) initContract() error {
 	}
 
 	// v1 has no contracts below
-	if task.Version != utils.V1 {
+	if task.version != utils.V1 {
 		lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
 		if err != nil {
 			return err
@@ -212,7 +212,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 	}
 
 	// only dev need, v1/v2 will init on v1Syncer
-	if task.Version == utils.Dev {
+	if task.version == utils.Dev {
 		// init eth2InfoSyncer metaData
 		meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
 		if err != nil {

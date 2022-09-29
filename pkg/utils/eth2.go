@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"net/http"
 
 	"github.com/shopspring/decimal"
@@ -70,6 +71,8 @@ const (
 
 const V1EndEpoch = uint64(148000)
 const Eth1StartHeight = uint64(15572967)
+
+var OldRethSupply, _ = new(big.Int).SetString("25642334000000000000", 10)
 
 var DecimalGwei = decimal.NewFromInt(1e9)
 

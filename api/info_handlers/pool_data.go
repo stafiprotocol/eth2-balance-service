@@ -4,7 +4,6 @@
 package info_handlers
 
 import (
-	"math"
 	"math/big"
 
 	"github.com/gin-gonic/gin"
@@ -74,9 +73,14 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 	userDepositFromValidator := uint64(0)
 	totalStaked := uint64(0)
+
+	activeValidator := make([]*dao.Validator, 0)
 	for _, l := range list {
 		userDepositFromValidator += (utils.StandardEffectiveBalance - l.NodeDepositAmount)
 		totalStaked += l.EffectiveBalance
+		if l.Status == utils.ValidatorStatusActive {
+			activeValidator = append(activeValidator, l)
+		}
 	}
 	rsp.DepositedEth = poolEthBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(userDepositFromValidator)), 9)).String()
 	// cal minitedReth
@@ -91,7 +95,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	rsp.MatchedValidators = uint64(len(list))
 	rsp.EthPrice = ethPrice
 
-	// cal apr
+	// cal staker apr
 	rateInfoList, err := dao.GetLatestRateInfoList(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -125,18 +129,47 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 			Div(endRateDeci)
 		rsp.StakeApr, _ = apyDeci.Float64()
 	}
-	// $ethApy = exp(31556926 / 384 * 64 / 31622 / $stakeAmount ** 0.5) - 1;
-	// $ethApy = $ethApy * 0.75;
-	// $apr = round(100 * $ethApy * (1 - $platformFree) * (1 + 3 * $nodeFee), 2);
+	// cal validator apr
+	// if len(activeValidator) != 0 {
+	// 	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(h.db, activeValidator[0].ValidatorIndex)
+	// 	if err != nil {
+	// 		utils.Err(c, utils.CodeInternalErr, err.Error())
+	// 		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+	// 		return
+	// 	}
 
-	raw, _ := decimal.NewFromBigInt(big.NewInt(int64(totalStaked)), 9).Float64()
-	raw2 := math.Pow(raw, 0.5)
-	raw3, _ := decimal.NewFromInt(31556926 * 64).Div(decimal.NewFromInt(384 * 31622)).Div(decimal.NewFromFloat(raw2)).Float64()
-	raw4 := math.Exp(raw3) - 1
-	raw5 := raw4 * 0.75
-	raw6 := 100 * raw5 * (1 - 0.1) * (1 + 3*0.1)
+	// 	if len(validatorBalanceList) >= 2 {
+	// 		first := validatorBalanceList[0]
+	// 		end := validatorBalanceList[len(validatorBalanceList)-1]
 
-	rsp.ValidatorApr = raw6
+	// 		duBalance := uint64(0)
+	// 		if first.Balance > end.Balance {
+	// 			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, 4e9) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, 4e9)
+	// 		}
+
+	// 		firstRateDeci, err := decimal.NewFromString(first.Balance)
+	// 		if err != nil {
+	// 			utils.Err(c, utils.CodeInternalErr, err.Error())
+	// 			logrus.Errorf("decimal.NewFromString(first.REthRate) err: %s", err)
+	// 			return
+	// 		}
+
+	// 		endRateDeci, err := decimal.NewFromString(end.REthRate)
+	// 		if err != nil {
+	// 			utils.Err(c, utils.CodeInternalErr, err.Error())
+	// 			logrus.Errorf("decimal.NewFromString(end.REthRate) err: %s", err)
+	// 			return
+	// 		}
+
+	// 		du := int64(first.Timestamp - end.Timestamp)
+
+	// 		apyDeci := firstRateDeci.Sub(endRateDeci).
+	// 			Mul(decimal.NewFromInt(365 * 24 * 60 * 60 * 100)).
+	// 			Div(decimal.NewFromInt(du)).
+	// 			Div(endRateDeci)
+	// 		rsp.StakeApr, _ = apyDeci.Float64()
+	// 	}
+	// }
 
 	utils.Ok(c, "success", rsp)
 }

@@ -44,7 +44,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return err
 	}
 
-	if task.Version != utils.V2 {
+	if task.version != utils.V2 {
 		targetEth1BlockHeight = meta.DealedBlockHeight
 	}
 
@@ -64,7 +64,8 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}).Debug("syncValidatorLatestInfo")
 
 	if len(validatorList) == 0 {
-		return nil
+		metaData.DealedEpoch = finalEpoch
+		return dao.UpOrInMetaData(task.db, metaData)
 	}
 
 	pubkeys := make([]types.ValidatorPubkey, 0)
@@ -87,7 +88,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		willUsePubkeys := pubkeys[start:end]
 		validatorStatusMap := make(map[types.ValidatorPubkey]beacon.ValidatorStatus)
 
-		if task.Version == utils.Dev {
+		if task.version == utils.Dev {
 			for _, pubkey := range willUsePubkeys {
 				index := 21100 + int(pubkey.Bytes()[5])*10 + int(pubkey.Bytes()[25]) + int(pubkey.Bytes()[25])/10
 

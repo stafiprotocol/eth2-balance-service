@@ -16,7 +16,7 @@ func (task *Task) syncEth1Event() error {
 		return err
 	}
 
-	if task.Version != utils.Dev {
+	if task.version != utils.Dev {
 		if latestBlockNumber > fetchEth1WaitBlockNumbers {
 			latestBlockNumber -= fetchEth1WaitBlockNumbers
 		}
@@ -46,7 +46,7 @@ func (task *Task) syncEth1Event() error {
 			return err
 		}
 		// v1 has no contracts below
-		if task.Version != utils.V1 {
+		if task.version != utils.V1 {
 			err = task.fetchNodeDepositEvents(subStart, subEnd)
 			if err != nil {
 				return err

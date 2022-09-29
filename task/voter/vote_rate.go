@@ -82,6 +82,13 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return err
 	}
+	if task.version == utils.Dev {
+		rethTotalSupply = new(big.Int).Sub(rethTotalSupply, utils.OldRethSupply)
+	}
+	if rethTotalSupply.Cmp(big.NewInt(0)) <= 0 {
+		return nil
+	}
+
 	userDepositPoolBalance, err := task.userDepositContract.GetBalance(callOpts)
 	if err != nil {
 		return err
