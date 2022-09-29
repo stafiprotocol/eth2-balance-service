@@ -53,8 +53,9 @@ func (task *Task) syncValidatorEpochBalances() error {
 			"willDealValidatorListLen": len(validatorList),
 		}).Debug("syncValidatorEpochBalances")
 
+		// should skip if no validator
 		if len(validatorList) == 0 {
-			return nil
+			continue
 		}
 
 		pubkeys := make([]types.ValidatorPubkey, 0)
@@ -142,7 +143,6 @@ func (task *Task) syncValidatorEpochBalances() error {
 
 		// collect node address
 		for node := range nodeAddressMap {
-
 			list, err := dao.GetValidatorBalanceList(task.db, node, epoch)
 			if err != nil {
 				return err
@@ -198,7 +198,6 @@ func (task *Task) syncValidatorEpochBalances() error {
 			if err != nil {
 				return err
 			}
-
 		}
 
 		metaData.DealedEpoch = epoch

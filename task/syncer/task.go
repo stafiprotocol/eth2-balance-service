@@ -135,6 +135,7 @@ func (task *Task) initContract() error {
 		if err != nil {
 			return err
 		}
+		logrus.Debugf("stafiLightNode address: %s", lightNodeAddress.String())
 		task.lightNodeContract, err = light_node.NewLightNode(lightNodeAddress, task.connection.Eth1Client())
 		if err != nil {
 			return err
@@ -143,6 +144,7 @@ func (task *Task) initContract() error {
 		if err != nil {
 			return err
 		}
+		logrus.Debugf("stafiSuperNode address: %s", superNodeAddress.String())
 		task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connection.Eth1Client())
 		if err != nil {
 			return err

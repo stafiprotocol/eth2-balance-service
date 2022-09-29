@@ -40,8 +40,10 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 			"epoch":         epoch,
 			"validatorList": validatorList,
 		}).Debug("activeValidators")
+
+		// should skip if no validator
 		if len(validatorList) == 0 {
-			return nil
+			continue
 		}
 
 		pubkeys := make([]types.ValidatorPubkey, 0)
