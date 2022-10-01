@@ -39,7 +39,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		StakedEth:    "0",
 		PoolEth:      "0",
 		UnmatchedEth: "0",
-		ValidatorApr: 7.89,
 	}
 
 	list, err := dao.GetStakedAndActiveValidatorList(h.db)
@@ -130,46 +129,33 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		rsp.StakeApr, _ = apyDeci.Float64()
 	}
 	// cal validator apr
-	// if len(activeValidator) != 0 {
-	// 	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(h.db, activeValidator[0].ValidatorIndex)
-	// 	if err != nil {
-	// 		utils.Err(c, utils.CodeInternalErr, err.Error())
-	// 		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
-	// 		return
-	// 	}
+	if len(activeValidator) != 0 {
+		validatorBalanceList, err := dao.GetLatestValidatorBalanceList(h.db, activeValidator[0].ValidatorIndex)
+		if err != nil {
+			utils.Err(c, utils.CodeInternalErr, err.Error())
+			logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+			return
+		}
 
-	// 	if len(validatorBalanceList) >= 2 {
-	// 		first := validatorBalanceList[0]
-	// 		end := validatorBalanceList[len(validatorBalanceList)-1]
+		if len(validatorBalanceList) >= 2 {
+			first := validatorBalanceList[0]
+			end := validatorBalanceList[len(validatorBalanceList)-1]
 
-	// 		duBalance := uint64(0)
-	// 		if first.Balance > end.Balance {
-	// 			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, 4e9) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, 4e9)
-	// 		}
+			duBalance := uint64(0)
+			if first.Balance > end.Balance {
+				duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, 4e9) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, 4e9)
+			}
 
-	// 		firstRateDeci, err := decimal.NewFromString(first.Balance)
-	// 		if err != nil {
-	// 			utils.Err(c, utils.CodeInternalErr, err.Error())
-	// 			logrus.Errorf("decimal.NewFromString(first.REthRate) err: %s", err)
-	// 			return
-	// 		}
-
-	// 		endRateDeci, err := decimal.NewFromString(end.REthRate)
-	// 		if err != nil {
-	// 			utils.Err(c, utils.CodeInternalErr, err.Error())
-	// 			logrus.Errorf("decimal.NewFromString(end.REthRate) err: %s", err)
-	// 			return
-	// 		}
-
-	// 		du := int64(first.Timestamp - end.Timestamp)
-
-	// 		apyDeci := firstRateDeci.Sub(endRateDeci).
-	// 			Mul(decimal.NewFromInt(365 * 24 * 60 * 60 * 100)).
-	// 			Div(decimal.NewFromInt(du)).
-	// 			Div(endRateDeci)
-	// 		rsp.StakeApr, _ = apyDeci.Float64()
-	// 	}
-	// }
+			du := int64(first.Timestamp - end.Timestamp)
+			if du > 0 {
+				apr, _ := decimal.NewFromInt(int64(duBalance)).
+					Mul(decimal.NewFromInt(365 * 24 * 60 * 60 * 100)).
+					Div(decimal.NewFromInt(du)).
+					Div(decimal.NewFromInt(4e9)).Float64()
+				rsp.ValidatorApr = apr
+			}
+		}
+	}
 
 	utils.Ok(c, "success", rsp)
 }
