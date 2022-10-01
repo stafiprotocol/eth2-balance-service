@@ -36,6 +36,7 @@ func versionCmd() *cobra.Command {
 			}
 
 			bz, _ := json.MarshalIndent(v, "", "  ")
+			fmt.Println(logo)
 			fmt.Println(string(bz))
 			return nil
 		},
@@ -50,3 +51,16 @@ type version struct {
 	GoEthereum string `json:"go-ethereum"`
 	Prysm      string `json:"prysm"`
 }
+
+var logo = `
+             __                 ______   __ 
+            /  |               /      \ /  |
+  _______  _$$ |_     ______  /$$$$$$  |$$/ 
+ /       |/ $$   |   /      \ $$ |_ $$/ /  |
+/$$$$$$$/ $$$$$$/    $$$$$$  |$$   |    $$ |
+$$      \   $$ | __  /    $$ |$$$$/     $$ |
+ $$$$$$  |  $$ |/  |/$$$$$$$ |$$ |      $$ |
+/     $$/   $$  $$/ $$    $$ |$$ |      $$ |
+$$$$$$$/     $$$$/   $$$$$$$/ $$/       $$/ 
+                                            
+`
