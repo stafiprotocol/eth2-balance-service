@@ -8,6 +8,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
+	distributor "github.com/stafiprotocol/reth/bindings/Distributor"
 	light_node "github.com/stafiprotocol/reth/bindings/LightNode"
 	network_balances "github.com/stafiprotocol/reth/bindings/NetworkBalances"
 	reth "github.com/stafiprotocol/reth/bindings/Reth"
@@ -35,6 +36,7 @@ type Task struct {
 	storageContractAddress common.Address
 	rewardEpochInterval    uint64
 	version                string
+	enableDistribute       bool
 
 	// need init on start
 	connection              *shared.Connection
@@ -46,6 +48,10 @@ type Task struct {
 	networkBalancesContract *network_balances.NetworkBalances
 	rethContract            *reth.Reth
 	userDepositContract     *user_deposit.UserDeposit
+	distributorContract     *distributor.Distributor
+
+	feePoolAddress          common.Address
+	superNodeFeePoolAddress common.Address
 
 	rewardSlotInterval uint64
 	eth2Config         beacon.Eth2Config
@@ -95,6 +101,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 		version:                cfg.Version,
+		enableDistribute:       cfg.EnableDistribute,
 	}
 	return s, nil
 }
@@ -171,6 +178,19 @@ func (task *Task) voteHandler() {
 			}
 			logrus.Debug("voteWithdrawal end -----------\n")
 
+			if task.version != utils.V1 && task.enableDistribute {
+				logrus.Debug("distributeFee start -----------")
+
+				err = task.distributeFee()
+				if err != nil {
+					logrus.Warnf("distributeFee err %s", err)
+					time.Sleep(utils.RetryInterval)
+					retry++
+					continue
+				}
+				logrus.Debug("distributeFee end -----------\n")
+			}
+
 			logrus.Debug("voteRate start -----------")
 			err = task.voteRate()
 			if err != nil {
@@ -210,6 +230,30 @@ func (task *Task) initContract() error {
 		if err != nil {
 			return err
 		}
+
+		if task.enableDistribute {
+			stafiDistributorAddress, err := task.getContractAddress(storageContract, "stafiDistributor")
+			if err != nil {
+				return err
+			}
+			task.distributorContract, err = distributor.NewDistributor(stafiDistributorAddress, task.connection.Eth1Client())
+			if err != nil {
+				return err
+			}
+
+			stafiFeePoolAddress, err := task.getContractAddress(storageContract, "stafiFeePool")
+			if err != nil {
+				return err
+			}
+			task.feePoolAddress = stafiFeePoolAddress
+
+			stafiSuperNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiSuperNodeFeePool")
+			if err != nil {
+				return err
+			}
+			task.superNodeFeePoolAddress = stafiSuperNodeFeePoolAddress
+		}
+
 	}
 
 	networkBalancesAddress, err := task.getContractAddress(storageContract, "stafiNetworkBalances")

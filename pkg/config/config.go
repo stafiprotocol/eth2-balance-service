@@ -22,6 +22,7 @@ type Config struct {
 	RewardStartEpoch    uint64 // used for fetch history balance info by syncer
 	RewardEpochInterval uint64
 	Version             string
+	EnableDistribute    bool
 
 	Contracts Contracts
 

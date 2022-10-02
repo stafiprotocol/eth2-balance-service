@@ -34,6 +34,7 @@ genabi:
 	abigen --abi ./bindings/Storage/storage_abi.json --pkg storage --type Storage --out ./bindings/Storage/Storage.go
 	abigen --abi ./bindings/NodeManager/nodemanager_abi.json --pkg node_manager --type NodeManager --out ./bindings/NodeManager/NodeManager.go
 	abigen --abi ./bindings/StakingPoolManager/stakingpoolmanager_abi.json --pkg staking_pool_manager --type StakingPoolManger --out ./bindings/StakingPoolManager/StakingPoolManager.go
+	abigen --abi ./bindings/Distributor/distributor_abi.json --pkg distributor --type Distributor --out ./bindings/Distributor/Distributor.go
 
 build-linux:
 	@GOOS=linux GOARCH=amd64 go build --mod readonly $(BUILD_FLAGS) -o ./build/reth main.go
