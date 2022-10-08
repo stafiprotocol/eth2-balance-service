@@ -20,8 +20,8 @@ require (
 	github.com/wealdtech/go-eth2-types/v2 v2.6.0
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
-	gorm.io/driver/mysql v1.3.6
-	gorm.io/gorm v1.23.8
+	gorm.io/driver/mysql v1.4.0
+	gorm.io/gorm v1.24.0
 )
 
 require (
