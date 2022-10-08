@@ -1,5 +1,6 @@
 RewardEpochInterval = 75 
 RewardStartEpoch = 147900 
+enableDistribute = true 
 eth1Endpoint = "xxxxx" 
 eth2Endpoint = "xxxxxx" 
 from = "0xB20e8393C07FC446D17277c80b8E3f82Cd857A50" 

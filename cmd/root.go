@@ -17,7 +17,7 @@ const (
 	flagConfigPath   = "config"
 
 	defaultKeystorePath = "./keys"
-	defaultConfigPath   = "./config.json"
+	defaultConfigPath   = "./config.toml"
 )
 
 // NewRootCmd returns the root command.
