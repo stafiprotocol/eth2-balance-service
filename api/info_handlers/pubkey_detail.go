@@ -112,13 +112,15 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 
 		epochBefore24H := finalEpoch - 225
 		validatorBalance, err := dao.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epochBefore24H)
-		if err != nil {
+		if err != nil && err != gorm.ErrRecordNotFound {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
 			logrus.Errorf("dao.GetValidatorBalance err %s", err)
 			return
 		}
+		if err == nil {
+			rsp.Last24hRewardEth = decimal.NewFromBigInt(big.NewInt(int64(validator.Balance-validatorBalance.Balance)), 9).String()
+		}
 
-		rsp.Last24hRewardEth = decimal.NewFromBigInt(big.NewInt(int64(validator.Balance-validatorBalance.Balance)), 9).String()
 	}
 
 	// cal chart data
@@ -129,9 +131,14 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		}
 		chartDuEpoch := req.ChartDuSeconds / (12 * 32)
 		firstValidatorBalance, err := dao.GetFirstValidatorBalance(h.db, validator.ValidatorIndex)
-		if err != nil {
+		if err != nil && err != gorm.ErrRecordNotFound {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
 			logrus.Errorf("dao.GetFirstValidatorBalance err %s", err)
+			return
+		}
+
+		if err == gorm.ErrRecordNotFound {
+			utils.Ok(c, "success", rsp)
 			return
 		}
 
