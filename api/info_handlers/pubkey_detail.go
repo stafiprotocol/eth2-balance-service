@@ -68,7 +68,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		logrus.Errorf("dao.GetMetaData err %s", err)
 		return
 	}
-	finalEpoch := eth2InfoMetaData.DealedEpoch
+	infoFinalEpoch := eth2InfoMetaData.DealedEpoch
 
 	validator, err := dao.GetValidator(h.db, req.Pubkey)
 	if err != nil {
@@ -105,12 +105,12 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	rsp.EthPrice = ethPrice
 
 	if rsp.EligibleEpoch != 0 {
-		rsp.EligibleDays = (finalEpoch - validator.EligibleEpoch) * 32 * 12 / (60 * 60 * 24)
+		rsp.EligibleDays = (infoFinalEpoch - validator.EligibleEpoch) * 32 * 12 / (60 * 60 * 24)
 	}
 	if rsp.ActiveEpoch != 0 {
-		rsp.ActiveDays = (finalEpoch - validator.ActiveEpoch) * 32 * 12 / (60 * 60 * 24)
+		rsp.ActiveDays = (infoFinalEpoch - validator.ActiveEpoch) * 32 * 12 / (60 * 60 * 24)
 
-		epochBefore24H := finalEpoch - 225
+		epochBefore24H := infoFinalEpoch - 225
 		validatorBalance, err := dao.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epochBefore24H)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -142,7 +142,15 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 			return
 		}
 
-		totalEpoch := finalEpoch - firstValidatorBalance.Epoch
+		eth2BalanceMetaData, err := dao.GetMetaData(h.db, utils.MetaTypeEth2BalanceSyncer)
+		if err != nil {
+			utils.Err(c, utils.CodeInternalErr, err.Error())
+			logrus.Errorf("dao.GetMetaData err %s", err)
+			return
+		}
+		balanceFinalEpoch := eth2BalanceMetaData.DealedEpoch
+
+		totalEpoch := balanceFinalEpoch - firstValidatorBalance.Epoch
 		if chartDuEpoch > totalEpoch {
 			chartDuEpoch = totalEpoch
 		}
@@ -150,8 +158,11 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		skip := totalEpoch / uint64(chartDataLen)
 		epoches := make([]uint64, 0)
 		for i := uint64(0); i < uint64(chartDataLen); i++ {
-			epoches = append(epoches, finalEpoch-i*skip)
+			epoches = append(epoches, balanceFinalEpoch-i*skip)
 		}
+
+		validatorBalancesExists := make(map[uint64]bool)
+		validatorBalances := make([]*dao.ValidatorBalance, 0)
 
 		for _, epoch := range epoches {
 			validatorBalance, err := dao.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epoch)
@@ -162,9 +173,16 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 			}
 
 			if err == gorm.ErrRecordNotFound {
-				continue
+				break
 			}
+			// filter dublicate data
+			if !validatorBalancesExists[validatorBalance.Epoch] {
+				validatorBalancesExists[validatorBalance.Epoch] = true
+				validatorBalances = append(validatorBalances, validatorBalance)
+			}
+		}
 
+		for _, validatorBalance := range validatorBalances {
 			reward := uint64(0)
 			if validatorBalance.Balance > validatorBalance.EffectiveBalance {
 				reward = validatorBalance.Balance - validatorBalance.EffectiveBalance

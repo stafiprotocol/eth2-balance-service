@@ -35,7 +35,7 @@ func GetValidatorBalance(db *db.WrapDb, validatorIndex, epoch uint64) (c *Valida
 
 func GetValidatorBalanceBefore(db *db.WrapDb, validatorIndex, epoch uint64) (c *ValidatorBalance, err error) {
 	c = &ValidatorBalance{}
-	err = db.Order("epoch desc").Take(c, "validator_index = ? and epoch < ?", validatorIndex, epoch).Error
+	err = db.Order("epoch desc").Take(c, "validator_index = ? and epoch <= ?", validatorIndex, epoch).Error
 	return
 }
 
