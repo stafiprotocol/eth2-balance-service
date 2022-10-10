@@ -154,7 +154,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	if rsp.ActiveEpoch != 0 {
 		chartDataLen := 10
 		if req.ChartDuSeconds == 0 {
-			req.ChartDuSeconds = 1e15 // will return all
+			req.ChartDuSeconds = 1e15 // largenumber ensure return all
 		}
 		chartDuEpoch := req.ChartDuSeconds / (12 * 32)
 		firstValidatorBalance, err := dao.GetFirstValidatorBalance(h.db, validator.ValidatorIndex)

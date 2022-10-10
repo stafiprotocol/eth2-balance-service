@@ -131,14 +131,15 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 			SelfEraRewardEth:  decimal.NewFromInt(int64(l.TotalSelfEraReward)).Mul(utils.DecimalGwei).String(),
 		})
 	}
-	// cal chartData
-	eth2InfoMetaData, err := dao.GetMetaData(h.db, utils.MetaTypeEth2InfoSyncer)
+
+	// cal chartData *********************
+	eth2BalanceMetaData, err := dao.GetMetaData(h.db, utils.MetaTypeEth2BalanceSyncer)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetMetaData err %s", err)
 		return
 	}
-	finalEpoch := eth2InfoMetaData.DealedEpoch
+	finalEpoch := eth2BalanceMetaData.DealedEpoch
 
 	chartDataLen := 10
 	if req.ChartDuSeconds == 0 {
@@ -146,42 +147,52 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 	}
 	chartDuEpoch := req.ChartDuSeconds / (12 * 32)
 	firstNodeBalance, err := dao.GetFirstNodeBalance(h.db, req.NodeAddress)
-	if err != nil {
+	if err != nil && err != gorm.ErrRecordNotFound {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao.GetFirstValidatorBalance err %s", err)
+		logrus.Errorf("dao.GetFirstNodeBalance err %s", err)
 		return
 	}
-
-	totalEpoch := finalEpoch - firstNodeBalance.Epoch
-	if chartDuEpoch > totalEpoch {
-		chartDuEpoch = totalEpoch
-	}
-
-	skip := totalEpoch / uint64(chartDataLen)
-	epoches := make([]uint64, 0)
-	for i := uint64(0); i < uint64(chartDataLen); i++ {
-		epoches = append(epoches, finalEpoch-i*skip)
-	}
-
-	for _, epoch := range epoches {
-		nodeBalance, err := dao.GetNodeBalanceBefore(h.db, req.NodeAddress, epoch)
-		if err != nil && err != gorm.ErrRecordNotFound {
-			utils.Err(c, utils.CodeInternalErr, err.Error())
-			logrus.Errorf("dao.dao.GetValidatorBalanceBefore err %s", err)
-			return
+	if err == nil {
+		totalEpoch := finalEpoch - firstNodeBalance.Epoch
+		if chartDuEpoch > totalEpoch {
+			chartDuEpoch = totalEpoch
 		}
 
-		if err == gorm.ErrRecordNotFound {
-			continue
+		skip := totalEpoch / uint64(chartDataLen)
+		epoches := make([]uint64, 0)
+		for i := uint64(0); i < uint64(chartDataLen); i++ {
+			epoches = append(epoches, finalEpoch-i*skip-1)
 		}
 
-		reward := uint64(0)
-		if nodeBalance.TotalBalance > nodeBalance.TotalEffectiveBalance {
-			reward = nodeBalance.TotalBalance - nodeBalance.TotalEffectiveBalance
+		nodeBalancesExists := make(map[uint64]bool)
+		nodeBalances := make([]*dao.NodeBalance, 0)
+		for _, epoch := range epoches {
+			nodeBalance, err := dao.GetNodeBalanceBefore(h.db, req.NodeAddress, epoch)
+			if err != nil && err != gorm.ErrRecordNotFound {
+				utils.Err(c, utils.CodeInternalErr, err.Error())
+				logrus.Errorf("dao.dao.GetValidatorBalanceBefore err %s", err)
+				return
+			}
+
+			if err == gorm.ErrRecordNotFound {
+				break
+			}
+			// filter duplicate data
+			if !nodeBalancesExists[nodeBalance.Epoch] {
+				nodeBalancesExists[nodeBalance.Epoch] = true
+				nodeBalances = append(nodeBalances, nodeBalance)
+			}
 		}
 
-		rsp.ChartXData = append(rsp.ChartXData, nodeBalance.Timestamp)
-		rsp.ChartYData = append(rsp.ChartYData, decimal.NewFromBigInt(big.NewInt(int64(reward)), 9).String())
+		for _, nodeBalance := range nodeBalances {
+			reward := uint64(0)
+			if nodeBalance.TotalBalance > nodeBalance.TotalEffectiveBalance {
+				reward = nodeBalance.TotalBalance - nodeBalance.TotalEffectiveBalance
+			}
+
+			rsp.ChartXData = append(rsp.ChartXData, nodeBalance.Timestamp)
+			rsp.ChartYData = append(rsp.ChartYData, decimal.NewFromBigInt(big.NewInt(int64(reward)), 9).String())
+		}
 	}
 
 	utils.Ok(c, "success", rsp)
