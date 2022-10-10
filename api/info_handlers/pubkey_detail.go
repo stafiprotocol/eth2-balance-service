@@ -123,6 +123,33 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 
 	}
 
+	// cal validator apr
+	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(h.db, validator.ValidatorIndex)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+		return
+	}
+
+	if len(validatorBalanceList) >= 2 {
+		first := validatorBalanceList[0]
+		end := validatorBalanceList[len(validatorBalanceList)-1]
+
+		duBalance := uint64(0)
+		if first.Balance > end.Balance {
+			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, 4e9) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, 4e9)
+		}
+
+		du := int64(first.Timestamp - end.Timestamp)
+		if du > 0 {
+			apr, _ := decimal.NewFromInt(int64(duBalance)).
+				Mul(decimal.NewFromInt(365 * 24 * 60 * 60 * 100)).
+				Div(decimal.NewFromInt(du)).
+				Div(decimal.NewFromInt(4e9)).Float64()
+			rsp.Apr = apr
+		}
+	}
+
 	// cal chart data
 	if rsp.ActiveEpoch != 0 {
 		chartDataLen := 10
@@ -175,7 +202,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 			if err == gorm.ErrRecordNotFound {
 				break
 			}
-			// filter dublicate data
+			// filter duplicate data
 			if !validatorBalancesExists[validatorBalance.Epoch] {
 				validatorBalancesExists[validatorBalance.Epoch] = true
 				validatorBalances = append(validatorBalances, validatorBalance)
