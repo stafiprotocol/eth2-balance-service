@@ -17,6 +17,7 @@
 
 *  get node info
 
+pending status(front-end use): 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch 8 waiting
 ### (2) path
 
 * /reth/v1/nodeInfo
@@ -30,12 +31,12 @@
 * data format: application/json
 * data detail:
 
-| field       | type   | notice                                                                                                                                 |
-| :---------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------- |
-| nodeAddress | string | node address, hex string                                                                                                               |
-| status      | number | 0 all 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit} |
-| pageIndex   | number | page index                                                                                                                             |
-| pageCount   | number | page count                                                                                                                             |
+| field       | type   | notice                                                                                                                                            |
+| :---------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------ |
+| nodeAddress | string | node address, hex string                                                                                                                          |
+| status      | number | 0 all 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit} 20 pending |
+| pageIndex   | number | page index                                                                                                                                        |
+| pageCount   | number | page count                                                                                                                                        |
 
 ### (5) response
 * include status、data、message fields

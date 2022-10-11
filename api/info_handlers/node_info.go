@@ -83,7 +83,7 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		totalManagedEth += utils.GetNodeManagedEth(l.NodeDepositAmount, l.Balance, l.Status)
 	}
 
-	list, count, err := dao.GetValidatorListByNodeWithPage(h.db, req.NodeAddress, req.Status, req.PageIndex, req.PageCount)
+	list, totalCount, err := dao.GetValidatorListByNodeWithPage(h.db, req.NodeAddress, req.Status, req.PageIndex, req.PageCount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
@@ -112,7 +112,7 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		"ethPrice":         ethPrice,
 	}).Debug("rsp info")
 
-	rsp.TotalCount = count
+	rsp.TotalCount = totalCount
 	rsp.SelfDepositedEth = decimal.NewFromInt(int64(selfDepositedEth)).Mul(utils.DecimalGwei).String()
 	rsp.SelfRewardEth = decimal.NewFromInt(int64(selfRewardEth)).Mul(utils.DecimalGwei).String()
 	rsp.TotalManagedEth = decimal.NewFromInt(int64(totalManagedEth)).Mul(utils.DecimalGwei).String()

@@ -98,22 +98,27 @@ func GetValidatorListByNodeWithPage(db *db.WrapDb, nodeAddress string, status ui
 		pageCount = 50
 	}
 
-	if status == 0 {
+	switch status {
+	case 0: // all
 		err = db.Model(&Validator{}).Where("node_address = ?", nodeAddress).Count(&count).Error
 		if err != nil {
 			return nil, 0, err
 		}
-	} else {
+		err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ?", nodeAddress).Error
+	case 20: // pending(front-end use)
+		err = db.Model(&Validator{}).Where("node_address = ? and status in (1, 2, 3, 4, 8)", nodeAddress).Count(&count).Error
+		if err != nil {
+			return nil, 0, err
+		}
+		err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ? and status in (1, 2, 3, 4, 8)", nodeAddress).Error
+
+	default:
 		err = db.Model(&Validator{}).Where("node_address = ? and status = ?", nodeAddress, status).Count(&count).Error
 		if err != nil {
 			return nil, 0, err
 		}
-	}
-
-	if status == 0 {
-		err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ?", nodeAddress).Error
-	} else {
 		err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ? and status = ?", nodeAddress, status).Error
 	}
+
 	return
 }
