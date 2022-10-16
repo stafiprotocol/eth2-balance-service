@@ -230,24 +230,10 @@ func (task *Task) getEthInfoOfValidator(validator *dao.Validator, targetEpoch ui
 
 func (task *Task) getEthInfoOfCommonNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
 	switch validator.Status {
-	case utils.ValidatorStatusDeposited:
-		fallthrough
-	case utils.ValidatorStatusWithdrawMatch:
-		fallthrough
-	case utils.ValidatorStatusWithdrawUnmatch:
-		fallthrough
-	case utils.ValidatorStatusOffBoard:
-		fallthrough
-	case utils.ValidatorStatusCanWithdraw:
-		fallthrough
-	case utils.ValidatorStatusWithdrawed:
+	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusCanWithdraw, utils.ValidatorStatusWithdrawed:
 		return 0, 0, nil
 
-	case utils.ValidatorStatusExit:
-		fallthrough
-	case utils.ValidatorStatusStaked:
-		fallthrough
-	case utils.ValidatorStatusActive:
+	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive, utils.ValidatorStatusExit:
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err
@@ -266,18 +252,10 @@ func (task *Task) getEthInfoOfCommonNodeValidator(validator *dao.Validator, targ
 
 func (task *Task) getEthInfoOfTrustNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
 	switch validator.Status {
-	case utils.ValidatorStatusDeposited:
-		fallthrough
-	case utils.ValidatorStatusWithdrawMatch:
-		fallthrough
-	case utils.ValidatorStatusWithdrawUnmatch:
+	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch:
 		return 0, 0, nil
 
-	case utils.ValidatorStatusExit:
-		fallthrough
-	case utils.ValidatorStatusStaked:
-		fallthrough
-	case utils.ValidatorStatusActive:
+	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive, utils.ValidatorStatusExit:
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err
@@ -295,24 +273,10 @@ func (task *Task) getEthInfoOfTrustNodeValidator(validator *dao.Validator, targe
 }
 func (task *Task) getEthInfoOfLightNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
 	switch validator.Status {
-	case utils.ValidatorStatusDeposited:
-		fallthrough
-	case utils.ValidatorStatusWithdrawMatch:
-		fallthrough
-	case utils.ValidatorStatusWithdrawUnmatch:
-		fallthrough
-	case utils.ValidatorStatusOffBoard:
-		fallthrough
-	case utils.ValidatorStatusCanWithdraw:
-		fallthrough
-	case utils.ValidatorStatusWithdrawed:
+	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusCanWithdraw, utils.ValidatorStatusWithdrawed:
 		return 0, 0, nil
 
-	case utils.ValidatorStatusExit:
-		fallthrough
-	case utils.ValidatorStatusStaked:
-		fallthrough
-	case utils.ValidatorStatusActive:
+	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive, utils.ValidatorStatusExit:
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err
@@ -321,6 +285,7 @@ func (task *Task) getEthInfoOfLightNodeValidator(validator *dao.Validator, targe
 
 		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount)
 		return userDepositBalance, userDepositAndReward, nil
+
 	case utils.ValidatorStatusDistribute:
 		return 0, 0, nil
 	default:
@@ -329,18 +294,10 @@ func (task *Task) getEthInfoOfLightNodeValidator(validator *dao.Validator, targe
 }
 func (task *Task) getEthInfoOfSuperNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
 	switch validator.Status {
-	case utils.ValidatorStatusDeposited:
-		fallthrough
-	case utils.ValidatorStatusWithdrawMatch:
-		fallthrough
-	case utils.ValidatorStatusWithdrawUnmatch:
+	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch:
 		return 1e9, 1e9, nil
 
-	case utils.ValidatorStatusExit:
-		fallthrough
-	case utils.ValidatorStatusStaked:
-		fallthrough
-	case utils.ValidatorStatusActive:
+	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive, utils.ValidatorStatusExit:
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err

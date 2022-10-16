@@ -29,8 +29,7 @@ func SlotAt(config beacon.Eth2Config, epoch uint64) uint64 {
 	return config.GenesisEpoch + config.SlotsPerEpoch*epoch
 }
 
-// 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch 5 offboard 6 can withdraw 7 withdrawed 8 exit 9 staking
-
+// 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit}
 const (
 	ValidatorStatusDeposited     = uint8(1)
 	ValidatorStatusWithdrawMatch = uint8(2)
