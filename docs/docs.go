@@ -175,6 +175,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/pubkeyStatusList": {
+            "post": {
+                "description": "pubkey status list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "pubkey status list",
+                "parameters": [
+                    {
+                        "description": "pubkey status list",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqPubkeyStatusList"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspPubkeyStatusList"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/rewardInfo": {
             "post": {
                 "description": "reward info",
@@ -249,6 +295,18 @@ const docTemplate = `{
                 "pubkey": {
                     "description": "hex string",
                     "type": "string"
+                }
+            }
+        },
+        "info_handlers.ReqPubkeyStatusList": {
+            "type": "object",
+            "properties": {
+                "pubkeyList": {
+                    "description": "hex string list",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -423,6 +481,17 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "integer"
+                }
+            }
+        },
+        "info_handlers.RspPubkeyStatusList": {
+            "type": "object",
+            "properties": {
+                "statusList": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },

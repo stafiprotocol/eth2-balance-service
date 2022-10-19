@@ -19,6 +19,14 @@ definitions:
         description: hex string
         type: string
     type: object
+  info_handlers.ReqPubkeyStatusList:
+    properties:
+      pubkeyList:
+        description: hex string list
+        items:
+          type: string
+        type: array
+    type: object
   info_handlers.ReqRewardInfo:
     properties:
       chartDuSeconds:
@@ -132,6 +140,13 @@ definitions:
         type: string
       status:
         type: integer
+    type: object
+  info_handlers.RspPubkeyStatusList:
+    properties:
+      statusList:
+        items:
+          type: integer
+        type: array
     type: object
   info_handlers.RspRewardInfo:
     properties:
@@ -261,6 +276,33 @@ paths:
                   $ref: '#/definitions/info_handlers.RspPubkeyDetail'
               type: object
       summary: pubkey detail
+      tags:
+      - v1
+  /v1/pubkeyStatusList:
+    post:
+      consumes:
+      - application/json
+      description: pubkey status list
+      parameters:
+      - description: pubkey status list
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqPubkeyStatusList'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspPubkeyStatusList'
+              type: object
+      summary: pubkey status list
       tags:
       - v1
   /v1/rewardInfo:

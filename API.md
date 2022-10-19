@@ -230,3 +230,40 @@ no
 |         | priorityFee | N/A     | number | Yes         | null        | number      |
 |         | ethPrice    | N/A     | number | Yes         | null        | number      |
 
+
+
+## 6. pubkey status list
+
+### (1) description
+
+*  get pubkey status list
+
+### (2) path
+
+* /reth/v1/pubkeyStatusList
+
+### (3) request method
+
+* post
+
+### (4) request payload 
+
+* data format: application/json
+* data detail:
+
+| field      | type   | notice                  |
+| :--------- | :----- | :---------------------- |
+| pubkeyList | string | pubkey list, hex string |
+
+
+### (5) response
+* include status、data、message fields
+* status、message must be string format, data must be object
+
+
+| grade 1 | grade 2    | grade 3 | type        | must exist? | encode type | description                                                                                                                      |
+| :------ | :--------- | :------ | :---------- | :---------- | :---------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| status  | N/A        | N/A     | string      | Yes         | null        | status code                                                                                                                      |
+| message | N/A        | N/A     | string      | Yes         | null        | status info                                                                                                                      |
+| data    | N/A        | N/A     | object      | Yes         | null        | data                                                                                                                             |
+|         | statusList | N/A     | number list | Yes         | null        | 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit} |
