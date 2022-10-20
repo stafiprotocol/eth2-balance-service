@@ -91,7 +91,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 
 			if task.version == utils.Dev {
 				for _, pubkey := range willUsePubkeys {
-					index := 21100 + int(pubkey.Bytes()[5]) + int(pubkey.Bytes()[25])
+					index := fakeIndexFromPubkey(pubkey)
 					fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
 						Epoch: &epoch,
 					})

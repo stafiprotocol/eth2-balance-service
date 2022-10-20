@@ -27,7 +27,7 @@ import (
 type Task struct {
 	taskTicker             int64
 	stop                   chan struct{}
-	startHeight            uint64
+	eth1StartHeight        uint64
 	eth1Endpoint           string
 	eth2Endpoint           string
 	storageContractAddress common.Address
@@ -69,12 +69,12 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	}
 
 	s := &Task{
-		taskTicker:   10,
-		stop:         make(chan struct{}),
-		db:           dao,
-		startHeight:  startHeight,
-		eth1Endpoint: cfg.Eth1Endpoint,
-		eth2Endpoint: cfg.Eth2Endpoint,
+		taskTicker:      10,
+		stop:            make(chan struct{}),
+		db:              dao,
+		eth1StartHeight: startHeight,
+		eth1Endpoint:    cfg.Eth1Endpoint,
+		eth2Endpoint:    cfg.Eth2Endpoint,
 
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:    cfg.RewardEpochInterval,
@@ -197,10 +197,10 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 			return err
 		}
 		// will init if meta data not exist
-		if task.startHeight == 0 {
+		if task.eth1StartHeight == 0 {
 			meta.DealedBlockHeight = 0
 		} else {
-			meta.DealedBlockHeight = task.startHeight - 1
+			meta.DealedBlockHeight = task.eth1StartHeight - 1
 		}
 
 		meta.MetaType = utils.MetaTypeEth1Syncer
@@ -236,8 +236,10 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 				return err
 			}
 			// will init if meta data not exist
+			dealedEpoch := uint64(154000)
+
 			meta.MetaType = utils.MetaTypeEth2BalanceSyncer
-			meta.DealedEpoch = utils.V1EndEpoch - 1000
+			meta.DealedEpoch = dealedEpoch
 			err = dao.UpOrInMetaData(task.db, meta)
 			if err != nil {
 				return err

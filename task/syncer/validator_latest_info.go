@@ -90,7 +90,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 
 		if task.version == utils.Dev {
 			for _, pubkey := range willUsePubkeys {
-				index := 21100 + int(pubkey.Bytes()[5])*10 + int(pubkey.Bytes()[25]) + int(pubkey.Bytes()[25])/10
+				index := fakeIndexFromPubkey(pubkey)
 
 				fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
 					Epoch: &finalEpoch,
@@ -140,4 +140,9 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}
 	metaData.DealedEpoch = finalEpoch
 	return dao.UpOrInMetaData(task.db, metaData)
+}
+
+// dev test use
+func fakeIndexFromPubkey(pubkey types.ValidatorPubkey) int {
+	return 21100 + int(pubkey.Bytes()[5])*10 + int(pubkey.Bytes()[25]) + int(pubkey.Bytes()[25])/10
 }

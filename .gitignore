@@ -42,3 +42,4 @@ log_file/
 conf.toml
 conf_v1.toml
 conf_dev.toml
+conf_goerli.toml
