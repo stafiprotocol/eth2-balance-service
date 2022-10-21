@@ -10,7 +10,7 @@ import (
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
-var minDistributeAmount = big.NewInt(1e17) // 0.1eth
+var minDistributeAmount = big.NewInt(5e17) // 0.5eth
 
 func (task *Task) distributeFee() error {
 	err := task.distributeFeePool()
