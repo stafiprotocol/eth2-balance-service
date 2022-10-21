@@ -40,7 +40,7 @@ func (task *Task) voteRate() error {
 
 	balancesBlockOnChain, err := task.networkBalancesContract.GetBalancesBlock(task.connection.CallOpts(nil))
 	if err != nil {
-		return err
+		return fmt.Errorf("networkBalancesContract.GetBalancesBlock err: %s", err)
 	}
 
 	logrus.WithFields(logrus.Fields{
@@ -91,7 +91,7 @@ func (task *Task) voteRate() error {
 
 	userDepositPoolBalance, err := task.userDepositContract.GetBalance(callOpts)
 	if err != nil {
-		return err
+		return fmt.Errorf("userDepositContract.GetBalance err: %s", err)
 	}
 
 	// get all validator deposited before targetHeight
@@ -124,7 +124,7 @@ func (task *Task) voteRate() error {
 		voted, err := task.networkBalancesContract.NodeVoted(task.connection.CallOpts(nil),
 			task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEth, totalStakingEth, rethTotalSupply)
 		if err != nil {
-			return err
+			return fmt.Errorf("networkBalancesContract.NodeVoted err: %s", err)
 		}
 		if voted {
 			return nil
@@ -140,7 +140,7 @@ func (task *Task) voteRate() error {
 
 	oldExchangeRate, err := task.rethContract.GetExchangeRate(callOpts)
 	if err != nil {
-		return err
+		return fmt.Errorf("rethContract.GetExchangeRate err: %s", err)
 	}
 
 	newExchangeRate := decimal.NewFromBigInt(totalUserEth, 18).Div(decimal.NewFromBigInt(rethTotalSupply, 0)).BigInt()
