@@ -94,13 +94,11 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 			userDepositFromValidator += (utils.StandardEffectiveBalance - l.NodeDepositAmount)
 			matchedValidatorsNum += 1
 			allEth += l.Balance
-		}
 
-		if l.Status == utils.ValidatorStatusActive {
 			activeValidator = append(activeValidator, l)
 		}
-
 	}
+
 	rsp.DepositedEth = poolEthBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(userDepositFromValidator)), 9)).String()
 	// cal minitedReth
 	rsp.MintedREth = poolInfo.REthSupply

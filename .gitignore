@@ -41,5 +41,6 @@ reth_log*.json
 log_file/
 conf.toml
 conf_v1.toml
+conf_v2.toml
 conf_dev.toml
 conf_goerli.toml

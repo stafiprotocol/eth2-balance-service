@@ -52,6 +52,7 @@ pending status(front-end use): 1 deposited 2 withdrawl match 3 staked 4 withdraw
 |         | totalManagedEth  | N/A     | string | Yes         | null        | decimal format string, reward of last era, "" represent no reward                                                                |
 |         | selfRewardEth    | N/A     | string | Yes         | null        | decimal format string, reward of last era, "" represent no reward                                                                |
 |         | ethPrice         | N/A     | number | Yes         | null        | eth price                                                                                                                        |
+|         | totalCount       | N/A     | number | Yes         | null        | pubkey list total count                                                                                                          |
 |         | pubkeyList       | N/A     | list   | Yes         | null        | list                                                                                                                             |
 |         |                  | pubkey  | string | Yes         | null        | hex string                                                                                                                       |
 |         |                  | status  | number | Yes         | null        | 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit} |
