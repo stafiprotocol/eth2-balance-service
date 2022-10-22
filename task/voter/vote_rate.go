@@ -143,6 +143,20 @@ func (task *Task) voteRate() error {
 	}
 
 	newExchangeRate := decimal.NewFromBigInt(totalUserEth, 18).Div(decimal.NewFromBigInt(rethTotalSupply, 0)).BigInt()
+	logrus.WithFields(logrus.Fields{
+		"newExchangeRate": newExchangeRate.String(),
+		"oldExchangeRate": oldExchangeRate.String(),
+	}).Debug("exchangeInfo")
+
+	if newExchangeRate.Cmp(oldExchangeRate) < 0 {
+		return nil
+		// return fmt.Errorf("newExchangeRate %s less than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
+	}
+	if task.version != utils.Dev {
+		if newExchangeRate.Cmp(new(big.Int).Add(oldExchangeRate, maxRateChange)) > 0 {
+			return fmt.Errorf("newExchangeRate %s too big than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
+		}
+	}
 
 	logrus.WithFields(logrus.Fields{
 		"targetEth1Height":          targetEth1BlockHeight,
@@ -156,17 +170,6 @@ func (task *Task) voteRate() error {
 		"newExchangeRate":           newExchangeRate.String(),
 		"oldExchangeRate":           oldExchangeRate.String(),
 	}).Info("exchangeInfo")
-
-	if newExchangeRate.Cmp(oldExchangeRate) < 0 {
-		return nil
-		// return fmt.Errorf("newExchangeRate %s less than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
-	}
-
-	if task.version != utils.Dev {
-		if newExchangeRate.Cmp(new(big.Int).Add(oldExchangeRate, maxRateChange)) > 0 {
-			return fmt.Errorf("newExchangeRate %s too big than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
-		}
-	}
 
 	tx, err := task.networkBalancesContract.SubmitBalances(
 		task.connection.TxOpts(),
