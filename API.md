@@ -192,6 +192,7 @@ no
 |         | mintedREth        | N/A     | string | Yes         | null        | decimal format string |
 |         | stakedEth         | N/A     | string | Yes         | null        | decimal format string |
 |         | poolEth           | N/A     | string | Yes         | null        | decimal format string |
+|         | allEth            | N/A     | string | Yes         | null        | decimal format string |
 |         | unmatchedEth      | N/A     | string | Yes         | null        | decimal format string |
 |         | matchedValidators | N/A     | number | Yes         | null        | number                |
 |         | stakeApr          | N/A     | number | Yes         | null        | apr                   |

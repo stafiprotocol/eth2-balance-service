@@ -405,6 +405,10 @@ const docTemplate = `{
         "info_handlers.RspPoolData": {
             "type": "object",
             "properties": {
+                "allEth": {
+                    "description": "staker + validator + reward",
+                    "type": "string"
+                },
                 "depositedEth": {
                     "type": "string"
                 },
@@ -412,21 +416,25 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "matchedValidators": {
+                    "description": "staked waiting actived",
                     "type": "integer"
                 },
                 "mintedREth": {
                     "type": "string"
                 },
                 "poolEth": {
+                    "description": "all eth from staker(not include validators self deposit)",
                     "type": "string"
                 },
                 "stakeApr": {
                     "type": "number"
                 },
                 "stakedEth": {
+                    "description": "all actived eth from staker(not include validators self deposit)",
                     "type": "string"
                 },
                 "unmatchedEth": {
+                    "description": "userdeposit balance",
                     "type": "string"
                 },
                 "validatorApr": {

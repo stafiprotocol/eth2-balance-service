@@ -53,7 +53,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return nil
 	}
 
-	validatorList, err := dao.GetStakedAndActiveValidatorList(task.db)
+	validatorList, err := dao.GetStakedWaitingActivedValidatorList(task.db)
 	if err != nil {
 		return err
 	}

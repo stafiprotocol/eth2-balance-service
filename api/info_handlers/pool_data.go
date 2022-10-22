@@ -16,13 +16,14 @@ import (
 type RspPoolData struct {
 	DepositedEth      string  `json:"depositedEth"`
 	MintedREth        string  `json:"mintedREth"`
-	StakedEth         string  `json:"stakedEth"`
-	PoolEth           string  `json:"poolEth"`
-	UnmatchedEth      string  `json:"unmatchedEth"`
-	MatchedValidators uint64  `json:"matchedValidators"`
+	StakedEth         string  `json:"stakedEth"`         // all actived eth from staker(not include validators self deposit)
+	PoolEth           string  `json:"poolEth"`           // all eth from staker(not include validators self deposit)
+	UnmatchedEth      string  `json:"unmatchedEth"`      // userdeposit balance
+	MatchedValidators uint64  `json:"matchedValidators"` // staked waiting actived
 	StakeApr          float64 `json:"stakeApr"`
 	ValidatorApr      float64 `json:"validatorApr"`
 	EthPrice          float64 `json:"ethPrice"`
+	AllEth            string  `json:"allEth"` // staker + validator + reward
 }
 
 // @Summary pool data
@@ -41,7 +42,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		UnmatchedEth: "0",
 	}
 
-	list, err := dao.GetStakedAndActiveValidatorList(h.db)
+	list, err := dao.GetDepositedStakedWaitingActivedValidatorList(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetStakedAndActiveValidatorList err %v", err)
@@ -71,27 +72,46 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
 
 	userDepositFromValidator := uint64(0)
-	totalStaked := uint64(0)
-
+	allEth := uint64(0)
+	matchedValidatorsNum := uint64(0)
 	activeValidator := make([]*dao.Validator, 0)
+
 	for _, l := range list {
-		userDepositFromValidator += (utils.StandardEffectiveBalance - l.NodeDepositAmount)
-		totalStaked += l.EffectiveBalance
+		switch l.Status {
+		case utils.ValidatorStatusDeposited:
+			switch l.NodeType {
+			case utils.NodeTypeSuper:
+				// will fetch 1 eth when super node deposit, so we need add this
+				userDepositFromValidator += 1e9
+			case utils.NodeTypeLight:
+				allEth += 4e9
+			}
+		case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
+			userDepositFromValidator += (utils.StandardEffectiveBalance - l.NodeDepositAmount)
+			matchedValidatorsNum += 1
+			allEth += utils.StandardEffectiveBalance
+		case utils.ValidatorStatusActive:
+			userDepositFromValidator += (utils.StandardEffectiveBalance - l.NodeDepositAmount)
+			matchedValidatorsNum += 1
+			allEth += l.Balance
+		}
+
 		if l.Status == utils.ValidatorStatusActive {
 			activeValidator = append(activeValidator, l)
 		}
+
 	}
 	rsp.DepositedEth = poolEthBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(userDepositFromValidator)), 9)).String()
 	// cal minitedReth
 	rsp.MintedREth = poolInfo.REthSupply
 	//cal stakedEth
 	rsp.StakedEth = decimal.NewFromBigInt(big.NewInt(int64(userDepositFromValidator)), 9).String()
-
 	//pool eth
 	rsp.PoolEth = poolEthBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(userDepositFromValidator)), 9)).String()
+	rsp.AllEth = poolEthBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(allEth)), 9)).String()
 
 	rsp.UnmatchedEth = poolInfo.PoolEthBalance
-	rsp.MatchedValidators = uint64(len(list))
+	rsp.MatchedValidators = matchedValidatorsNum
 	rsp.EthPrice = ethPrice
 
 	// cal staker apr
