@@ -41,7 +41,7 @@ func (task *Task) voteWithdrawal() error {
 	superValidatorMatchs := make([]bool, 0)
 
 	for _, validator := range validatorListNeedVote {
-		// simute waiting in mainnet
+		// simulate waiting in dev
 		if task.version == utils.Dev {
 			time.Sleep(time.Minute)
 		}

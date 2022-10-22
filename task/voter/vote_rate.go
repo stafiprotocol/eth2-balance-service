@@ -158,7 +158,8 @@ func (task *Task) voteRate() error {
 	}).Info("exchangeInfo")
 
 	if newExchangeRate.Cmp(oldExchangeRate) < 0 {
-		return fmt.Errorf("newExchangeRate %s less than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
+		return nil
+		// return fmt.Errorf("newExchangeRate %s less than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
 	}
 
 	if task.version != utils.Dev {
