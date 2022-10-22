@@ -49,6 +49,7 @@ type Task struct {
 	rethContract            *reth.Reth
 	userDepositContract     *user_deposit.UserDeposit
 	distributorContract     *distributor.Distributor
+	storageContract         *storage.Storage
 
 	feePoolAddress          common.Address
 	superNodeFeePoolAddress common.Address
@@ -212,6 +213,8 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
+	task.storageContract = storageContract
+
 	if task.version != utils.V1 {
 		lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
 		if err != nil {
@@ -303,4 +306,9 @@ func (task *Task) getContractAddress(storage *storage.Storage, name string) (com
 		return common.Address{}, fmt.Errorf("address empty")
 	}
 	return address, nil
+}
+
+func (task *Task) NodeVoted(storage *storage.Storage, sender common.Address, _block *big.Int, _totalEth *big.Int, _stakingEth *big.Int, _rethSupply *big.Int) (bool, error) {
+
+	return storage.GetBool(task.connection.CallOpts(nil), utils.NodeSubmissionKey(sender, _block, _totalEth, _stakingEth, _rethSupply))
 }

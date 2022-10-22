@@ -121,8 +121,7 @@ func (task *Task) voteRate() error {
 	balancesEpoch := big.NewInt(int64(targetEpoch + balancesEpochOffset))
 
 	if task.version != utils.V1 {
-		voted, err := task.networkBalancesContract.NodeVoted(task.connection.CallOpts(nil),
-			task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEth, totalStakingEth, rethTotalSupply)
+		voted, err := task.NodeVoted(task.storageContract, task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEth, totalStakingEth, rethTotalSupply)
 		if err != nil {
 			return fmt.Errorf("networkBalancesContract.NodeVoted err: %s", err)
 		}
