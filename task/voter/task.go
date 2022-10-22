@@ -2,9 +2,15 @@ package task_voter
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/prysmaticlabs/prysm/v3/beacon-chain/core/signing"
+	"github.com/prysmaticlabs/prysm/v3/config/params"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
@@ -21,8 +27,6 @@ import (
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared"
 	"github.com/stafiprotocol/reth/shared/beacon"
-	"math/big"
-	"time"
 )
 
 type Task struct {
@@ -38,7 +42,7 @@ type Task struct {
 	version                string
 	enableDistribute       bool
 
-	// need init on start
+	// need init on start()
 	connection              *shared.Connection
 	db                      *db.WrapDb
 	withdrawCredientials    string
@@ -58,6 +62,8 @@ type Task struct {
 	eth2Config         beacon.Eth2Config
 	platformFee        decimal.Decimal // 0.1
 	nodeFee            decimal.Decimal // 0.1
+
+	domain []byte
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*Task, error) {
@@ -144,6 +150,38 @@ func (task *Task) Start() error {
 	}
 	task.nodeFee = decimal.NewFromBigInt(nodeFee, -18)
 	logrus.Infof("nodeFee: %s", task.nodeFee.String())
+
+	chainId, err := task.connection.Eth1Client().ChainID(context.Background())
+	if err != nil {
+		return err
+	}
+
+	if chainId.Uint64() == 1 { // mainnet
+		domain, err := signing.ComputeDomain(
+			params.MainnetConfig().DomainDeposit,
+			params.MainnetConfig().GenesisForkVersion,
+			params.MainnetConfig().ZeroHash[:],
+		)
+		if err != nil {
+			return err
+		}
+		task.domain = domain
+
+	} else { // goerli
+		domain, err := signing.ComputeDomain(
+			params.PraterConfig().DomainDeposit,
+			params.PraterConfig().GenesisForkVersion,
+			params.PraterConfig().ZeroHash[:],
+		)
+		if err != nil {
+			return err
+		}
+		task.domain = domain
+	}
+
+	if len(task.domain) == 0 {
+		return fmt.Errorf("domain not ok")
+	}
 
 	utils.SafeGoWithRestart(task.voteHandler)
 	return nil
@@ -309,6 +347,5 @@ func (task *Task) getContractAddress(storage *storage.Storage, name string) (com
 }
 
 func (task *Task) NodeVoted(storage *storage.Storage, sender common.Address, _block *big.Int, _totalEth *big.Int, _stakingEth *big.Int, _rethSupply *big.Int) (bool, error) {
-
 	return storage.GetBool(task.connection.CallOpts(nil), utils.NodeSubmissionKey(sender, _block, _totalEth, _stakingEth, _rethSupply))
 }

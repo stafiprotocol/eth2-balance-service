@@ -7,8 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/prysmaticlabs/prysm/v3/beacon-chain/core/signing"
-	"github.com/prysmaticlabs/prysm/v3/config/params"
+
 	"github.com/prysmaticlabs/prysm/v3/contracts/deposit"
 	ethpb "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1"
 	"github.com/sirupsen/logrus"
@@ -101,16 +100,7 @@ func (task *Task) voteWithdrawal() error {
 			Signature:             sigBts,
 		}
 
-		domain, err := signing.ComputeDomain(
-			params.BeaconConfig().DomainDeposit,
-			params.BeaconConfig().GenesisForkVersion,
-			params.BeaconConfig().ZeroHash[:],
-		)
-		if err != nil {
-			return err
-		}
-
-		if err := deposit.VerifyDepositSignature(&dp, domain); err != nil {
+		if err := deposit.VerifyDepositSignature(&dp, task.domain); err != nil {
 			match = false
 
 			logrus.WithFields(logrus.Fields{
