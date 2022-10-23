@@ -24,6 +24,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// sync deposit/stake event info from execute chain
+// sync pool info from execute chain
+// sync validator realtime info and epoch balance from consensus chain
 type Task struct {
 	taskTicker             int64
 	stop                   chan struct{}

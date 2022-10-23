@@ -42,7 +42,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		UnmatchedEth: "0",
 	}
 
-	list, err := dao.GetDepositedStakedWaitingActivedValidatorList(h.db)
+	list, err := dao.GetAllValidatorList(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetStakedAndActiveValidatorList err %v", err)
@@ -78,12 +78,14 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 	for _, l := range list {
 		switch l.Status {
-		case utils.ValidatorStatusDeposited:
+		case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusCanWithdraw:
 			switch l.NodeType {
 			case utils.NodeTypeSuper:
-				// will fetch 1 eth when super node deposit, so we need add this
+				// will fetch 1 eth from pool when super node deposit, so we need add this
 				userDepositFromValidator += 1e9
+				allEth += 1e9
 			case utils.NodeTypeLight:
+				userDepositFromValidator += 0 // no eth fetched from pool
 				allEth += 4e9
 			}
 		case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:

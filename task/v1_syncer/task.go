@@ -16,6 +16,8 @@ import (
 	"gorm.io/gorm"
 )
 
+// sync v1 old data(include all validator realtime info and epoch balance info ) from start epoch to end epoch
+// task will automatic exit after dealing end epoch
 type Task struct {
 	taskTicker             int64
 	stop                   chan struct{}

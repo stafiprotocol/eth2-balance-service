@@ -106,12 +106,12 @@ func (task *Task) voteRate() error {
 	totalUserEthFromValidator := uint64(0)
 	totalStakingEthFromValidator := uint64(0)
 	for _, validator := range validatorDepositedList {
-		stakingEth, userEth, err := task.getEthInfoOfValidator(validator, targetEpoch)
+		userStakingEth, userAllEth, err := task.getUserEthInfoOfValidator(validator, targetEpoch)
 		if err != nil {
 			return err
 		}
-		totalUserEthFromValidator += userEth
-		totalStakingEthFromValidator += stakingEth
+		totalUserEthFromValidator += userAllEth
+		totalStakingEthFromValidator += userStakingEth
 	}
 
 	totalUserEthFromValidatorDeci := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(utils.DecimalGwei)
@@ -215,28 +215,34 @@ func (task *Task) voteRate() error {
 }
 
 // Gwei
-func (task *Task) getEthInfoOfValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
+func (task *Task) getUserEthInfoOfValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
 
 	switch validator.NodeType {
 	case utils.NodeTypeCommon:
-		return task.getEthInfoOfCommonNodeValidator(validator, targetEpoch)
+		return task.getUserEthInfoOfCommonNodeValidator(validator, targetEpoch)
 	case utils.NodeTypeTrust:
-		return task.getEthInfoOfTrustNodeValidator(validator, targetEpoch)
+		return task.getUserEthInfoOfTrustNodeValidator(validator, targetEpoch)
 	case utils.NodeTypeLight:
-		return task.getEthInfoOfLightNodeValidator(validator, targetEpoch)
+		return task.getUserEthInfoOfLightNodeValidator(validator, targetEpoch)
 	case utils.NodeTypeSuper:
-		return task.getEthInfoOfSuperNodeValidator(validator, targetEpoch)
+		return task.getUserEthInfoOfSuperNodeValidator(validator, targetEpoch)
 	default:
 		return 0, 0, fmt.Errorf("unknow node type: %d", validator.NodeType)
 	}
 }
 
-func (task *Task) getEthInfoOfCommonNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
+func (task *Task) getUserEthInfoOfCommonNodeValidator(validator *dao.Validator, targetEpoch uint64) (userStakingEth uint64, userAllEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusCanWithdraw, utils.ValidatorStatusWithdrawed:
 		return 0, 0, nil
 
-	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
+		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
+
+		userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
+		return userDepositBalance, userDepositAndReward, nil
+
+	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err
@@ -253,12 +259,18 @@ func (task *Task) getEthInfoOfCommonNodeValidator(validator *dao.Validator, targ
 	}
 }
 
-func (task *Task) getEthInfoOfTrustNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
+func (task *Task) getUserEthInfoOfTrustNodeValidator(validator *dao.Validator, targetEpoch uint64) (userStakingEth uint64, userAllEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch:
 		return 0, 0, nil
 
-	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
+		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
+
+		userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
+		return userDepositBalance, userDepositAndReward, nil
+
+	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err
@@ -274,12 +286,18 @@ func (task *Task) getEthInfoOfTrustNodeValidator(validator *dao.Validator, targe
 		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
 	}
 }
-func (task *Task) getEthInfoOfLightNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
+func (task *Task) getUserEthInfoOfLightNodeValidator(validator *dao.Validator, targetEpoch uint64) (userStakingEth uint64, userAllEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusCanWithdraw, utils.ValidatorStatusWithdrawed:
 		return 0, 0, nil
 
-	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
+		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
+
+		userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
+		return userDepositBalance, userDepositAndReward, nil
+
+	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err
@@ -295,12 +313,18 @@ func (task *Task) getEthInfoOfLightNodeValidator(validator *dao.Validator, targe
 		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
 	}
 }
-func (task *Task) getEthInfoOfSuperNodeValidator(validator *dao.Validator, targetEpoch uint64) (stakingEth uint64, userEth uint64, err error) {
+func (task *Task) getUserEthInfoOfSuperNodeValidator(validator *dao.Validator, targetEpoch uint64) (userStakingEth uint64, userAllEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch:
 		return 1e9, 1e9, nil
 
-	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
+		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
+
+		userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
+		return userDepositBalance, userDepositAndReward, nil
+
+	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err

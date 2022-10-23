@@ -97,18 +97,12 @@ func GetNodeReward(balance, effectiveBalance, nodeDepositAmount uint64) uint64 {
 
 func GetNodeManagedEth(nodeDeposit, balance uint64, status uint8) uint64 {
 	switch status {
-	case ValidatorStatusDeposited:
-		fallthrough
-	case ValidatorStatusWithdrawMatch:
-		fallthrough
-	case ValidatorStatusWithdrawUnmatch:
+	case ValidatorStatusDeposited, ValidatorStatusWithdrawMatch, ValidatorStatusWithdrawUnmatch:
 		return nodeDeposit
 
-	case ValidatorStatusExit:
-		fallthrough
-	case ValidatorStatusStaked:
-		fallthrough
-	case ValidatorStatusActive:
+	case ValidatorStatusStaked, ValidatorStatusWaiting:
+		return StandardEffectiveBalance
+	case ValidatorStatusActive, ValidatorStatusExit:
 		return balance
 
 	default:
