@@ -1,17 +1,15 @@
 package shared_test
 
 import (
+	"context"
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	storage "github.com/stafiprotocol/reth/bindings/Storage"
-	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared"
 )
 
 func TestCallOpts(t *testing.T) {
-	c, err := shared.NewConnection("https://test-eth-node.stafi.io", "https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io", nil, nil, nil)
+	c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beaconcha-rpc2.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,14 +25,13 @@ func TestCallOpts(t *testing.T) {
 	t.Log(newopts)
 	t.Log(newopts2)
 
-	storageContract, err := storage.NewStorage(common.HexToAddress("0xA4efE44eE3D52211df575b9fD8F3409C5c1443eE"), c.Eth1Client())
+	gasPrice, err := c.Eth1Client().SuggestGasPrice(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	address, err := storageContract.GetAddress(c.CallOpts(nil), utils.ContractStorageKey("stafiLightNode"))
+	gasTip, err := c.Eth1Client().SuggestGasTipCap(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(address)
+	t.Log(gasPrice.String(), gasTip.String())
 }

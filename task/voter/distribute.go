@@ -30,7 +30,10 @@ func (task *Task) distributeFeePool() error {
 		return nil
 	}
 
-	task.connection.LockAndUpdateTxOpts()
+	err = task.connection.LockAndUpdateTxOpts()
+	if err != nil {
+		return err
+	}
 	defer task.connection.UnlockTxOpts()
 
 	tx, err := task.distributorContract.DistributeFee(task.connection.TxOpts(), balance)
@@ -80,7 +83,10 @@ func (task *Task) distributeSuperNodeFeePool() error {
 		return nil
 	}
 
-	task.connection.LockAndUpdateTxOpts()
+	err = task.connection.LockAndUpdateTxOpts()
+	if err != nil {
+		return err
+	}
 	defer task.connection.UnlockTxOpts()
 
 	tx, err := task.distributorContract.DistributeSuperNodeFee(task.connection.TxOpts(), balance)

@@ -23,7 +23,10 @@ import (
 	"github.com/stafiprotocol/reth/types"
 )
 
-var ExtraGasPrice = big.NewInt(5e9)
+var Gwei5 = big.NewInt(5e9)
+var Gwei10 = big.NewInt(10e9)
+var Gwei20 = big.NewInt(20e9)
+
 var retryLimit = 100
 var waitInterval = 6 * time.Second
 
@@ -41,13 +44,22 @@ type Connection struct {
 }
 
 // NewConnection returns an uninitialized connection, must call Connection.Connect() before using.
-func NewConnection(eth1Endpoint, eth2Endpoint string, kp *secp256k1.Keypair, gasLimit, gasPrice *big.Int) (*Connection, error) {
+func NewConnection(eth1Endpoint, eth2Endpoint string, kp *secp256k1.Keypair, gasLimit, maxGasPrice *big.Int) (*Connection, error) {
+
+	if kp != nil {
+		if maxGasPrice.Cmp(big.NewInt(0)) <= 0 {
+			return nil, fmt.Errorf("max gas price empty")
+		}
+		if gasLimit.Cmp(big.NewInt(0)) <= 0 {
+			return nil, fmt.Errorf("gas limit empty")
+		}
+	}
 	c := &Connection{
 		eth1Endpoint: eth1Endpoint,
 		eth2Endpoint: eth2Endpoint,
 		kp:           kp,
 		gasLimit:     gasLimit,
-		maxGasPrice:  gasPrice,
+		maxGasPrice:  maxGasPrice,
 	}
 	err := c.connect()
 	if err != nil {
@@ -140,13 +152,28 @@ func (c *Connection) CallOpts(blocknumber *big.Int) *bind.CallOpts {
 	return &newCallOpts
 }
 
-func (c *Connection) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
-	gasPrice, err := c.eth1Client.SuggestGasPrice(ctx)
+// return suggest gastipcap gasfeecap
+func (c *Connection) SafeEstimateFee(ctx context.Context) (*big.Int, *big.Int, error) {
+	gasTipCap, err := c.eth1Client.SuggestGasTipCap(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	gasFeeCap, err := c.eth1Client.SuggestGasPrice(ctx)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return gasPrice.Add(gasPrice, ExtraGasPrice), nil
+	if gasFeeCap.Cmp(Gwei20) < 0 {
+		gasFeeCap = new(big.Int).Add(gasFeeCap, Gwei5)
+	} else {
+		gasFeeCap = new(big.Int).Add(gasFeeCap, Gwei10)
+	}
+
+	if gasFeeCap.Cmp(c.maxGasPrice) > 0 {
+		gasFeeCap = c.maxGasPrice
+	}
+
+	return gasTipCap, gasFeeCap, nil
 }
 
 // LockAndUpdateOpts acquires a lock on the opts before updating the nonce
@@ -154,12 +181,13 @@ func (c *Connection) SafeEstimateGas(ctx context.Context) (*big.Int, error) {
 func (c *Connection) LockAndUpdateTxOpts() error {
 	c.optsLock.Lock()
 
-	gasPrice, err := c.SafeEstimateGas(context.Background())
+	gasTipCap, gasFeeCap, err := c.SafeEstimateFee(context.Background())
 	if err != nil {
 		c.optsLock.Unlock()
 		return err
 	}
-	c.txOpts.GasPrice = gasPrice
+	c.txOpts.GasTipCap = gasTipCap
+	c.txOpts.GasFeeCap = gasFeeCap
 
 	nonce, err := c.eth1Client.PendingNonceAt(context.Background(), c.txOpts.From)
 	if err != nil {
