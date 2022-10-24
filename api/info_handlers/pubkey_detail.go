@@ -74,11 +74,11 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.Err(c, utils.CodeValidatorNotExist, err.Error())
-			logrus.Errorf("dao.GetNodeBalanceListByNodeWithPage err %v", err)
+			logrus.Errorf("dao.GetValidator err %v", err)
 			return
 		}
 		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao.GetNodeBalanceListByNodeWithPage err %v", err)
+		logrus.Errorf("dao.GetValidator err %v", err)
 		return
 	}
 	poolInfo, err := dao.GetPoolInfo(h.db)
@@ -90,15 +90,30 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	ethPriceDeci, err := decimal.NewFromString(poolInfo.EthPrice)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("poolInfo.PoolEthBalance to decimal err %v", err)
+		logrus.Errorf("poolInfo.EthPrice to decimal err %v", err)
 		return
 	}
 	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
 
-	rsp.Status = validator.Status
 	rsp.CurrentBalance = decimal.NewFromInt(int64(validator.Balance)).Mul(utils.DecimalGwei).String()
-	rsp.DepositBalance = decimal.NewFromInt(int64(validator.NodeDepositAmount)).Mul(utils.DecimalGwei).String()
 	rsp.EffectiveBalance = decimal.NewFromInt(int64(validator.EffectiveBalance)).Mul(utils.DecimalGwei).String()
+	rsp.DepositBalance = decimal.NewFromInt(int64(validator.NodeDepositAmount)).Mul(utils.DecimalGwei).String()
+	rsp.Status = validator.Status
+
+	switch validator.Status {
+	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch:
+		switch validator.NodeType {
+		case utils.NodeTypeLight:
+			rsp.CurrentBalance = decimal.NewFromInt(int64(4e9)).Mul(utils.DecimalGwei).String()
+			rsp.EffectiveBalance = decimal.NewFromInt(int64(4e9)).Mul(utils.DecimalGwei).String()
+		case utils.NodeTypeSuper:
+			rsp.CurrentBalance = decimal.NewFromInt(int64(1e9)).Mul(utils.DecimalGwei).String()
+			rsp.EffectiveBalance = decimal.NewFromInt(int64(1e9)).Mul(utils.DecimalGwei).String()
+		}
+	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
+		rsp.CurrentBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.DecimalGwei).String()
+		rsp.EffectiveBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.DecimalGwei).String()
+	}
 
 	rsp.EligibleEpoch = validator.EligibleEpoch
 	rsp.ActiveEpoch = validator.ActiveEpoch
