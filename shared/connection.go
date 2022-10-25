@@ -91,7 +91,7 @@ func (c *Connection) connect() error {
 
 	if c.kp != nil {
 		// Construct tx opts, call opts, and nonce mechanism
-		opts, err := c.newTransactOpts(big.NewInt(0), c.gasLimit, c.maxGasPrice)
+		opts, err := c.newTransactOpts(big.NewInt(0), c.gasLimit)
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func (c *Connection) connect() error {
 }
 
 // newTransactOpts builds the TransactOpts for the connection's keypair.
-func (c *Connection) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.TransactOpts, error) {
+func (c *Connection) newTransactOpts(value, gasLimit *big.Int) (*bind.TransactOpts, error) {
 	privateKey := c.kp.PrivateKey()
 	address := ethcrypto.PubkeyToAddress(privateKey.PublicKey)
 
@@ -124,7 +124,6 @@ func (c *Connection) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = value
 	auth.GasLimit = uint64(gasLimit.Int64())
-	auth.GasPrice = gasPrice
 	auth.Context = context.Background()
 
 	return auth, nil
