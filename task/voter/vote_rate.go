@@ -243,6 +243,14 @@ func (task *Task) getUserEthInfoOfCommonNodeValidator(validator *dao.Validator, 
 		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+		// case: activeEpoch 155747 targetEpoch 155700
+		if validator.ActiveEpoch < targetEpoch {
+			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
+
+			userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
+			return userDepositBalance, userDepositAndReward, nil
+		}
+
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err
@@ -271,6 +279,14 @@ func (task *Task) getUserEthInfoOfTrustNodeValidator(validator *dao.Validator, t
 		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+		// case: activeEpoch 155747 targetEpoch 155700
+		if validator.ActiveEpoch < targetEpoch {
+			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
+
+			userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
+			return userDepositBalance, userDepositAndReward, nil
+		}
+
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err
@@ -298,6 +314,14 @@ func (task *Task) getUserEthInfoOfLightNodeValidator(validator *dao.Validator, t
 		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+		// case: activeEpoch 155747 targetEpoch 155700
+		if validator.ActiveEpoch < targetEpoch {
+			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
+
+			userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
+			return userDepositBalance, userDepositAndReward, nil
+		}
+
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err
@@ -325,6 +349,14 @@ func (task *Task) getUserEthInfoOfSuperNodeValidator(validator *dao.Validator, t
 		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+		// case: activeEpoch 155747 targetEpoch 155700
+		if validator.ActiveEpoch < targetEpoch {
+			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
+
+			userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
+			return userDepositBalance, userDepositAndReward, nil
+		}
+
 		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err

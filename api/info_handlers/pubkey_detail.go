@@ -97,7 +97,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 
 	rsp.CurrentBalance = decimal.NewFromInt(int64(validator.Balance)).Mul(utils.DecimalGwei).String()
 	rsp.EffectiveBalance = decimal.NewFromInt(int64(validator.EffectiveBalance)).Mul(utils.DecimalGwei).String()
-	rsp.DepositBalance = decimal.NewFromInt(int64(validator.NodeDepositAmount)).Mul(utils.DecimalGwei).String()
+	rsp.DepositBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.DecimalGwei).String()
 	rsp.Status = validator.Status
 
 	switch validator.Status {
