@@ -243,8 +243,8 @@ func (task *Task) getUserEthInfoOfCommonNodeValidator(validator *dao.Validator, 
 		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
-		// case: activeEpoch 155747 targetEpoch 155700
-		if validator.ActiveEpoch < targetEpoch {
+		// case: activeEpoch 155747 > targetEpoch 155700
+		if validator.ActiveEpoch > targetEpoch {
 			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
 
 			userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
@@ -279,8 +279,8 @@ func (task *Task) getUserEthInfoOfTrustNodeValidator(validator *dao.Validator, t
 		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
-		// case: activeEpoch 155747 targetEpoch 155700
-		if validator.ActiveEpoch < targetEpoch {
+		// case: activeEpoch 155747 > targetEpoch 155700
+		if validator.ActiveEpoch > targetEpoch {
 			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
 
 			userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
@@ -314,8 +314,8 @@ func (task *Task) getUserEthInfoOfLightNodeValidator(validator *dao.Validator, t
 		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
-		// case: activeEpoch 155747 targetEpoch 155700
-		if validator.ActiveEpoch < targetEpoch {
+		// case: activeEpoch 155747 > targetEpoch 155700
+		if validator.ActiveEpoch > targetEpoch {
 			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
 
 			userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
@@ -349,8 +349,9 @@ func (task *Task) getUserEthInfoOfSuperNodeValidator(validator *dao.Validator, t
 		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
-		// case: activeEpoch 155747 targetEpoch 155700
-		if validator.ActiveEpoch < targetEpoch {
+		// case: activeEpoch 155747 > targetEpoch 155700
+		// case: activeEpoch 156035 > targetEpoch 156000
+		if validator.ActiveEpoch > targetEpoch {
 			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
 
 			userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
