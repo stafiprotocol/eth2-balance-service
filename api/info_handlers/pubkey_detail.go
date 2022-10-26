@@ -122,20 +122,23 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	if rsp.EligibleEpoch != 0 {
 		rsp.EligibleDays = (infoFinalEpoch - validator.EligibleEpoch) * 32 * 12 / (60 * 60 * 24)
 	}
+	// already active
 	if rsp.ActiveEpoch != 0 {
 		rsp.ActiveDays = (infoFinalEpoch - validator.ActiveEpoch) * 32 * 12 / (60 * 60 * 24)
 
 		epochBefore24H := infoFinalEpoch - 225
 		validatorBalance, err := dao.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epochBefore24H)
-		if err != nil && err != gorm.ErrRecordNotFound {
-			utils.Err(c, utils.CodeInternalErr, err.Error())
-			logrus.Errorf("dao.GetValidatorBalance err %s", err)
-			return
-		}
-		if err == nil {
+		if err != nil {
+			if err != gorm.ErrRecordNotFound {
+				utils.Err(c, utils.CodeInternalErr, err.Error())
+				logrus.Errorf("dao.GetValidatorBalance err %s", err)
+				return
+			} else {
+				rsp.Last24hRewardEth = decimal.NewFromBigInt(big.NewInt(int64(validator.Balance-utils.StandardEffectiveBalance)), 9).String()
+			}
+		} else {
 			rsp.Last24hRewardEth = decimal.NewFromBigInt(big.NewInt(int64(validator.Balance-validatorBalance.Balance)), 9).String()
 		}
-
 	}
 
 	// cal validator apr

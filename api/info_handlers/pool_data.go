@@ -10,6 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
+	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
@@ -121,7 +122,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		logrus.Errorf("dao.GetLatestRateInfoList err: %s", err)
 		return
 	}
-
 	if len(rateInfoList) >= 2 {
 		first := rateInfoList[0]
 		end := rateInfoList[len(rateInfoList)-1]
@@ -148,34 +148,62 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 			Div(endRateDeci)
 		rsp.StakeApr, _ = apyDeci.Float64()
 	}
+
 	// cal validator apr
 	if len(activeValidator) != 0 {
-		validatorBalanceList, err := dao.GetLatestValidatorBalanceList(h.db, activeValidator[0].ValidatorIndex)
-		if err != nil {
-			utils.Err(c, utils.CodeInternalErr, err.Error())
-			logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
-			return
+		du := len(activeValidator) / 10
+		total := 0
+		totalApr := 0.0
+		for i := range activeValidator {
+			if i%du == 0 {
+				selectedValidatorIndex := activeValidator[i].ValidatorIndex
+				apr, err := getValidatorApr(h.db, selectedValidatorIndex)
+
+				logrus.WithFields(logrus.Fields{
+					"du":             du,
+					"validatorIndex": selectedValidatorIndex,
+					"apr":            apr,
+					"err":            err,
+				}).Debug("selected apr info")
+
+				if err == nil && apr != 0 {
+					total++
+					totalApr += apr
+				}
+			}
 		}
-
-		if len(validatorBalanceList) >= 2 {
-			first := validatorBalanceList[0]
-			end := validatorBalanceList[len(validatorBalanceList)-1]
-
-			duBalance := uint64(0)
-			if first.Balance > end.Balance {
-				duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, 4e9) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, 4e9)
-			}
-
-			du := int64(first.Timestamp - end.Timestamp)
-			if du > 0 {
-				apr, _ := decimal.NewFromInt(int64(duBalance)).
-					Mul(decimal.NewFromInt(365 * 24 * 60 * 60 * 100)).
-					Div(decimal.NewFromInt(du)).
-					Div(decimal.NewFromInt(4e9)).Float64()
-				rsp.ValidatorApr = apr
-			}
+		if total != 0 {
+			rsp.ValidatorApr = totalApr / float64(total)
 		}
 	}
 
 	utils.Ok(c, "success", rsp)
+}
+
+func getValidatorApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
+	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(db, validatorIndex)
+	if err != nil {
+		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+		return 0, err
+	}
+
+	if len(validatorBalanceList) >= 2 {
+		first := validatorBalanceList[0]
+		end := validatorBalanceList[len(validatorBalanceList)-1]
+
+		duBalance := uint64(0)
+		if first.Balance > end.Balance {
+			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, 4e9) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, 4e9)
+		}
+
+		du := int64(first.Timestamp - end.Timestamp)
+		if du > 0 {
+			apr, _ := decimal.NewFromInt(int64(duBalance)).
+				Mul(decimal.NewFromInt(365 * 24 * 60 * 60 * 100)).
+				Div(decimal.NewFromInt(du)).
+				Div(decimal.NewFromInt(4e9)).Float64()
+			return apr, nil
+		}
+	}
+	return 0, nil
 }
