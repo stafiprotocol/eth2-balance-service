@@ -30,6 +30,6 @@ func GetRateInfo(db *db.WrapDb, timestamp uint64) (c *RateInfo, err error) {
 }
 
 func GetLatestRateInfoList(db *db.WrapDb) (c []*RateInfo, err error) {
-	err = db.Order("timestamp desc").Limit(20).Offset(0).Find(&c).Error
+	err = db.Order("timestamp desc").Limit(22).Offset(0).Find(&c).Error
 	return
 }

@@ -57,6 +57,6 @@ func GetFirstValidatorBalance(db *db.WrapDb, validatorIndex uint64) (c *Validato
 }
 
 func GetLatestValidatorBalanceList(db *db.WrapDb, validatorIndex uint64) (c []*ValidatorBalance, err error) {
-	err = db.Order("epoch desc").Limit(20).Offset(0).Find(&c, "validator_index = ?", validatorIndex).Error
+	err = db.Order("epoch desc").Limit(22).Offset(0).Find(&c, "validator_index = ?", validatorIndex).Error
 	return
 }
