@@ -53,6 +53,10 @@ func (task *Task) syncPooInfo() error {
 
 	poolInfo.PoolEthBalance = poolBalance.String()
 	poolInfo.REthSupply = rethSupply.String()
+	logrus.WithFields(logrus.Fields{
+		"poolBalance": poolInfo.PoolEthBalance,
+		"rethsupply":  poolInfo.REthSupply,
+	}).Debug("poolInfo")
 
 	return dao.UpOrInPoolInfo(task.db, poolInfo)
 }
