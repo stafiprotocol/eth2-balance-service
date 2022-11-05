@@ -3,31 +3,13 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/big"
 	"net/http"
 
 	"github.com/shopspring/decimal"
 	"github.com/stafiprotocol/reth/shared/beacon"
 )
-
-// Get an eth2 epoch number by time
-func EpochAt(config beacon.Eth2Config, time uint64) uint64 {
-	return config.GenesisEpoch + (time-config.GenesisTime)/config.SecondsPerEpoch
-}
-
-func EpochTime(config beacon.Eth2Config, epoch uint64) uint64 {
-	return (epoch-config.GenesisEpoch)*config.SecondsPerEpoch + config.GenesisTime
-}
-
-func SlotInterval(config beacon.Eth2Config, epochInterval uint64) uint64 {
-	return config.SlotsPerEpoch * epochInterval
-}
-
-// Get an eth2 slot number by epoch
-func SlotAt(config beacon.Eth2Config, epoch uint64) uint64 {
-	return config.GenesisEpoch + config.SlotsPerEpoch*epoch
-}
 
 // 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit}
 const (
@@ -68,14 +50,39 @@ const (
 	MetaTypeV1ValidatorSyncer = uint8(4)
 )
 
-const V1EndEpoch = uint64(148000)
-const Eth1StartHeight = uint64(15572967)
+const (
+	V1EndEpoch      = uint64(148000)
+	Eth1StartHeight = uint64(15572967)
 
-var OldRethSupply, _ = new(big.Int).SetString("25642334000000000000", 10)
+	StandardEffectiveBalance            = uint64(32e9)
+	StandardLightNodeDepositBalance     = uint64(4e9)
+	StandardSuperNodeFakeDepositBalance = uint64(1e9)
+)
 
-var DecimalGwei = decimal.NewFromInt(1e9)
+var (
+	// dev use
+	OldRethSupply, _ = new(big.Int).SetString("25642334000000000000", 10)
 
-const StandardEffectiveBalance = uint64(32e9)
+	GweiDeci = decimal.NewFromInt(1e9)
+)
+
+// Get an eth2 epoch number by time
+func EpochAt(config beacon.Eth2Config, time uint64) uint64 {
+	return config.GenesisEpoch + (time-config.GenesisTime)/config.SecondsPerEpoch
+}
+
+func EpochTime(config beacon.Eth2Config, epoch uint64) uint64 {
+	return (epoch-config.GenesisEpoch)*config.SecondsPerEpoch + config.GenesisTime
+}
+
+func SlotInterval(config beacon.Eth2Config, epochInterval uint64) uint64 {
+	return config.SlotsPerEpoch * epochInterval
+}
+
+// Get an eth2 slot number by epoch
+func SlotAt(config beacon.Eth2Config, epoch uint64) uint64 {
+	return config.GenesisEpoch + config.SlotsPerEpoch*epoch
+}
 
 func GetNodeReward(balance, effectiveBalance, nodeDepositAmount uint64) uint64 {
 	if balance == 0 || effectiveBalance == 0 {
@@ -110,7 +117,7 @@ func GetNodeManagedEth(nodeDeposit, balance uint64, status uint8) uint64 {
 	}
 }
 
-func GetGasprice() (base, priority uint64, err error) {
+func GetGaspriceFromEthgasstation() (base, priority uint64, err error) {
 	rsp, err := http.Get("https://api.ethgasstation.info/api/fee-estimate")
 	if err != nil {
 		return 0, 0, err
@@ -119,7 +126,7 @@ func GetGasprice() (base, priority uint64, err error) {
 	if rsp.StatusCode != http.StatusOK {
 		return 0, 0, fmt.Errorf("status err %d", rsp.StatusCode)
 	}
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	if err != nil {
 		return 0, 0, err
 	}

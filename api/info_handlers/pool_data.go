@@ -4,7 +4,6 @@
 package info_handlers
 
 import (
-	"math/big"
 	"sort"
 
 	"github.com/gin-gonic/gin"
@@ -88,8 +87,8 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 			switch l.NodeType {
 			case utils.NodeTypeSuper:
 				// will fetch 1 eth from pool when super node deposit, so we need add this
-				stakerValidatorDepositAmount += 1e9
-				allEth += 1e9
+				stakerValidatorDepositAmount += utils.StandardSuperNodeFakeDepositBalance
+				allEth += utils.StandardSuperNodeFakeDepositBalance
 			case utils.NodeTypeLight:
 				stakerValidatorDepositAmount += l.NodeDepositAmount
 				allEth += l.NodeDepositAmount
@@ -111,15 +110,15 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		}
 	}
 
-	rsp.DepositedEth = poolEthBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(stakerValidatorDepositAmount)), 9)).String()
+	rsp.DepositedEth = poolEthBalanceDeci.Add(decimal.NewFromInt(int64(stakerValidatorDepositAmount)).Mul(utils.GweiDeci)).String()
 	// cal minitedReth
 	rsp.MintedREth = poolInfo.REthSupply
 	// cal stakedEth
-	rsp.StakedEth = decimal.NewFromBigInt(big.NewInt(int64(stakerValidatorDepositAmount)), 9).String()
+	rsp.StakedEth = decimal.NewFromInt(int64(stakerValidatorDepositAmount)).Mul(utils.GweiDeci).String()
 	// pool eth
-	rsp.PoolEth = poolEthBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(allEth)), 9)).String()
+	rsp.PoolEth = poolEthBalanceDeci.Add(decimal.NewFromInt(int64(allEth)).Mul(utils.GweiDeci)).String()
 	// all eth
-	rsp.AllEth = poolEthBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(allEth)), 9)).String()
+	rsp.AllEth = poolEthBalanceDeci.Add(decimal.NewFromInt(int64(allEth)).Mul(utils.GweiDeci)).String()
 
 	rsp.UnmatchedEth = poolInfo.PoolEthBalance
 	rsp.MatchedValidators = matchedValidatorsNum
@@ -190,6 +189,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	utils.Ok(c, "success", rsp)
 }
 
+// return 0 if no data used to cal rate
 func getValidatorApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
 	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(db, validatorIndex)
 	if err != nil {
@@ -203,7 +203,7 @@ func getValidatorApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
 
 		duBalance := uint64(0)
 		if first.Balance > end.Balance {
-			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, 4e9) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, 4e9)
+			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositBalance) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositBalance)
 		}
 
 		du := int64(first.Timestamp - end.Timestamp)
@@ -211,7 +211,7 @@ func getValidatorApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
 			apr, _ := decimal.NewFromInt(int64(duBalance)).
 				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
 				Div(decimal.NewFromInt(du)).
-				Div(decimal.NewFromInt(4e9)).Float64()
+				Div(decimal.NewFromInt(int64(utils.StandardLightNodeDepositBalance))).Float64()
 			return apr, nil
 		}
 	}

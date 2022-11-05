@@ -74,5 +74,5 @@ func (task *Task) getEthPrice() (string, error) {
 }
 
 func (task *Task) getGasPrice() (base uint64, priority uint64, err error) {
-	return utils.GetGasprice()
+	return utils.GetGaspriceFromEthgasstation()
 }

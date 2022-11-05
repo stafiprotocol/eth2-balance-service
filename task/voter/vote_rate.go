@@ -114,10 +114,10 @@ func (task *Task) voteRate() error {
 		totalStakingEthFromValidator += userStakingEth
 	}
 
-	totalUserEthFromValidatorDeci := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(utils.DecimalGwei)
+	totalUserEthFromValidatorDeci := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(utils.GweiDeci)
 	totalUserEth := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).BigInt()
 
-	totalStakingEth := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(utils.DecimalGwei).BigInt()
+	totalStakingEth := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(utils.GweiDeci).BigInt()
 	balancesEpoch := big.NewInt(int64(targetEpoch + balancesEpochOffset))
 
 	if task.version != utils.V1 {
@@ -340,7 +340,7 @@ func (task *Task) getUserEthInfoOfLightNodeValidator(validator *dao.Validator, t
 func (task *Task) getUserEthInfoOfSuperNodeValidator(validator *dao.Validator, targetEpoch uint64) (userStakingEth uint64, userAllEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch:
-		return 1e9, 1e9, nil
+		return utils.StandardSuperNodeFakeDepositBalance, utils.StandardSuperNodeFakeDepositBalance, nil
 
 	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
 		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount

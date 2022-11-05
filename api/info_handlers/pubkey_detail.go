@@ -5,7 +5,6 @@ package info_handlers
 
 import (
 	"encoding/json"
-	"math/big"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -95,24 +94,24 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	}
 	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
 
-	rsp.CurrentBalance = decimal.NewFromInt(int64(validator.Balance)).Mul(utils.DecimalGwei).String()
-	rsp.EffectiveBalance = decimal.NewFromInt(int64(validator.EffectiveBalance)).Mul(utils.DecimalGwei).String()
-	rsp.DepositBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.DecimalGwei).String()
+	rsp.CurrentBalance = decimal.NewFromInt(int64(validator.Balance)).Mul(utils.GweiDeci).String()
+	rsp.EffectiveBalance = decimal.NewFromInt(int64(validator.EffectiveBalance)).Mul(utils.GweiDeci).String()
+	rsp.DepositBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.GweiDeci).String()
 	rsp.Status = validator.Status
 
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch:
 		switch validator.NodeType {
 		case utils.NodeTypeLight:
-			rsp.CurrentBalance = decimal.NewFromInt(int64(4e9)).Mul(utils.DecimalGwei).String()
-			rsp.EffectiveBalance = decimal.NewFromInt(int64(4e9)).Mul(utils.DecimalGwei).String()
+			rsp.CurrentBalance = decimal.NewFromInt(int64(utils.StandardLightNodeDepositBalance)).Mul(utils.GweiDeci).String()
+			rsp.EffectiveBalance = decimal.NewFromInt(int64(utils.StandardLightNodeDepositBalance)).Mul(utils.GweiDeci).String()
 		case utils.NodeTypeSuper:
-			rsp.CurrentBalance = decimal.NewFromInt(int64(1e9)).Mul(utils.DecimalGwei).String()
-			rsp.EffectiveBalance = decimal.NewFromInt(int64(1e9)).Mul(utils.DecimalGwei).String()
+			rsp.CurrentBalance = decimal.NewFromInt(int64(utils.StandardSuperNodeFakeDepositBalance)).Mul(utils.GweiDeci).String()
+			rsp.EffectiveBalance = decimal.NewFromInt(int64(utils.StandardSuperNodeFakeDepositBalance)).Mul(utils.GweiDeci).String()
 		}
 	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
-		rsp.CurrentBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.DecimalGwei).String()
-		rsp.EffectiveBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.DecimalGwei).String()
+		rsp.CurrentBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.GweiDeci).String()
+		rsp.EffectiveBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.GweiDeci).String()
 	}
 
 	rsp.EligibleEpoch = validator.EligibleEpoch
@@ -134,39 +133,21 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 				logrus.Errorf("dao.GetValidatorBalance err %s", err)
 				return
 			} else {
-				rsp.Last24hRewardEth = decimal.NewFromBigInt(big.NewInt(int64(validator.Balance-utils.StandardEffectiveBalance)), 9).String()
+				rsp.Last24hRewardEth = decimal.NewFromInt(int64(validator.Balance - utils.StandardEffectiveBalance)).Mul(utils.GweiDeci).String()
 			}
 		} else {
-			rsp.Last24hRewardEth = decimal.NewFromBigInt(big.NewInt(int64(validator.Balance-validatorBalance.Balance)), 9).String()
+			rsp.Last24hRewardEth = decimal.NewFromInt(int64(validator.Balance - validatorBalance.Balance)).Mul(utils.GweiDeci).String()
 		}
 	}
 
 	// cal validator apr
-	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(h.db, validator.ValidatorIndex)
+	apr, err := getValidatorApr(h.db, validator.ValidatorIndex)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+		logrus.Errorf("getValidatorApr err: %s", err)
 		return
 	}
-
-	if len(validatorBalanceList) >= 2 {
-		first := validatorBalanceList[0]
-		end := validatorBalanceList[len(validatorBalanceList)-1]
-
-		duBalance := uint64(0)
-		if first.Balance > end.Balance {
-			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, 4e9) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, 4e9)
-		}
-
-		du := int64(first.Timestamp - end.Timestamp)
-		if du > 0 {
-			apr, _ := decimal.NewFromInt(int64(duBalance)).
-				Mul(decimal.NewFromInt(365 * 24 * 60 * 60 * 100)).
-				Div(decimal.NewFromInt(du)).
-				Div(decimal.NewFromInt(4e9)).Float64()
-			rsp.Apr = apr
-		}
-	}
+	rsp.Apr = apr
 
 	// cal chart data
 	if rsp.ActiveEpoch != 0 {
@@ -234,7 +215,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 			}
 
 			rsp.ChartXData = append(rsp.ChartXData, validatorBalance.Timestamp)
-			rsp.ChartYData = append(rsp.ChartYData, decimal.NewFromBigInt(big.NewInt(int64(reward)), 9).String())
+			rsp.ChartYData = append(rsp.ChartYData, decimal.NewFromInt(int64(reward)).Mul(utils.GweiDeci).String())
 		}
 	}
 

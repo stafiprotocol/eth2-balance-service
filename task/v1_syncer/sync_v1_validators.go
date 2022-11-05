@@ -2,7 +2,11 @@ package task_v1_syncer
 
 import (
 	"fmt"
+	"math"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	staking_pool "github.com/stafiprotocol/reth/bindings/StakingPool"
 	"github.com/stafiprotocol/reth/dao"
@@ -10,8 +14,6 @@ import (
 	"github.com/stafiprotocol/reth/shared/beacon"
 	"github.com/stafiprotocol/reth/types"
 	"gorm.io/gorm"
-	"math"
-	"math/big"
 )
 
 func (task *Task) syncV1Validators() error {
@@ -107,7 +109,7 @@ func (task *Task) syncV1Validators() error {
 		validator.EffectiveBalance = status.EffectiveBalance
 		validator.EligibleEpoch = status.ActivationEligibilityEpoch
 		validator.NodeAddress = nodeAddress.String()
-		validator.NodeDepositAmount = new(big.Int).Div(depositBalance, big.NewInt(1e9)).Uint64()
+		validator.NodeDepositAmount = decimal.NewFromBigInt(depositBalance, 0).Div(utils.GweiDeci).BigInt().Uint64()
 		validator.NodeType = nodeType
 		validator.PoolAddress = stakingPoolAddress.String()
 		validator.Pubkey = pubkeyStr

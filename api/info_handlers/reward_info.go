@@ -5,8 +5,6 @@ package info_handlers
 
 import (
 	"encoding/json"
-	"math/big"
-
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -117,18 +115,18 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 	}
 
 	rsp.TotalCount = totalCount
-	rsp.TotalStakedEth = decimal.NewFromInt(int64(totalStakedEth)).Mul(utils.DecimalGwei).String()
-	rsp.LastEraRewardEth = decimal.NewFromInt(int64(lastEraReward)).Mul(utils.DecimalGwei).String()
+	rsp.TotalStakedEth = decimal.NewFromInt(int64(totalStakedEth)).Mul(utils.GweiDeci).String()
+	rsp.LastEraRewardEth = decimal.NewFromInt(int64(lastEraReward)).Mul(utils.GweiDeci).String()
 	rsp.EthPrice = ethPrice
 
 	for _, l := range list {
 		rsp.List = append(rsp.List, ResReward{
 			Timestamp:         l.Timestamp,
 			Commission:        10,
-			TotalStakedEth:    decimal.NewFromInt(int64(l.TotalEffectiveBalance)).Mul(utils.DecimalGwei).String(),
-			SelfStakedEth:     decimal.NewFromInt(int64(l.TotalNodeDepositAmount)).Mul(utils.DecimalGwei).String(),
-			TotalEraRewardEth: decimal.NewFromInt(int64(l.TotalEraReward)).Mul(utils.DecimalGwei).String(),
-			SelfEraRewardEth:  decimal.NewFromInt(int64(l.TotalSelfEraReward)).Mul(utils.DecimalGwei).String(),
+			TotalStakedEth:    decimal.NewFromInt(int64(l.TotalEffectiveBalance)).Mul(utils.GweiDeci).String(),
+			SelfStakedEth:     decimal.NewFromInt(int64(l.TotalNodeDepositAmount)).Mul(utils.GweiDeci).String(),
+			TotalEraRewardEth: decimal.NewFromInt(int64(l.TotalEraReward)).Mul(utils.GweiDeci).String(),
+			SelfEraRewardEth:  decimal.NewFromInt(int64(l.TotalSelfEraReward)).Mul(utils.GweiDeci).String(),
 		})
 	}
 
@@ -191,7 +189,7 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 			}
 
 			rsp.ChartXData = append(rsp.ChartXData, nodeBalance.Timestamp)
-			rsp.ChartYData = append(rsp.ChartYData, decimal.NewFromBigInt(big.NewInt(int64(reward)), 9).String())
+			rsp.ChartYData = append(rsp.ChartYData, decimal.NewFromInt(int64(reward)).Mul(utils.GweiDeci).String())
 		}
 	}
 

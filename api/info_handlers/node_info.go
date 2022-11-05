@@ -5,7 +5,6 @@ package info_handlers
 
 import (
 	"encoding/json"
-
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -113,9 +112,9 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	}).Debug("rsp info")
 
 	rsp.TotalCount = totalCount
-	rsp.SelfDepositedEth = decimal.NewFromInt(int64(selfDepositedEth)).Mul(utils.DecimalGwei).String()
-	rsp.SelfRewardEth = decimal.NewFromInt(int64(selfRewardEth)).Mul(utils.DecimalGwei).String()
-	rsp.TotalManagedEth = decimal.NewFromInt(int64(totalManagedEth)).Mul(utils.DecimalGwei).String()
+	rsp.SelfDepositedEth = decimal.NewFromInt(int64(selfDepositedEth)).Mul(utils.GweiDeci).String()
+	rsp.SelfRewardEth = decimal.NewFromInt(int64(selfRewardEth)).Mul(utils.GweiDeci).String()
+	rsp.TotalManagedEth = decimal.NewFromInt(int64(totalManagedEth)).Mul(utils.GweiDeci).String()
 	rsp.EthPrice = ethPrice
 	for _, l := range list {
 		rsp.List = append(rsp.List, ResPubkey{
