@@ -88,11 +88,17 @@ func TestBeaconBlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	block, _, err := c.GetBeaconBlock("4736000")
+	block, _, err := c.GetBeaconBlock("5071584")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(block.ExecutionBlockNumber)
+
+	t.Log(block.ExecutionBlockNumber, block.FeeRecipient, block.HasExecutionPayload, block.ProposerIndex, block.Slot)
+	for _, a := range block.Attestations {
+
+		t.Logf("%+v", a)
+
+	}
 
 	head, err := c.GetBeaconHead()
 	if err != nil {

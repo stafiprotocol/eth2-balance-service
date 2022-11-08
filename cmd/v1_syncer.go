@@ -42,7 +42,7 @@ func startV1SyncerCmd() *cobra.Command {
 			logrus.Infof("v1 syncer config info:\nlogFilePath: %s\nlogLevel: %s\neth1Endpoint: %s\neth2Endpoint: %s",
 				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint)
 
-			log.InitLogFile(cfg.LogFilePath + "./log_file/v1_syncer")
+			log.InitLogFile(cfg.LogFilePath + "/v1_syncer")
 			//init db
 			db, err := db.NewDB(&db.Config{
 				Host:     cfg.Db.Host,

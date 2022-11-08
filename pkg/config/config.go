@@ -46,6 +46,9 @@ func Load(configFilePath string) (*Config, error) {
 	if err := loadSysConfig(configFilePath, &cfg); err != nil {
 		return nil, err
 	}
+	if len(cfg.LogFilePath) == 0 {
+		cfg.LogFilePath = "./log_data"
+	}
 
 	return &cfg, nil
 }
