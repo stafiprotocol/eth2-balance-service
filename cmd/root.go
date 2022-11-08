@@ -34,11 +34,11 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	rootCmd.AddCommand(
-		startApiCmd(),
-		startSyncerCmd(),
-		startV1SyncerCmd(),
-		startVoterCmd(),
 		genAccountCmd(),
+		startSyncerCmd(),
+		startApiCmd(),
+		startVoterCmd(),
+		startV1SyncerCmd(),
 		versionCmd(),
 	)
 	return rootCmd

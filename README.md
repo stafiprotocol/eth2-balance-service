@@ -18,11 +18,11 @@ Usage:
   reth [command]
 
 Available Commands:
-  start-api    Start api server
-  start-syncer Start syncer
-  sync-v1-data Sync data of v1
-  start-voter  Start voter
   gen-account  Generate ethereum keystore
+  start-syncer Start syncer
+  start-api    Start api server
+  start-voter  Start voter
+  sync-v1-data Sync data of v1
   version      Show version information
   help         Help about any command
 
@@ -36,5 +36,5 @@ Use "reth [command] --help" for more information about a command.
 ## Features
 
 * sync validators info on eth1 and eth2
-* vote for validator state and reth/eth rate
-* api server for validator's datail info
+* vote for validator status and reth/eth rate
+* api server for validator's detail info
