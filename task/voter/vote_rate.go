@@ -14,7 +14,7 @@ import (
 
 const balancesEpochOffset = uint64(1e10)
 
-var maxRateChange = big.NewInt(1e16)
+var maxRateChangeDeci = decimal.NewFromInt(1e16)
 
 func (task *Task) voteRate() error {
 
@@ -115,13 +115,15 @@ func (task *Task) voteRate() error {
 	}
 
 	totalUserEthFromValidatorDeci := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(utils.GweiDeci)
-	totalUserEth := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).BigInt()
 
-	totalStakingEth := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(utils.GweiDeci).BigInt()
+	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0))
+	rethTotalSupplyDeci := decimal.NewFromBigInt(rethTotalSupply, 0)
+
+	totalStakingEthDeci := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(utils.GweiDeci)
 	balancesEpoch := big.NewInt(int64(targetEpoch + balancesEpochOffset))
 
 	if task.version != utils.V1 {
-		voted, err := task.NodeVoted(task.storageContract, task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEth, totalStakingEth, rethTotalSupply)
+		voted, err := task.NodeVoted(task.storageContract, task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEthDeci.BigInt(), totalStakingEthDeci.BigInt(), rethTotalSupplyDeci.BigInt())
 		if err != nil {
 			return fmt.Errorf("networkBalancesContract.NodeVoted err: %s", err)
 		}
@@ -141,20 +143,27 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return fmt.Errorf("rethContract.GetExchangeRate err: %s", err)
 	}
+	oldExchangeRateDeci := decimal.NewFromBigInt(oldExchangeRate, 0)
 
-	newExchangeRate := decimal.NewFromBigInt(totalUserEth, 18).Div(decimal.NewFromBigInt(rethTotalSupply, 0)).BigInt()
+	newExchangeRateDeci := totalUserEthDeci.Mul(decimal.NewFromInt(1e18)).Div(rethTotalSupplyDeci)
+
 	logrus.WithFields(logrus.Fields{
-		"newExchangeRate": newExchangeRate.String(),
+		"newExchangeRate": newExchangeRateDeci.StringFixed(0),
 		"oldExchangeRate": oldExchangeRate.String(),
 	}).Debug("exchangeInfo")
 
-	if newExchangeRate.Cmp(oldExchangeRate) < 0 {
+	err = task.AppendToStatistic(fmt.Sprintf("totalStakerEth:%s totalReth:%s oldExchangeRate:%s newExchangeRate:%s",
+		totalUserEthDeci.StringFixed(0), rethTotalSupplyDeci.StringFixed(0), oldExchangeRateDeci.StringFixed(0), newExchangeRateDeci.StringFixed(0)))
+	if err != nil {
+		return err
+	}
+
+	if newExchangeRateDeci.LessThanOrEqual(oldExchangeRateDeci) {
 		return nil
-		// return fmt.Errorf("newExchangeRate %s less than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
 	}
 	if task.version != utils.Dev {
-		if newExchangeRate.Cmp(new(big.Int).Add(oldExchangeRate, maxRateChange)) > 0 {
-			return fmt.Errorf("newExchangeRate %s too big than oldExchangeRate %s", newExchangeRate.String(), oldExchangeRate.String())
+		if newExchangeRateDeci.GreaterThan(oldExchangeRateDeci.Add(maxRateChangeDeci)) {
+			return fmt.Errorf("newExchangeRate %s too big than oldExchangeRate %s", newExchangeRateDeci.String(), oldExchangeRateDeci.String())
 		}
 	}
 
@@ -162,20 +171,20 @@ func (task *Task) voteRate() error {
 		"targetEth1Height":          targetEth1BlockHeight,
 		"targetEpoch":               targetEpoch,
 		"balancesEpoch":             balancesEpoch,
-		"totalUserEthFromValidator": totalUserEthFromValidatorDeci.String(),
+		"totalUserEthFromValidator": totalUserEthFromValidatorDeci.StringFixed(0),
 		"userDepositPoolBalance":    userDepositPoolBalance,
-		"totalUserEth":              totalUserEth.String(),
-		"totalStakingEth":           totalStakingEth.String(),
-		"rethTotalSupply":           rethTotalSupply.String(),
-		"newExchangeRate":           newExchangeRate.String(),
-		"oldExchangeRate":           oldExchangeRate.String(),
+		"totalUserEth":              totalUserEthDeci.StringFixed(0),
+		"totalStakingEth":           totalStakingEthDeci.StringFixed(0),
+		"rethTotalSupply":           rethTotalSupplyDeci.StringFixed(0),
+		"newExchangeRate":           newExchangeRateDeci.StringFixed(0),
+		"oldExchangeRate":           oldExchangeRateDeci.StringFixed(0),
 	}).Info("exchangeInfo")
 
 	tx, err := task.networkBalancesContract.SubmitBalances(
 		task.connection.TxOpts(),
 		balancesEpoch,
-		totalUserEth,
-		totalStakingEth,
+		totalUserEthDeci.BigInt(),
+		totalStakingEthDeci.BigInt(),
 		rethTotalSupply)
 	if err != nil {
 		return err

@@ -4,15 +4,20 @@
 package utils
 
 import (
+	"bufio"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"math/big"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -182,4 +187,74 @@ func ContractStorageKey(name string) [32]byte {
 func NodeSubmissionKey(sender common.Address, _block *big.Int, _totalEth *big.Int, _stakingEth *big.Int, _rethSupply *big.Int) [32]byte {
 	// keccak256(abi.encodePacked("network.balances.submitted.node", sender, _block, _totalEth, _stakingEth, _rethSupply))
 	return crypto.Keccak256Hash([]byte("network.balances.submitted.node"), sender.Bytes(), common.LeftPadBytes(_block.Bytes(), 32), common.LeftPadBytes(_totalEth.Bytes(), 32), common.LeftPadBytes(_stakingEth.Bytes(), 32), common.LeftPadBytes(_rethSupply.Bytes(), 32))
+}
+
+func AppendToFile(filePath, content string) error {
+	// make sure the dir is existed, eg:
+	// ./foo/bar/baz/hello.log must make sure ./foo/bar/baz is existed
+	dirname := filepath.Dir(filePath)
+	if err := os.MkdirAll(dirname, 0755); err != nil {
+		return errors.Wrapf(err, "failed to create directory %s", dirname)
+	}
+	// if we got here, then we need to create a file
+	f, err := os.OpenFile(filePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return errors.Errorf("failed to open file %s: %s", filePath, err)
+	}
+	defer f.Close()
+
+	writer := bufio.NewWriter(f)
+	_, err = writer.WriteString(content)
+	if err != nil {
+		return err
+	}
+	return writer.Flush()
+}
+
+func ReadLastLine(filePath string) (string, error) {
+	// make sure the dir is existed, eg:
+	// ./foo/bar/baz/hello.log must make sure ./foo/bar/baz is existed
+	dirname := filepath.Dir(filePath)
+	if err := os.MkdirAll(dirname, 0755); err != nil {
+		return "", errors.Wrapf(err, "failed to create directory %s", dirname)
+	}
+	// if we got here, then we need to create a file
+	f, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDONLY, 0644)
+	if err != nil {
+		return "", errors.Errorf("failed to open file %s: %s", filePath, err)
+	}
+	defer f.Close()
+
+	line := ""
+	var cursor int64 = 0
+	stat, err := f.Stat()
+	if err != nil {
+		return "", fmt.Errorf("f.stat err: %s", err)
+	}
+	filesize := stat.Size()
+	if filesize == 0 {
+		return "", nil
+	}
+	for {
+		cursor -= 1
+		f.Seek(cursor, io.SeekEnd)
+
+		char := make([]byte, 1)
+		_, err := f.Read(char)
+		if err != nil {
+			return "", fmt.Errorf("read file err: %s", err)
+		}
+
+		if cursor != -1 && (char[0] == 10 || char[0] == 13) { // stop if we find a line
+			break
+		}
+
+		line = fmt.Sprintf("%s%s", string(char), line) // there is more efficient way
+
+		if cursor == -filesize { // stop if we are at the begining
+			break
+		}
+	}
+
+	return line, nil
 }

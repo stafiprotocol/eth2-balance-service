@@ -1,7 +1,7 @@
 VERSION := $(shell git describe --tags)
 COMMIT  := $(shell git log -1 --format='%H')
 
-all: install
+all: build
 
 LD_FLAGS = -X github.com/stafiprotocol/reth/cmd.Version=$(VERSION) \
 	-X github.com/stafiprotocol/reth/cmd.Commit=$(COMMIT) \

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -41,6 +42,7 @@ type Task struct {
 	rewardEpochInterval    uint64
 	version                string
 	enableDistribute       bool
+	statisticFilePath      string
 
 	// need init on start()
 	connection              *shared.Connection
@@ -96,6 +98,12 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		return nil, fmt.Errorf("unsupport version: %s", cfg.Version)
 	}
 
+	statisticFilePath := cfg.LogFilePath + "/statistic.txt"
+	logrus.WithFields(
+		logrus.Fields{
+			"path": statisticFilePath,
+		}).Info("statistic file")
+
 	s := &Task{
 		taskTicker:             10,
 		stop:                   make(chan struct{}),
@@ -109,6 +117,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 		version:                cfg.Version,
 		enableDistribute:       cfg.EnableDistribute,
+		statisticFilePath:      statisticFilePath,
 	}
 	return s, nil
 }
@@ -348,4 +357,28 @@ func (task *Task) getContractAddress(storage *storage.Storage, name string) (com
 
 func (task *Task) NodeVoted(storage *storage.Storage, sender common.Address, _block *big.Int, _totalEth *big.Int, _stakingEth *big.Int, _rethSupply *big.Int) (bool, error) {
 	return storage.GetBool(task.connection.CallOpts(nil), utils.NodeSubmissionKey(sender, _block, _totalEth, _stakingEth, _rethSupply))
+}
+
+func (task *Task) AppendToStatistic(content string) error {
+	lastLine, err := utils.ReadLastLine(task.statisticFilePath)
+	if err != nil {
+		return err
+	}
+
+	if len(lastLine) != 0 {
+		splits := strings.Split(lastLine, " ")
+		if len(splits) > 0 {
+			lastLineTime, err := time.Parse(time.RFC3339, splits[0])
+			if err != nil {
+				return err
+			}
+
+			if time.Since(lastLineTime).Minutes() < 24*60-1 {
+				return nil
+			}
+		}
+	}
+
+	newLine := fmt.Sprintf("\n%s %s", time.Now().Format(time.RFC3339), content)
+	return utils.AppendToFile(task.statisticFilePath, newLine)
 }

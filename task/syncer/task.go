@@ -36,6 +36,8 @@ type Task struct {
 	storageContractAddress common.Address
 	rewardEpochInterval    uint64
 	version                string
+	// used for dev mode
+	rewardStartEpoch uint64
 
 	// need init on start
 	db                      *db.WrapDb
@@ -83,6 +85,11 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 		version:                cfg.Version,
 	}
+
+	if cfg.Version == utils.Dev {
+		s.rewardStartEpoch = cfg.RewardStartEpoch
+	}
+
 	return s, nil
 }
 
@@ -239,10 +246,10 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 				return err
 			}
 			// will init if meta data not exist
-			dealedEpoch := uint64(154000)
-
 			meta.MetaType = utils.MetaTypeEth2BalanceSyncer
-			meta.DealedEpoch = dealedEpoch
+			if task.rewardStartEpoch > 0 {
+				meta.DealedEpoch = task.rewardStartEpoch - 1
+			}
 			err = dao.UpOrInMetaData(task.db, meta)
 			if err != nil {
 				return err

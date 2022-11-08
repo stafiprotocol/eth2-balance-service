@@ -7,6 +7,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.24
 	github.com/gin-gonic/gin v1.8.1
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
+	github.com/pkg/errors v0.9.1
 	github.com/prysmaticlabs/go-bitfield v0.0.0-20210809151128-385d8c5e3fb7
 	github.com/prysmaticlabs/prysm/v3 v3.1.1
 	github.com/satori/go.uuid v1.2.0
@@ -73,7 +74,6 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/pierrec/xxHash v0.1.5 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.12.2 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.35.0 // indirect
