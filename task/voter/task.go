@@ -193,6 +193,7 @@ func (task *Task) Start() error {
 	}
 
 	utils.SafeGoWithRestart(task.voteHandler)
+	utils.SafeGoWithRestart(task.statisticHandler)
 	return nil
 }
 
@@ -249,6 +250,37 @@ func (task *Task) voteHandler() {
 			}
 
 			logrus.Debug("voteRate end -----------\n")
+			retry = 0
+		}
+	}
+}
+
+func (task *Task) statisticHandler() {
+	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
+	defer ticker.Stop()
+	retry := 0
+	for {
+		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
+			return
+		}
+
+		select {
+		case <-task.stop:
+			logrus.Info("statistic task has stopped")
+			return
+		case <-ticker.C:
+
+			logrus.Debug("statistic start -----------")
+			err := task.statistic()
+			if err != nil {
+				logrus.Warnf("statistic  err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+
+			logrus.Debug("statistic end -----------\n")
 			retry = 0
 		}
 	}
@@ -359,26 +391,40 @@ func (task *Task) NodeVoted(storage *storage.Storage, sender common.Address, _bl
 	return storage.GetBool(task.connection.CallOpts(nil), utils.NodeSubmissionKey(sender, _block, _totalEth, _stakingEth, _rethSupply))
 }
 
-func (task *Task) AppendToStatistic(content string) error {
-	lastLine, err := utils.ReadLastLine(task.statisticFilePath)
-	if err != nil {
-		return err
+func (task *Task) AlreadyStatisticToday() (bool, error) {
+	now := time.Now().UTC()
+	if now.Hour() > 1 {
+		return true, nil
 	}
 
-	if len(lastLine) != 0 {
+	lastLine, err := utils.ReadLastLine(task.statisticFilePath)
+	if err != nil {
+		return false, err
+	}
+
+	if len(lastLine) > 0 {
 		splits := strings.Split(lastLine, " ")
 		if len(splits) > 0 {
 			lastLineTime, err := time.Parse(time.RFC3339, splits[0])
 			if err != nil {
-				return err
+				return false, err
+			}
+			lastLineTime = lastLineTime.UTC()
+
+			if lastLineTime.Year() == now.Year() && lastLineTime.Month() == now.Month() && lastLineTime.Day() == now.Day() {
+				return true, nil
 			}
 
-			if time.Since(lastLineTime).Minutes() < 24*60-1 {
-				return nil
-			}
 		}
 	}
+	return false, nil
+}
 
-	newLine := fmt.Sprintf("\n%s %s", time.Now().Format(time.RFC3339), content)
+func (task *Task) AppendToStatistic(content string) error {
+	now := time.Now().UTC()
+
+	useTime := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	newLine := fmt.Sprintf("\n%s %s", useTime.Format(time.RFC3339), content)
+
 	return utils.AppendToFile(task.statisticFilePath, newLine)
 }
