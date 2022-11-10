@@ -152,12 +152,6 @@ func (task *Task) voteRate() error {
 		"oldExchangeRate": oldExchangeRate.String(),
 	}).Debug("exchangeInfo")
 
-	err = task.AppendToStatistic(fmt.Sprintf("totalStakerEth:%s totalReth:%s oldExchangeRate:%s newExchangeRate:%s",
-		totalUserEthDeci.StringFixed(0), rethTotalSupplyDeci.StringFixed(0), oldExchangeRateDeci.StringFixed(0), newExchangeRateDeci.StringFixed(0)))
-	if err != nil {
-		return err
-	}
-
 	if newExchangeRateDeci.LessThanOrEqual(oldExchangeRateDeci) {
 		return nil
 	}
