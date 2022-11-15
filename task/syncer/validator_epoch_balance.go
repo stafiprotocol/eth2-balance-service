@@ -23,22 +23,22 @@ func (task *Task) syncValidatorEpochBalances() error {
 	if err != nil {
 		return err
 	}
-	// ensure validator info synced
+	// ensure validators latest info already synced
 	if finalEpoch > eth2InfoSyncerMetaData.DealedEpoch {
 		finalEpoch = eth2InfoSyncerMetaData.DealedEpoch
 	}
 
-	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
+	eth2BalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
 	if err != nil {
 		return err
 	}
 
 	// no need fetch new balance
-	if finalEpoch <= metaData.DealedEpoch {
+	if finalEpoch <= eth2BalanceMetaData.DealedEpoch {
 		return nil
 	}
 
-	for epoch := metaData.DealedEpoch + 1; epoch <= finalEpoch; epoch++ {
+	for epoch := eth2BalanceMetaData.DealedEpoch + 1; epoch <= finalEpoch; epoch++ {
 		if epoch%task.rewardEpochInterval != 0 {
 			continue
 		}
@@ -48,15 +48,15 @@ func (task *Task) syncValidatorEpochBalances() error {
 			return err
 		}
 		logrus.WithFields(logrus.Fields{
-			"dealedEpoch":              metaData.DealedEpoch,
+			"dealedEpoch":              eth2BalanceMetaData.DealedEpoch,
 			"willDealEpoch":            epoch,
 			"willDealValidatorListLen": len(validatorList),
 		}).Debug("syncValidatorEpochBalances")
 
 		// should skip if no validator
 		if len(validatorList) == 0 {
-			metaData.DealedEpoch = epoch
-			err = dao.UpOrInMetaData(task.db, metaData)
+			eth2BalanceMetaData.DealedEpoch = epoch
+			err = dao.UpOrInMetaData(task.db, eth2BalanceMetaData)
 			if err != nil {
 				return err
 			}
@@ -205,8 +205,8 @@ func (task *Task) syncValidatorEpochBalances() error {
 			}
 		}
 
-		metaData.DealedEpoch = epoch
-		err = dao.UpOrInMetaData(task.db, metaData)
+		eth2BalanceMetaData.DealedEpoch = epoch
+		err = dao.UpOrInMetaData(task.db, eth2BalanceMetaData)
 		if err != nil {
 			return err
 		}

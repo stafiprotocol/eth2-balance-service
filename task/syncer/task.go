@@ -115,8 +115,9 @@ func (task *Task) Start() error {
 
 	task.rewardSlotInterval = utils.SlotInterval(task.eth2Config, task.rewardEpochInterval)
 
-	utils.SafeGoWithRestart(task.syncEventHandler)
-	utils.SafeGoWithRestart(task.syncInfoHandler)
+	utils.SafeGoWithRestart(task.syncEth1EventHandler)
+	utils.SafeGoWithRestart(task.syncEth2ValidatorHandler)
+	utils.SafeGoWithRestart(task.syncEth2BlockHandler)
 	return nil
 }
 
@@ -277,7 +278,7 @@ func (task *Task) getContractAddress(storage *storage.Storage, name string) (com
 	return address, nil
 }
 
-func (task *Task) syncEventHandler() {
+func (task *Task) syncEth1EventHandler() {
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0
@@ -303,8 +304,39 @@ func (task *Task) syncEventHandler() {
 			}
 			logrus.Debug("syncEth1Event end -----------\n")
 
+			logrus.Debug("syncPooInfo start -----------")
+			err = task.syncPooInfo()
+			if err != nil {
+				logrus.Warnf("syncPooInfo err: %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("syncPooInfo end -----------\n")
+
+			retry = 0
+		}
+	}
+}
+
+func (task *Task) syncEth2ValidatorHandler() {
+	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
+	defer ticker.Stop()
+	retry := 0
+	for {
+		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
+			return
+		}
+
+		select {
+		case <-task.stop:
+			logrus.Info("task has stopped")
+			return
+		case <-ticker.C:
+
 			logrus.Debug("syncValidatorLatestInfo start -----------")
-			err = task.syncValidatorLatestInfo()
+			err := task.syncValidatorLatestInfo()
 			if err != nil {
 				logrus.Warnf("syncValidatorLatestInfo err: %s", err)
 				time.Sleep(utils.RetryInterval)
@@ -328,7 +360,7 @@ func (task *Task) syncEventHandler() {
 	}
 }
 
-func (task *Task) syncInfoHandler() {
+func (task *Task) syncEth2BlockHandler() {
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0
@@ -343,16 +375,6 @@ func (task *Task) syncInfoHandler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
-
-			logrus.Debug("syncPooInfo start -----------")
-			err := task.syncPooInfo()
-			if err != nil {
-				logrus.Warnf("syncPooInfo err: %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			}
-			logrus.Debug("syncPooInfo end -----------\n")
 
 			retry = 0
 		}

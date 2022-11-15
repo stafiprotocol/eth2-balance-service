@@ -81,7 +81,7 @@ func SlotInterval(config beacon.Eth2Config, epochInterval uint64) uint64 {
 
 // Get an eth2 slot number by epoch
 func SlotAt(config beacon.Eth2Config, epoch uint64) uint64 {
-	return config.GenesisEpoch + config.SlotsPerEpoch*epoch
+	return config.SlotsPerEpoch * epoch
 }
 
 func GetNodeReward(balance, effectiveBalance, nodeDepositAmount uint64) uint64 {

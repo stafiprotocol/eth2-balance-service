@@ -12,21 +12,21 @@ import (
 	"github.com/stafiprotocol/reth/types"
 )
 
-// get staked/actived validator info from beacon on latest finalized epoch, and update
+// get detail info of staked/waiting/actived validator from beacon chain on latest finalized epoch, and update in db
 func (task *Task) syncValidatorLatestInfo() error {
 	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {
 		return err
 	}
 
-	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
+	eth2InfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
 	if err != nil {
 		return err
 	}
 	finalEpoch := beaconHead.FinalizedEpoch
 
 	// no need fetch, if allready dealed
-	if finalEpoch <= metaData.DealedEpoch {
+	if finalEpoch <= eth2InfoMetaData.DealedEpoch {
 		return nil
 	}
 
@@ -39,17 +39,18 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}
 	targetEth1BlockHeight := targetBeaconBlock.ExecutionBlockNumber
 
-	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
+	eth1SyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
 	if err != nil {
 		return err
 	}
 
+	// for test/dev only
 	if task.version != utils.V2 {
-		targetEth1BlockHeight = meta.DealedBlockHeight
+		targetEth1BlockHeight = eth1SyncerMetaData.DealedBlockHeight
 	}
 
 	// ensure all eth1 event synced before targetEth1BlockHeight
-	if meta.DealedBlockHeight < targetEth1BlockHeight {
+	if eth1SyncerMetaData.DealedBlockHeight < targetEth1BlockHeight {
 		return nil
 	}
 
@@ -64,8 +65,8 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}).Debug("syncValidatorLatestInfo")
 
 	if len(validatorList) == 0 {
-		metaData.DealedEpoch = finalEpoch
-		return dao.UpOrInMetaData(task.db, metaData)
+		eth2InfoMetaData.DealedEpoch = finalEpoch
+		return dao.UpOrInMetaData(task.db, eth2InfoMetaData)
 	}
 
 	pubkeys := make([]types.ValidatorPubkey, 0)
@@ -116,6 +117,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		for pubkey, status := range validatorStatusMap {
 			pubkeyStr := hexutil.Encode(pubkey.Bytes())
 			if status.Exists {
+				// must exist here
 				validator, err := dao.GetValidator(task.db, pubkeyStr)
 				if err != nil {
 					return err
@@ -138,8 +140,8 @@ func (task *Task) syncValidatorLatestInfo() error {
 			}
 		}
 	}
-	metaData.DealedEpoch = finalEpoch
-	return dao.UpOrInMetaData(task.db, metaData)
+	eth2InfoMetaData.DealedEpoch = finalEpoch
+	return dao.UpOrInMetaData(task.db, eth2InfoMetaData)
 }
 
 // dev test use

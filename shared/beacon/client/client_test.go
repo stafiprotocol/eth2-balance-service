@@ -98,6 +98,20 @@ func TestBeaconBlock(t *testing.T) {
 	t.Logf("%+v", block)
 
 }
+func TestBeaconHead(t *testing.T) {
+	// c, err := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
+	c, err := client.NewStandardHttpClient("https://beaconcha-rpc2.stafi.io")
+	if err != nil {
+		t.Fatal(err)
+	}
+	head, err := c.GetBeaconHead()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("%+v", head)
+
+}
 
 func TestSigs(t *testing.T) {
 	withdrawBts, err := hexutil.Decode("0x003cd051a5757b82bf2c399d7476d1636473969af698377434af1d6c54f2bee9")
