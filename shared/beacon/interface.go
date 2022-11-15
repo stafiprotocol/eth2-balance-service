@@ -58,12 +58,49 @@ type Eth1Data struct {
 	BlockHash    common.Hash
 }
 type BeaconBlock struct {
-	Slot                 uint64
-	ProposerIndex        uint64
+	Slot uint64
+
+	// consensus
+	ProposerIndex     uint64
+	Attestations      []AttestationInfo
+	ProposerSlashings []ProposerSlashing
+	AttesterSlashing  []AttesterSlashing
+
+	// execute layer
 	HasExecutionPayload  bool
-	Attestations         []AttestationInfo
 	FeeRecipient         common.Address
 	ExecutionBlockNumber uint64
+}
+
+type ProposerSlashing struct {
+	SignedHeader1 SignedHeader
+	SignedHeader2 SignedHeader
+}
+
+type SignedHeader struct {
+	Slot          uint64
+	ProposerIndex uint64
+	ParentRoot    string
+	StateRoot     string
+	BodyRoot      string
+	Signature     string
+}
+
+type AttesterSlashing struct {
+	Attestation1 Attestation
+	Attestation2 Attestation
+}
+
+type Attestation struct {
+	AttestingIndices []uint64
+	Signature        string
+	Slot             uint64
+	Index            uint64
+	BeaconBlockRoot  string
+	SourceEpoch      uint64
+	SourceRoot       string
+	TargetEpoch      uint64
+	TargetRoot       string
 }
 
 type Committee struct {

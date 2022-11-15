@@ -3,7 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 )
@@ -17,7 +17,7 @@ func GetPriceFromCoinGecko(url string) (map[string]float64, error) {
 	if rsp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("status err %d", rsp.StatusCode)
 	}
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func GetPriceFromCoinMarket(url string) (map[string]float64, error) {
 	if rsp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("status err %d", rsp.StatusCode)
 	}
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	if err != nil {
 		return nil, err
 	}

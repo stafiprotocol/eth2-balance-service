@@ -70,26 +70,162 @@ type ForkResponse struct {
 type AttestationsResponse struct {
 	Data []Attestation `json:"data"`
 }
+
+// type BeaconBlockResponse struct {
+// 	Data struct {
+// 		Message struct {
+// 			Slot          uinteger `json:"slot"`
+// 			ProposerIndex uinteger `json:"proposer_index"`
+// 			Body          struct {
+// 				Eth1Data struct {
+// 					DepositRoot  byteArray `json:"deposit_root"`
+// 					DepositCount uinteger  `json:"deposit_count"`
+// 					BlockHash    byteArray `json:"block_hash"`
+// 				} `json:"eth1_data"`
+// 				Attestations     []Attestation `json:"attestations"`
+// 				ExecutionPayload *struct {
+// 					FeeRecipient byteArray `json:"fee_recipient"`
+// 					BlockNumber  uinteger  `json:"block_number"`
+// 				} `json:"execution_payload"`
+// 			} `json:"body"`
+// 		} `json:"message"`
+// 	} `json:"data"`
+// }
+
 type BeaconBlockResponse struct {
-	Data struct {
+	Version             string `json:"version"`
+	ExecutionOptimistic bool   `json:"execution_optimistic"`
+	Data                struct {
 		Message struct {
 			Slot          uinteger `json:"slot"`
 			ProposerIndex uinteger `json:"proposer_index"`
+			ParentRoot    string   `json:"parent_root"`
+			StateRoot     string   `json:"state_root"`
 			Body          struct {
-				Eth1Data struct {
-					DepositRoot  byteArray `json:"deposit_root"`
-					DepositCount uinteger  `json:"deposit_count"`
-					BlockHash    byteArray `json:"block_hash"`
+				RandaoReveal string `json:"randao_reveal"`
+				Eth1Data     struct {
+					DepositRoot  string   `json:"deposit_root"`
+					DepositCount uinteger `json:"deposit_count"`
+					BlockHash    string   `json:"block_hash"`
 				} `json:"eth1_data"`
-				Attestations     []Attestation `json:"attestations"`
+				Graffiti          string `json:"graffiti"`
+				ProposerSlashings []struct {
+					SignedHeader1 struct {
+						Message struct {
+							Slot          uinteger `json:"slot"`
+							ProposerIndex uinteger `json:"proposer_index"`
+							ParentRoot    string   `json:"parent_root"`
+							StateRoot     string   `json:"state_root"`
+							BodyRoot      string   `json:"body_root"`
+						} `json:"message"`
+						Signature string `json:"signature"`
+					} `json:"signed_header_1"`
+					SignedHeader2 struct {
+						Message struct {
+							Slot          uinteger `json:"slot"`
+							ProposerIndex uinteger `json:"proposer_index"`
+							ParentRoot    string   `json:"parent_root"`
+							StateRoot     string   `json:"state_root"`
+							BodyRoot      string   `json:"body_root"`
+						} `json:"message"`
+						Signature string `json:"signature"`
+					} `json:"signed_header_2"`
+				} `json:"proposer_slashings"`
+				AttesterSlashings []struct {
+					Attestation1 struct {
+						AttestingIndices []uinteger `json:"attesting_indices"`
+						Signature        string     `json:"signature"`
+						Data             struct {
+							Slot            uinteger `json:"slot"`
+							Index           uinteger `json:"index"`
+							BeaconBlockRoot string   `json:"beacon_block_root"`
+							Source          struct {
+								Epoch uinteger `json:"epoch"`
+								Root  string   `json:"root"`
+							} `json:"source"`
+							Target struct {
+								Epoch uinteger `json:"epoch"`
+								Root  string   `json:"root"`
+							} `json:"target"`
+						} `json:"data"`
+					} `json:"attestation_1"`
+					Attestation2 struct {
+						AttestingIndices []uinteger `json:"attesting_indices"`
+						Signature        string     `json:"signature"`
+						Data             struct {
+							Slot            uinteger `json:"slot"`
+							Index           uinteger `json:"index"`
+							BeaconBlockRoot string   `json:"beacon_block_root"`
+							Source          struct {
+								Epoch uinteger `json:"epoch"`
+								Root  string   `json:"root"`
+							} `json:"source"`
+							Target struct {
+								Epoch uinteger `json:"epoch"`
+								Root  string   `json:"root"`
+							} `json:"target"`
+						} `json:"data"`
+					} `json:"attestation_2"`
+				} `json:"attester_slashings"`
+				Attestations []struct {
+					AggregationBits string `json:"aggregation_bits"`
+					Signature       string `json:"signature"`
+					Data            struct {
+						Slot            uinteger `json:"slot"`
+						Index           uinteger `json:"index"`
+						BeaconBlockRoot string   `json:"beacon_block_root"`
+						Source          struct {
+							Epoch uinteger `json:"epoch"`
+							Root  string   `json:"root"`
+						} `json:"source"`
+						Target struct {
+							Epoch uinteger `json:"epoch"`
+							Root  string   `json:"root"`
+						} `json:"target"`
+					} `json:"data"`
+				} `json:"attestations"`
+				Deposits []struct {
+					Proof []string `json:"proof"`
+					Data  struct {
+						Pubkey                string   `json:"pubkey"`
+						WithdrawalCredentials string   `json:"withdrawal_credentials"`
+						Amount                uinteger `json:"amount"`
+						Signature             string   `json:"signature"`
+					} `json:"data"`
+				} `json:"deposits"`
+				VoluntaryExits []struct {
+					Message struct {
+						Epoch          uinteger `json:"epoch"`
+						ValidatorIndex uinteger `json:"validator_index"`
+					} `json:"message"`
+					Signature string `json:"signature"`
+				} `json:"voluntary_exits"`
+				SyncAggregate struct {
+					SyncCommitteeBits      string `json:"sync_committee_bits"`
+					SyncCommitteeSignature string `json:"sync_committee_signature"`
+				} `json:"sync_aggregate"`
 				ExecutionPayload *struct {
-					FeeRecipient byteArray `json:"fee_recipient"`
-					BlockNumber  uinteger  `json:"block_number"`
+					ParentHash    string   `json:"parent_hash"`
+					FeeRecipient  string   `json:"fee_recipient"`
+					StateRoot     string   `json:"state_root"`
+					ReceiptsRoot  string   `json:"receipts_root"`
+					LogsBloom     string   `json:"logs_bloom"`
+					PrevRandao    string   `json:"prev_randao"`
+					BlockNumber   uinteger `json:"block_number"`
+					GasLimit      uinteger `json:"gas_limit"`
+					GasUsed       uinteger `json:"gas_used"`
+					Timestamp     uinteger `json:"timestamp"`
+					ExtraData     string   `json:"extra_data"`
+					BaseFeePerGas uinteger `json:"base_fee_per_gas"`
+					BlockHash     string   `json:"block_hash"`
+					Transactions  []string `json:"transactions"`
 				} `json:"execution_payload"`
 			} `json:"body"`
 		} `json:"message"`
+		Signature string `json:"signature"`
 	} `json:"data"`
 }
+
 type ValidatorsResponse struct {
 	Data []Validator `json:"data"`
 }
