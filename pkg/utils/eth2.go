@@ -48,6 +48,12 @@ const (
 	MetaTypeEth2InfoSyncer    = uint8(2)
 	MetaTypeEth2BalanceSyncer = uint8(3)
 	MetaTypeV1ValidatorSyncer = uint8(4)
+	MetaTypeEth2BlockSyncer   = uint8(5)
+)
+const (
+	SlashTypeFeeRecipient = uint8(1)
+	SlashTypeAttester     = uint8(1)
+	SlashTypeProposer     = uint8(1)
 )
 
 const (
@@ -73,6 +79,10 @@ func EpochAt(config beacon.Eth2Config, time uint64) uint64 {
 
 func EpochTime(config beacon.Eth2Config, epoch uint64) uint64 {
 	return (epoch-config.GenesisEpoch)*config.SecondsPerEpoch + config.GenesisTime
+}
+
+func SlotTime(config beacon.Eth2Config, slot uint64) uint64 {
+	return slot*config.SecondsPerSlot + config.GenesisTime
 }
 
 func SlotInterval(config beacon.Eth2Config, epochInterval uint64) uint64 {

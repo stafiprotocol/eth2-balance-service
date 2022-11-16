@@ -22,16 +22,16 @@ func (task *Task) syncEth1Event() error {
 		}
 	}
 
-	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
+	eth1SyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("latestBlockNumber: %d, dealedBlockNumber: %d", latestBlockNumber, metaData.DealedBlockHeight)
-	if latestBlockNumber <= uint64(metaData.DealedBlockHeight) {
+	logrus.Debugf("latestBlockNumber: %d, dealedBlockNumber: %d", latestBlockNumber, eth1SyncerMetaData.DealedBlockHeight)
+	if latestBlockNumber <= uint64(eth1SyncerMetaData.DealedBlockHeight) {
 		return nil
 	}
 
-	start := uint64(metaData.DealedBlockHeight + 1)
+	start := uint64(eth1SyncerMetaData.DealedBlockHeight + 1)
 	end := latestBlockNumber
 
 	for i := start; i <= end; i += fetchEventBlockLimit {
@@ -72,8 +72,8 @@ func (task *Task) syncEth1Event() error {
 			return err
 		}
 
-		metaData.DealedBlockHeight = subEnd
-		err = dao.UpOrInMetaData(task.db, metaData)
+		eth1SyncerMetaData.DealedBlockHeight = subEnd
+		err = dao.UpOrInMetaData(task.db, eth1SyncerMetaData)
 		if err != nil {
 			return err
 		}

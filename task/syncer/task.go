@@ -24,9 +24,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// sync deposit/stake event info from execute chain
-// sync pool info from execute chain
-// sync validator realtime info and epoch balance from consensus chain
+// sync deposit/stake events and pool latest info from execute chain
+// sync validator latest info and epoch balance from consensus chain
+// sync beacon block info from consensus chain
 type Task struct {
 	taskTicker             int64
 	stop                   chan struct{}
@@ -375,6 +375,15 @@ func (task *Task) syncEth2BlockHandler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
+			logrus.Debug("syncEth2Block start -----------")
+			err := task.syncEth2Block()
+			if err != nil {
+				logrus.Warnf("syncEth2Block err: %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("syncEth2Block end -----------\n")
 
 			retry = 0
 		}

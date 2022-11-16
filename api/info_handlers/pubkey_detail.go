@@ -17,6 +17,8 @@ import (
 type ReqPubkeyDetail struct {
 	Pubkey         string `json:"pubkey"` //hex string
 	ChartDuSeconds uint64 `json:"chartDuSeconds"`
+	PageIndex      int    `json:"pageIndex"`
+	PageCount      int    `json:"pageCount"`
 }
 
 type RspPubkeyDetail struct {
@@ -33,6 +35,16 @@ type RspPubkeyDetail struct {
 	ActiveDays       uint64   `json:"activeDays"`
 	ChartXData       []uint64 `json:"chartXData"`
 	ChartYData       []string `json:"chartYData"`
+
+	TotalCount     int64        `json:"totalCount"`
+	SlashEventList []SlashEvent `json:"slashEventList"`
+}
+
+type SlashEvent struct {
+	Timestamp   uint64 `json:"timestamp"`
+	Block       uint64 `json:"block"`
+	SlashAmount string `json:"slashAmount"`
+	SlashType   uint8  `json:"slashType"`
 }
 
 // @Summary pubkey detail
@@ -59,6 +71,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		Apr:              0,
 		ChartXData:       []uint64{},
 		ChartYData:       []string{},
+		SlashEventList:   []SlashEvent{},
 	}
 
 	eth2InfoMetaData, err := dao.GetMetaData(h.db, utils.MetaTypeEth2InfoSyncer)
@@ -194,7 +207,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 			validatorBalance, err := dao.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				utils.Err(c, utils.CodeInternalErr, err.Error())
-				logrus.Errorf("dao.dao.GetValidatorBalanceBefore err %s", err)
+				logrus.Errorf("dao.GetValidatorBalanceBefore err %s", err)
 				return
 			}
 
@@ -218,6 +231,23 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 			rsp.ChartYData = append(rsp.ChartYData, decimal.NewFromInt(int64(reward)).Mul(utils.GweiDeci).String())
 		}
 	}
+
+	// slash events
+	slashList, total, err := dao.GetSlashEventList(h.db, validator.ValidatorIndex, req.PageIndex, req.PageCount)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetSlashEventList err %s", err)
+		return
+	}
+	for _, slash := range slashList {
+		rsp.SlashEventList = append(rsp.SlashEventList, SlashEvent{
+			Timestamp:   slash.Timestamp,
+			Block:       slash.Slot,
+			SlashAmount: slash.SlashAmount,
+			SlashType:   slash.SlashType,
+		})
+	}
+	rsp.TotalCount = total
 
 	utils.Ok(c, "success", rsp)
 }
