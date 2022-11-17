@@ -292,6 +292,12 @@ const docTemplate = `{
                 "chartDuSeconds": {
                     "type": "integer"
                 },
+                "pageCount": {
+                    "type": "integer"
+                },
+                "pageIndex": {
+                    "type": "integer"
+                },
                 "pubkey": {
                     "description": "hex string",
                     "type": "string"
@@ -406,10 +412,11 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "allEth": {
-                    "description": "staker + validator + reward",
+                    "description": "staker principal + validator principal + reward",
                     "type": "string"
                 },
                 "depositedEth": {
+                    "description": "staker principal + validator principal",
                     "type": "string"
                 },
                 "ethPrice": {
@@ -423,14 +430,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "poolEth": {
-                    "description": "all eth from staker(not include validators self deposit)",
+                    "description": "staker principal + validator principal + reward",
                     "type": "string"
                 },
                 "stakeApr": {
                     "type": "number"
                 },
                 "stakedEth": {
-                    "description": "all actived eth from staker(not include validators self deposit)",
+                    "description": "matched number * 32 + solo unmatched number * 4 + trust unmatched number * 1",
                     "type": "string"
                 },
                 "unmatchedEth": {
@@ -487,7 +494,16 @@ const docTemplate = `{
                 "last24hRewardEth": {
                     "type": "string"
                 },
+                "slashEventList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/info_handlers.SlashEvent"
+                    }
+                },
                 "status": {
+                    "type": "integer"
+                },
+                "totalCount": {
                     "type": "integer"
                 }
             }
@@ -535,6 +551,26 @@ const docTemplate = `{
                 },
                 "totalStakedEth": {
                     "type": "string"
+                }
+            }
+        },
+        "info_handlers.SlashEvent": {
+            "type": "object",
+            "properties": {
+                "endBlock": {
+                    "type": "integer"
+                },
+                "slashAmount": {
+                    "type": "string"
+                },
+                "slashType": {
+                    "type": "integer"
+                },
+                "startBlock": {
+                    "type": "integer"
+                },
+                "startTimestamp": {
+                    "type": "integer"
                 }
             }
         },

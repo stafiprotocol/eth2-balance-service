@@ -10,7 +10,7 @@ import (
 // blocks proposed by pool validators
 type ProposedBlock struct {
 	db.BaseModel
-	Slot uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:slot;index"`
+	Slot uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:slot;uinqueIndex"`
 
 	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index"`
 	FeeRecipient   string `gorm:"type:varchar(40) not null;default:'';column:fee_recipient"` // 0x prefix

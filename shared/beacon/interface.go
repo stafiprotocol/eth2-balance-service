@@ -3,6 +3,7 @@ package beacon
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prysmaticlabs/go-bitfield"
+	ethpb "github.com/prysmaticlabs/prysm/v3/proto/eth/v1"
 	"github.com/stafiprotocol/reth/types"
 )
 
@@ -51,6 +52,7 @@ type ValidatorStatus struct {
 	ExitEpoch                  uint64
 	WithdrawableEpoch          uint64
 	Exists                     bool
+	Status                     ethpb.ValidatorStatus
 }
 type Eth1Data struct {
 	DepositRoot  common.Hash

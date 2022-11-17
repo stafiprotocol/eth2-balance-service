@@ -5,18 +5,18 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/prysmaticlabs/prysm/v3/crypto/bls"
 	"github.com/stafiprotocol/reth/types"
 	eth2types "github.com/wealdtech/go-eth2-types/v2"
 	"golang.org/x/sync/errgroup"
 
+	ethpb "github.com/prysmaticlabs/prysm/v3/proto/eth/v1"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared/beacon"
 )
@@ -215,6 +215,7 @@ func (c *StandardHttpClient) getValidatorStatus(pubkeyOrIndex string, opts *beac
 		ExitEpoch:                  uint64(validator.Validator.ExitEpoch),
 		WithdrawableEpoch:          uint64(validator.Validator.WithdrawableEpoch),
 		Exists:                     true,
+		Status:                     ethpb.ValidatorStatus(ethpb.ValidatorStatus_value[strings.ToUpper(validator.Status)]),
 	}, nil
 
 }
@@ -227,17 +228,9 @@ func (c *StandardHttpClient) GetValidatorStatuses(pubkeys []types.ValidatorPubke
 
 	// Filter out null pubkeys
 	nullPubkeyExists := false
-	realPubkeys := []types.ValidatorPubkey{}
 	for _, pubkey := range pubkeys {
 		if bytes.Equal(pubkey.Bytes(), nullPubkey.Bytes()) {
 			nullPubkeyExists = true
-		} else {
-			// Teku doesn't like invalid pubkeys, so filter them out to make it consistent with other clients
-			_, err := bls.PublicKeyFromBytes(pubkey.Bytes())
-
-			if err == nil {
-				realPubkeys = append(realPubkeys, pubkey)
-			}
 		}
 	}
 
@@ -273,6 +266,7 @@ func (c *StandardHttpClient) GetValidatorStatuses(pubkeys []types.ValidatorPubke
 			ExitEpoch:                  uint64(validator.Validator.ExitEpoch),
 			WithdrawableEpoch:          uint64(validator.Validator.WithdrawableEpoch),
 			Exists:                     true,
+			Status:                     ethpb.ValidatorStatus(ethpb.ValidatorStatus_value[strings.ToUpper(validator.Status)]),
 		}
 
 	}
@@ -372,7 +366,7 @@ func (c *StandardHttpClient) GetValidatorIndex(pubkey types.ValidatorPubkey) (ui
 		return 0, err
 	}
 	if len(validators.Data) == 0 {
-		return 0, fmt.Errorf("validator %s index not found.", pubkeyString)
+		return 0, fmt.Errorf("validator %s index not found", pubkeyString)
 	}
 	validator := validators.Data[0]
 
@@ -712,6 +706,7 @@ func (c *StandardHttpClient) getValidators(stateId string, pubkeys []string) (Va
 	if status != http.StatusOK {
 		return ValidatorsResponse{}, fmt.Errorf("could not get validators: HTTP status %d; response body: '%s'", status, string(responseBody))
 	}
+
 	var validators ValidatorsResponse
 	if err := json.Unmarshal(responseBody, &validators); err != nil {
 		return ValidatorsResponse{}, fmt.Errorf("could not decode validators: %w", err)
@@ -729,8 +724,7 @@ func (c *StandardHttpClient) getValidatorsByOpts(pubkeysOrIndices []string, opts
 	} else if opts.Slot != nil {
 		stateId = strconv.FormatInt(int64(*opts.Slot), 10)
 	} else if opts.Epoch != nil {
-
-		// Get slot nuimber
+		// Get slot nuumber
 		slot := *opts.Epoch * uint64(c.eth2Config.SlotsPerEpoch)
 		stateId = strconv.FormatInt(int64(slot), 10)
 
@@ -850,7 +844,7 @@ func (c *StandardHttpClient) getRequest(requestPath string) ([]byte, int, error)
 	}()
 
 	// Get response
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return []byte{}, 0, err
 	}
@@ -880,7 +874,7 @@ func (c *StandardHttpClient) postRequest(requestPath string, requestBody interfa
 	}()
 
 	// Get response
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return []byte{}, 0, err
 	}

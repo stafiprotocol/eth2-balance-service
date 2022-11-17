@@ -140,6 +140,11 @@ func (task *Task) syncValidatorLatestInfo() error {
 					validator.Status = utils.ValidatorStatusActive
 				}
 
+				// balance will not change after withdrawable epoch
+				if status.WithdrawableEpoch != uint64(math.MaxUint64) && status.WithdrawableEpoch <= finalEpoch {
+					validator.Status = utils.ValidatorStatusExit
+				}
+
 				err = dao.UpOrInValidator(task.db, validator)
 				if err != nil {
 					return err

@@ -8,13 +8,14 @@ import (
 	"math/big"
 
 	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared/beacon"
 	"gorm.io/gorm"
 )
 
-const maxSlots = 100
+const maxDealSlots = 100
 
 func (task *Task) syncEth2Block() error {
 
@@ -31,8 +32,9 @@ func (task *Task) syncEth2Block() error {
 	startSlot := eth2BlockSyncerMetaData.DealedBlockHeight + 1
 	finalSlot := utils.SlotAt(task.eth2Config, eth2InfoMetaData.DealedEpoch)
 
-	if startSlot+maxSlots < finalSlot {
-		finalSlot = startSlot + maxSlots
+	// limit slots count
+	if startSlot+maxDealSlots < finalSlot {
+		finalSlot = startSlot + maxDealSlots
 	}
 
 	for slot := startSlot; slot < finalSlot; slot++ {
@@ -182,6 +184,10 @@ func (task *Task) syncSlashEventEndSlotInfo() error {
 		return err
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"len": len(slashEventList),
+	}).Debug("slashEventList")
+
 	if len(slashEventList) == 0 {
 		return nil
 	}
@@ -190,32 +196,43 @@ func (task *Task) syncSlashEventEndSlotInfo() error {
 	if err != nil {
 		return err
 	}
+
 	for _, slashEvent := range slashEventList {
-		validator, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(slashEvent.ValidatorIndex), &beacon.ValidatorStatusOptions{
+		validatorNow, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(slashEvent.ValidatorIndex), &beacon.ValidatorStatusOptions{
 			Epoch: &beaconHead.FinalizedEpoch,
 		})
 		if err != nil {
 			return err
 		}
 
-		if validator.ExitEpoch != math.MaxUint64 && validator.ExitEpoch <= beaconHead.Epoch {
+		if validatorNow.WithdrawableEpoch != math.MaxUint64 && validatorNow.WithdrawableEpoch >= beaconHead.Epoch {
 			continue
 		}
 
+		// balance will be reduced at slash block utils withdrawable epoch
+		balanceStartSlot := slashEvent.StartSlot - 1
 		validatorStart, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(slashEvent.ValidatorIndex), &beacon.ValidatorStatusOptions{
-			Slot: &slashEvent.StartSlot,
+			Slot: &balanceStartSlot,
+		})
+		if err != nil {
+			return err
+		}
+
+		balanceEndSlot := utils.SlotAt(task.eth2Config, validatorNow.WithdrawableEpoch) + 1
+		validatorEnd, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(slashEvent.ValidatorIndex), &beacon.ValidatorStatusOptions{
+			Slot: &balanceEndSlot,
 		})
 		if err != nil {
 			return err
 		}
 
 		slashAmount := decimal.Zero
-		if validatorStart.Balance < validator.Balance {
-			slashAmount = decimal.NewFromInt(int64(validator.Balance - validatorStart.Balance)).Mul(utils.GweiDeci)
+		if validatorStart.Balance > validatorEnd.Balance {
+			slashAmount = decimal.NewFromInt(int64(validatorStart.Balance - validatorEnd.Balance)).Mul(utils.GweiDeci)
 		}
 
-		slashEvent.EndSlot = validator.ExitEpoch
-		slashEvent.EndTimestamp = utils.EpochTime(task.eth2Config, validator.ExitEpoch)
+		slashEvent.EndSlot = utils.SlotAt(task.eth2Config, validatorNow.WithdrawableEpoch)
+		slashEvent.EndTimestamp = utils.EpochTime(task.eth2Config, validatorNow.WithdrawableEpoch)
 		slashEvent.SlashAmount = slashAmount.StringFixed(0)
 
 		err = dao.UpOrInSlashEvent(task.db, slashEvent)

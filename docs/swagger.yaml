@@ -15,6 +15,10 @@ definitions:
     properties:
       chartDuSeconds:
         type: integer
+      pageCount:
+        type: integer
+      pageIndex:
+        type: integer
       pubkey:
         description: hex string
         type: string
@@ -90,9 +94,10 @@ definitions:
   info_handlers.RspPoolData:
     properties:
       allEth:
-        description: staker + validator + reward
+        description: staker principal + validator principal + reward
         type: string
       depositedEth:
+        description: staker principal + validator principal
         type: string
       ethPrice:
         type: number
@@ -102,12 +107,13 @@ definitions:
       mintedREth:
         type: string
       poolEth:
-        description: all eth from staker(not include validators self deposit)
+        description: staker principal + validator principal + reward
         type: string
       stakeApr:
         type: number
       stakedEth:
-        description: all actived eth from staker(not include validators self deposit)
+        description: matched number * 32 + solo unmatched number * 4 + trust unmatched
+          number * 1
         type: string
       unmatchedEth:
         description: userdeposit balance
@@ -145,7 +151,13 @@ definitions:
         type: number
       last24hRewardEth:
         type: string
+      slashEventList:
+        items:
+          $ref: '#/definitions/info_handlers.SlashEvent'
+        type: array
       status:
+        type: integer
+      totalCount:
         type: integer
     type: object
   info_handlers.RspPubkeyStatusList:
@@ -177,6 +189,19 @@ definitions:
         type: integer
       totalStakedEth:
         type: string
+    type: object
+  info_handlers.SlashEvent:
+    properties:
+      endBlock:
+        type: integer
+      slashAmount:
+        type: string
+      slashType:
+        type: integer
+      startBlock:
+        type: integer
+      startTimestamp:
+        type: integer
     type: object
   utils.Rsp:
     properties:
