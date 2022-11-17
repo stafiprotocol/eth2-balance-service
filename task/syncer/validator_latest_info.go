@@ -30,10 +30,17 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return nil
 	}
 
-	targetBeaconBlock, _, err := task.connection.GetBeaconBlock(fmt.Sprint(utils.SlotAt(task.eth2Config, finalEpoch)))
+	targetSlot := utils.SlotAt(task.eth2Config, finalEpoch)
+	targetBeaconBlock, exist, err := task.connection.GetBeaconBlock(fmt.Sprint(targetSlot))
 	if err != nil {
 		return err
 	}
+
+	// maybe skiped by consensue
+	if !exist {
+		return nil
+	}
+
 	if targetBeaconBlock.ExecutionBlockNumber == 0 {
 		return fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
 	}

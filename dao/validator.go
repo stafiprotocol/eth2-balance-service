@@ -53,6 +53,12 @@ func GetValidatorByIndex(db *db.WrapDb, validatorIndex uint64) (c *Validator, er
 	return
 }
 
+func GetFirstActiveValidator(db *db.WrapDb) (c *Validator, err error) {
+	c = &Validator{}
+	err = db.Order("active_epoch asc").Take(c, "active_epoch <> 0").Error
+	return
+}
+
 func GetValidatorListNeedVote(db *db.WrapDb) (c []*Validator, err error) {
 	err = db.Find(&c, "status = ?", utils.ValidatorStatusDeposited).Error
 	return

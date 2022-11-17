@@ -49,6 +49,8 @@ type Task struct {
 	rethContract            *reth.Reth
 	userDepositContract     *user_deposit.UserDeposit
 	networkBalancesContract *network_balances.NetworkBalances
+	lightNodeFeePoolAddress common.Address
+	superNodeFeePoolAddress common.Address
 
 	eth2Config         beacon.Eth2Config
 	rewardSlotInterval uint64
@@ -160,6 +162,18 @@ func (task *Task) initContract() error {
 		if err != nil {
 			return err
 		}
+		superNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiSuperNodeFeePool")
+		if err != nil {
+			return err
+		}
+		task.superNodeFeePoolAddress = superNodeFeePoolAddress
+
+		lightNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiFeePool")
+		if err != nil {
+			return err
+		}
+		task.lightNodeFeePoolAddress = lightNodeFeePoolAddress
+
 	}
 
 	nodeDepositAddress, err := task.getContractAddress(storageContract, "stafiNodeDeposit")
@@ -262,6 +276,26 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 	err = task.syncPooInfo()
 	if err != nil {
 		return err
+	}
+
+	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			val, err := dao.GetFirstActiveValidator(task.db)
+			if err != nil {
+				return err
+			}
+
+			eth2BlockSyncerMetaData.DealedBlockHeight = utils.SlotAt(task.eth2Config, val.ActiveEpoch)
+			eth2BlockSyncerMetaData.MetaType = utils.MetaTypeEth2BlockSyncer
+
+			err = dao.UpOrInMetaData(task.db, eth2BlockSyncerMetaData)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
 
 	return nil
@@ -384,6 +418,16 @@ func (task *Task) syncEth2BlockHandler() {
 				continue
 			}
 			logrus.Debug("syncEth2Block end -----------\n")
+
+			logrus.Debug("syncSlashEventEndSlotInfo start -----------")
+			err = task.syncSlashEventEndSlotInfo()
+			if err != nil {
+				logrus.Warnf("syncSlashEventEndSlotInfo err: %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("syncSlashEventEndSlotInfo end -----------\n")
 
 			retry = 0
 		}

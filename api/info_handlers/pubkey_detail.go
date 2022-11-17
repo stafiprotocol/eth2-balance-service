@@ -41,10 +41,11 @@ type RspPubkeyDetail struct {
 }
 
 type SlashEvent struct {
-	Timestamp   uint64 `json:"timestamp"`
-	Block       uint64 `json:"block"`
-	SlashAmount string `json:"slashAmount"`
-	SlashType   uint8  `json:"slashType"`
+	StartTimestamp uint64 `json:"startTimestamp"`
+	StartBlock     uint64 `json:"startBlock"`
+	EndBlock       uint64 `json:"endBlock"`
+	SlashAmount    string `json:"slashAmount"`
+	SlashType      uint8  `json:"slashType"`
 }
 
 // @Summary pubkey detail
@@ -241,10 +242,11 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	}
 	for _, slash := range slashList {
 		rsp.SlashEventList = append(rsp.SlashEventList, SlashEvent{
-			Timestamp:   slash.Timestamp,
-			Block:       slash.Slot,
-			SlashAmount: slash.SlashAmount,
-			SlashType:   slash.SlashType,
+			StartTimestamp: slash.StartTimestamp,
+			StartBlock:     slash.StartSlot,
+			EndBlock:       slash.EndSlot,
+			SlashAmount:    slash.SlashAmount,
+			SlashType:      slash.SlashType,
 		})
 	}
 	rsp.TotalCount = total

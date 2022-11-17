@@ -11,10 +11,12 @@ type SlashEvent struct {
 	db.BaseModel
 	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index;index"`
 
-	Slot        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:slot"` // slash event happend on slot
-	SlashAmount string `gorm:"type:varchar(40) not null;default:'0';column:slash_amount"`
-	Timestamp   uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
-	SlashType   uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:slash_type"` // 1 fee recipient 2 proposer 3 attester
+	StartSlot      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:start_slot"` // slash event start slot
+	EndSlot        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:end_slot"`   // slash event end slot
+	SlashAmount    string `gorm:"type:varchar(40) not null;default:'0';column:slash_amount"`
+	StartTimestamp uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:start_timestamp"`
+	EndTimestamp   uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:end_timestamp"`
+	SlashType      uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:slash_type"` // 1 fee recipient 2 proposer 3 attester
 }
 
 func (f SlashEvent) TableName() string {
@@ -25,9 +27,14 @@ func UpOrInSlashEvent(db *db.WrapDb, c *SlashEvent) error {
 	return db.Save(c).Error
 }
 
-func GetSlashEvent(db *db.WrapDb, validatorIndex, slot uint64) (c *SlashEvent, err error) {
+func GetSlashEvent(db *db.WrapDb, validatorIndex, startSlot uint64) (c *SlashEvent, err error) {
 	c = &SlashEvent{}
-	err = db.Take(c, "validator_index = ? and slot = ?", validatorIndex, slot).Error
+	err = db.Take(c, "validator_index = ? and start_slot = ?", validatorIndex, startSlot).Error
+	return
+}
+
+func GetNoEndSlotSlashEventList(db *db.WrapDb) (c []*SlashEvent, err error) {
+	err = db.Find(&c, " end_slot = 0").Error
 	return
 }
 
