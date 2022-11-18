@@ -92,7 +92,7 @@ func TestBeaconBlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	block, _, err := c.GetBeaconBlock("5071584")
+	block, _, err := c.GetBeaconBlock("5155757")
 	// block, _, err := c.GetBeaconBlock("5071581")
 	// block, _, err := c.GetBeaconBlock("3339591")
 	if err != nil {

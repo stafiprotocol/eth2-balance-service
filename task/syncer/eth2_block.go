@@ -130,23 +130,33 @@ func (task *Task) syncEth2Block() error {
 			if len(attesterSlash.Attestation1.AttestingIndices) == 0 || len(attesterSlash.Attestation2.AttestingIndices) == 0 {
 				continue
 			}
-			attesterVlaidatorIndex := attesterSlash.Attestation1.AttestingIndices[0]
-			if len(attesterSlash.Attestation1.AttestingIndices) > len(attesterSlash.Attestation2.AttestingIndices) {
-				attesterVlaidatorIndex = attesterSlash.Attestation2.AttestingIndices[0]
-			}
 
-			slashEvent, err := dao.GetSlashEvent(task.db, attesterVlaidatorIndex, beaconBlock.Slot)
-			if err != nil && err != gorm.ErrRecordNotFound {
-				return err
-			}
-			slashEvent.ValidatorIndex = attesterVlaidatorIndex
-			slashEvent.StartSlot = beaconBlock.Slot
-			slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, beaconBlock.Slot)
-			slashEvent.SlashType = utils.SlashTypeAttester
+			for _, valIndex := range attesterSlash.Attestation1.AttestingIndices {
 
-			err = dao.UpOrInSlashEvent(task.db, slashEvent)
-			if err != nil {
-				return err
+				doubleExist := false
+				for _, valIndex2 := range attesterSlash.Attestation2.AttestingIndices {
+					if valIndex == valIndex2 {
+						exist = true
+						break
+					}
+				}
+
+				if doubleExist {
+					slashEvent, err := dao.GetSlashEvent(task.db, valIndex, beaconBlock.Slot)
+					if err != nil && err != gorm.ErrRecordNotFound {
+						return err
+					}
+					slashEvent.ValidatorIndex = valIndex
+					slashEvent.StartSlot = beaconBlock.Slot
+					slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, beaconBlock.Slot)
+					slashEvent.SlashType = utils.SlashTypeAttester
+
+					err = dao.UpOrInSlashEvent(task.db, slashEvent)
+					if err != nil {
+						return err
+					}
+				}
+
 			}
 		}
 
@@ -205,7 +215,7 @@ func (task *Task) syncSlashEventEndSlotInfo() error {
 			return err
 		}
 
-		if validatorNow.WithdrawableEpoch != math.MaxUint64 && validatorNow.WithdrawableEpoch >= beaconHead.Epoch {
+		if validatorNow.WithdrawableEpoch != uint64(math.MaxUint64) && validatorNow.WithdrawableEpoch >= beaconHead.Epoch {
 			continue
 		}
 
