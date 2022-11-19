@@ -38,6 +38,10 @@ const (
 )
 
 const (
+	FeePool          = uint8(1)
+	SuperNodeFeePool = uint8(2)
+)
+const (
 	V1  = "v1"
 	V2  = "v2"
 	Dev = "dev"
@@ -169,41 +173,82 @@ type ResGasPrice struct {
 	} `json:"priorityFee"`
 }
 
-func GetUserValPlatformDepositAndReward(validatorBalance, nodeDepositAmount uint64, platformFee, nodeFee decimal.Decimal) (uint64, uint64, uint64) {
+// return (user deposit, user reward, val deposit, val reward, paltform fee)
+func GetUserValPlatformDepositAndReward(validatorBalance, nodeDepositAmount uint64, platformFee, nodeFee decimal.Decimal) (uint64, uint64, uint64, uint64, uint64) {
 	userDepositBalance := StandardEffectiveBalance - nodeDepositAmount
 
 	switch {
 	case validatorBalance == StandardEffectiveBalance:
-		return userDepositBalance, nodeDepositAmount, 0
+		return userDepositBalance, 0, nodeDepositAmount, 0, 0
 	case validatorBalance < StandardEffectiveBalance:
 		loss := StandardEffectiveBalance - validatorBalance
 		if loss < nodeDepositAmount {
-			return userDepositBalance, nodeDepositAmount - loss, 0
+			return userDepositBalance, 0, nodeDepositAmount - loss, 0, 0
 		} else {
-			return validatorBalance, 0, 0
+			return validatorBalance, 0, 0, 0, 0
 		}
 	case validatorBalance > StandardEffectiveBalance:
 		// total staking reward
 		reward := validatorBalance - StandardEffectiveBalance
+		rewardDeci := decimal.NewFromInt(int64(reward))
+
 		// platform Fee
-		platformFeeDeci := decimal.NewFromInt(int64(reward)).Mul(platformFee)
-		// node+user raw reward
-		nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Sub(platformFeeDeci)
+		platformFeeDeci := rewardDeci.Mul(platformFee)
 
-		// user raw reward
-		userRawRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(int64(StandardEffectiveBalance)))
-		// node reward
-		nodeReward := nodeAndUserRewardDeci.Sub(userRawRewardDeci)
+		// node+user stake reward
+		nodeAndUserStakeRewardDeci := rewardDeci.Sub(platformFeeDeci)
 
-		// node reward from user
-		nodeRewardFromUser := userRawRewardDeci.Mul(nodeFee)
+		// user stake reward
+		userStakeRewardDeci := nodeAndUserStakeRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(int64(StandardEffectiveBalance)))
+		// node stake reward
+		nodeStakeRewardDeci := nodeAndUserStakeRewardDeci.Sub(userStakeRewardDeci)
+
+		// node commisson reward from user
+		nodeCommissionRewardFromUserDeci := userStakeRewardDeci.Mul(nodeFee)
 
 		// user reward
-		userRewardDeci := userRawRewardDeci.Sub(nodeRewardFromUser)
+		userRewardDeci := userStakeRewardDeci.Sub(nodeCommissionRewardFromUserDeci)
+		// node reward
+		nodeRewardDeci := nodeStakeRewardDeci.Add(nodeCommissionRewardFromUserDeci)
 
-		return userDepositBalance + userRewardDeci.BigInt().Uint64(), nodeDepositAmount + nodeReward.BigInt().Uint64() + nodeRewardFromUser.BigInt().Uint64(), platformFeeDeci.BigInt().Uint64()
+		return userDepositBalance, userRewardDeci.BigInt().Uint64(), nodeDepositAmount, nodeRewardDeci.BigInt().Uint64(), platformFeeDeci.BigInt().Uint64()
 	default:
 		// should not happen here
 		panic("GetUserValPlatformDepositAndReward ")
 	}
+}
+
+// return (user reward, val reward, paltform fee)
+func GetUserValPlatformReward(rewardDeci, platformFee, nodeFee decimal.Decimal, feePoolType uint8) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
+
+	userDepositBalance := 28e9
+	if feePoolType == SuperNodeFeePool {
+		userDepositBalance = 32e9
+	}
+
+	if !rewardDeci.IsPositive() {
+		return decimal.Zero, decimal.Zero, decimal.Zero
+	}
+
+	// platform Fee
+	platformFeeDeci := rewardDeci.Mul(platformFee)
+
+	// node+user stake reward
+	nodeAndUserStakeRewardDeci := rewardDeci.Sub(platformFeeDeci)
+
+	// user stake reward
+	userStakeRewardDeci := nodeAndUserStakeRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(int64(StandardEffectiveBalance)))
+	// node stake reward
+	nodeStakeRewardDeci := nodeAndUserStakeRewardDeci.Sub(userStakeRewardDeci)
+
+	// node commisson reward from user
+	nodeCommissionRewardFromUserDeci := userStakeRewardDeci.Mul(nodeFee)
+
+	// user reward
+	userRewardDeci := userStakeRewardDeci.Sub(nodeCommissionRewardFromUserDeci)
+	// node reward
+	nodeRewardDeci := nodeStakeRewardDeci.Add(nodeCommissionRewardFromUserDeci)
+
+	return userRewardDeci, nodeRewardDeci, platformFeeDeci
+
 }

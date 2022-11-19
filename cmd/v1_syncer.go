@@ -39,7 +39,12 @@ func startV1SyncerCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			logrus.Infof("v1 syncer config info:\nlogFilePath: %s\nlogLevel: %s\neth1Endpoint: %s\neth2Endpoint: %s",
+			logrus.Infof(
+				`v1 syncer config info:
+	logFilePath: %s
+	logLevel: %s
+	eth1Endpoint: %s
+	eth2Endpoint: %s`,
 				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint)
 
 			log.InitLogFile(cfg.LogFilePath + "/v1_syncer")

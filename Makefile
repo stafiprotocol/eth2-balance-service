@@ -16,11 +16,14 @@ build:
 	@echo " > \033[32mBuilding reth...\033[0m "
 	go build -mod readonly $(BUILD_FLAGS) -o build/reth main.go
 
+build-linux:
+	@GOOS=linux GOARCH=amd64 go build --mod readonly $(BUILD_FLAGS) -o ./build/reth main.go
+
 install:
 	@echo " > \033[32mInstalling reth...\033[0m "
 	go install -mod readonly $(BUILD_FLAGS) ./...
 
-genabi:
+abi:
 	@echo " > \033[32mGenabi...\033[0m "
 	abigen --abi ./bindings/DepositContract/depositcontract_abi.json --pkg deposit_contract --type DepositContract --out ./bindings/DepositContract/DepositContract.go
 	abigen --abi ./bindings/NodeDeposit/nodedeposit_abi.json --pkg node_deposit --type NodeDeposit --out ./bindings/NodeDeposit/NodeDeposit.go
@@ -35,9 +38,9 @@ genabi:
 	abigen --abi ./bindings/NodeManager/nodemanager_abi.json --pkg node_manager --type NodeManager --out ./bindings/NodeManager/NodeManager.go
 	abigen --abi ./bindings/StakingPoolManager/stakingpoolmanager_abi.json --pkg staking_pool_manager --type StakingPoolManger --out ./bindings/StakingPoolManager/StakingPoolManager.go
 	abigen --abi ./bindings/Distributor/distributor_abi.json --pkg distributor --type Distributor --out ./bindings/Distributor/Distributor.go
+	abigen --abi ./bindings/FeePool/feepool_abi.json --pkg fee_pool --type FeePool --out ./bindings/FeePool/FeePool.go
+	abigen --abi ./bindings/SuperNodeFeePool/supernodefeepool_abi.json --pkg super_node_fee_pool --type SuperNodeFeePool --out ./bindings/SuperNodeFeePool/SuperNodeFeePool.go
 
-build-linux:
-	@GOOS=linux GOARCH=amd64 go build --mod readonly $(BUILD_FLAGS) -o ./build/reth main.go
 
 clean:
 	@echo " > \033[32mCleanning build files ...\033[0m "
