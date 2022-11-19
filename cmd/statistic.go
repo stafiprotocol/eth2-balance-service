@@ -211,6 +211,7 @@ func statisticCmd() *cobra.Command {
 				distributeFee.Amount = decimal.NewFromBigInt(distributeIter.Event.Amount, 0).StringFixed(0)
 				distributeFee.Timestamp = distributeIter.Event.Time.Uint64()
 				distributeFee.BlockNumber = distributeIter.Event.Raw.BlockNumber
+				distributeFee.FeePoolType = utils.FeePool
 
 				err = dao.UpOrInDistributeFee(db, distributeFee)
 				if err != nil {
@@ -242,6 +243,7 @@ func statisticCmd() *cobra.Command {
 				distributeFee.Amount = decimal.NewFromBigInt(superNodeDistributeIter.Event.Amount, 0).StringFixed(0)
 				distributeFee.Timestamp = superNodeDistributeIter.Event.Time.Uint64()
 				distributeFee.BlockNumber = superNodeDistributeIter.Event.Raw.BlockNumber
+				distributeFee.FeePoolType = utils.SuperNodeFeePool
 
 				err = dao.UpOrInDistributeFee(db, distributeFee)
 				if err != nil {
