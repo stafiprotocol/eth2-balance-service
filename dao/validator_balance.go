@@ -50,6 +50,11 @@ func GetValidatorBalanceList(db *db.WrapDb, node string, epoch uint64) (c []*Val
 	return
 }
 
+func GetValidatorBalanceListByEpoch(db *db.WrapDb, epoch uint64) (c []*ValidatorBalance, err error) {
+	err = db.Find(&c, "epoch = ?", epoch).Error
+	return
+}
+
 func GetFirstValidatorBalance(db *db.WrapDb, validatorIndex uint64) (c *ValidatorBalance, err error) {
 	c = &ValidatorBalance{}
 	err = db.Order("epoch asc").Take(c, "validator_index = ?", validatorIndex).Error

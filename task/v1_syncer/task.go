@@ -185,12 +185,12 @@ func (task *Task) syncHandler() error {
 	}
 	logrus.Debug("syncValidatorLatestInfo end -----------")
 
-	logrus.Debug("syncValidatorEpochBalances start -----------")
-	err = task.syncV1ValidatorEpochBalances()
-	if err != nil {
-		logrus.Warnf("syncValidatorEpochBalances err: %s", err)
-		return err
-	}
-	logrus.Debug("syncValidatorEpochBalances end -----------")
+	// logrus.Debug("syncValidatorEpochBalances start -----------")
+	// err = task.syncV1ValidatorEpochBalances()
+	// if err != nil {
+	// 	logrus.Warnf("syncValidatorEpochBalances err: %s", err)
+	// 	return err
+	// }
+	// logrus.Debug("syncValidatorEpochBalances end -----------")
 	return nil
 }

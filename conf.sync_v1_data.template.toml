@@ -1,0 +1,14 @@
+RewardEpochInterval = 75
+RewardStartEpoch = 147900
+eth1Endpoint = "https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E"
+eth2Endpoint = "https://beaconcha-rpc2.stafi.io"
+
+[contracts]
+storageContractAddress = "0x6c2f7b6110a37b3b0fbdd811876be368df02e8b0"
+
+[db]
+host = "127.0.0.1" # mysql host ip
+name = "eth2_v1" # the database this server used
+port = "3306" 
+pwd = "123456" # mysql password
+user = "root" # mysql username

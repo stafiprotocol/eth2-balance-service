@@ -24,6 +24,8 @@ type Config struct {
 	Version             string
 	EnableDistribute    bool
 
+	EraCount uint64 // used for statistic
+
 	Contracts Contracts
 
 	Db Db
