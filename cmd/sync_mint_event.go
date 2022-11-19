@@ -50,7 +50,11 @@ func syncMintEventCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			logrus.Infof("syncer mint event config info:\nlogLevel: %s\neth1Endpoint: %s\nstorageAddress:%s",
+			logrus.Infof(
+				`syncer mint event config info:
+	logLevel: %s
+	eth1Endpoint: %s
+	storageAddress:%s`,
 				logLevelStr, cfg.Eth1Endpoint, cfg.Contracts.StorageContractAddress)
 
 			//init db

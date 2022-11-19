@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"math/big"
 
@@ -13,15 +14,18 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/stafiprotocol/reth/bindings/FeePool"
 	reth "github.com/stafiprotocol/reth/bindings/Reth"
 	"github.com/stafiprotocol/reth/bindings/Settings"
 	storage "github.com/stafiprotocol/reth/bindings/Storage"
+	"github.com/stafiprotocol/reth/bindings/SuperNodeFeePool"
 	user_deposit "github.com/stafiprotocol/reth/bindings/UserDeposit"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared"
+	"gorm.io/gorm"
 )
 
 func statisticCmd() *cobra.Command {
@@ -49,8 +53,20 @@ func statisticCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			logrus.Infof("statistic config info:\nlogFilePath: %s\nlogLevel: %s\neth1Endpoint: %s\neth2Endpoint: %s\nstorageAddress:%s\neraCount:%d\nrewardEpochInterval:%d",
-				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.Contracts.StorageContractAddress, cfg.EraCount, cfg.RewardEpochInterval)
+			logrus.Infof(
+				`statistic config info ->
+	logFilePath: %s
+	logLevel: %s
+	eth1Endpoint: %s
+	eth2Endpoint: %s
+	storageAddress:%s
+	eraCount:%d
+	rewardEpochInterval:%d`,
+				cfg.LogFilePath, logLevelStr,
+				cfg.Eth1Endpoint, cfg.Eth2Endpoint,
+				cfg.Contracts.StorageContractAddress,
+				cfg.EraCount, cfg.RewardEpochInterval)
+
 			if cfg.EraCount == 0 {
 				cfg.EraCount = 22
 			}
@@ -108,7 +124,7 @@ func statisticCmd() *cobra.Command {
 				return err
 			}
 
-			networkSettingsAddress, err := storageContract.GetAddress(&bind.CallOpts{}, utils.ContractStorageKey("stafiNetworkSettings"))
+			networkSettingsAddress, err := storageContract.GetAddress(connection.CallOpts(nil), utils.ContractStorageKey("stafiNetworkSettings"))
 			if err != nil {
 				return err
 			}
@@ -129,7 +145,7 @@ func statisticCmd() *cobra.Command {
 			}
 			nodeFeeDeci := decimal.NewFromBigInt(nodeFee, -18)
 
-			userDepositAddress, err := storageContract.GetAddress(&bind.CallOpts{}, utils.ContractStorageKey("stafiUserDeposit"))
+			userDepositAddress, err := storageContract.GetAddress(connection.CallOpts(nil), utils.ContractStorageKey("stafiUserDeposit"))
 			if err != nil {
 				return err
 			}
@@ -138,7 +154,7 @@ func statisticCmd() *cobra.Command {
 				return err
 			}
 
-			rethAddress, err := storageContract.GetAddress(&bind.CallOpts{}, utils.ContractStorageKey("rETHToken"))
+			rethAddress, err := storageContract.GetAddress(connection.CallOpts(nil), utils.ContractStorageKey("rETHToken"))
 			if err != nil {
 				return err
 			}
@@ -150,12 +166,98 @@ func statisticCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			stafiFeePoolAddress, err := storageContract.GetAddress(connection.CallOpts(nil), utils.ContractStorageKey("stafiFeePool"))
+			if err != nil {
+				return err
+			}
 
+			stafiSuperNodeFeePoolAddress, err := storageContract.GetAddress(connection.CallOpts(nil), utils.ContractStorageKey("stafiSuperNodeFeePool"))
+			if err != nil {
+				return err
+			}
+			feePoolContract, err := fee_pool.NewFeePool(stafiFeePoolAddress, connection.Eth1Client())
+			if err != nil {
+				return err
+			}
+
+			superNodeFeePoolContract, err := super_node_fee_pool.NewSuperNodeFeePool(stafiSuperNodeFeePoolAddress, connection.Eth1Client())
+			if err != nil {
+				return err
+			}
+
+			// sync distribute events
+			logrus.Info("sync distribute events start...")
+			distributeIter, err := feePoolContract.FilterEtherWithdrawn(&bind.FilterOpts{
+				Context: context.Background(),
+			}, nil, nil)
+
+			if err != nil {
+				return err
+			}
+			for distributeIter.Next() {
+				txHashStr := distributeIter.Event.Raw.TxHash.String()
+				logIndex := uint32(distributeIter.Event.Raw.Index)
+
+				distributeFee, err := dao.GetDistributeFee(db, txHashStr, logIndex)
+				if err != nil && err != gorm.ErrRecordNotFound {
+					return err
+				}
+				if err == nil {
+					continue
+				}
+				distributeFee.LogIndex = logIndex
+				distributeFee.TxHash = txHashStr
+
+				distributeFee.Amount = decimal.NewFromBigInt(distributeIter.Event.Amount, 0).StringFixed(0)
+				distributeFee.Timestamp = distributeIter.Event.Time.Uint64()
+				distributeFee.BlockNumber = distributeIter.Event.Raw.BlockNumber
+
+				err = dao.UpOrInDistributeFee(db, distributeFee)
+				if err != nil {
+					return err
+				}
+			}
+
+			superNodeDistributeIter, err := superNodeFeePoolContract.FilterEtherWithdrawn(&bind.FilterOpts{
+				Context: context.Background(),
+			}, nil, nil)
+
+			if err != nil {
+				return err
+			}
+			for superNodeDistributeIter.Next() {
+				txHashStr := superNodeDistributeIter.Event.Raw.TxHash.String()
+				logIndex := uint32(superNodeDistributeIter.Event.Raw.Index)
+
+				distributeFee, err := dao.GetDistributeFee(db, txHashStr, logIndex)
+				if err != nil && err != gorm.ErrRecordNotFound {
+					return err
+				}
+				if err == nil {
+					continue
+				}
+				distributeFee.LogIndex = logIndex
+				distributeFee.TxHash = txHashStr
+
+				distributeFee.Amount = decimal.NewFromBigInt(superNodeDistributeIter.Event.Amount, 0).StringFixed(0)
+				distributeFee.Timestamp = superNodeDistributeIter.Event.Time.Uint64()
+				distributeFee.BlockNumber = superNodeDistributeIter.Event.Raw.BlockNumber
+
+				err = dao.UpOrInDistributeFee(db, distributeFee)
+				if err != nil {
+					return err
+				}
+			}
+			logrus.Info("sync distribute events end")
+
+			// get metadata of balancy syncer
 			eth2BalanceSyncerMetaData, err := dao.GetMetaData(db, utils.MetaTypeEth2BalanceSyncer)
 			if err != nil {
 				return err
 			}
+
 			logrus.Info("start statistic...")
+
 			allVal, err := dao.GetAllValidatorList(db)
 			if err != nil {
 				return err
@@ -171,13 +273,14 @@ func statisticCmd() *cobra.Command {
 					break
 				}
 				willDealEpoch := eth2BalanceSyncerMetaData.DealedEpoch - i*cfg.RewardEpochInterval
+
+				// get validator balance list
 				valBalanceList, err := dao.GetValidatorBalanceListByEpoch(db, willDealEpoch)
 				if err != nil {
 					return err
 				}
-				if len(valBalanceList) == 0 {
-					break
-				}
+
+				// get eth1 block height
 				targetBeaconBlock, _, err := connection.Eth2Client().GetBeaconBlock(fmt.Sprint(utils.SlotAt(eth2Config, willDealEpoch)))
 				if err != nil {
 					return err
@@ -187,69 +290,104 @@ func statisticCmd() *cobra.Command {
 				}
 				targetEth1BlockHeight := targetBeaconBlock.ExecutionBlockNumber
 
+				//get deposited validator before target height
+				valDepositedList, err := dao.GetValidatorDepositedListBefore(db, targetEth1BlockHeight)
+				if err != nil {
+					return err
+				}
+				depositedIndex := make(map[uint64]*dao.Validator)
+				for _, val := range valDepositedList {
+					depositedIndex[val.ValidatorIndex] = val
+				}
+
 				totalUserEthFromValidator := uint64(0)
 				totalValidatorEth := uint64(0)
 				totalValidatorDepositEth := uint64(0)
-				allEth := uint64(0)
+				allEthFromNode := uint64(0)
 				totalPlatformFee := uint64(0)
-				old1 := uint64(471105)
-				old2 := uint64(471085)
-				old1Exist := false
-				old2Exist := false
+
+				totalRewardFromConsensus := uint64(0)
+				totalUserRewardFromConsensus := uint64(0)
+				totalValRewardFromConsensus := uint64(0)
+				totalPlatformRewardFromConsensus := uint64(0)
 
 				for _, validatorBalance := range valBalanceList {
 					validator := valIndex[validatorBalance.ValidatorIndex]
 
-					userDepositAndRewardEth, valDepositAndReward, platformFee := utils.GetUserValPlatformDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount, platformFeeDeci, nodeFeeDeci)
+					userDeposit, userReward, valDeposit, valReward, platformFee := utils.GetUserValPlatformDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount, platformFeeDeci, nodeFeeDeci)
 
-					totalUserEthFromValidator += userDepositAndRewardEth
+					totalUserEthFromValidator += userDeposit
+					totalUserEthFromValidator += userReward
 
-					totalValidatorDepositEth += validator.NodeDepositAmount
-					totalValidatorEth += valDepositAndReward
+					totalValidatorEth += valDeposit
+					totalValidatorEth += valReward
 
-					allEth += validatorBalance.Balance
+					totalValidatorDepositEth += valDeposit
+
+					allEthFromNode += validatorBalance.Balance
 
 					totalPlatformFee += platformFee
 
-					if validatorBalance.ValidatorIndex == old1 {
-						old1Exist = true
+					totalRewardFromConsensus += userReward + valReward + platformFee
+					totalUserRewardFromConsensus += userReward
+					totalValRewardFromConsensus += valReward
+					totalPlatformRewardFromConsensus += platformFee
+
+					// rm from depositedIndex if exist in val balance list
+					delete(depositedIndex, validatorBalance.ValidatorIndex)
+				}
+
+				//we should deal val deposited before target height but not in balance list
+				for _, val := range depositedIndex {
+					userDeposit, userReward, valDeposit, valReward, platformFee := utils.GetUserValPlatformDepositAndReward(utils.StandardEffectiveBalance, val.NodeDepositAmount, platformFeeDeci, nodeFeeDeci)
+
+					totalUserEthFromValidator += userDeposit
+					totalUserEthFromValidator += userReward
+
+					totalValidatorEth += valDeposit
+					totalValidatorEth += valReward
+
+					totalValidatorDepositEth += valDeposit
+
+					allEthFromNode += utils.StandardEffectiveBalance
+
+					totalPlatformFee += platformFee
+
+					totalRewardFromConsensus += userReward + valReward + platformFee
+				}
+
+				//cal reward from fee pool
+				distributeFeeList, err := dao.GetDistributeFeeListBefore(db, targetEth1BlockHeight)
+				if err != nil {
+					return err
+				}
+
+				totalRewardFromFeeDeci := decimal.Zero
+				totalUserRewardFromFeeDeci := decimal.Zero
+				totalValRewardFromFeeDeci := decimal.Zero
+				totalPlatformFeeFromFeeDeci := decimal.Zero
+				for _, distributeFee := range distributeFeeList {
+					rewardDeci, err := decimal.NewFromString(distributeFee.Amount)
+					if err != nil {
+						return err
 					}
-					if validatorBalance.ValidatorIndex == old2 {
-						old2Exist = true
-					}
+
+					userReward, valReward, platformFee := utils.GetUserValPlatformReward(rewardDeci, platformFeeDeci, nodeFeeDeci, distributeFee.FeePoolType)
+
+					totalRewardFromFeeDeci = totalRewardFromFeeDeci.Add(rewardDeci)
+					totalUserRewardFromFeeDeci = totalUserRewardFromFeeDeci.Add(userReward)
+					totalValRewardFromFeeDeci = totalValRewardFromFeeDeci.Add(valReward)
+					totalPlatformFeeFromFeeDeci = totalPlatformFeeFromFeeDeci.Add(platformFee)
 				}
 
-				if !old1Exist {
-					userDepositAndRewardEth, valDepositAndReward, platformFee := utils.GetUserValPlatformDepositAndReward(utils.StandardEffectiveBalance, 0, platformFeeDeci, nodeFeeDeci)
-
-					totalUserEthFromValidator += userDepositAndRewardEth
-
-					totalValidatorDepositEth += 0
-					totalValidatorEth += valDepositAndReward
-
-					allEth += utils.StandardEffectiveBalance
-
-					totalPlatformFee += platformFee
-				}
-				if !old2Exist {
-					userDepositAndRewardEth, valDepositAndReward, platformFee := utils.GetUserValPlatformDepositAndReward(utils.StandardEffectiveBalance, 0, platformFeeDeci, nodeFeeDeci)
-
-					totalUserEthFromValidator += userDepositAndRewardEth
-
-					totalValidatorDepositEth += 0
-					totalValidatorEth += valDepositAndReward
-
-					allEth += utils.StandardEffectiveBalance
-
-					totalPlatformFee += platformFee
-				}
-
+				// get userDepositPool balance
 				userDepositPoolBalance, err := userDepositContract.GetBalance(connection.CallOpts(big.NewInt(int64(targetEth1BlockHeight))))
 				if err != nil {
 					return err
 				}
 				userDepositPoolBalanceDeci := decimal.NewFromBigInt(userDepositPoolBalance, 0)
 
+				// get eth totalsupply
 				rethTotalSupply, err := rethContract.TotalSupply(connection.CallOpts(big.NewInt(int64(targetEth1BlockHeight))))
 				if err != nil {
 					return err
@@ -260,7 +398,6 @@ func statisticCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-
 				totalUserEthFromValidatorDeci := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(utils.GweiDeci)
 
 				// staker
@@ -269,32 +406,47 @@ func statisticCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				totalStakerRewardDeci := totalStakerEthDeci.Sub(totalStakerDepositEthDeci)
+
+				// totalStakerRewardDeci := totalStakerEthDeci.Sub(totalStakerDepositEthDeci)
+				totalStakerRewardDeci := decimal.NewFromInt(int64(totalUserRewardFromConsensus)).Add(totalUserRewardFromFeeDeci)
 
 				// validator
 				totalValidatorEthDeci := decimal.NewFromInt(int64(totalValidatorEth)).Mul(utils.GweiDeci)
 				totalValidatorDepositEthDeci := decimal.NewFromInt(int64(totalValidatorDepositEth)).Mul(utils.GweiDeci)
-				totalValidatorRewardDeci := totalValidatorEthDeci.Sub(totalValidatorDepositEthDeci)
+
+				// totalValidatorRewardDeci := totalValidatorEthDeci.Sub(totalValidatorDepositEthDeci)
+				totalValidatorRewardDeci := decimal.NewFromInt(int64(totalValRewardFromConsensus)).Add(totalValRewardFromFeeDeci)
 
 				// platform
 				totalPlatformFeeDeci := decimal.NewFromInt(int64(totalPlatformFee)).Mul(utils.GweiDeci)
 
 				// all
-				allEthDeci := userDepositPoolBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(allEth)), 9))
-				allDepositEthDeci := decimal.NewFromInt(int64(len(valBalanceList))).Mul(decimal.NewFromInt(int64(utils.StandardEffectiveBalance))).Mul(utils.GweiDeci)
-				allRewardDeci := allEthDeci.Sub(allDepositEthDeci)
+				allEthDeci := userDepositPoolBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(allEthFromNode)), 9))
+				allDepositEthDeci := decimal.NewFromInt(int64(len(valBalanceList))).Mul(decimal.NewFromInt(int64(utils.StandardEffectiveBalance))).Mul(utils.GweiDeci).Add(userDepositPoolBalanceDeci)
+
+				allRewardDeci := decimal.NewFromInt(int64(totalRewardFromConsensus)).Add(totalRewardFromFeeDeci)
 
 				// exchange rate
 				rethTotalSupplyDeci := decimal.NewFromBigInt(rethTotalSupply, 0)
 				exchangeRateDeci := totalStakerEthDeci.Mul(decimal.NewFromInt(1e18)).Div(rethTotalSupplyDeci)
 
-				content := fmt.Sprintf("\nepoch: %d timestamp: %d\nstaker: totalEth: %s totalDepositEth: %s totalReward: %s\nvalidator: totalEth: %s totalDepositEth: %s totalReward: %s\nplatform: fee: %s\nall: totalEth: %s totalDepositEth: %s totalReward: %s\nexchangeRate: %s\n",
+				content := fmt.Sprintf(
+					`
+epoch: %d timestamp: %d
+	staker -> totalEth: %s totalDepositEth: %s totalReward: %s
+	validator -> totalEth: %s totalDepositEth: %s totalReward: %s
+	platform -> totalfee: %s
+	feePool -> totalReward: %s stakerReward: %s validatorReward: %s platformReward: %s
+	all -> totalEth: %s totalDepositEth: %s totalReward: %s
+	exchangeRate -> rate: %s
+`,
 					willDealEpoch, utils.EpochTime(eth2Config, willDealEpoch),
-					totalStakerEthDeci.StringFixed(0), totalStakerDepositEthDeci.StringFixed(0), totalStakerRewardDeci.StringFixed(0),
-					totalValidatorEthDeci.StringFixed(0), totalValidatorDepositEthDeci.StringFixed(0), totalValidatorRewardDeci.StringFixed(0),
-					totalPlatformFeeDeci.StringFixed(0),
-					allEthDeci.StringFixed(0), allDepositEthDeci.StringFixed(0), allRewardDeci.StringFixed(0),
-					exchangeRateDeci.StringFixed(0))
+					totalStakerEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), totalStakerDepositEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), totalStakerRewardDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6),
+					totalValidatorEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), totalValidatorDepositEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), totalValidatorRewardDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6),
+					totalPlatformFeeDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6),
+					totalRewardFromFeeDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), totalUserRewardFromFeeDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), totalValRewardFromFeeDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), totalPlatformFeeFromFeeDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6),
+					allEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), allDepositEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), allRewardDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6),
+					exchangeRateDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6))
 
 				utils.AppendToFile(statisticFilePath, content)
 			}
