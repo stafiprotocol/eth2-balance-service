@@ -158,3 +158,42 @@ type ResGasPrice struct {
 		Standard int `json:"standard"`
 	} `json:"priorityFee"`
 }
+
+func GetUserValPlatformDepositAndReward(validatorBalance, nodeDepositAmount uint64, platformFee, nodeFee decimal.Decimal) (uint64, uint64, uint64) {
+	userDepositBalance := StandardEffectiveBalance - nodeDepositAmount
+
+	switch {
+	case validatorBalance == StandardEffectiveBalance:
+		return userDepositBalance, nodeDepositAmount, 0
+	case validatorBalance < StandardEffectiveBalance:
+		loss := StandardEffectiveBalance - validatorBalance
+		if loss < nodeDepositAmount {
+			return userDepositBalance, nodeDepositAmount - loss, 0
+		} else {
+			return validatorBalance, 0, 0
+		}
+	case validatorBalance > StandardEffectiveBalance:
+		// total staking reward
+		reward := validatorBalance - StandardEffectiveBalance
+		// platform Fee
+		platformFeeDeci := decimal.NewFromInt(int64(reward)).Mul(platformFee)
+		// node+user raw reward
+		nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Sub(platformFeeDeci)
+
+		// user raw reward
+		userRawRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(int64(StandardEffectiveBalance)))
+		// node reward
+		nodeReward := nodeAndUserRewardDeci.Sub(userRawRewardDeci)
+
+		// node reward from user
+		nodeRewardFromUser := userRawRewardDeci.Mul(nodeFee)
+
+		// user reward
+		userRewardDeci := userRawRewardDeci.Sub(nodeRewardFromUser)
+
+		return userDepositBalance + userRewardDeci.BigInt().Uint64(), nodeDepositAmount + nodeReward.BigInt().Uint64() + nodeRewardFromUser.BigInt().Uint64(), platformFeeDeci.BigInt().Uint64()
+	default:
+		// should not happen here
+		panic("GetUserValPlatformDepositAndReward ")
+	}
+}

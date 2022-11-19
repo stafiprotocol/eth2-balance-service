@@ -40,6 +40,7 @@ func NewRootCmd() *cobra.Command {
 		startVoterCmd(),
 		startV1SyncerCmd(),
 		syncMintEventCmd(),
+		statisticCmd(),
 		versionCmd(),
 	)
 	return rootCmd
