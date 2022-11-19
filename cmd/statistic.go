@@ -306,7 +306,8 @@ func statisticCmd() *cobra.Command {
 				totalValidatorEth := uint64(0)
 				totalValidatorDepositEth := uint64(0)
 				allEthFromNode := uint64(0)
-				totalPlatformFee := uint64(0)
+
+				totalPlatformFeeFromConsensus := uint64(0)
 
 				totalRewardFromConsensus := uint64(0)
 				totalUserRewardFromConsensus := uint64(0)
@@ -328,7 +329,7 @@ func statisticCmd() *cobra.Command {
 
 					allEthFromNode += validatorBalance.Balance
 
-					totalPlatformFee += platformFee
+					totalPlatformFeeFromConsensus += platformFee
 
 					totalRewardFromConsensus += userReward + valReward + platformFee
 					totalUserRewardFromConsensus += userReward
@@ -353,9 +354,12 @@ func statisticCmd() *cobra.Command {
 
 					allEthFromNode += utils.StandardEffectiveBalance
 
-					totalPlatformFee += platformFee
+					totalPlatformFeeFromConsensus += platformFee
 
 					totalRewardFromConsensus += userReward + valReward + platformFee
+					totalUserRewardFromConsensus += userReward
+					totalValRewardFromConsensus += valReward
+					totalPlatformRewardFromConsensus += platformFee
 				}
 
 				//cal reward from fee pool
@@ -410,23 +414,23 @@ func statisticCmd() *cobra.Command {
 				}
 
 				// totalStakerRewardDeci := totalStakerEthDeci.Sub(totalStakerDepositEthDeci)
-				totalStakerRewardDeci := decimal.NewFromInt(int64(totalUserRewardFromConsensus)).Add(totalUserRewardFromFeeDeci)
+				totalStakerRewardDeci := decimal.NewFromInt(int64(totalUserRewardFromConsensus)).Mul(utils.GweiDeci).Add(totalUserRewardFromFeeDeci)
 
 				// validator
 				totalValidatorEthDeci := decimal.NewFromInt(int64(totalValidatorEth)).Mul(utils.GweiDeci)
 				totalValidatorDepositEthDeci := decimal.NewFromInt(int64(totalValidatorDepositEth)).Mul(utils.GweiDeci)
 
 				// totalValidatorRewardDeci := totalValidatorEthDeci.Sub(totalValidatorDepositEthDeci)
-				totalValidatorRewardDeci := decimal.NewFromInt(int64(totalValRewardFromConsensus)).Add(totalValRewardFromFeeDeci)
+				totalValidatorRewardDeci := decimal.NewFromInt(int64(totalValRewardFromConsensus)).Mul(utils.GweiDeci).Add(totalValRewardFromFeeDeci)
 
 				// platform
-				totalPlatformFeeDeci := decimal.NewFromInt(int64(totalPlatformFee)).Mul(utils.GweiDeci)
+				totalPlatformFeeDeci := decimal.NewFromInt(int64(totalPlatformFeeFromConsensus)).Mul(utils.GweiDeci).Add(totalPlatformFeeFromFeeDeci)
 
 				// all
-				allEthDeci := userDepositPoolBalanceDeci.Add(decimal.NewFromBigInt(big.NewInt(int64(allEthFromNode)), 9))
+				allEthDeci := decimal.NewFromInt(int64(allEthFromNode)).Mul(utils.GweiDeci).Add(userDepositPoolBalanceDeci)
 				allDepositEthDeci := decimal.NewFromInt(int64(len(valBalanceList))).Mul(decimal.NewFromInt(int64(utils.StandardEffectiveBalance))).Mul(utils.GweiDeci).Add(userDepositPoolBalanceDeci)
 
-				allRewardDeci := decimal.NewFromInt(int64(totalRewardFromConsensus)).Add(totalRewardFromFeeDeci)
+				allRewardDeci := decimal.NewFromInt(int64(totalRewardFromConsensus)).Mul(utils.GweiDeci).Add(totalRewardFromFeeDeci)
 
 				// exchange rate
 				rethTotalSupplyDeci := decimal.NewFromBigInt(rethTotalSupply, 0)
