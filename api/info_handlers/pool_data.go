@@ -156,8 +156,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 			Div(decimal.NewFromInt(du)).
 			Div(endRateDeci)
 		rsp.StakeApr, _ = apyDeci.Float64()
-		logrus.Info("apr: ", rsp.StakeApr)
-		rsp.StakeApr = 4
 	}
 
 	// cal validator apr
