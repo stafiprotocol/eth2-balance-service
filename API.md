@@ -165,7 +165,7 @@ pending status(front-end use): 1 deposited 2 withdrawl match 3 staked 4 withdraw
 |         |                  | startBlock     | number      | Yes         | null        | start block                                                                                                                      |
 |         |                  | endBlock       | number      | Yes         | null        | end block                                                                                                                        |
 |         |                  | slashAmount    | string      | Yes         | null        | decimal format string, slashed eth amount                                                                                        |
-|         |                  | slashType      | number      | Yes         | null        | 1 fee recipient not match 2 proposer slash 3 attester slash                                                                      |
+|         |                  | slashType      | number      | Yes         | null        | 1 fee recipient not match 2 proposer slash 3 attester slash 4 sync committee panish                                              |
 
 ## 4. pool data
 

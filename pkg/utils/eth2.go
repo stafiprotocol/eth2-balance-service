@@ -56,8 +56,9 @@ const (
 )
 const (
 	SlashTypeFeeRecipient = uint8(1)
-	SlashTypeAttester     = uint8(1)
-	SlashTypeProposer     = uint8(1)
+	SlashTypeAttester     = uint8(2)
+	SlashTypeProposer     = uint8(3)
+	SlashTypeSync         = uint8(4)
 )
 
 const (
