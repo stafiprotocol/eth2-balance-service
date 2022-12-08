@@ -40,7 +40,7 @@ const (
 	RequestValidatorSyncDuties       = "/eth/v1/validator/duties/sync/%s"
 	RequestValidatorProposerDuties   = "/eth/v1/validator/duties/proposer/%s"
 
-	MaxRequestValidatorsCount = 600
+	MaxRequestValidatorsCount = 100
 )
 
 // Beacon client using the standard Beacon HTTP REST API (https://ethereum.github.io/beacon-APIs/)

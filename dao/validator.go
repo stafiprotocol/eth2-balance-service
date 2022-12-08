@@ -4,6 +4,8 @@
 package dao
 
 import (
+	"fmt"
+
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
@@ -98,7 +100,11 @@ func GetValidatorListByNode(db *db.WrapDb, nodeAddress string, status uint8) (c 
 	return
 }
 
-func GetValidatorListByNodeWithPage(db *db.WrapDb, nodeAddress string, status uint8, pageIndex, pageCount int) (c []*Validator, count int64, err error) {
+// 1 deposited { 2 withdrawl match 3 staked 4 withdrawl unmatch } { 5 offboard 6 OffBoard can withdraw 7 OffBoard withdrawed } 8 waiting 9 active 10 exited 11 withdrawable 12 withdrawdone { 13 distributed }
+// 51 active+slash 52 exit+slash 53 withdrawable+slash 54 withdrawdone+slash 55 distributed+slash
+
+// status from front-end must in (0,9,10,20,30)
+func GetValidatorListByNodeWithPageWithStatusList(db *db.WrapDb, nodeAddress string, statusList []uint8, pageIndex, pageCount int) (c []*Validator, count int64, err error) {
 	if pageIndex <= 0 {
 		pageIndex = 1
 	}
@@ -109,27 +115,63 @@ func GetValidatorListByNodeWithPage(db *db.WrapDb, nodeAddress string, status ui
 		pageCount = 50
 	}
 
-	switch status {
-	case 0: // all
-		err = db.Model(&Validator{}).Where("node_address = ?", nodeAddress).Count(&count).Error
-		if err != nil {
-			return nil, 0, err
-		}
-		err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ?", nodeAddress).Error
-	case 20: // pending(front-end use)
-		err = db.Model(&Validator{}).Where("node_address = ? and status in (1, 2, 3, 4, 8)", nodeAddress).Count(&count).Error
-		if err != nil {
-			return nil, 0, err
-		}
-		err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ? and status in (1, 2, 3, 4, 8)", nodeAddress).Error
+	statusMap := make(map[uint8]bool)
+	for _, status := range statusList {
+		switch status {
+		case 20: //pending
+			statusMap[1] = true
+			statusMap[2] = true
+			statusMap[3] = true
+			statusMap[4] = true
+			statusMap[8] = true
+		case 9: //active
+			statusMap[9] = true
+			statusMap[51] = true
+		case 10: //exited
+			statusMap[10] = true
+			statusMap[52] = true
 
-	default:
-		err = db.Model(&Validator{}).Where("node_address = ? and status = ?", nodeAddress, status).Count(&count).Error
-		if err != nil {
-			return nil, 0, err
+			statusMap[11] = true
+			statusMap[53] = true
+
+			statusMap[12] = true
+			statusMap[54] = true
+
+			statusMap[13] = true
+			statusMap[55] = true
+
+		case 30: //slash
+			statusMap[51] = true
+			statusMap[52] = true
+			statusMap[53] = true
+			statusMap[54] = true
+			statusMap[55] = true
+		case 0: //all
+			for _, value := range []uint8{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 51, 52, 53, 54, 55} {
+				statusMap[value] = true
+			}
+		default:
+			return nil, 0, fmt.Errorf("not supported status: %d", status)
 		}
-		err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ? and status = ?", nodeAddress, status).Error
 	}
+	if len(statusMap) == 0 {
+		return nil, 0, fmt.Errorf("status list empty")
+	}
+
+	InStatus := "( "
+	for status := range statusMap {
+		InStatus += fmt.Sprintf("%d", status)
+		InStatus += ","
+	}
+	InStatus = InStatus[:len(InStatus)-1]
+	InStatus += " )"
+	sqlWhere := fmt.Sprintf("node_address = ? and status in %s", InStatus)
+
+	err = db.Model(&Validator{}).Where(sqlWhere, nodeAddress).Count(&count).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, sqlWhere, nodeAddress).Error
 
 	return
 }

@@ -13,14 +13,19 @@ import (
 )
 
 type ReqNodeInfo struct {
-	NodeAddress string `json:"nodeAddress"`
-	Status      uint8  `json:"status"`
-	PageIndex   int    `json:"pageIndex"`
-	PageCount   int    `json:"pageCount"`
+	NodeAddress string  `json:"nodeAddress"`
+	Status      uint8   `json:"status"`     // ignore if statusList not empty
+	StatusList  []uint8 `json:"statusList"` // {9 active 10 exited 20 pending 30 slash}
+	PageIndex   int     `json:"pageIndex"`
+	PageCount   int     `json:"pageCount"`
 }
 
 type RspNodeInfo struct {
 	TotalCount       int64       `json:"totalCount"`
+	PendingCount     int64       `json:"pendingCount"`
+	ActiveCount      int64       `json:"activeCount"`
+	ExitedCount      int64       `json:"exitedCount"`
+	SlashCount       int64       `json:"slashCount"`
 	SelfDepositedEth string      `json:"selfDepositedEth"`
 	SelfRewardEth    string      `json:"selfRewardEth"`
 	TotalManagedEth  string      `json:"totalManagedEth"`
@@ -52,6 +57,13 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	reqBytes, _ := json.Marshal(req)
 	logrus.Debugf("HandlePostNodeInfo req parm:\n %s", string(reqBytes))
 
+	var willUseStatusList []uint8
+	if len(req.StatusList) != 0 {
+		willUseStatusList = req.StatusList
+	} else {
+		willUseStatusList = []uint8{req.Status}
+	}
+
 	rsp := RspNodeInfo{
 		SelfDepositedEth: "0",
 		SelfRewardEth:    "0",
@@ -82,7 +94,36 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		totalManagedEth += utils.GetNodeManagedEth(l.NodeDepositAmount, l.Balance, l.Status)
 	}
 
-	list, totalCount, err := dao.GetValidatorListByNodeWithPage(h.db, req.NodeAddress, req.Status, req.PageIndex, req.PageCount)
+	_, pendingCount, err := dao.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{20}, req.PageIndex, req.PageCount)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
+		return
+	}
+	_, activeCount, err := dao.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{9}, req.PageIndex, req.PageCount)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
+		return
+	}
+	_, exitedCount, err := dao.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{10}, req.PageIndex, req.PageCount)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
+		return
+	}
+	_, slashCount, err := dao.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{30}, req.PageIndex, req.PageCount)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
+		return
+	}
+	rsp.PendingCount = pendingCount
+	rsp.ActiveCount = activeCount
+	rsp.ExitedCount = exitedCount
+	rsp.SlashCount = slashCount
+
+	list, totalCount, err := dao.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, willUseStatusList, req.PageIndex, req.PageCount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)

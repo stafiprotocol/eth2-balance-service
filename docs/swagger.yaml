@@ -9,7 +9,13 @@ definitions:
       pageIndex:
         type: integer
       status:
+        description: ignore if statusList not empty
         type: integer
+      statusList:
+        description: '{9 active 10 exited 20 pending 30 slash}'
+        items:
+          type: integer
+        type: array
     type: object
   info_handlers.ReqPubkeyDetail:
     properties:
@@ -76,8 +82,14 @@ definitions:
     type: object
   info_handlers.RspNodeInfo:
     properties:
+      activeCount:
+        type: integer
       ethPrice:
         type: number
+      exitedCount:
+        type: integer
+      pendingCount:
+        type: integer
       pubkeyList:
         items:
           $ref: '#/definitions/info_handlers.ResPubkey'
@@ -86,6 +98,8 @@ definitions:
         type: string
       selfRewardEth:
         type: string
+      slashCount:
+        type: integer
       totalCount:
         type: integer
       totalManagedEth:

@@ -282,7 +282,15 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "status": {
+                    "description": "ignore if statusList not empty",
                     "type": "integer"
+                },
+                "statusList": {
+                    "description": "{9 active 10 exited 20 pending 30 slash}",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -385,8 +393,17 @@ const docTemplate = `{
         "info_handlers.RspNodeInfo": {
             "type": "object",
             "properties": {
+                "activeCount": {
+                    "type": "integer"
+                },
                 "ethPrice": {
                     "type": "number"
+                },
+                "exitedCount": {
+                    "type": "integer"
+                },
+                "pendingCount": {
+                    "type": "integer"
                 },
                 "pubkeyList": {
                     "type": "array",
@@ -399,6 +416,9 @@ const docTemplate = `{
                 },
                 "selfRewardEth": {
                     "type": "string"
+                },
+                "slashCount": {
+                    "type": "integer"
                 },
                 "totalCount": {
                     "type": "integer"
