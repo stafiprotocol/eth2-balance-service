@@ -27,7 +27,7 @@ func (task *Task) getStakerEthInfoOfValidator(validator *dao.Validator, targetEp
 
 func (task *Task) getStakerEthInfoOfCommonNodeValidator(validator *dao.Validator, targetEpoch uint64, forStatistic bool) (userStakingEth uint64, userAllEth uint64, err error) {
 	switch validator.Status {
-	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusCanWithdraw, utils.ValidatorStatusWithdrawed:
+	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusOffBoardCanWithdraw, utils.ValidatorStatusOffBoardWithdrawed:
 		return 0, 0, nil
 
 	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
@@ -36,7 +36,7 @@ func (task *Task) getStakerEthInfoOfCommonNodeValidator(validator *dao.Validator
 		userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
 		return userDepositBalance, userDepositAndReward, nil
 
-	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+	case utils.ValidatorStatusActive, utils.ValidatorStatusExited:
 		// case: activeEpoch 155747 > targetEpoch 155700
 		if validator.ActiveEpoch > targetEpoch {
 			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
@@ -60,7 +60,7 @@ func (task *Task) getStakerEthInfoOfCommonNodeValidator(validator *dao.Validator
 		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount)
 		return userDepositBalance, userDepositAndReward, nil
 
-	case utils.ValidatorStatusDistribute:
+	case utils.ValidatorStatusDistributed:
 		return 0, 0, nil
 	default:
 		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
@@ -78,7 +78,7 @@ func (task *Task) getStakerEthInfoOfTrustNodeValidator(validator *dao.Validator,
 		userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
 		return userDepositBalance, userDepositAndReward, nil
 
-	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+	case utils.ValidatorStatusActive, utils.ValidatorStatusExited:
 		// case: activeEpoch 155747 > targetEpoch 155700
 		if validator.ActiveEpoch > targetEpoch {
 			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
@@ -102,7 +102,7 @@ func (task *Task) getStakerEthInfoOfTrustNodeValidator(validator *dao.Validator,
 		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount)
 		return userDepositBalance, userDepositAndReward, nil
 
-	case utils.ValidatorStatusDistribute:
+	case utils.ValidatorStatusDistributed:
 		return 0, 0, nil
 	default:
 		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
@@ -110,7 +110,7 @@ func (task *Task) getStakerEthInfoOfTrustNodeValidator(validator *dao.Validator,
 }
 func (task *Task) getStakerEthInfoOfLightNodeValidator(validator *dao.Validator, targetEpoch uint64, forStatistic bool) (userStakingEth uint64, userAllEth uint64, err error) {
 	switch validator.Status {
-	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusCanWithdraw, utils.ValidatorStatusWithdrawed:
+	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusOffBoardCanWithdraw, utils.ValidatorStatusOffBoardWithdrawed:
 		return 0, 0, nil
 
 	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
@@ -119,7 +119,7 @@ func (task *Task) getStakerEthInfoOfLightNodeValidator(validator *dao.Validator,
 		userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
 		return userDepositBalance, userDepositAndReward, nil
 
-	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+	case utils.ValidatorStatusActive, utils.ValidatorStatusExited:
 		// case: activeEpoch 155747 > targetEpoch 155700
 		if validator.ActiveEpoch > targetEpoch {
 			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
@@ -143,7 +143,7 @@ func (task *Task) getStakerEthInfoOfLightNodeValidator(validator *dao.Validator,
 		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount)
 		return userDepositBalance, userDepositAndReward, nil
 
-	case utils.ValidatorStatusDistribute:
+	case utils.ValidatorStatusDistributed:
 		return 0, 0, nil
 	default:
 		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)
@@ -160,7 +160,7 @@ func (task *Task) getStakerEthInfoOfSuperNodeValidator(validator *dao.Validator,
 		userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
 		return userDepositBalance, userDepositAndReward, nil
 
-	case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+	case utils.ValidatorStatusActive, utils.ValidatorStatusExited:
 		// case: activeEpoch 155747 > targetEpoch 155700
 		// case: activeEpoch 156035 > targetEpoch 156000
 		if validator.ActiveEpoch > targetEpoch {
@@ -185,7 +185,7 @@ func (task *Task) getStakerEthInfoOfSuperNodeValidator(validator *dao.Validator,
 		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount)
 		return userDepositBalance, userDepositAndReward, nil
 
-	case utils.ValidatorStatusDistribute:
+	case utils.ValidatorStatusDistributed:
 		return 0, 0, nil
 	default:
 		return 0, 0, fmt.Errorf("unknow validator status: %d", validator.Status)

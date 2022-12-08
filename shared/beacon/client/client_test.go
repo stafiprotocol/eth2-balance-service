@@ -27,26 +27,26 @@ func TestStatus(t *testing.T) {
 	// pubkey, err := types.HexToValidatorPubkey("b427ea30366336e4632d327428fac24ac3016534b18e0e39f5c2c4fffaa35656f982fba8e636599ae54b6f148a90a8e9")
 	// pubkey, err := types.HexToValidatorPubkey("ae9d34a72d6d16c17e3703a12eeaa45063128046055516f0611a337caaea7cf823e1ae8c9298154c325fc10fcb279d42")
 	// pubkey, err := types.HexToValidatorPubkey("b3ea762c11ef4548d7c2a1a707f69cf68a1f1b7fc63c7dcb414d6a7ab722e2155d7e3ac3b601abdb98e158ca6035e9c4")
-	pubkey, err := types.HexToValidatorPubkey("b02c42a2cda10f06441597ba87e87a47c187cd70e2b415bef8dc890669efe223f551a2c91c3d63a5779857d3073bf288")
+	pubkey, err := types.HexToValidatorPubkey("800003d8af8aa481646da46d0d00ed2659a5bb303e0d88edf468abc1259a1f23ccf12eaeaa3f80511cfeaf256904a72a")
 	if err != nil {
 		t.Fatal(err)
 	}
-	startSlot := uint64(6668)
-	endSlot := uint64(268800)
-	startStatus, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
-		Slot: &startSlot,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("%+v", startStatus)
+	// startSlot := uint64(6668)
+	endSlot := uint64(5304588)
+	// startStatus, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
+	// 	Slot: &startSlot,
+	// })
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// t.Logf("%+v", startStatus)
 	endStatus, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
 		Slot: &endSlot,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("%+v, %d", endStatus, startStatus.Balance-endStatus.Balance)
+	t.Logf("%+v", endStatus)
 
 }
 

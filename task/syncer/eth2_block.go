@@ -17,6 +17,7 @@ import (
 
 const maxDealSlots = 100
 
+// sync feeRecipient and slash events
 func (task *Task) syncEth2Block() error {
 
 	eth2InfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
@@ -136,7 +137,7 @@ func (task *Task) syncEth2Block() error {
 				doubleExist := false
 				for _, valIndex2 := range attesterSlash.Attestation2.AttestingIndices {
 					if valIndex == valIndex2 {
-						exist = true
+						doubleExist = true
 						break
 					}
 				}
@@ -188,6 +189,8 @@ func (task *Task) syncEth2Block() error {
 	return nil
 }
 
+// validator will be reduced eth until WithdrawableEpoch
+// so, we sync total slashed amount after WithdrawableEpoch
 func (task *Task) syncSlashEventEndSlotInfo() error {
 	slashEventList, err := dao.GetNoEndSlotSlashEventList(task.db)
 	if err != nil {

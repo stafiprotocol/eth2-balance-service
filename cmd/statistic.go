@@ -454,7 +454,10 @@ epoch: %d timestamp: %d
 					allEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), allDepositEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), allRewardDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6),
 					exchangeRateDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6))
 
-				utils.AppendToFile(statisticFilePath, content)
+				err = utils.AppendToFile(statisticFilePath, content)
+				if err != nil {
+					return err
+				}
 			}
 
 			logrus.Info("statistic end")

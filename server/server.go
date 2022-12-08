@@ -13,7 +13,6 @@ import (
 
 type Server struct {
 	listenAddr string
-	taskTicker int64
 	httpServer *http.Server
 	db         *db.WrapDb
 }

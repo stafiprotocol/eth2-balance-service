@@ -83,7 +83,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 	for _, l := range list {
 		switch l.Status {
-		case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusCanWithdraw:
+		case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusOffBoardCanWithdraw:
 			switch l.NodeType {
 			case utils.NodeTypeSuper:
 				// will fetch 1 eth from pool when super node deposit, so we need add this
@@ -100,7 +100,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 			matchedValidatorsNum += 1
 
-		case utils.ValidatorStatusActive, utils.ValidatorStatusExit:
+		case utils.ValidatorStatusActive, utils.ValidatorStatusExited:
 			stakerValidatorDepositAmount += utils.StandardEffectiveBalance
 			allEth += l.Balance
 

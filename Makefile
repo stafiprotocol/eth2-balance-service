@@ -53,4 +53,10 @@ swagger:
 	@echo "  >  \033[32mBuilding swagger docs...\033[0m "
 	swag init --parseDependency
 
+get-lint:
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s latest
+
+lint:
+	golangci-lint run ./... --skip-files "[*_test].go"
+
 .PHONY: all lint test race msan tools clean build

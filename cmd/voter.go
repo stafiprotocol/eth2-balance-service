@@ -51,7 +51,10 @@ func startVoterCmd() *cobra.Command {
 	eth2Endpoint: %s`,
 				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint)
 
-			log.InitLogFile(cfg.LogFilePath + "/voter")
+			err = log.InitLogFile(cfg.LogFilePath + "/voter")
+			if err != nil {
+				return err
+			}
 			//init db
 			db, err := db.NewDB(&db.Config{
 				Host:     cfg.Db.Host,

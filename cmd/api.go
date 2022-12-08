@@ -45,7 +45,10 @@ func startApiCmd() *cobra.Command {
 	listenAddress: %s`,
 				cfg.LogFilePath, logLevelStr, cfg.ListenAddr)
 
-			log.InitLogFile(cfg.LogFilePath + "/api")
+			err = log.InitLogFile(cfg.LogFilePath + "/api")
+			if err != nil {
+				return err
+			}
 
 			//init db
 			db, err := db.NewDB(&db.Config{

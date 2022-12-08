@@ -50,7 +50,10 @@ func startSyncerCmd() *cobra.Command {
 	storageAddress:%s`,
 				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.Contracts.StorageContractAddress)
 
-			log.InitLogFile(cfg.LogFilePath + "/syncer")
+			err = log.InitLogFile(cfg.LogFilePath + "/syncer")
+			if err != nil {
+				return err
+			}
 			//init db
 			db, err := db.NewDB(&db.Config{
 				Host:     cfg.Db.Host,

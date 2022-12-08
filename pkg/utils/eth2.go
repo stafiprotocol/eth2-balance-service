@@ -11,22 +11,37 @@ import (
 	"github.com/stafiprotocol/reth/shared/beacon"
 )
 
-// 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit}
+// 1 deposited { 2 withdrawl match 3 staked 4 withdrawl unmatch } { 5 offboard 6 OffBoard can withdraw 7 OffBoard withdrawed } 8 waiting 9 active 10 exited 11 withdrawable 12 withdrawdone { 13 distributed }
+// 51 active+slash 52 exit+slash 53 withdrawable+slash 54 withdrawdone+slash 55 distributed+slash
 const (
-	ValidatorStatusDeposited     = uint8(1)
+	ValidatorStatusDeposited = uint8(1)
+
+	// lightnode + super node related
 	ValidatorStatusWithdrawMatch = uint8(2)
 	ValidatorStatusStaked        = uint8(3)
 
 	// lightnode related
-	ValidatorStatusWithdrawUnmatch = uint8(4)
-	ValidatorStatusOffBoard        = uint8(5)
-	ValidatorStatusCanWithdraw     = uint8(6)
-	ValidatorStatusWithdrawed      = uint8(7)
+	ValidatorStatusWithdrawUnmatch     = uint8(4)
+	ValidatorStatusOffBoard            = uint8(5)
+	ValidatorStatusOffBoardCanWithdraw = uint8(6)
+	ValidatorStatusOffBoardWithdrawed  = uint8(7)
 
-	ValidatorStatusWaiting    = uint8(8)
-	ValidatorStatusActive     = uint8(9)
-	ValidatorStatusExit       = uint8(10)
-	ValidatorStatusDistribute = uint8(11)
+	// status on beacon chain
+	ValidatorStatusWaiting      = uint8(8)
+	ValidatorStatusActive       = uint8(9)
+	ValidatorStatusExited       = uint8(10)
+	ValidatorStatusWithdrawable = uint8(11)
+	ValidatorStatusWithdrawDone = uint8(12)
+
+	// after distribute reward
+	ValidatorStatusDistributed = uint8(13)
+
+	// after slash
+	ValidatorStatusActiveSlash       = uint8(51)
+	ValidatorStatusExitedSlash       = uint8(52)
+	ValidatorStatusWithdrawableSlash = uint8(53)
+	ValidatorStatusWithdrawDoneSlash = uint8(54)
+	ValidatorStatusDistributedSlash  = uint8(55)
 )
 
 // 1 common node 2 trust node 3 light node 4 super node
@@ -124,7 +139,7 @@ func GetNodeManagedEth(nodeDeposit, balance uint64, status uint8) uint64 {
 
 	case ValidatorStatusStaked, ValidatorStatusWaiting:
 		return StandardEffectiveBalance
-	case ValidatorStatusActive, ValidatorStatusExit:
+	case ValidatorStatusActive, ValidatorStatusExited:
 		return balance
 
 	default:

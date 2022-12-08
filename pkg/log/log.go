@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,7 +76,7 @@ func (hook *BtmHook) ioWrite(entry *logrus.Entry) error {
 }
 
 func clearLockFiles(logPath string) error {
-	files, err := ioutil.ReadDir(logPath)
+	files, err := os.ReadDir(logPath)
 	if os.IsNotExist(err) {
 		return nil
 	} else if err != nil {

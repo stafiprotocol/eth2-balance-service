@@ -28,8 +28,8 @@ type Validator struct {
 	Balance          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance"`           // realtime balance
 	EffectiveBalance uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:effective_balance"` //realtime effectiveBalance
 
-	NodeType       uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:node_type"` // 1 common node 2 trust node(used in v1) 3 light node 4 super node
-	Status         uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:status"`    // 1 deposited 2 withdrawl match 3 staked 4 withdrawl unmatch {5 offboard 6 can withdraw 7 withdrawed} {8 waiting 9 active 10 exit}
+	NodeType       uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:node_type"` // 1 common node 2 trust node(used in v1) 3 light node 4 super node‰
+	Status         uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:status"`    // status details defined in pkg/utils/eth2.go
 	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index"`
 }
 

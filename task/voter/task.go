@@ -255,37 +255,6 @@ func (task *Task) voteHandler() {
 	}
 }
 
-func (task *Task) statisticHandler() {
-	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
-	defer ticker.Stop()
-	retry := 0
-	for {
-		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return
-		}
-
-		select {
-		case <-task.stop:
-			logrus.Info("statistic task has stopped")
-			return
-		case <-ticker.C:
-
-			logrus.Debug("statistic start -----------")
-			err := task.statistic()
-			if err != nil {
-				logrus.Warnf("statistic  err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			}
-
-			logrus.Debug("statistic end -----------\n")
-			retry = 0
-		}
-	}
-}
-
 func (task *Task) initContract() error {
 
 	storageContract, err := storage.NewStorage(task.storageContractAddress, task.connection.Eth1Client())

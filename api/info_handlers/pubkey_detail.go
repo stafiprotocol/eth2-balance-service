@@ -195,7 +195,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 			chartDuEpoch = totalEpoch
 		}
 
-		skip := totalEpoch / uint64(chartDataLen)
+		skip := chartDuEpoch / uint64(chartDataLen)
 		epoches := make([]uint64, 0)
 		for i := uint64(0); i < uint64(chartDataLen); i++ {
 			epoches = append(epoches, balanceFinalEpoch-i*skip)

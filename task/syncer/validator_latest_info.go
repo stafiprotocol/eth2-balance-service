@@ -2,9 +2,9 @@ package task_syncer
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	ethpb "github.com/prysmaticlabs/prysm/v3/proto/eth/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
@@ -121,6 +121,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 			"validatorStatuses len": len(validatorStatusMap),
 		}).Debug("validator statuses")
 
+		// update validator info
 		for pubkey, status := range validatorStatusMap {
 			pubkeyStr := hexutil.Encode(pubkey.Bytes())
 			if status.Exists {
@@ -129,20 +130,64 @@ func (task *Task) syncValidatorLatestInfo() error {
 				if err != nil {
 					return err
 				}
-				validator.Status = utils.ValidatorStatusWaiting
-				validator.ValidatorIndex = status.Index
 
-				if status.ActivationEpoch != uint64(math.MaxUint64) {
+				// ValidatorStatus_PENDING_INITIALIZED ValidatorStatus = 0
+				// ValidatorStatus_PENDING_QUEUED      ValidatorStatus = 1
+				// ValidatorStatus_ACTIVE_ONGOING      ValidatorStatus = 2
+				// ValidatorStatus_ACTIVE_EXITING      ValidatorStatus = 3
+				// ValidatorStatus_ACTIVE_SLASHED      ValidatorStatus = 4
+				// ValidatorStatus_EXITED_UNSLASHED    ValidatorStatus = 5
+				// ValidatorStatus_EXITED_SLASHED      ValidatorStatus = 6
+				// ValidatorStatus_WITHDRAWAL_POSSIBLE ValidatorStatus = 7
+				// ValidatorStatus_WITHDRAWAL_DONE     ValidatorStatus = 8
+
+				// ValidatorStatus_ACTIVE              ValidatorStatus = 9
+				// ValidatorStatus_PENDING             ValidatorStatus = 10
+				// ValidatorStatus_EXITED              ValidatorStatus = 11
+				// ValidatorStatus_WITHDRAWAL          ValidatorStatus = 12
+
+				updateBalance := func() {
 					validator.ActiveEpoch = status.ActivationEpoch
 					validator.EligibleEpoch = status.ActivationEligibilityEpoch
 					validator.Balance = status.Balance
 					validator.EffectiveBalance = status.EffectiveBalance
-					validator.Status = utils.ValidatorStatusActive
 				}
 
-				// balance will not change after withdrawable epoch
-				if status.WithdrawableEpoch != uint64(math.MaxUint64) && status.WithdrawableEpoch <= finalEpoch {
-					validator.Status = utils.ValidatorStatusExit
+				switch status.Status {
+				case ethpb.ValidatorStatus_PENDING_INITIALIZED, ethpb.ValidatorStatus_PENDING_QUEUED:
+					validator.Status = utils.ValidatorStatusWaiting
+					validator.ValidatorIndex = status.Index
+
+				case ethpb.ValidatorStatus_ACTIVE_ONGOING, ethpb.ValidatorStatus_ACTIVE_EXITING, ethpb.ValidatorStatus_ACTIVE_SLASHED:
+					validator.Status = utils.ValidatorStatusActive
+					validator.ValidatorIndex = status.Index
+					if status.Slashed {
+						validator.Status = utils.ValidatorStatusActiveSlash
+					}
+					updateBalance()
+
+				case ethpb.ValidatorStatus_EXITED_UNSLASHED, ethpb.ValidatorStatus_EXITED_SLASHED:
+					validator.Status = utils.ValidatorStatusExited
+					validator.ValidatorIndex = status.Index
+					if status.Slashed {
+						validator.Status = utils.ValidatorStatusExitedSlash
+					}
+
+					updateBalance()
+				case ethpb.ValidatorStatus_WITHDRAWAL_POSSIBLE:
+					validator.Status = utils.ValidatorStatusWithdrawable
+					validator.ValidatorIndex = status.Index
+					if status.Slashed {
+						validator.Status = utils.ValidatorStatusWithdrawableSlash
+					}
+					updateBalance()
+
+				case ethpb.ValidatorStatus_WITHDRAWAL_DONE:
+					validator.Status = utils.ValidatorStatusWithdrawDone
+					validator.ValidatorIndex = status.Index
+					if status.Slashed {
+						validator.Status = utils.ValidatorStatusWithdrawDoneSlash
+					}
 				}
 
 				err = dao.UpOrInValidator(task.db, validator)
