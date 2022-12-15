@@ -6,7 +6,6 @@ import (
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
-const fetchValidatorStatusLimit = 50
 const fetchEventBlockLimit = uint64(4900)
 const fetchEth1WaitBlockNumbers = uint64(5)
 

@@ -81,18 +81,28 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	matchedValidatorsNum := uint64(0)
 	activeValidator := make([]*dao.Validator, 0)
 
+	// cal eth info on Deposit contract and operator
 	for _, l := range list {
 		switch l.Status {
-		case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusOffBoardCanWithdraw:
+		case utils.ValidatorStatusDeposited,
+			utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch,
+			utils.ValidatorStatusOffBoard, utils.ValidatorStatusOffBoardCanWithdraw:
+
 			switch l.NodeType {
 			case utils.NodeTypeSuper:
 				// will fetch 1 eth from pool when super node deposit, so we need add this
 				stakerValidatorDepositAmount += utils.StandardSuperNodeFakeDepositBalance
 				allEth += utils.StandardSuperNodeFakeDepositBalance
+
 			case utils.NodeTypeLight:
 				stakerValidatorDepositAmount += l.NodeDepositAmount
 				allEth += l.NodeDepositAmount
+
+			default:
+				utils.Err(c, utils.CodeInternalErr, "node type not supported")
+				return
 			}
+		case utils.ValidatorStatusOffBoardWithdrawed:
 
 		case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
 			stakerValidatorDepositAmount += utils.StandardEffectiveBalance
@@ -100,13 +110,22 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 			matchedValidatorsNum += 1
 
-		case utils.ValidatorStatusActive, utils.ValidatorStatusExited:
+		case utils.ValidatorStatusActive, utils.ValidatorStatusExited, utils.ValidatorStatusWithdrawable, utils.ValidatorStatusWithdrawDone,
+			utils.ValidatorStatusActiveSlash, utils.ValidatorStatusExitedSlash, utils.ValidatorStatusWithdrawableSlash, utils.ValidatorStatusWithdrawDoneSlash:
+
 			stakerValidatorDepositAmount += utils.StandardEffectiveBalance
 			allEth += l.Balance
 
 			matchedValidatorsNum += 1
 
 			activeValidator = append(activeValidator, l)
+
+		case utils.ValidatorStatusDistributed, utils.ValidatorStatusDistributedSlash:
+			matchedValidatorsNum += 1
+
+		default:
+			utils.Err(c, utils.CodeInternalErr, "node status not supported")
+			return
 		}
 	}
 

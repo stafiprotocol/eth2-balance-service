@@ -109,24 +109,51 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	}
 	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
 
-	rsp.CurrentBalance = decimal.NewFromInt(int64(validator.Balance)).Mul(utils.GweiDeci).String()
-	rsp.EffectiveBalance = decimal.NewFromInt(int64(validator.EffectiveBalance)).Mul(utils.GweiDeci).String()
 	rsp.DepositBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.GweiDeci).String()
 	rsp.Status = validator.Status
 
 	switch validator.Status {
-	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch:
+	case utils.ValidatorStatusDeposited,
+		utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch,
+		utils.ValidatorStatusOffBoard, utils.ValidatorStatusOffBoardCanWithdraw:
+
 		switch validator.NodeType {
 		case utils.NodeTypeLight:
 			rsp.CurrentBalance = decimal.NewFromInt(int64(utils.StandardLightNodeDepositBalance)).Mul(utils.GweiDeci).String()
 			rsp.EffectiveBalance = decimal.NewFromInt(int64(utils.StandardLightNodeDepositBalance)).Mul(utils.GweiDeci).String()
+
 		case utils.NodeTypeSuper:
 			rsp.CurrentBalance = decimal.NewFromInt(int64(utils.StandardSuperNodeFakeDepositBalance)).Mul(utils.GweiDeci).String()
 			rsp.EffectiveBalance = decimal.NewFromInt(int64(utils.StandardSuperNodeFakeDepositBalance)).Mul(utils.GweiDeci).String()
+
+		default:
+			utils.Err(c, utils.CodeInternalErr, "node type not supported")
+			return
 		}
+
+	case utils.ValidatorStatusOffBoardWithdrawed:
+		rsp.CurrentBalance = "0"
+		rsp.EffectiveBalance = "0"
+
 	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
 		rsp.CurrentBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.GweiDeci).String()
 		rsp.EffectiveBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.GweiDeci).String()
+
+	case utils.ValidatorStatusActive, utils.ValidatorStatusExited, utils.ValidatorStatusWithdrawable,
+		utils.ValidatorStatusActiveSlash, utils.ValidatorStatusExitedSlash, utils.ValidatorStatusWithdrawableSlash:
+
+		rsp.CurrentBalance = decimal.NewFromInt(int64(validator.Balance)).Mul(utils.GweiDeci).String()
+		rsp.EffectiveBalance = decimal.NewFromInt(int64(validator.EffectiveBalance)).Mul(utils.GweiDeci).String()
+
+	case utils.ValidatorStatusWithdrawDone, utils.ValidatorStatusWithdrawDoneSlash,
+		utils.ValidatorStatusDistributed, utils.ValidatorStatusDistributedSlash:
+
+		rsp.CurrentBalance = "0"
+		rsp.EffectiveBalance = "0"
+
+	default:
+		utils.Err(c, utils.CodeInternalErr, "not supported status")
+		return
 	}
 
 	rsp.EligibleEpoch = validator.EligibleEpoch

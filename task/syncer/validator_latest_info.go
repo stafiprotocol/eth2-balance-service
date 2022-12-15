@@ -12,7 +12,7 @@ import (
 	"github.com/stafiprotocol/reth/types"
 )
 
-// get detail info of staked/waiting/actived validator from beacon chain on latest finalized epoch, and update in db
+// get latest info of validators from beacon chain on finalized epoch, and update in db
 func (task *Task) syncValidatorLatestInfo() error {
 	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {
@@ -101,7 +101,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 			}
 			validatorStatusMap[pubkey] = fakeStatus
 		}
-	case utils.V2:
+	case utils.V1, utils.V2:
 		validatorStatusMap, err = task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
 			Epoch: &finalEpoch,
 		})
@@ -125,21 +125,6 @@ func (task *Task) syncValidatorLatestInfo() error {
 			if err != nil {
 				return err
 			}
-
-			// ValidatorStatus_PENDING_INITIALIZED ValidatorStatus = 0
-			// ValidatorStatus_PENDING_QUEUED      ValidatorStatus = 1
-			// ValidatorStatus_ACTIVE_ONGOING      ValidatorStatus = 2
-			// ValidatorStatus_ACTIVE_EXITING      ValidatorStatus = 3
-			// ValidatorStatus_ACTIVE_SLASHED      ValidatorStatus = 4
-			// ValidatorStatus_EXITED_UNSLASHED    ValidatorStatus = 5
-			// ValidatorStatus_EXITED_SLASHED      ValidatorStatus = 6
-			// ValidatorStatus_WITHDRAWAL_POSSIBLE ValidatorStatus = 7
-			// ValidatorStatus_WITHDRAWAL_DONE     ValidatorStatus = 8
-
-			// ValidatorStatus_ACTIVE              ValidatorStatus = 9
-			// ValidatorStatus_PENDING             ValidatorStatus = 10
-			// ValidatorStatus_EXITED              ValidatorStatus = 11
-			// ValidatorStatus_WITHDRAWAL          ValidatorStatus = 12
 
 			updateBaseInfo := func() {
 				// validator's info may be inited at any status

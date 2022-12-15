@@ -87,7 +87,6 @@ func GetValidatorListNeedUpdate(db *db.WrapDb) (c []*Validator, err error) {
 	return
 }
 
-
 func GetValidatorListByNode(db *db.WrapDb, nodeAddress string, status uint8) (c []*Validator, err error) {
 	if status == 0 {
 		err = db.Find(&c, "node_address = ?", nodeAddress).Error

@@ -39,6 +39,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 	}
 
 	for epoch := eth2BalanceMetaData.DealedEpoch + 1; epoch <= finalEpoch; epoch++ {
+		// we fetch epoch info every 75 epoch
 		if epoch%task.rewardEpochInterval != 0 {
 			continue
 		}
@@ -78,72 +79,65 @@ func (task *Task) syncValidatorEpochBalances() error {
 			pubkeyToIndex[validator.Pubkey] = validator.ValidatorIndex
 		}
 
-		for i := 0; i < len(pubkeys); {
-			start := i
-			end := i + fetchValidatorStatusLimit
-			if end > len(pubkeys) {
-				end = len(pubkeys)
-			}
-			i = end
-
-			willUsePubkeys := pubkeys[start:end]
-			validatorStatusMap := make(map[types.ValidatorPubkey]beacon.ValidatorStatus)
-
-			if task.version == utils.Dev {
-				for _, pubkey := range willUsePubkeys {
-					index := fakeIndexFromPubkey(pubkey)
-					fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
-						Epoch: &epoch,
-					})
-					if err != nil {
-						return fmt.Errorf("GetValidatorStatus err: %s", err)
-					}
-					validatorStatusMap[pubkey] = fakeStatus
-				}
-			} else {
-				validatorStatusMap, err = task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
+		willUsePubkeys := pubkeys
+		validatorStatusMap := make(map[types.ValidatorPubkey]beacon.ValidatorStatus)
+		switch task.version {
+		case utils.Dev:
+			for _, pubkey := range willUsePubkeys {
+				index := fakeIndexFromPubkey(pubkey)
+				fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
 					Epoch: &epoch,
 				})
 				if err != nil {
-					return err
+					return fmt.Errorf("GetValidatorStatus err: %s", err)
 				}
+				validatorStatusMap[pubkey] = fakeStatus
+			}
+		case utils.V1, utils.V2:
+			validatorStatusMap, err = task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
+				Epoch: &epoch,
+			})
+			if err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("unsupported version %s", task.version)
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"validatorStatuses len": len(validatorStatusMap),
+		}).Debug("validator statuses")
+
+		if len(validatorStatusMap) != len(willUsePubkeys) {
+			return fmt.Errorf("validatorStatusMap len: %d not equal pubkeys len: %d", len(validatorStatusMap), len(willUsePubkeys))
+		}
+
+		for pubkey, status := range validatorStatusMap {
+			pubkeyStr := hexutil.Encode(pubkey.Bytes())
+			if !status.Exists {
+				return fmt.Errorf("should exist status on beacon chain, pubkey: %s, epoch: %d", pubkeyStr, epoch)
+			}
+			validatorIndex, exist := pubkeyToIndex[pubkeyStr]
+			if !exist {
+				return fmt.Errorf("validator index not exit in pubkeyToIndex")
+			}
+			validatorBalance, err := dao.GetValidatorBalance(task.db, validatorIndex, epoch)
+			if err != nil && err != gorm.ErrRecordNotFound {
+				return err
 			}
 
-			logrus.WithFields(logrus.Fields{
-				"validatorStatuses len": len(validatorStatusMap),
-			}).Debug("validator statuses")
+			validatorBalance.NodeAddress = pubkeyNodeMap[pubkeyStr]
+			validatorBalance.Balance = status.Balance
+			validatorBalance.EffectiveBalance = status.EffectiveBalance
+			validatorBalance.Epoch = epoch
+			validatorBalance.ValidatorIndex = validatorIndex
+			validatorBalance.Timestamp = utils.EpochTime(task.eth2Config, epoch)
 
-			if len(validatorStatusMap) != len(willUsePubkeys) {
-				return fmt.Errorf("validatorStatusMap len: %d not equal pubkeys len: %d", len(validatorStatusMap), len(willUsePubkeys))
+			err = dao.UpOrInValidatorBalance(task.db, validatorBalance)
+			if err != nil {
+				return err
 			}
 
-			for pubkey, status := range validatorStatusMap {
-				pubkeyStr := hexutil.Encode(pubkey.Bytes())
-				if !status.Exists {
-					return fmt.Errorf("should exist status on beacon chain, pubkey: %s, epoch: %d", pubkeyStr, epoch)
-				}
-				validatorIndex, exist := pubkeyToIndex[pubkeyStr]
-				if !exist {
-					return fmt.Errorf("validator index not exit in pubkeyToIndex")
-				}
-				validatorBalance, err := dao.GetValidatorBalance(task.db, validatorIndex, epoch)
-				if err != nil && err != gorm.ErrRecordNotFound {
-					return err
-				}
-
-				validatorBalance.NodeAddress = pubkeyNodeMap[pubkeyStr]
-				validatorBalance.Balance = status.Balance
-				validatorBalance.EffectiveBalance = status.EffectiveBalance
-				validatorBalance.Epoch = epoch
-				validatorBalance.ValidatorIndex = validatorIndex
-				validatorBalance.Timestamp = utils.EpochTime(task.eth2Config, epoch)
-
-				err = dao.UpOrInValidatorBalance(task.db, validatorBalance)
-				if err != nil {
-					return err
-				}
-
-			}
 		}
 
 		// collect node address
