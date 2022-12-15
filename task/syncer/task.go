@@ -38,6 +38,8 @@ type Task struct {
 	version                string
 	// used for dev mode
 	rewardStartEpoch uint64
+	// for eth2 block syncer
+	slashStartEpoch uint64
 
 	// need init on start
 	db                      *db.WrapDb
@@ -70,22 +72,23 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		return nil, fmt.Errorf("unsupport version: %s", cfg.Version)
 	}
 
-	startHeight := utils.Eth1StartHeight
+	eth1StartHeight := utils.Eth1StartHeight
 	if cfg.Version == utils.Dev {
-		startHeight = 0
+		eth1StartHeight = 0
 	}
 
 	s := &Task{
 		taskTicker:      10,
 		stop:            make(chan struct{}),
 		db:              dao,
-		eth1StartHeight: startHeight,
+		eth1StartHeight: eth1StartHeight,
 		eth1Endpoint:    cfg.Eth1Endpoint,
 		eth2Endpoint:    cfg.Eth2Endpoint,
 
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 		version:                cfg.Version,
+		slashStartEpoch:        cfg.SlashStartEpoch,
 	}
 
 	if cfg.Version == utils.Dev {
@@ -278,22 +281,18 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 		return err
 	}
 
+	// init eth2 block syncer info
 	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			val, err := dao.GetFirstActiveValidator(task.db)
-			if err != nil {
-				return err
-			}
+		if err != gorm.ErrRecordNotFound {
+			return err
+		}
 
-			eth2BlockSyncerMetaData.DealedBlockHeight = utils.SlotAt(task.eth2Config, val.ActiveEpoch)
-			eth2BlockSyncerMetaData.MetaType = utils.MetaTypeEth2BlockSyncer
+		eth2BlockSyncerMetaData.DealedBlockHeight = task.slashStartEpoch
+		eth2BlockSyncerMetaData.MetaType = utils.MetaTypeEth2BlockSyncer
 
-			err = dao.UpOrInMetaData(task.db, eth2BlockSyncerMetaData)
-			if err != nil {
-				return err
-			}
-		} else {
+		err = dao.UpOrInMetaData(task.db, eth2BlockSyncerMetaData)
+		if err != nil {
 			return err
 		}
 	}

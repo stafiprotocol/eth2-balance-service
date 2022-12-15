@@ -16,7 +16,7 @@ type SlashEvent struct {
 	SlashAmount    string `gorm:"type:varchar(40) not null;default:'0';column:slash_amount"`
 	StartTimestamp uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:start_timestamp"`
 	EndTimestamp   uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:end_timestamp"`
-	SlashType      uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:slash_type"` // 1 fee recipient 2 proposer 3 attester
+	SlashType      uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:slash_type"` // 1 fee recipient 2 proposer slash 3 attester slash
 }
 
 func (f SlashEvent) TableName() string {

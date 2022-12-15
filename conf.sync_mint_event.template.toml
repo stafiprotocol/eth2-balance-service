@@ -5,7 +5,7 @@ storageContractAddress = "0xA4efE44eE3D52211df575b9fD8F3409C5c1443eE"
 
 [db]
 host = "127.0.0.1" # mysql host ip
-name = "eth2_dev" # the database this server used
-port = "3306" 
-pwd = "123456" # mysql password
-user = "root" # mysql username
+name = "eth2_dev"  # the database this server used
+port = "3306"
+pwd = "123456"     # mysql password
+user = "root"      # mysql username

@@ -23,6 +23,7 @@ type Config struct {
 	RewardEpochInterval uint64
 	Version             string
 	EnableDistribute    bool
+	SlashStartEpoch     uint64 // used for eth2block syncer
 
 	EraCount uint64 // used for statistic
 
