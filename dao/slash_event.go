@@ -13,7 +13,8 @@ type SlashEvent struct {
 
 	StartSlot      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:start_slot"` // slash event start slot
 	EndSlot        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:end_slot"`   // slash event end slot
-	SlashAmount    string `gorm:"type:varchar(40) not null;default:'0';column:slash_amount"`
+	Epoch          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:epoch"`
+	SlashAmount    uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:slash_amount"` // Gwei
 	StartTimestamp uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:start_timestamp"`
 	EndTimestamp   uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:end_timestamp"`
 	SlashType      uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:slash_type"` // 1 fee recipient 2 proposer slash 3 attester slash
@@ -58,8 +59,14 @@ func GetSlashEventList(db *db.WrapDb, validatorIndex uint64, pageIndex, pageCoun
 	return
 }
 
-func GetTotalSlashAmount(db *db.WrapDb, validatorIndex uint64) (totalSlashAmount string, err error) {
+func GetTotalSlashAmount(db *db.WrapDb, validatorIndex uint64) (totalSlashAmount uint64, err error) {
 	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where validator_index = ?",
 		validatorIndex).Scan(&totalSlashAmount).Error
+	return
+}
+
+func GetTotalSlashAmountBefore(db *db.WrapDb, validatorIndex, targetEpoch uint64) (totalSlashAmount uint64, err error) {
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where validator_index = ? and epoch <= ?",
+		validatorIndex, targetEpoch).Scan(&totalSlashAmount).Error
 	return
 }

@@ -56,7 +56,7 @@ func (task *Task) syncEth2Block() error {
 				return err
 			}
 
-			// we olsy save and deal blocks proposed by our pool validators
+			// we only save and deal blocks proposed by our pool validators
 			if err == nil {
 				proposedBlock, err := dao.GetProposedBlock(task.db, slot)
 				if err != nil && err != gorm.ErrRecordNotFound {
@@ -110,13 +110,19 @@ func (task *Task) syncEth2Block() error {
 					if err != nil && err != gorm.ErrRecordNotFound {
 						return err
 					}
+
+					feeAmountDeci, err := decimal.NewFromString(proposedBlock.FeeAmount)
+					if err != nil {
+						return err
+					}
+
 					slashEvent.ValidatorIndex = proposedBlock.ValidatorIndex
 					slashEvent.StartSlot = proposedBlock.Slot
 					slashEvent.EndSlot = proposedBlock.Slot
 					slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, proposedBlock.Slot)
 					slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, proposedBlock.Slot)
 					slashEvent.SlashType = utils.SlashTypeFeeRecipient
-					slashEvent.SlashAmount = proposedBlock.FeeAmount
+					slashEvent.SlashAmount = feeAmountDeci.Div(utils.GweiDeci).BigInt().Uint64() // use Gwei as unit
 					err = dao.UpOrInSlashEvent(task.db, slashEvent)
 					if err != nil {
 						return err
@@ -239,14 +245,14 @@ func (task *Task) syncSlashEventEndSlotInfo() error {
 			return err
 		}
 
-		slashAmount := decimal.Zero
+		slashAmount := uint64(0)
 		if validatorStart.Balance > validatorEnd.Balance {
-			slashAmount = decimal.NewFromInt(int64(validatorStart.Balance - validatorEnd.Balance)).Mul(utils.GweiDeci)
+			slashAmount = validatorStart.Balance - validatorEnd.Balance
 		}
 
 		slashEvent.EndSlot = utils.SlotAt(task.eth2Config, validatorNow.WithdrawableEpoch)
 		slashEvent.EndTimestamp = utils.EpochTime(task.eth2Config, validatorNow.WithdrawableEpoch)
-		slashEvent.SlashAmount = slashAmount.StringFixed(0)
+		slashEvent.SlashAmount = slashAmount
 
 		err = dao.UpOrInSlashEvent(task.db, slashEvent)
 		if err != nil {

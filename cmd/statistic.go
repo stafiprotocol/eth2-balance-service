@@ -377,8 +377,12 @@ func statisticCmd() *cobra.Command {
 					if err != nil {
 						return err
 					}
+					userDepositBalance := uint64(28e9)
+					if distributeFee.FeePoolType == utils.SuperNodeFeePool {
+						userDepositBalance = 32e9
+					}
 
-					userReward, valReward, platformFee := utils.GetUserValPlatformReward(rewardDeci, platformFeeDeci, nodeFeeDeci, distributeFee.FeePoolType)
+					userReward, valReward, platformFee := utils.GetUserNodePlatformReward(userDepositBalance, rewardDeci, platformFeeDeci, nodeFeeDeci)
 
 					totalRewardFromFeeDeci = totalRewardFromFeeDeci.Add(rewardDeci)
 					totalUserRewardFromFeeDeci = totalUserRewardFromFeeDeci.Add(userReward)

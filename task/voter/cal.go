@@ -24,18 +24,15 @@ func (task *Task) getStakerEthInfoOfValidator(validator *dao.Validator, targetEp
 
 	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
 		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
-
-		userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
-		return userDepositBalance, userDepositAndReward, nil
+		return userDepositBalance, userDepositBalance, nil
 
 	case utils.ValidatorStatusActive, utils.ValidatorStatusExited, utils.ValidatorStatusWithdrawable, utils.ValidatorStatusWithdrawDone,
 		utils.ValidatorStatusActiveSlash, utils.ValidatorStatusExitedSlash, utils.ValidatorStatusWithdrawableSlash, utils.ValidatorStatusWithdrawDoneSlash:
+
 		// case: activeEpoch 155747 > targetEpoch 155700
 		if validator.ActiveEpoch > targetEpoch {
 			userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
-
-			userDepositAndReward := task.getUserDepositAndReward(utils.StandardEffectiveBalance, validator.NodeDepositAmount)
-			return userDepositBalance, userDepositAndReward, nil
+			return userDepositBalance, userDepositBalance, nil
 		}
 
 		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
@@ -45,7 +42,12 @@ func (task *Task) getStakerEthInfoOfValidator(validator *dao.Validator, targetEp
 			return 0, 0, err
 		}
 
-		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount)
+		slashAmount, err := dao.GetTotalSlashAmountBefore(task.db, validator.ValidatorIndex, targetEpoch)
+		if err != nil {
+			return 0, 0, err
+		}
+
+		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount, slashAmount)
 		return userDepositBalance, userDepositAndReward, nil
 
 	case utils.ValidatorStatusDistributed, utils.ValidatorStatusDistributedSlash:
@@ -56,7 +58,7 @@ func (task *Task) getStakerEthInfoOfValidator(validator *dao.Validator, targetEp
 	}
 }
 
-func (task Task) getUserDepositAndReward(validatorBalance, nodeDepositAmount uint64) uint64 {
+func (task Task) getUserDepositAndReward(validatorBalance, nodeDepositAmount, slashAmount uint64) uint64 {
 	userDepositBalance := utils.StandardEffectiveBalance - nodeDepositAmount
 
 	switch {
@@ -70,16 +72,21 @@ func (task Task) getUserDepositAndReward(validatorBalance, nodeDepositAmount uin
 			return validatorBalance
 		}
 	case validatorBalance > utils.StandardEffectiveBalance:
+
 		// total staking reward
 		reward := validatorBalance - utils.StandardEffectiveBalance
-		// node+user raw reward
-		nodeAndUserRewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromInt(1).Sub(task.platformFee))
-		// user raw reward
-		userRewardDeci := nodeAndUserRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(int64(utils.StandardEffectiveBalance)))
+		userReward, nodeReward, _ := utils.GetUserNodePlatformReward(userDepositBalance, decimal.NewFromInt(int64(reward)), task.platformFee, task.nodeFee)
+		nodeDepositAndReward := decimal.NewFromInt(int64(nodeDepositAmount)).Add(nodeReward)
 
-		userLeftRewardDeci := userRewardDeci.Mul(decimal.NewFromInt(1).Sub(task.nodeFee))
+		// slash related
+		userSlash, _, platformSlash := utils.GetUserNodePlatformReward(userDepositBalance, decimal.NewFromInt(int64(slashAmount)), task.platformFee, task.nodeFee)
+		nodeShouldPaySlash := userSlash.Add(platformSlash)
+		if nodeDepositAndReward.BigInt().Uint64() < slashAmount {
+			nodeShouldPaySlash = nodeDepositAndReward
+		}
+		nodeShouldPayUserSlash := nodeShouldPaySlash.Mul(userSlash).Div(userSlash.Add(platformSlash))
 
-		return userDepositBalance + userLeftRewardDeci.BigInt().Uint64()
+		return userDepositBalance + userReward.Add(nodeShouldPayUserSlash).BigInt().Uint64()
 	default:
 		// should not happen here
 		return userDepositBalance

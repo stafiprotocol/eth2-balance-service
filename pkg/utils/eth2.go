@@ -234,15 +234,11 @@ func GetUserValPlatformDepositAndReward(validatorBalance, nodeDepositAmount uint
 	}
 }
 
-// return (user reward, val reward, paltform fee)
-func GetUserValPlatformReward(rewardDeci, platformFee, nodeFee decimal.Decimal, feePoolType uint8) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
+// todo unit test
+// return (user reward, node reward, paltform fee)
+func GetUserNodePlatformReward(userDepositBalance uint64, rewardDeci, platformFee, nodeFee decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
 
-	userDepositBalance := 28e9
-	if feePoolType == SuperNodeFeePool {
-		userDepositBalance = 32e9
-	}
-
-	if !rewardDeci.IsPositive() {
+	if !rewardDeci.IsPositive() || platformFee.IsNegative() || nodeFee.IsNegative() || userDepositBalance > StandardEffectiveBalance {
 		return decimal.Zero, decimal.Zero, decimal.Zero
 	}
 

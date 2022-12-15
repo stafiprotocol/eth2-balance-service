@@ -275,19 +275,14 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		logrus.Errorf("dao.GetTotalSlashAmount err %s", err)
 		return
 	}
-	totalSlashAmountDeci, err := decimal.NewFromString(totalSlashAmount)
-	if err != nil {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("decimal err %s", err)
-		return
-	}
+	totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).Mul(utils.GweiDeci)
 
 	for _, slash := range slashList {
 		rsp.SlashEventList = append(rsp.SlashEventList, SlashEvent{
 			StartTimestamp: slash.StartTimestamp,
 			StartBlock:     slash.StartSlot,
 			EndBlock:       slash.EndSlot,
-			SlashAmount:    slash.SlashAmount,
+			SlashAmount:    decimal.NewFromInt(int64(slash.SlashAmount)).Mul(utils.GweiDeci).StringFixed(0),
 			SlashType:      slash.SlashType,
 		})
 	}
