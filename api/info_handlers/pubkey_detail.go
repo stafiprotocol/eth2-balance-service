@@ -36,8 +36,9 @@ type RspPubkeyDetail struct {
 	ChartXData       []uint64 `json:"chartXData"`
 	ChartYData       []string `json:"chartYData"`
 
-	TotalCount     int64        `json:"totalCount"`
-	SlashEventList []SlashEvent `json:"slashEventList"`
+	TotalCount       int64        `json:"totalCount"`
+	TotalSlashAmount string       `json:"totalSlashAmount"`
+	SlashEventList   []SlashEvent `json:"slashEventList"`
 }
 
 type SlashEvent struct {
@@ -240,6 +241,20 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		logrus.Errorf("dao.GetSlashEventList err %s", err)
 		return
 	}
+
+	totalSlashAmount, err := dao.GetTotalSlashAmount(h.db, validator.ValidatorIndex)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetTotalSlashAmount err %s", err)
+		return
+	}
+	totalSlashAmountDeci, err := decimal.NewFromString(totalSlashAmount)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("decimal err %s", err)
+		return
+	}
+
 	for _, slash := range slashList {
 		rsp.SlashEventList = append(rsp.SlashEventList, SlashEvent{
 			StartTimestamp: slash.StartTimestamp,
@@ -250,6 +265,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		})
 	}
 	rsp.TotalCount = total
+	rsp.TotalSlashAmount = totalSlashAmountDeci.StringFixed(0)
 
 	utils.Ok(c, "success", rsp)
 }

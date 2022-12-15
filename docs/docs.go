@@ -525,6 +525,9 @@ const docTemplate = `{
                 },
                 "totalCount": {
                     "type": "integer"
+                },
+                "totalSlashAmount": {
+                    "type": "string"
                 }
             }
         },

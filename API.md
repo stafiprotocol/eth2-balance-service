@@ -177,6 +177,7 @@ slash : 51 52 53 54 55
 |         | chartXData       | N/A            | number list | Yes         | null        | timestamp array, chart x data                                                       |
 |         | chartYData       | N/A            | string list | Yes         | null        | total reward eth array, chart y data                                                |
 |         | totalCount       | N/A            | number      | Yes         | null        | total slash count of this pubkey                                                    |
+|         | totalSlashAmount | N/A            | string      | Yes         | null        | total slash amount of this pubkey                                                   |
 |         | slashEventList   | N/A            | list        | Yes         | null        | list                                                                                |
 |         |                  | startTimestamp | number      | Yes         | null        | start timestamp                                                                     |
 |         |                  | startBlock     | number      | Yes         | null        | start block                                                                         |

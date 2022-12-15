@@ -51,7 +51,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return err
 	}
 
-	// for test/dev only
+	// for v1/dev only
 	if task.version != utils.V2 {
 		targetEth1BlockHeight = eth1SyncerMetaData.DealedBlockHeight
 	}
@@ -61,7 +61,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return nil
 	}
 
-	validatorList, err := dao.GetStakedWaitingActivedValidatorList(task.db)
+	validatorList, err := dao.GetValidatorListNeedUpdate(task.db)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,8 @@ func (task *Task) syncValidatorLatestInfo() error {
 	willUsePubkeys := pubkeys
 	validatorStatusMap := make(map[types.ValidatorPubkey]beacon.ValidatorStatus)
 
-	if task.version == utils.Dev {
+	switch task.version {
+	case utils.Dev:
 		for _, pubkey := range willUsePubkeys {
 			index := fakeIndexFromPubkey(pubkey)
 
@@ -100,13 +101,15 @@ func (task *Task) syncValidatorLatestInfo() error {
 			}
 			validatorStatusMap[pubkey] = fakeStatus
 		}
-	} else {
+	case utils.V2:
 		validatorStatusMap, err = task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
 			Epoch: &finalEpoch,
 		})
 		if err != nil {
 			return err
 		}
+	default:
+		return fmt.Errorf("unsupported version %s", task.version)
 	}
 
 	logrus.WithFields(logrus.Fields{
@@ -138,48 +141,55 @@ func (task *Task) syncValidatorLatestInfo() error {
 			// ValidatorStatus_EXITED              ValidatorStatus = 11
 			// ValidatorStatus_WITHDRAWAL          ValidatorStatus = 12
 
-			updateBalance := func() {
+			updateBaseInfo := func() {
+				// validator's info may be inited at any status
 				validator.ActiveEpoch = status.ActivationEpoch
 				validator.EligibleEpoch = status.ActivationEligibilityEpoch
+				validator.ValidatorIndex = status.Index
+			}
+
+			updateBalance := func() {
 				validator.Balance = status.Balance
 				validator.EffectiveBalance = status.EffectiveBalance
 			}
 
 			switch status.Status {
-			case ethpb.ValidatorStatus_PENDING_INITIALIZED, ethpb.ValidatorStatus_PENDING_QUEUED:
+
+			case ethpb.ValidatorStatus_PENDING_INITIALIZED, ethpb.ValidatorStatus_PENDING_QUEUED: // pending
 				validator.Status = utils.ValidatorStatusWaiting
 				validator.ValidatorIndex = status.Index
 
-			case ethpb.ValidatorStatus_ACTIVE_ONGOING, ethpb.ValidatorStatus_ACTIVE_EXITING, ethpb.ValidatorStatus_ACTIVE_SLASHED:
+			case ethpb.ValidatorStatus_ACTIVE_ONGOING, ethpb.ValidatorStatus_ACTIVE_EXITING, ethpb.ValidatorStatus_ACTIVE_SLASHED: // active
 				validator.Status = utils.ValidatorStatusActive
-				validator.ValidatorIndex = status.Index
 				if status.Slashed {
 					validator.Status = utils.ValidatorStatusActiveSlash
 				}
+				updateBaseInfo()
 				updateBalance()
 
-			case ethpb.ValidatorStatus_EXITED_UNSLASHED, ethpb.ValidatorStatus_EXITED_SLASHED:
+			case ethpb.ValidatorStatus_EXITED_UNSLASHED, ethpb.ValidatorStatus_EXITED_SLASHED: // exited
 				validator.Status = utils.ValidatorStatusExited
-				validator.ValidatorIndex = status.Index
 				if status.Slashed {
 					validator.Status = utils.ValidatorStatusExitedSlash
 				}
-
+				updateBaseInfo()
 				updateBalance()
-			case ethpb.ValidatorStatus_WITHDRAWAL_POSSIBLE:
+			case ethpb.ValidatorStatus_WITHDRAWAL_POSSIBLE: // withdrawable
 				validator.Status = utils.ValidatorStatusWithdrawable
-				validator.ValidatorIndex = status.Index
 				if status.Slashed {
 					validator.Status = utils.ValidatorStatusWithdrawableSlash
 				}
+				updateBaseInfo()
 				updateBalance()
 
-			case ethpb.ValidatorStatus_WITHDRAWAL_DONE:
+			case ethpb.ValidatorStatus_WITHDRAWAL_DONE: // withdrawdone
 				validator.Status = utils.ValidatorStatusWithdrawDone
-				validator.ValidatorIndex = status.Index
 				if status.Slashed {
 					validator.Status = utils.ValidatorStatusWithdrawDoneSlash
 				}
+				updateBaseInfo()
+			default:
+				return fmt.Errorf("unsupported validator status %d", status.Status)
 			}
 
 			err = dao.UpOrInValidator(task.db, validator)
@@ -188,7 +198,6 @@ func (task *Task) syncValidatorLatestInfo() error {
 			}
 		}
 	}
-	// }
 	eth2InfoMetaData.DealedEpoch = finalEpoch
 	return dao.UpOrInMetaData(task.db, eth2InfoMetaData)
 }

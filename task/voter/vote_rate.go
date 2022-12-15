@@ -106,7 +106,7 @@ func (task *Task) voteRate() error {
 	totalUserEthFromValidator := uint64(0)
 	totalStakingEthFromValidator := uint64(0)
 	for _, validator := range validatorDepositedList {
-		userStakingEth, userAllEth, err := task.getStakerEthInfoOfValidator(validator, targetEpoch, false)
+		userStakingEth, userAllEth, err := task.getStakerEthInfoOfValidator(validator, targetEpoch)
 		if err != nil {
 			return err
 		}

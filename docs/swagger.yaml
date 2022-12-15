@@ -173,6 +173,8 @@ definitions:
         type: integer
       totalCount:
         type: integer
+      totalSlashAmount:
+        type: string
     type: object
   info_handlers.RspPubkeyStatusList:
     properties:

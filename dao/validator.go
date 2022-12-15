@@ -81,15 +81,12 @@ func GetValidatorListActiveEpochBefore(db *db.WrapDb, epoch uint64) (c []*Valida
 	return
 }
 
-func GetStakedWaitingActivedValidatorList(db *db.WrapDb) (c []*Validator, err error) {
-	err = db.Find(&c, "status in (?, ?, ?) ", utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive).Error
+func GetValidatorListNeedUpdate(db *db.WrapDb) (c []*Validator, err error) {
+	err = db.Find(&c, "status in (?, ?, ?, ?, ?, ?, ?, ?) ", utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive, utils.ValidatorStatusExited, utils.ValidatorStatusWithdrawable,
+		utils.ValidatorStatusActiveSlash, utils.ValidatorStatusExitedSlash, utils.ValidatorStatusWithdrawableSlash).Error
 	return
 }
 
-func GetDepositedStakedWaitingActivedValidatorList(db *db.WrapDb) (c []*Validator, err error) {
-	err = db.Find(&c, "status in (?, ?, ?, ?) ", utils.ValidatorStatusDeposited, utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive).Error
-	return
-}
 
 func GetValidatorListByNode(db *db.WrapDb, nodeAddress string, status uint8) (c []*Validator, err error) {
 	if status == 0 {

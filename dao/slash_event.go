@@ -57,3 +57,9 @@ func GetSlashEventList(db *db.WrapDb, validatorIndex uint64, pageIndex, pageCoun
 	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "validator_index = ?", validatorIndex).Error
 	return
 }
+
+func GetTotalSlashAmount(db *db.WrapDb, validatorIndex uint64) (totalSlashAmount string, err error) {
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where validator_index = ?",
+		validatorIndex).Scan(&totalSlashAmount).Error
+	return
+}
