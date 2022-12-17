@@ -39,6 +39,7 @@ const (
 	RequestBeaconBlockPath           = "/eth/v2/beacon/blocks/%s"
 	RequestValidatorSyncDuties       = "/eth/v1/validator/duties/sync/%s"
 	RequestValidatorProposerDuties   = "/eth/v1/validator/duties/proposer/%s"
+	RequestSyncCommittees            = "/eth/v1/beacon/states/%s/sync_committees"
 
 	MaxRequestValidatorsCount = 100
 )
@@ -326,8 +327,8 @@ func (c *StandardHttpClient) GetValidatorSyncDuties(indices []uint64, epoch uint
 	return validatorMap, nil
 }
 
-// Sums proposer duties per validators for a given epoch
-func (c *StandardHttpClient) GetValidatorProposerDuties(indices []uint64, epoch uint64) (map[uint64]uint64, error) {
+// proposer duties for a given epoch, return [slot][valIndex]
+func (c *StandardHttpClient) GetValidatorProposerDuties(epoch uint64) (map[uint64]uint64, error) {
 
 	// Perform the post request
 	responseBody, status, err := c.getRequest(fmt.Sprintf(RequestValidatorProposerDuties, strconv.FormatUint(epoch, 10)))
@@ -347,14 +348,8 @@ func (c *StandardHttpClient) GetValidatorProposerDuties(indices []uint64, epoch 
 	// Map the results
 	proposerMap := make(map[uint64]uint64)
 
-	for _, index := range indices {
-		proposerMap[index] = 0
-		for _, duty := range response.Data {
-			if uint64(duty.ValidatorIndex) == index {
-				proposerMap[index]++
-				break
-			}
-		}
+	for _, duty := range response.Data {
+		proposerMap[uint64(duty.Slot)] = uint64(duty.ValidatorIndex)
 	}
 
 	return proposerMap, nil
@@ -505,6 +500,19 @@ func (c *StandardHttpClient) GetBeaconBlock(blockId string) (beacon.BeaconBlock,
 		beaconBlock.Attestations = append(beaconBlock.Attestations, info)
 	}
 
+	//add syncAggregate
+	if len(block.Data.Message.Body.SyncAggregate.SyncCommitteeBits) > 0 {
+		syncAggregate := beacon.SyncAggregate{}
+		bitString := utils.RemovePrefix(block.Data.Message.Body.SyncAggregate.SyncCommitteeBits)
+		syncAggregate.SyncCommitteeBits, err = hex.DecodeString(bitString)
+		if err != nil {
+			return beacon.BeaconBlock{}, false, fmt.Errorf("decoding aggregation bits for SyncCommitteeBits of block %s err: %w", blockId, err)
+		}
+		syncAggregate.SyncCommitteeSignature = block.Data.Message.Body.SyncAggregate.SyncCommitteeSignature
+
+		beaconBlock.SyncAggregate = syncAggregate
+	}
+
 	// Add proposer slash
 	for _, proposerSlash := range block.Data.Message.Body.ProposerSlashings {
 		newProposerSlash := beacon.ProposerSlashing{
@@ -528,7 +536,7 @@ func (c *StandardHttpClient) GetBeaconBlock(blockId string) (beacon.BeaconBlock,
 		beaconBlock.ProposerSlashings = append(beaconBlock.ProposerSlashings, newProposerSlash)
 	}
 
-	// Add
+	// Add attester slash
 	for _, attesterSlash := range block.Data.Message.Body.AttesterSlashings {
 		newAttestingIndeces1 := make([]uint64, len(attesterSlash.Attestation1.AttestingIndices))
 		for i, indice := range attesterSlash.Attestation1.AttestingIndices {
@@ -579,8 +587,8 @@ func (c *StandardHttpClient) GetBeaconBlock(blockId string) (beacon.BeaconBlock,
 }
 
 // Get the attestation committees for the given epoch, or the current epoch if nil
-func (c *StandardHttpClient) GetCommitteesForEpoch(epoch *uint64) ([]beacon.Committee, error) {
-	response, err := c.getCommittees("head", epoch)
+func (c *StandardHttpClient) GetCommitteesForEpoch(epoch uint64) ([]beacon.Committee, error) {
+	response, err := c.getCommittees("head", &epoch)
 	if err != nil {
 		return nil, err
 	}
@@ -595,6 +603,26 @@ func (c *StandardHttpClient) GetCommitteesForEpoch(epoch *uint64) ([]beacon.Comm
 			Index:      uint64(committee.Index),
 			Slot:       uint64(committee.Slot),
 			Validators: validators,
+		})
+	}
+
+	return committees, nil
+}
+
+func (c *StandardHttpClient) GetSyncCommitteesForEpoch(epoch uint64) ([]beacon.SyncCommittee, error) {
+	response, err := c.getSyncCommittees("head", &epoch)
+	if err != nil {
+		return nil, err
+	}
+
+	committees := []beacon.SyncCommittee{}
+	for _, valIndexStr := range response.Data.Validators {
+		valIndexU64, err := strconv.ParseUint(valIndexStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("in sync_committee for epoch %d validator has bad validator index: %q", epoch, valIndexStr)
+		}
+		committees = append(committees, beacon.SyncCommittee{
+			ValIndex: valIndexU64,
 		})
 	}
 
@@ -842,6 +870,26 @@ func (c *StandardHttpClient) getCommittees(stateId string, epoch *uint64) (Commi
 	var committees CommitteesResponse
 	if err := json.Unmarshal(responseBody, &committees); err != nil {
 		return CommitteesResponse{}, fmt.Errorf("could not decode committees: %w", err)
+	}
+	return committees, nil
+}
+
+// Get the sync committees for the epoch
+func (c *StandardHttpClient) getSyncCommittees(stateId string, epoch *uint64) (SyncCommitteesResponse, error) {
+	query := ""
+	if epoch != nil {
+		query = fmt.Sprintf("?epoch=%d", *epoch)
+	}
+	responseBody, status, err := c.getRequest(fmt.Sprintf(RequestSyncCommittees, stateId) + query)
+	if err != nil {
+		return SyncCommitteesResponse{}, fmt.Errorf("could not get sync committees: %w", err)
+	}
+	if status != http.StatusOK {
+		return SyncCommitteesResponse{}, fmt.Errorf("could not get sync committees: HTTP status %d; response body: '%s'", status, string(responseBody))
+	}
+	var committees SyncCommitteesResponse
+	if err := json.Unmarshal(responseBody, &committees); err != nil {
+		return SyncCommitteesResponse{}, fmt.Errorf("could not decode sync committees: %w", err)
 	}
 	return committees, nil
 }

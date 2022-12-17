@@ -70,10 +70,12 @@ const (
 	MetaTypeEth2BlockSyncer   = uint8(5)
 )
 const (
-	SlashTypeFeeRecipient = uint8(1)
-	SlashTypeAttester     = uint8(2)
-	SlashTypeProposer     = uint8(3)
-	SlashTypeSync         = uint8(4)
+	SlashTypeFeeRecipient  = uint8(1)
+	SlashTypeAttesterSlash = uint8(2)
+	SlashTypeProposerSlash = uint8(3)
+	SlashTypeSyncMiss      = uint8(4)
+	SlashTypeAttesterMiss  = uint8(5)
+	SlashTypeProposerMiss  = uint8(6)
 )
 
 const (

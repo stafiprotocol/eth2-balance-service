@@ -116,6 +116,45 @@ func TestBeaconHead(t *testing.T) {
 	t.Logf("%+v", head)
 
 }
+func TestConfig(t *testing.T) {
+	// c, err := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
+	c, err := client.NewStandardHttpClient("https://beaconcha-rpc2.stafi.io")
+	if err != nil {
+		t.Fatal(err)
+	}
+	head, err := c.GetEth2Config()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("%+v", head)
+
+	duties, err := c.GetValidatorProposerDuties(167578)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(duties)
+	sc, err := c.GetSyncCommitteesForEpoch(167578)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(sc)
+
+	block, exist, err := c.GetBeaconBlock("5362523")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(block.SyncAggregate)
+	t.Log(exist)
+
+	// com,err:=c.GetCommitteesForEpoch(167578)
+	// if err!=nil{
+	// 	t.Fatal(err)
+	// }
+	// t.Log(com)
+
+}
 
 func TestSigs(t *testing.T) {
 	withdrawBts, err := hexutil.Decode("0x003cd051a5757b82bf2c399d7476d1636473969af698377434af1d6c54f2bee9")

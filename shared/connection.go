@@ -275,6 +275,22 @@ func (c *Connection) GetBeaconBlock(blockId string) (beacon.BeaconBlock, bool, e
 
 }
 
+func (c *Connection) GetValidatorProposerDuties(epoch uint64) (map[uint64]uint64, error) {
+	var retErr error
+	for i := 0; i < retryLimit; i++ {
+		status, err := c.eth2Client.GetValidatorProposerDuties(epoch)
+		if err != nil {
+			retErr = err
+			logrus.Warnf("GetValidatorProposerDuties err: %s", err)
+			time.Sleep(waitInterval)
+			continue
+		}
+		return status, nil
+	}
+	return nil, fmt.Errorf("GetValidatorProposerDuties reach RetryLimit, err: %s", retErr)
+
+}
+
 func (c *Connection) GetValidatorStatusByIndex(index string, opts *beacon.ValidatorStatusOptions) (beacon.ValidatorStatus, error) {
 	var retErr error
 	for i := 0; i < retryLimit; i++ {
@@ -288,4 +304,19 @@ func (c *Connection) GetValidatorStatusByIndex(index string, opts *beacon.Valida
 		return status, nil
 	}
 	return beacon.ValidatorStatus{}, fmt.Errorf("eth2Client.GetValidatorStatusByIndex reach RetryLimit, err: %s", retErr)
+}
+
+func (c *Connection) GetSyncCommitteesForEpoch(epoch uint64) ([]beacon.SyncCommittee, error) {
+	var retErr error
+	for i := 0; i < retryLimit; i++ {
+		status, err := c.eth2Client.GetSyncCommitteesForEpoch(epoch)
+		if err != nil {
+			retErr = err
+			logrus.Warnf("eth2Client.GetSyncCommitteesForEpoch err: %s", err)
+			time.Sleep(waitInterval)
+			continue
+		}
+		return status, nil
+	}
+	return nil, fmt.Errorf("eth2Client.GetSyncCommitteesForEpoch reach RetryLimit, err: %s", retErr)
 }

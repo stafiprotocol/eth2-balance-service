@@ -288,7 +288,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 			return err
 		}
 
-		eth2BlockSyncerMetaData.DealedBlockHeight = task.slashStartEpoch
+		eth2BlockSyncerMetaData.DealedEpoch = task.slashStartEpoch
 		eth2BlockSyncerMetaData.MetaType = utils.MetaTypeEth2BlockSyncer
 
 		err = dao.UpOrInMetaData(task.db, eth2BlockSyncerMetaData)
@@ -409,7 +409,7 @@ func (task *Task) syncEth2BlockHandler() {
 			return
 		case <-ticker.C:
 			logrus.Debug("syncEth2Block start -----------")
-			err := task.syncEth2Block()
+			err := task.syncSlashEvent()
 			if err != nil {
 				logrus.Warnf("syncEth2Block err: %s", err)
 				time.Sleep(utils.RetryInterval)
