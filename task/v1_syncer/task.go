@@ -48,7 +48,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		taskTicker:       10,
 		stop:             make(chan struct{}),
 		db:               dao,
-		rewardStartEpoch: cfg.RewardStartEpoch,
+		rewardStartEpoch: cfg.Mock.RewardStartEpoch,
 		eth1Endpoint:     cfg.Eth1Endpoint,
 		eth2Endpoint:     cfg.Eth2Endpoint,
 

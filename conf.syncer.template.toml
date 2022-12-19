@@ -14,3 +14,7 @@ name = "eth2_dev"  # the database this server used
 port = "3306"
 pwd = "123456"     # mysql password
 user = "root"      # mysql username
+
+[mock] # for dev
+eth1MainnetEndpoint = "xxx"
+rewardStartEpoch = 159000 ## for init dealedEpoch of balance syncer 

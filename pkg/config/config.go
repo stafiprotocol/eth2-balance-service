@@ -19,7 +19,6 @@ type Config struct {
 	KeystorePath        string
 	GasLimit            string
 	MaxGasPrice         string
-	RewardStartEpoch    uint64 // used for fetch history balance info by syncer
 	RewardEpochInterval uint64
 	Version             string
 	EnableDistribute    bool
@@ -30,6 +29,13 @@ type Config struct {
 	Contracts Contracts
 
 	Db Db
+
+	Mock Mock
+}
+
+type Mock struct {
+	Eth1MainnetEndpoint string // used for dev
+	RewardStartEpoch    uint64 // used for fetch history balance info by syncer
 }
 
 type Contracts struct {

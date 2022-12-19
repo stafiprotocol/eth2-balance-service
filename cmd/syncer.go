@@ -43,13 +43,17 @@ func startSyncerCmd() *cobra.Command {
 			}
 			logrus.Infof(
 				`syncer config info:
-	logFilePath: %s
-	logLevel: %s
-	eth1Endpoint: %s
-	eth2Endpoint: %s
-	slashStartEpoch: %d
-	storageAddress:%s`,
-				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.SlashStartEpoch, cfg.Contracts.StorageContractAddress)
+  version: %s
+  logFilePath: %s
+  logLevel: %s
+  eth1Endpoint: %s
+  eth2Endpoint: %s
+  slashStartEpoch: %d
+  storageAddress:%s
+  mock:
+    eth1MainnetEndpoint: %s
+    rewardStartEpoch: %d`,
+				cfg.Version, cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.SlashStartEpoch, cfg.Contracts.StorageContractAddress, cfg.Mock.Eth1MainnetEndpoint, cfg.Mock.RewardStartEpoch)
 
 			err = log.InitLogFile(cfg.LogFilePath + "/syncer")
 			if err != nil {

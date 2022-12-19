@@ -13,7 +13,7 @@ type ProposedBlock struct {
 	Slot uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:slot;uinqueIndex"`
 
 	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index"`
-	FeeRecipient   string `gorm:"type:varchar(40) not null;default:'';column:fee_recipient"` // 0x prefix
+	FeeRecipient   string `gorm:"type:varchar(42) not null;default:'';column:fee_recipient"` // 0x prefix
 	FeeAmount      string `gorm:"type:varchar(40) not null;default:'0';column:fee_amount"`
 }
 

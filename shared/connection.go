@@ -297,7 +297,7 @@ func (c *Connection) GetValidatorStatusByIndex(index string, opts *beacon.Valida
 		status, err := c.eth2Client.GetValidatorStatusByIndex(index, opts)
 		if err != nil {
 			retErr = err
-			logrus.Warnf("eth2Client.GetBeaconBlock err: %s", err)
+			logrus.Warnf("eth2Client.GetValidatorStatusByIndex err: %s", err)
 			time.Sleep(waitInterval)
 			continue
 		}

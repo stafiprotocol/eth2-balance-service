@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	deposit_contract "github.com/stafiprotocol/reth/bindings/DepositContract"
 	light_node "github.com/stafiprotocol/reth/bindings/LightNode"
@@ -36,11 +38,11 @@ type Task struct {
 	storageContractAddress common.Address
 	rewardEpochInterval    uint64
 	version                string
-	// used for dev mode
-	rewardStartEpoch uint64
 	// for eth2 block syncer
 	slashStartEpoch uint64
 
+	// used for dev mode
+	mock mock
 	// need init on start
 	db                      *db.WrapDb
 	connection              *shared.Connection
@@ -58,6 +60,13 @@ type Task struct {
 	rewardSlotInterval uint64
 }
 
+type mock struct {
+	rewardStartEpoch    uint64
+	eth1MainnetEndpoint string
+
+	eth1MainnetClient ethclient.Client
+}
+
 func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("contracts address fmt err")
@@ -72,16 +81,11 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		return nil, fmt.Errorf("unsupport version: %s", cfg.Version)
 	}
 
-	eth1StartHeight := utils.Eth1StartHeight
-	if cfg.Version == utils.Dev {
-		eth1StartHeight = 0
-	}
-
 	s := &Task{
 		taskTicker:      10,
 		stop:            make(chan struct{}),
 		db:              dao,
-		eth1StartHeight: eth1StartHeight,
+		eth1StartHeight: utils.Eth1StartHeight,
 		eth1Endpoint:    cfg.Eth1Endpoint,
 		eth2Endpoint:    cfg.Eth2Endpoint,
 
@@ -89,10 +93,14 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 		version:                cfg.Version,
 		slashStartEpoch:        cfg.SlashStartEpoch,
+		mock:                   mock{},
 	}
 
 	if cfg.Version == utils.Dev {
-		s.rewardStartEpoch = cfg.RewardStartEpoch
+		s.mock.rewardStartEpoch = cfg.Mock.RewardStartEpoch
+		s.mock.eth1MainnetEndpoint = cfg.Mock.Eth1MainnetEndpoint
+
+		s.eth1StartHeight = 0
 	}
 
 	return s, nil
@@ -119,6 +127,14 @@ func (task *Task) Start() error {
 	}
 
 	task.rewardSlotInterval = utils.SlotInterval(task.eth2Config, task.rewardEpochInterval)
+
+	if task.version == utils.Dev {
+		client, err := ethclient.Dial(task.mock.eth1MainnetEndpoint)
+		if err != nil {
+			return errors.Wrap(err, "ethclient.Dial")
+		}
+		task.mock.eth1MainnetClient = *client
+	}
 
 	utils.SafeGoWithRestart(task.syncEth1EventHandler)
 	utils.SafeGoWithRestart(task.syncEth2ValidatorHandler)
@@ -265,8 +281,8 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 			}
 			// will init if meta data not exist
 			meta.MetaType = utils.MetaTypeEth2BalanceSyncer
-			if task.rewardStartEpoch > 0 {
-				meta.DealedEpoch = task.rewardStartEpoch - 1
+			if task.mock.rewardStartEpoch > 0 {
+				meta.DealedEpoch = task.mock.rewardStartEpoch - 1
 			}
 			err = dao.UpOrInMetaData(task.db, meta)
 			if err != nil {
@@ -335,7 +351,7 @@ func (task *Task) syncEth1EventHandler() {
 				retry++
 				continue
 			}
-			logrus.Debug("syncEth1Event end -----------\n")
+			logrus.Debug("syncEth1Event end -----------")
 
 			logrus.Debug("syncPooInfo start -----------")
 			err = task.syncPooInfo()
@@ -345,7 +361,7 @@ func (task *Task) syncEth1EventHandler() {
 				retry++
 				continue
 			}
-			logrus.Debug("syncPooInfo end -----------\n")
+			logrus.Debug("syncPooInfo end -----------")
 
 			retry = 0
 		}
@@ -376,7 +392,7 @@ func (task *Task) syncEth2ValidatorHandler() {
 				retry++
 				continue
 			}
-			logrus.Debug("syncValidatorLatestInfo end -----------\n")
+			logrus.Debug("syncValidatorLatestInfo end -----------")
 
 			logrus.Debug("syncValidatorEpochBalances start -----------")
 			err = task.syncValidatorEpochBalances()
@@ -386,7 +402,7 @@ func (task *Task) syncEth2ValidatorHandler() {
 				retry++
 				continue
 			}
-			logrus.Debug("syncValidatorEpochBalances end -----------\n")
+			logrus.Debug("syncValidatorEpochBalances end -----------")
 
 			retry = 0
 		}
@@ -408,25 +424,25 @@ func (task *Task) syncEth2BlockHandler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
-			logrus.Debug("syncEth2Block start -----------")
+			logrus.Debug("syncSlashEvent start -----------")
 			err := task.syncSlashEvent()
 			if err != nil {
-				logrus.Warnf("syncEth2Block err: %s", err)
+				logrus.Warnf("syncSlashEvent err: %s , will retry", err.Error())
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("syncEth2Block end -----------\n")
+			logrus.Debug("syncSlashEvent end -----------")
 
 			logrus.Debug("syncSlashEventEndSlotInfo start -----------")
 			err = task.syncSlashEventEndSlotInfo()
 			if err != nil {
-				logrus.Warnf("syncSlashEventEndSlotInfo err: %s", err)
+				logrus.Warnf("syncSlashEventEndSlotInfo err: %s", err.Error())
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("syncSlashEventEndSlotInfo end -----------\n")
+			logrus.Debug("syncSlashEventEndSlotInfo end -----------")
 
 			retry = 0
 		}

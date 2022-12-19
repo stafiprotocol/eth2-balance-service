@@ -27,26 +27,31 @@ func TestStatus(t *testing.T) {
 	// pubkey, err := types.HexToValidatorPubkey("b427ea30366336e4632d327428fac24ac3016534b18e0e39f5c2c4fffaa35656f982fba8e636599ae54b6f148a90a8e9")
 	// pubkey, err := types.HexToValidatorPubkey("ae9d34a72d6d16c17e3703a12eeaa45063128046055516f0611a337caaea7cf823e1ae8c9298154c325fc10fcb279d42")
 	// pubkey, err := types.HexToValidatorPubkey("b3ea762c11ef4548d7c2a1a707f69cf68a1f1b7fc63c7dcb414d6a7ab722e2155d7e3ac3b601abdb98e158ca6035e9c4")
-	pubkey, err := types.HexToValidatorPubkey("800003d8af8aa481646da46d0d00ed2659a5bb303e0d88edf468abc1259a1f23ccf12eaeaa3f80511cfeaf256904a72a")
+	pubkey, err := types.HexToValidatorPubkey("8d7425d483dbfd069a5779b2746ad3eef0ca5c0145404b8aa24d1a1c42597fd914d63697fe4acd7166eacffef5e304ea")
 	if err != nil {
 		t.Fatal(err)
 	}
-	// startSlot := uint64(6668)
-	endSlot := uint64(5304588)
-	// startStatus, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
-	// 	Slot: &startSlot,
-	// })
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// t.Logf("%+v", startStatus)
-	endStatus, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
-		Slot: &endSlot,
+	epoch1 := uint64(167680)
+	epoch2 := uint64(167679)
+	epoch3 := uint64(167678)
+	startStatus1, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
+		Epoch: &epoch1,
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("%+v", endStatus)
+
+	t.Logf("%+v", startStatus1.Balance)
+	startStatus2, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
+		Epoch: &epoch2,
+	})
+
+	t.Logf("%+v", startStatus2.Balance)
+	startStatus3, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
+		Epoch: &epoch3,
+	})
+
+	t.Logf("%+v", startStatus3.Balance)
+	reward1 := startStatus1.Balance - startStatus2.Balance
+	reward2 := startStatus2.Balance - startStatus3.Balance
+	t.Log(reward1, reward2, (reward1-reward2)/6)
 
 }
 
