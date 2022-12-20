@@ -299,33 +299,7 @@ func (task *Task) saveProposerMissEvent(slot, epoch, proposer uint64) error {
 	slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
 	slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, slot)
 	slashEvent.SlashType = utils.SlashTypeProposerMiss
-
-	// cal slash amount, here we use preblock's income as slash block
-	preBlock, exist, err := task.connection.GetBeaconBlock(fmt.Sprintf("%d", slot-1))
-	if err != nil {
-		return errors.Wrap(err, "GetBeaconBlock")
-	}
-	if !exist {
-		return fmt.Errorf("preBlock  %d not exist ", slot-1)
-	}
-
-	statusThis, err := task.connection.GetValidatorStatusByIndex(fmt.Sprintf("%d", preBlock.ProposerIndex), &beacon.ValidatorStatusOptions{
-		Slot: &slot,
-	})
-	if err != nil {
-		return errors.Wrap(err, "GetValidatorStatusByIndex")
-	}
-
-	nextEpochSlot := slot + 32
-	statusAfterThis, err := task.connection.GetValidatorStatusByIndex(fmt.Sprintf("%d", preBlock.ProposerIndex), &beacon.ValidatorStatusOptions{
-		Slot: &nextEpochSlot,
-	})
-	if err != nil {
-		return errors.Wrap(err, "GetValidatorStatusByIndex")
-	}
-
-	slash := statusAfterThis.Balance - statusThis.Balance
-	slashEvent.SlashAmount = slash
+	slashEvent.SlashAmount = 0
 
 	err = dao.UpOrInSlashEvent(task.db, slashEvent)
 	if err != nil {
@@ -364,7 +338,7 @@ func (task *Task) saveSyncMissEvent(slot, epoch, valIndex uint64) error {
 	slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
 	slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, slot)
 	slashEvent.SlashType = utils.SlashTypeSyncMiss
-	slashEvent.SlashAmount = 12694
+	slashEvent.SlashAmount = 0
 
 	err = dao.UpOrInSlashEvent(task.db, slashEvent)
 	if err != nil {
@@ -490,6 +464,7 @@ func (task *Task) saveRecipientUnMatchEvent(slot, epoch uint64, beaconBlock *bea
 }
 
 func (task *Task) saveAttesterSlashEvent(slot, epoch, valIndex uint64) error {
+	willUseValIndex := valIndex
 	if task.version == utils.Dev {
 		list, err := dao.GetAllValidatorList(task.db)
 		if err != nil {
@@ -497,29 +472,46 @@ func (task *Task) saveAttesterSlashEvent(slot, epoch, valIndex uint64) error {
 		}
 		index := int(valIndex) % len(list)
 
-		valIndex = list[index].ValidatorIndex
+		willUseValIndex = list[index].ValidatorIndex
 	}
 
 	logrus.WithFields(logrus.Fields{
 		"slot":     slot,
 		"epoch":    epoch,
-		"valIndex": valIndex,
+		"valIndex": willUseValIndex,
 	}).Debug("saveAttesterSlashEvent")
 
-	slashEvent, err := dao.GetSlashEvent(task.db, valIndex, slot, utils.SlashTypeAttesterSlash)
+	slashEvent, err := dao.GetSlashEvent(task.db, willUseValIndex, slot, utils.SlashTypeAttesterSlash)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return errors.Wrap(err, "dao.GetSlashEvent")
 	}
-	slashEvent.ValidatorIndex = valIndex
+	slashEvent.ValidatorIndex = willUseValIndex
 	slashEvent.StartSlot = slot
 	slashEvent.Epoch = epoch
 	slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
 	slashEvent.SlashType = utils.SlashTypeAttesterSlash
-	if task.version == utils.Dev {
-		slashEvent.EndSlot = slot
-		slashEvent.EndTimestamp = slashEvent.StartTimestamp
-		slashEvent.SlashAmount = 100000000
+
+	validatorStart, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(valIndex), &beacon.ValidatorStatusOptions{
+		Slot: &slot,
+	})
+	if err != nil {
+		return err
 	}
+	endSlot := utils.SlotAt(task.eth2Config, epoch+1)
+	validatorEnd, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(valIndex), &beacon.ValidatorStatusOptions{
+		Slot: &endSlot,
+	})
+	if err != nil {
+		return err
+	}
+	slashAmount := uint64(0)
+	if validatorStart.Balance > validatorEnd.Balance {
+		slashAmount = validatorStart.Balance - validatorEnd.Balance
+	}
+
+	slashEvent.EndSlot = endSlot
+	slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
+	slashEvent.SlashAmount = slashAmount
 
 	err = dao.UpOrInSlashEvent(task.db, slashEvent)
 	if err != nil {
@@ -529,6 +521,7 @@ func (task *Task) saveAttesterSlashEvent(slot, epoch, valIndex uint64) error {
 }
 
 func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uint64) error {
+	willUseValIndex := proposerValidatorIndex
 	if task.version == utils.Dev {
 		list, err := dao.GetAllValidatorList(task.db)
 		if err != nil {
@@ -536,10 +529,10 @@ func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uin
 		}
 		index := int(proposerValidatorIndex) % len(list)
 
-		proposerValidatorIndex = list[index].ValidatorIndex
+		willUseValIndex = list[index].ValidatorIndex
 	}
 
-	slashEvent, err := dao.GetSlashEvent(task.db, proposerValidatorIndex, slot, utils.SlashTypeProposerSlash)
+	slashEvent, err := dao.GetSlashEvent(task.db, willUseValIndex, slot, utils.SlashTypeProposerSlash)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return errors.Wrap(err, "dao.GetSlashEvent")
 	}
@@ -547,19 +540,37 @@ func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uin
 	logrus.WithFields(logrus.Fields{
 		"slot":     slot,
 		"epoch":    epoch,
-		"valIndex": proposerValidatorIndex,
+		"valIndex": willUseValIndex,
 	}).Debug("saveProposerSlashEvent")
 
-	slashEvent.ValidatorIndex = proposerValidatorIndex
+	slashEvent.ValidatorIndex = willUseValIndex
 	slashEvent.StartSlot = slot
 	slashEvent.Epoch = epoch
 	slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
 	slashEvent.SlashType = utils.SlashTypeProposerSlash
-	if task.version == utils.Dev {
-		slashEvent.EndSlot = slot
-		slashEvent.EndTimestamp = slashEvent.StartTimestamp
-		slashEvent.SlashAmount = 100000000
+
+	validatorStart, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(proposerValidatorIndex), &beacon.ValidatorStatusOptions{
+		Slot: &slot,
+	})
+	if err != nil {
+		return err
 	}
+	endSlot := utils.SlotAt(task.eth2Config, epoch+1)
+	validatorEnd, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(proposerValidatorIndex), &beacon.ValidatorStatusOptions{
+		Slot: &endSlot,
+	})
+	if err != nil {
+		return err
+	}
+	slashAmount := uint64(0)
+	if validatorStart.Balance > validatorEnd.Balance {
+		slashAmount = validatorStart.Balance - validatorEnd.Balance
+	}
+
+	slashEvent.EndSlot = endSlot
+	slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
+	slashEvent.SlashAmount = slashAmount
+
 	err = dao.UpOrInSlashEvent(task.db, slashEvent)
 	if err != nil {
 		return errors.Wrap(err, "dao.UpOrInSlashEvent")
@@ -570,7 +581,11 @@ func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uin
 // validator will be reduced eth until WithdrawableEpoch
 // so, we sync total slashed amount after WithdrawableEpoch
 func (task *Task) syncSlashEventEndSlotInfo() error {
-	slashEventList, err := dao.GetNoEndSlotSlashEventList(task.db)
+	if task.version == utils.Dev {
+		return nil
+	}
+
+	slashEventList, err := dao.GetProposerAttesterSlashEventList(task.db)
 	if err != nil {
 		return err
 	}
@@ -595,23 +610,33 @@ func (task *Task) syncSlashEventEndSlotInfo() error {
 		if err != nil {
 			return err
 		}
+		if !validatorNow.Slashed {
+			return fmt.Errorf("validator %d should slashed", slashEvent.ValidatorIndex)
+		}
 
-		if validatorNow.WithdrawableEpoch != uint64(math.MaxUint64) && validatorNow.WithdrawableEpoch >= beaconHead.Epoch {
-			continue
+		// ensure endEpoch <= withdrawableEpoch
+		endEpoch := beaconHead.FinalizedEpoch
+		if validatorNow.WithdrawableEpoch != uint64(math.MaxUint64) && validatorNow.WithdrawableEpoch < beaconHead.FinalizedEpoch {
+			endEpoch = validatorNow.WithdrawableEpoch
+		}
+		endSlot := utils.SlotAt(task.eth2Config, endEpoch)
+
+		// already dealed
+		if slashEvent.EndSlot == endSlot {
+			return nil
 		}
 
 		// balance will be reduced at slash block utils withdrawable epoch
-		balanceStartSlot := slashEvent.StartSlot - 1
+		startSlot := slashEvent.StartSlot
 		validatorStart, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(slashEvent.ValidatorIndex), &beacon.ValidatorStatusOptions{
-			Slot: &balanceStartSlot,
+			Slot: &startSlot,
 		})
 		if err != nil {
 			return err
 		}
 
-		balanceEndSlot := utils.SlotAt(task.eth2Config, validatorNow.WithdrawableEpoch) + 1
 		validatorEnd, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(slashEvent.ValidatorIndex), &beacon.ValidatorStatusOptions{
-			Slot: &balanceEndSlot,
+			Slot: &endSlot,
 		})
 		if err != nil {
 			return err
@@ -622,8 +647,8 @@ func (task *Task) syncSlashEventEndSlotInfo() error {
 			slashAmount = validatorStart.Balance - validatorEnd.Balance
 		}
 
-		slashEvent.EndSlot = utils.SlotAt(task.eth2Config, validatorNow.WithdrawableEpoch)
-		slashEvent.EndTimestamp = utils.EpochTime(task.eth2Config, validatorNow.WithdrawableEpoch)
+		slashEvent.EndSlot = endSlot
+		slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
 		slashEvent.SlashAmount = slashAmount
 
 		err = dao.UpOrInSlashEvent(task.db, slashEvent)
