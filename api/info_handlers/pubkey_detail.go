@@ -5,6 +5,7 @@ package info_handlers
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -47,6 +48,7 @@ type SlashEvent struct {
 	EndBlock       uint64 `json:"endBlock"`
 	SlashAmount    string `json:"slashAmount"`
 	SlashType      uint8  `json:"slashType"`
+	ExplorerUrl    string `json:"explorerUrl"`
 }
 
 // @Summary pubkey detail
@@ -278,12 +280,24 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).Mul(utils.GweiDeci)
 
 	for _, slash := range slashList {
+		url := ""
+		switch slash.SlashType {
+		case utils.SlashTypeFeeRecipient:
+			url = "https://docs.stafi.io/rtoken-app/reth-solution/original-validator-guide#3.run-a-node-on-eth2-mainnet"
+		case utils.SlashTypeProposerSlash:
+			url = fmt.Sprintf("https://beaconcha.in/slot/%d#proposer-slashings", slash.StartSlot)
+		case utils.SlashTypeAttesterSlash:
+			url = fmt.Sprintf("https://beaconcha.in/slot/%d#attester-slashings", slash.StartSlot)
+		case utils.SlashTypeAttesterMiss:
+			url = fmt.Sprintf("https://beaconcha.in/validator/%d", slash.ValidatorIndex)
+		}
 		rsp.SlashEventList = append(rsp.SlashEventList, SlashEvent{
 			StartTimestamp: slash.StartTimestamp,
 			StartBlock:     slash.StartSlot,
 			EndBlock:       slash.EndSlot,
 			SlashAmount:    decimal.NewFromInt(int64(slash.SlashAmount)).Mul(utils.GweiDeci).StringFixed(0),
 			SlashType:      slash.SlashType,
+			ExplorerUrl:    url,
 		})
 	}
 	rsp.TotalCount = total

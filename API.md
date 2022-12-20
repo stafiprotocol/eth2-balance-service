@@ -184,6 +184,7 @@ slash : 51 52 53 54 55
 |         |                  | endBlock       | number      | Yes         | null        | end block                                                                    |
 |         |                  | slashAmount    | string      | Yes         | null        | decimal format string, slashed eth amount                                    |
 |         |                  | slashType      | number      | Yes         | null        | 1 fee recipient not match 2 proposer slash 3 attester slash  5 attester miss |
+|         |                  | explorerUrl    | string      | Yes         | null        | explorer url                                                                 |
 
 ## 4. pool data
 

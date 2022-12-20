@@ -583,6 +583,9 @@ const docTemplate = `{
                 "endBlock": {
                     "type": "integer"
                 },
+                "explorerUrl": {
+                    "type": "string"
+                },
                 "slashAmount": {
                     "type": "string"
                 },
