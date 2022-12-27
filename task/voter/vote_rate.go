@@ -207,6 +207,7 @@ func (task *Task) voteRate() error {
 				}).Warn("tx status")
 			}
 			time.Sleep(utils.RetryInterval)
+			retry++
 			continue
 		}
 	}

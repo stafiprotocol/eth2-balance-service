@@ -63,6 +63,7 @@ func (task *Task) distributeFeePool() error {
 				}).Warn("tx status")
 			}
 			time.Sleep(utils.RetryInterval)
+			retry++
 			continue
 		}
 	}
@@ -116,6 +117,7 @@ func (task *Task) distributeSuperNodeFeePool() error {
 				}).Warn("tx status")
 			}
 			time.Sleep(utils.RetryInterval)
+			retry++
 			continue
 		}
 	}

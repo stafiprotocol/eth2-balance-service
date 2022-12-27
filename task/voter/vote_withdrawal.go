@@ -262,6 +262,7 @@ func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error 
 				}).Warn("tx status")
 			}
 			time.Sleep(utils.RetryInterval)
+			retry++
 			continue
 		}
 	}
@@ -281,6 +282,7 @@ func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error 
 				"poolAddr": validator.PoolAddress,
 			}).Warn("GetWithdrawalCredentialsMatch")
 			time.Sleep(utils.RetryInterval)
+			retry++
 			continue
 		}
 		if !match {
@@ -289,6 +291,7 @@ func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error 
 				"poolAddr": validator.PoolAddress,
 			}).Warn("GetWithdrawalCredentialsMatch")
 			time.Sleep(utils.RetryInterval)
+			retry++
 			continue
 		}
 		break
@@ -348,6 +351,7 @@ func (task *Task) voteForLightNode(lightNodeContract *light_node.LightNode, vali
 				}).Warn("tx status")
 			}
 			time.Sleep(utils.RetryInterval)
+			retry++
 			continue
 		}
 	}
@@ -408,6 +412,7 @@ func (task *Task) voteForSuperNode(superNodeContract *super_node.SuperNode, vali
 				}).Warn("tx status")
 			}
 			time.Sleep(utils.RetryInterval)
+			retry++
 			continue
 		}
 	}
