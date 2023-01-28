@@ -84,10 +84,13 @@ func (task Task) getUserDepositAndReward(validatorBalance, nodeDepositAmount, sl
 		// slash related
 		userSlash, _, platformSlash := utils.GetUserNodePlatformReward(userDepositBalance, decimal.NewFromInt(int64(slashAmount)), task.platformFee, task.nodeFee)
 		nodeShouldPaySlash := userSlash.Add(platformSlash)
-		if nodeDepositAndReward.BigInt().Uint64() < slashAmount {
-			nodeShouldPaySlash = nodeDepositAndReward
+		nodeShouldPayUserSlash := decimal.Zero
+		if nodeShouldPaySlash.IsPositive() {
+			if nodeDepositAndReward.BigInt().Uint64() < slashAmount {
+				nodeShouldPaySlash = nodeDepositAndReward
+			}
+			nodeShouldPayUserSlash = nodeShouldPaySlash.Mul(userSlash).Div(nodeShouldPaySlash)
 		}
-		nodeShouldPayUserSlash := nodeShouldPaySlash.Mul(userSlash).Div(userSlash.Add(platformSlash))
 
 		return userDepositBalance + userReward.Add(nodeShouldPayUserSlash).BigInt().Uint64()
 	default:
