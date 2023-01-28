@@ -12,15 +12,15 @@ import (
 
 type SlashEvent struct {
 	db.BaseModel
-	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index;index"`
+	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index;uniqueIndex:uni_idx_slot_type"`
 
-	StartSlot      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:start_slot"` // slash event start slot
-	EndSlot        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:end_slot"`   // slash event end slot
+	StartSlot      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:start_slot;uniqueIndex:uni_idx_slot_type"` // slash event start slot
+	EndSlot        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:end_slot"`                                 // slash event end slot
 	Epoch          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:epoch"`
 	SlashAmount    uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:slash_amount"` // Gwei
 	StartTimestamp uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:start_timestamp"`
 	EndTimestamp   uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:end_timestamp"`
-	SlashType      uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:slash_type"` // 1 fee recipient 2 proposer slash 3 attester slash 4 sync miss 5 attestation miss 6 propose miss
+	SlashType      uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:slash_type;uniqueIndex:uni_idx_slot_type"` // 1 fee recipient 2 proposer slash 3 attester slash 4 sync miss 5 attestation miss 6 propose miss
 }
 
 func (f SlashEvent) TableName() string {
@@ -39,6 +39,13 @@ func GetSlashEvent(db *db.WrapDb, validatorIndex, startSlot uint64, slashType ui
 
 func GetProposerAttesterSlashEventList(db *db.WrapDb) (c []*SlashEvent, err error) {
 	err = db.Find(&c, "slash_type in (?, ?)", utils.SlashTypeProposerSlash, utils.SlashTypeAttesterSlash).Error
+	return
+}
+
+// used for dev mode
+func GetSlashEventListOfType(db *db.WrapDb, validatorIndex uint64, slashType uint8) (c []*SlashEvent, err error) {
+	err = db.Find(&c, "validator_index = ? and slash_type = ?",
+		validatorIndex, slashType).Error
 	return
 }
 

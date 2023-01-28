@@ -93,6 +93,14 @@ func (task *Task) syncSlashEvent() error {
 					if err == nil {
 						continue
 					}
+					slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeAttesterMiss)
+					if err != nil {
+						return errors.Wrap(err, "dao.GetSlashEvent")
+					} else {
+						if len(slashEventListThisType) > 0 {
+							continue
+						}
+					}
 
 					slashEvent.ValidatorIndex = validator.ValidatorIndex
 					slashEvent.StartSlot = startSlot
@@ -302,6 +310,14 @@ func (task *Task) saveProposerMissEvent(slot, epoch, proposer uint64) error {
 			if err == nil {
 				continue
 			}
+			slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeProposerMiss)
+			if err != nil {
+				return errors.Wrap(err, "dao.GetSlashEvent")
+			} else {
+				if len(slashEventListThisType) > 0 {
+					continue
+				}
+			}
 
 			slashEvent.ValidatorIndex = validator.ValidatorIndex
 			slashEvent.StartSlot = slot
@@ -362,6 +378,14 @@ func (task *Task) saveSyncMissEvent(slot, epoch, valIndex uint64) error {
 			}
 			if err == nil {
 				continue
+			}
+			slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeSyncMiss)
+			if err != nil {
+				return errors.Wrap(err, "dao.GetSlashEvent")
+			} else {
+				if len(slashEventListThisType) > 0 {
+					continue
+				}
 			}
 
 			slashEvent.ValidatorIndex = validator.ValidatorIndex
@@ -477,6 +501,14 @@ func (task *Task) saveRecipientUnMatchEvent(slot, epoch uint64, beaconBlock *bea
 			if err == nil {
 				continue
 			}
+			slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeFeeRecipient)
+			if err != nil {
+				return errors.Wrap(err, "dao.GetSlashEvent")
+			} else {
+				if len(slashEventListThisType) > 0 {
+					continue
+				}
+			}
 
 			feeAmountDeci, err := decimal.NewFromString(proposedBlock.FeeAmount)
 			if err != nil {
@@ -563,6 +595,14 @@ func (task *Task) saveAttesterSlashEvent(slot, epoch, valIndex uint64) error {
 			if err == nil {
 				continue
 			}
+			slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeAttesterSlash)
+			if err != nil {
+				return errors.Wrap(err, "dao.GetSlashEvent")
+			} else {
+				if len(slashEventListThisType) > 0 {
+					continue
+				}
+			}
 
 			slashEvent.ValidatorIndex = validator.ValidatorIndex
 			slashEvent.StartSlot = slot
@@ -643,6 +683,14 @@ func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uin
 			}
 			if err == nil {
 				continue
+			}
+			slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeProposerSlash)
+			if err != nil {
+				return errors.Wrap(err, "dao.GetSlashEvent")
+			} else {
+				if len(slashEventListThisType) > 0 {
+					continue
+				}
 			}
 
 			slashEvent.ValidatorIndex = validator.ValidatorIndex
