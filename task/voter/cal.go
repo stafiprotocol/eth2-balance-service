@@ -46,6 +46,9 @@ func (task *Task) getStakerEthInfoOfValidator(validator *dao.Validator, targetEp
 		if err != nil {
 			return 0, 0, err
 		}
+		if slashAmount > utils.StandardEffectiveBalance {
+			return 0, 0, fmt.Errorf("get validator slash amount failed: %d", slashAmount)
+		}
 
 		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount, slashAmount)
 		return userDepositBalance, userDepositAndReward, nil

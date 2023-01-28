@@ -28,13 +28,22 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return err
 	}
+	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
+	if err != nil {
+		return err
+	}
 	logrus.WithFields(logrus.Fields{
 		"targetEpoch":                  targetEpoch,
 		"eth2BalanceSyncerDealedEpoch": eth2BalanceSyncerMetaData.DealedEpoch,
+		"eth2BlockSyncerDealedEpoch":   eth2BlockSyncerMetaData.DealedEpoch,
 	}).Debug("epocheInfo")
 
 	// ensure eth2 balances have synced
 	if eth2BalanceSyncerMetaData.DealedEpoch < targetEpoch {
+		return nil
+	}
+	// ensure eth2 block have synced
+	if eth2BlockSyncerMetaData.DealedEpoch < targetEpoch {
 		return nil
 	}
 
