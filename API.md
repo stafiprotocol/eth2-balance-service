@@ -5,13 +5,14 @@
 response status code:
 
 ```go
-	codeSuccess          = "80000"
-	CodeParamParseErr    = "80001"
-	CodeSymbolErr        = "80002"
-	CodeInternalErr      = "80003"
-	CodeParamErr         = "80004"
-	CodePriceEmptyErr    = "80005"
-	CodeAddressNotExist  = "80005"
+	CodeParamParseErr            = "80001"
+	CodeSymbolErr                = "80002"
+	CodeInternalErr              = "80003"
+	CodeParamErr                 = "80004"
+	CodePriceEmptyErr            = "80005"
+	CodeAddressNotExist          = "80005"
+	CodeValidatorNotExist        = "80006"
+	CodeStakerUnstakingPlanExist = "80007"
 ```
 
 validator status detail:
@@ -360,3 +361,39 @@ no
 | message | N/A         | N/A     | string | Yes         | null        | status info                   |
 | data    | N/A         | N/A     | object | Yes         | null        | data                          |
 |         | leftSeconds | N/A     | number | Yes         | null        | staker unstaking left seconds |
+
+## 9. staker unstaking plan exist
+
+### (1) description
+
+* staker unstaking plan exist
+
+### (2) path
+
+* /reth/v1/staker/unstakingPlanExist
+
+### (3) request method
+
+* post
+
+### (4) request payload 
+
+* data format: application/json
+* data detail:
+
+| field         | type   | notice                     |
+| :------------ | :----- | :------------------------- |
+| stakerAddress | string | staker address, hex string |
+
+
+### (5) response
+* include status、data、message fields
+* status、message must be string format, data must be object
+
+
+| grade 1 | grade 2 | grade 3 | type   | must exist? | encode type | description                 |
+| :------ | :------ | :------ | :----- | :---------- | :---------- | :-------------------------- |
+| status  | N/A     | N/A     | string | Yes         | null        | status code                 |
+| message | N/A     | N/A     | string | Yes         | null        | status info                 |
+| data    | N/A     | N/A     | object | Yes         | null        | data                        |
+|         | exist   | N/A     | bool   | Yes         | null        | staker unstaking plan exist |

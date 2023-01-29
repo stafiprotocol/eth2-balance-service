@@ -299,6 +299,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/staker/unstakingPlanExist": {
+            "post": {
+                "description": "staker unstaking plan exit",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "unstaking plan exit",
+                "parameters": [
+                    {
+                        "description": "unstaking plan exist",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqUnstakingPlanExist"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspUnstakingPlanExist"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/staker/uploadUnstakingPlan": {
             "post": {
                 "description": "staker unstaking plan",
@@ -405,6 +451,15 @@ const docTemplate = `{
                 },
                 "pageIndex": {
                     "type": "integer"
+                }
+            }
+        },
+        "info_handlers.ReqUnstakingPlanExist": {
+            "type": "object",
+            "properties": {
+                "stakerAddress": {
+                    "description": "hex string",
+                    "type": "string"
                 }
             }
         },
@@ -661,6 +716,14 @@ const docTemplate = `{
                 "leftSeconds": {
                     "description": "staked waiting actived",
                     "type": "integer"
+                }
+            }
+        },
+        "info_handlers.RspUnstakingPlanExist": {
+            "type": "object",
+            "properties": {
+                "exist": {
+                    "type": "boolean"
                 }
             }
         },

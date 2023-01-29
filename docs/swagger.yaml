@@ -49,6 +49,12 @@ definitions:
       pageIndex:
         type: integer
     type: object
+  info_handlers.ReqUnstakingPlanExist:
+    properties:
+      stakerAddress:
+        description: hex string
+        type: string
+    type: object
   info_handlers.ReqUploadUnstakingPlan:
     properties:
       amount:
@@ -219,6 +225,11 @@ definitions:
       leftSeconds:
         description: staked waiting actived
         type: integer
+    type: object
+  info_handlers.RspUnstakingPlanExist:
+    properties:
+      exist:
+        type: boolean
     type: object
   info_handlers.SlashEvent:
     properties:
@@ -412,6 +423,33 @@ paths:
                   $ref: '#/definitions/info_handlers.RspUnstakingLeftSeconds'
               type: object
       summary: staker unstaking left seconds
+      tags:
+      - v1
+  /v1/staker/unstakingPlanExist:
+    post:
+      consumes:
+      - application/json
+      description: staker unstaking plan exit
+      parameters:
+      - description: unstaking plan exist
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqUnstakingPlanExist'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspUnstakingPlanExist'
+              type: object
+      summary: unstaking plan exit
       tags:
       - v1
   /v1/staker/uploadUnstakingPlan:

@@ -32,6 +32,7 @@ func InitRouters(db *db.WrapDb, unstakingStartTimestamp uint64) http.Handler {
 	router.GET("/reth/v1/gasPrice", infoHandler.HandleGetGasPrice)
 
 	router.POST("/reth/v1/staker/uploadUnstakingPlan", infoHandler.HandlePostUploadUnstakingPlan)
+	router.POST("/reth/v1/staker/unstakingPlanExist", infoHandler.HandlePostUnstakingPlanExist)
 	router.GET("/reth/v1/staker/unstakingLeftSeconds", infoHandler.HandleGetUnstakingLeftSeconds)
 
 	return router
