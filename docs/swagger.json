@@ -260,6 +260,38 @@
                 }
             }
         },
+        "/v1/staker/unstakingLeftSeconds": {
+            "get": {
+                "description": "unstaking left seconds",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "staker unstaking left seconds",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspUnstakingLeftSeconds"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/staker/uploadUnstakingPlan": {
             "post": {
                 "description": "staker unstaking plan",
@@ -613,6 +645,15 @@
                 },
                 "totalStakedEth": {
                     "type": "string"
+                }
+            }
+        },
+        "info_handlers.RspUnstakingLeftSeconds": {
+            "type": "object",
+            "properties": {
+                "leftSeconds": {
+                    "description": "staked waiting actived",
+                    "type": "integer"
                 }
             }
         },

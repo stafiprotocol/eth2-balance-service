@@ -21,6 +21,8 @@ type ReqUploadUnstakingPlan struct {
 	Amount        string `json:"amount"`
 }
 
+// UnstakingLeftDay uint64 `json:"unstakingLeftDay"`
+
 // @Summary unstaking plan
 // @Description staker unstaking plan
 // @Tags v1

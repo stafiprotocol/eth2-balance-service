@@ -42,8 +42,9 @@ func startApiCmd() *cobra.Command {
 				`api config info ->
 	logFilePath: %s
 	logLevel: %s
-	listenAddress: %s`,
-				cfg.LogFilePath, logLevelStr, cfg.ListenAddr)
+	listenAddress: %s
+	unstakingStartTimestamp: %d`,
+				cfg.LogFilePath, logLevelStr, cfg.ListenAddr, cfg.UnstakingStartTimestamp)
 
 			err = log.InitLogFile(cfg.LogFilePath + "/api")
 			if err != nil {

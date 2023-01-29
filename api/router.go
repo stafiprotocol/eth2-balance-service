@@ -13,7 +13,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func InitRouters(db *db.WrapDb) http.Handler {
+func InitRouters(db *db.WrapDb, unstakingStartTimestamp uint64) http.Handler {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
@@ -22,7 +22,7 @@ func InitRouters(db *db.WrapDb) http.Handler {
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	infoHandler := info_handlers.NewHandler(db)
+	infoHandler := info_handlers.NewHandler(db, unstakingStartTimestamp)
 	router.POST("/reth/v1/nodeInfo", infoHandler.HandlePostNodeInfo)
 	router.POST("/reth/v1/rewardInfo", infoHandler.HandlePostRewardInfo)
 	router.POST("/reth/v1/pubkeyDetail", infoHandler.HandlePostPubkeyDetail)
@@ -32,6 +32,7 @@ func InitRouters(db *db.WrapDb) http.Handler {
 	router.GET("/reth/v1/gasPrice", infoHandler.HandleGetGasPrice)
 
 	router.POST("/reth/v1/staker/uploadUnstakingPlan", infoHandler.HandlePostUploadUnstakingPlan)
+	router.GET("/reth/v1/staker/unstakingLeftSeconds", infoHandler.HandleGetUnstakingLeftSeconds)
 
 	return router
 

@@ -214,6 +214,12 @@ definitions:
       totalStakedEth:
         type: string
     type: object
+  info_handlers.RspUnstakingLeftSeconds:
+    properties:
+      leftSeconds:
+        description: staked waiting actived
+        type: integer
+    type: object
   info_handlers.SlashEvent:
     properties:
       endBlock:
@@ -388,6 +394,24 @@ paths:
                   $ref: '#/definitions/info_handlers.RspRewardInfo'
               type: object
       summary: reward info
+      tags:
+      - v1
+  /v1/staker/unstakingLeftSeconds:
+    get:
+      description: unstaking left seconds
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspUnstakingLeftSeconds'
+              type: object
+      summary: staker unstaking left seconds
       tags:
       - v1
   /v1/staker/uploadUnstakingPlan:

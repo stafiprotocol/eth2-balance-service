@@ -23,7 +23,7 @@ func NewServer(cfg *config.Config, dao *db.WrapDb) (*Server, error) {
 		db:         dao,
 	}
 
-	handler := s.InitHandler()
+	handler := s.InitHandler(cfg.UnstakingStartTimestamp)
 
 	s.httpServer = &http.Server{
 		Addr:         s.listenAddr,
@@ -35,8 +35,8 @@ func NewServer(cfg *config.Config, dao *db.WrapDb) (*Server, error) {
 	return s, nil
 }
 
-func (svr *Server) InitHandler() http.Handler {
-	return api.InitRouters(svr.db)
+func (svr *Server) InitHandler(unstakingStartTimestamp uint64) http.Handler {
+	return api.InitRouters(svr.db, unstakingStartTimestamp)
 }
 
 func (svr *Server) ApiServer() {

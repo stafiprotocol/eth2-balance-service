@@ -11,18 +11,19 @@ import (
 )
 
 type Config struct {
-	ListenAddr          string
-	Eth1Endpoint        string // url for eth1 rpc endpoint
-	Eth2Endpoint        string // url for eth2 rpc endpoint
-	LogFilePath         string
-	From                string // address of voter
-	KeystorePath        string
-	GasLimit            string
-	MaxGasPrice         string
-	RewardEpochInterval uint64
-	Version             string
-	EnableDistribute    bool
-	SlashStartEpoch     uint64 // used for eth2block syncer
+	ListenAddr              string
+	Eth1Endpoint            string // url for eth1 rpc endpoint
+	Eth2Endpoint            string // url for eth2 rpc endpoint
+	LogFilePath             string
+	From                    string // address of voter
+	KeystorePath            string
+	GasLimit                string
+	MaxGasPrice             string
+	RewardEpochInterval     uint64
+	Version                 string
+	EnableDistribute        bool
+	SlashStartEpoch         uint64 // used for eth2block syncer
+	UnstakingStartTimestamp uint64 // used for eth2block syncer
 
 	EraCount uint64 // used for statistic
 

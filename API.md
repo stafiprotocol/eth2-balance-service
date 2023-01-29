@@ -329,3 +329,34 @@ no
 | status  | N/A     | N/A     | string | Yes         | null        | status code |
 | message | N/A     | N/A     | string | Yes         | null        | status info |
 | data    | N/A     | N/A     | object | Yes         | null        | data        |
+
+
+## 8. unstaking left time
+
+### (1) description
+
+*  get pool data
+
+### (2) path
+
+* /reth/v1/staker/unstakingLeftSeconds
+
+### (3) request method
+
+* get
+
+### (4) request payload 
+
+no
+
+### (5) response
+* include status、data、message fields
+* status、message must be string format, data must be object
+
+
+| grade 1 | grade 2     | grade 3 | type   | must exist? | encode type | description                   |
+| :------ | :---------- | :------ | :----- | :---------- | :---------- | :---------------------------- |
+| status  | N/A         | N/A     | string | Yes         | null        | status code                   |
+| message | N/A         | N/A     | string | Yes         | null        | status info                   |
+| data    | N/A         | N/A     | object | Yes         | null        | data                          |
+|         | leftSeconds | N/A     | number | Yes         | null        | staker unstaking left seconds |
