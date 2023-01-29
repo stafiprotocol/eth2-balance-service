@@ -294,3 +294,38 @@ no
 | message | N/A        | N/A     | string      | Yes         | null        | status info |
 | data    | N/A        | N/A     | object      | Yes         | null        | data        |
 |         | statusList | N/A     | number list | Yes         | null        | see notice  |
+## 7. upload staker unstaking plan
+
+### (1) description
+
+* upload staker unstaking plan
+
+### (2) path
+
+* /reth/v1/staker/uploadUnstakingPlan
+
+### (3) request method
+
+* post
+
+### (4) request payload 
+
+* data format: application/json
+* data detail:
+
+| field         | type   | notice                             |
+| :------------ | :----- | :--------------------------------- |
+| stakerAddress | string | staker address, hex string         |
+| amount        | string | reth amount, decimal format string |
+
+
+### (5) response
+* include status、data、message fields
+* status、message must be string format, data must be object
+
+
+| grade 1 | grade 2 | grade 3 | type   | must exist? | encode type | description |
+| :------ | :------ | :------ | :----- | :---------- | :---------- | :---------- |
+| status  | N/A     | N/A     | string | Yes         | null        | status code |
+| message | N/A     | N/A     | string | Yes         | null        | status info |
+| data    | N/A     | N/A     | object | Yes         | null        | data        |

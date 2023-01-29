@@ -49,6 +49,14 @@ definitions:
       pageIndex:
         type: integer
     type: object
+  info_handlers.ReqUploadUnstakingPlan:
+    properties:
+      amount:
+        type: string
+      stakerAddress:
+        description: hex string
+        type: string
+    type: object
   info_handlers.ResPubkey:
     properties:
       pubkey:
@@ -380,6 +388,28 @@ paths:
                   $ref: '#/definitions/info_handlers.RspRewardInfo'
               type: object
       summary: reward info
+      tags:
+      - v1
+  /v1/staker/uploadUnstakingPlan:
+    post:
+      consumes:
+      - application/json
+      description: staker unstaking plan
+      parameters:
+      - description: unstaking plan
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqUploadUnstakingPlan'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Rsp'
+      summary: unstaking plan
       tags:
       - v1
 swagger: "2.0"

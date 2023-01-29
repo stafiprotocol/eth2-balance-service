@@ -31,6 +31,8 @@ func InitRouters(db *db.WrapDb) http.Handler {
 	router.GET("/reth/v1/poolData", infoHandler.HandleGetPoolData)
 	router.GET("/reth/v1/gasPrice", infoHandler.HandleGetGasPrice)
 
+	router.POST("/reth/v1/staker/uploadUnstakingPlan", infoHandler.HandlePostUploadUnstakingPlan)
+
 	return router
 
 }

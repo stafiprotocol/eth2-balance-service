@@ -266,6 +266,40 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/staker/uploadUnstakingPlan": {
+            "post": {
+                "description": "staker unstaking plan",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "unstaking plan",
+                "parameters": [
+                    {
+                        "description": "unstaking plan",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqUploadUnstakingPlan"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Rsp"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -339,6 +373,18 @@ const docTemplate = `{
                 },
                 "pageIndex": {
                     "type": "integer"
+                }
+            }
+        },
+        "info_handlers.ReqUploadUnstakingPlan": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "stakerAddress": {
+                    "description": "hex string",
+                    "type": "string"
                 }
             }
         },
