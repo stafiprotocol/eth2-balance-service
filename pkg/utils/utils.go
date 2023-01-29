@@ -237,10 +237,13 @@ func ReadLastLine(filePath string) (string, error) {
 	}
 	for {
 		cursor -= 1
-		f.Seek(cursor, io.SeekEnd)
+		_, err := f.Seek(cursor, io.SeekEnd)
+		if err != nil {
+			return "", fmt.Errorf("seek file err: %s", err)
+		}
 
 		char := make([]byte, 1)
-		_, err := f.Read(char)
+		_, err = f.Read(char)
 		if err != nil {
 			return "", fmt.Errorf("read file err: %s", err)
 		}

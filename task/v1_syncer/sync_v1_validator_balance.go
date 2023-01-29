@@ -13,6 +13,7 @@ import (
 
 const fetchValidatorStatusLimit = 50
 
+// nolint
 func (task *Task) syncV1ValidatorEpochBalances() error {
 	finalEpoch := utils.V1EndEpoch
 
@@ -20,7 +21,7 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("final epoch: %d, dealedEpoch: %s", finalEpoch, metaData.DealedEpoch)
+	logrus.Debugf("final epoch: %d, dealedEpoch: %d", finalEpoch, metaData.DealedEpoch)
 	// no need fetch new balance
 	if finalEpoch <= metaData.DealedEpoch {
 		return nil
