@@ -758,7 +758,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "type": "integer"
+                    "type": "string"
                 }
             }
         }

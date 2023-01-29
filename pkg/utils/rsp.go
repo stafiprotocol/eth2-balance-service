@@ -15,7 +15,7 @@ const (
 )
 
 type Rsp struct {
-	Status  int64       `json:"status"`
+	Status  string      `json:"status"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
 }

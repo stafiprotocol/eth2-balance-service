@@ -252,7 +252,7 @@ definitions:
       message:
         type: string
       status:
-        type: integer
+        type: string
     type: object
 host: localhost:8083
 info:
