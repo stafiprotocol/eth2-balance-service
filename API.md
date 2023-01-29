@@ -331,11 +331,11 @@ no
 | data    | N/A     | N/A     | object | Yes         | null        | data        |
 
 
-## 8. unstaking left time
+## 8. staker unstaking left seconds
 
 ### (1) description
 
-*  get pool data
+*  get unstaking left seconds
 
 ### (2) path
 
