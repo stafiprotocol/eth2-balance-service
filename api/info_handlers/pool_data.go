@@ -5,6 +5,7 @@ package info_handlers
 
 import (
 	"sort"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -144,38 +145,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	rsp.EthPrice = ethPrice
 
 	// cal staker apr
-	rateInfoList, err := dao.GetLatestRateInfoList(h.db)
-	if err != nil {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao.GetLatestRateInfoList err: %s", err)
-		return
-	}
-	if len(rateInfoList) >= 2 {
-		first := rateInfoList[0]
-		end := rateInfoList[len(rateInfoList)-1]
-
-		firstRateDeci, err := decimal.NewFromString(first.REthRate)
-		if err != nil {
-			utils.Err(c, utils.CodeInternalErr, err.Error())
-			logrus.Errorf("decimal.NewFromString(first.REthRate) err: %s", err)
-			return
-		}
-
-		endRateDeci, err := decimal.NewFromString(end.REthRate)
-		if err != nil {
-			utils.Err(c, utils.CodeInternalErr, err.Error())
-			logrus.Errorf("decimal.NewFromString(end.REthRate) err: %s", err)
-			return
-		}
-
-		du := int64(first.Timestamp - end.Timestamp)
-
-		apyDeci := firstRateDeci.Sub(endRateDeci).
-			Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
-			Div(decimal.NewFromInt(du)).
-			Div(endRateDeci)
-		rsp.StakeApr, _ = apyDeci.Float64()
-	}
+	rsp.StakeApr = dao.MustCalStakeApy(h.db, time.Now().Unix()).InexactFloat64()
 
 	// cal validator apr
 	if len(activeValidator) != 0 {

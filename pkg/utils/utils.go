@@ -261,3 +261,5 @@ func ReadLastLine(filePath string) (string, error) {
 
 	return line, nil
 }
+
+var OneWeekSeconds = 7 * 24 * 60 * 60
