@@ -311,6 +311,14 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 		if err != nil {
 			return err
 		}
+	} else {
+		if task.slashStartEpoch > eth2BlockSyncerMetaData.DealedEpoch {
+			eth2BlockSyncerMetaData.DealedEpoch = task.slashStartEpoch
+			err = dao.UpOrInMetaData(task.db, eth2BlockSyncerMetaData)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
