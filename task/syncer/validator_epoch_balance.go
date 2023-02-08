@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
@@ -98,7 +99,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 				Epoch: &epoch,
 			})
 			if err != nil {
-				return err
+				return errors.Wrap(err, "syncValidatorEpochBalances GetValidatorStatuses failed")
 			}
 		default:
 			return fmt.Errorf("unsupported version %s", task.version)

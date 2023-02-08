@@ -41,7 +41,7 @@ const (
 	RequestValidatorProposerDuties   = "/eth/v1/validator/duties/proposer/%s"
 	RequestSyncCommittees            = "/eth/v1/beacon/states/%s/sync_committees"
 
-	MaxRequestValidatorsCount = 100
+	MaxRequestValidatorsCount = 50
 )
 
 var (
@@ -791,7 +791,7 @@ func (c *StandardHttpClient) getValidatorsByOpts(pubkeysOrIndices []string, opts
 			}
 			validators, err = c.getValidators(stateId, batch)
 			if err != nil {
-				time.Sleep(time.Second * 1)
+				time.Sleep(time.Millisecond * 200)
 				retry++
 				continue
 			}

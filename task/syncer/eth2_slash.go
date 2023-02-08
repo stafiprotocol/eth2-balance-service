@@ -132,7 +132,7 @@ func (task *Task) syncSlashEvent() error {
 				Epoch: &willUseEpoch,
 			})
 			if err != nil {
-				return err
+				return errors.Wrap(err, "syncSlashEvent GetValidatorStatuses failed")
 			}
 
 			preEpoch := willUseEpoch - 1
@@ -140,7 +140,7 @@ func (task *Task) syncSlashEvent() error {
 				Epoch: &preEpoch,
 			})
 			if err != nil {
-				return err
+				return errors.Wrap(err, "syncSlashEvent GetValidatorStatuses preEpoch failed")
 			}
 
 			for pubkey, status := range validatorsStatus {
