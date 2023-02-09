@@ -21,7 +21,7 @@ type RspUnstakingLeftSeconds struct {
 // @Success 200 {object} utils.Rsp{data=RspUnstakingLeftSeconds}
 // @Router /v1/staker/unstakingLeftSeconds [get]
 func (h *Handler) HandleGetUnstakingLeftSeconds(c *gin.Context) {
-	leftSeconds := int64(h.unstakingStartTimestamp) - time.Now().Unix()
+	leftSeconds := int64(utils.UnstakingStartTimestamp) - time.Now().Unix()
 	if leftSeconds <= 0 {
 		leftSeconds = 0
 	}

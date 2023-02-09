@@ -59,3 +59,11 @@ func TestFilterLogs(t *testing.T) {
 	}
 	t.Log(len(logs))
 }
+
+func TestGetApy(t *testing.T) {
+	apys, err := utils.GetApyFromStafiInfo("https://rtoken-api2.stafi.io")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(apys)
+}

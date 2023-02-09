@@ -5,7 +5,6 @@ package info_handlers
 
 import (
 	"sort"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -125,8 +124,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 			matchedValidatorsNum += 1
 
 		default:
-			utils.Err(c, utils.CodeInternalErr, "node status not supported")
-			return
 		}
 	}
 
@@ -145,7 +142,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	rsp.EthPrice = ethPrice
 
 	// cal staker apr
-	rsp.StakeApr = dao.MustCalStakeApy(h.db, time.Now().Unix()).InexactFloat64()
+	rsp.StakeApr = utils.REthTotalApy
 
 	// cal validator apr
 	if len(activeValidator) != 0 {

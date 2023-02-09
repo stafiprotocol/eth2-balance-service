@@ -8,10 +8,9 @@ import (
 )
 
 type Handler struct {
-	db                      *db.WrapDb
-	unstakingStartTimestamp uint64
+	db *db.WrapDb
 }
 
-func NewHandler(db *db.WrapDb, unstakingStartTimestamp uint64) *Handler {
-	return &Handler{db: db, unstakingStartTimestamp: unstakingStartTimestamp}
+func NewHandler(db *db.WrapDb) *Handler {
+	return &Handler{db: db}
 }

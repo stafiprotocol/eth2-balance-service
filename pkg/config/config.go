@@ -24,6 +24,7 @@ type Config struct {
 	EnableDistribute        bool
 	SlashStartEpoch         uint64 // used for eth2block syncer
 	UnstakingStartTimestamp uint64 // used for eth2block syncer
+	StafiInfoEndpoint       string // used for api
 
 	EraCount uint64 // used for statistic
 

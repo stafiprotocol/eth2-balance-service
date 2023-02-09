@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -12,18 +13,22 @@ import (
 )
 
 type Server struct {
-	listenAddr string
+	listenAddr        string
+	stafiInfoEndpoint string
+
 	httpServer *http.Server
 	db         *db.WrapDb
 }
 
 func NewServer(cfg *config.Config, dao *db.WrapDb) (*Server, error) {
 	s := &Server{
-		listenAddr: cfg.ListenAddr,
-		db:         dao,
+		listenAddr:        cfg.ListenAddr,
+		stafiInfoEndpoint: cfg.StafiInfoEndpoint,
+		db:                dao,
 	}
+	utils.UnstakingStartTimestamp = cfg.UnstakingStartTimestamp
 
-	handler := s.InitHandler(cfg.UnstakingStartTimestamp)
+	handler := s.InitHandler()
 
 	s.httpServer = &http.Server{
 		Addr:         s.listenAddr,
@@ -35,8 +40,8 @@ func NewServer(cfg *config.Config, dao *db.WrapDb) (*Server, error) {
 	return s, nil
 }
 
-func (svr *Server) InitHandler(unstakingStartTimestamp uint64) http.Handler {
-	return api.InitRouters(svr.db, unstakingStartTimestamp)
+func (svr *Server) InitHandler() http.Handler {
+	return api.InitRouters(svr.db)
 }
 
 func (svr *Server) ApiServer() {
@@ -51,7 +56,18 @@ func (svr *Server) ApiServer() {
 }
 
 func (svr *Server) Start() error {
+	apy, err := utils.GetApyFromStafiInfo(svr.stafiInfoEndpoint)
+	if err != nil {
+		return err
+	}
+
+	if apy <= 0 {
+		return fmt.Errorf("eth apy not match: %f", apy)
+	}
+	utils.REthTotalApy = apy
+
 	utils.SafeGoWithRestart(svr.ApiServer)
+	utils.SafeGoWithRestart(svr.FetchREthTotalApy)
 	return nil
 }
 
