@@ -188,7 +188,7 @@ func (c *Connection) LockAndUpdateTxOpts() error {
 	c.txOpts.GasTipCap = gasTipCap
 	c.txOpts.GasFeeCap = gasFeeCap
 
-	nonce, err := c.eth1Client.PendingNonceAt(context.Background(), c.txOpts.From)
+	nonce, err := c.eth1Client.NonceAt(context.Background(), c.txOpts.From, nil)
 	if err != nil {
 		c.optsLock.Unlock()
 		return err

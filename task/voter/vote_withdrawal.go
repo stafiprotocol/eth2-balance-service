@@ -244,6 +244,7 @@ func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error 
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
 			return fmt.Errorf("stakingPoolContract.VoteWithdrawCredentials tx reach retry limit")
 		}
 		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
@@ -273,6 +274,7 @@ func (task *Task) voteForCommonNode(validator *dao.Validator, match bool) error 
 	retry = 0
 	for {
 		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
 			return fmt.Errorf("stakingPoolContract.VoteWithdrawCredentials tx reach retry limit")
 		}
 		match, err := stakingPoolContract.GetWithdrawalCredentialsMatch(task.connection.CallOpts(nil))
@@ -333,6 +335,7 @@ func (task *Task) voteForLightNode(lightNodeContract *light_node.LightNode, vali
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
 			return fmt.Errorf("lightNodeContract.VoteWithdrawCredentials tx reach retry limit")
 		}
 		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
@@ -394,6 +397,7 @@ func (task *Task) voteForSuperNode(superNodeContract *super_node.SuperNode, vali
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
 			return fmt.Errorf("superNodeContract.VoteWithdrawCredentials tx reach retry limit")
 		}
 		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())

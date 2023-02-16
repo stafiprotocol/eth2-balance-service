@@ -45,6 +45,7 @@ func (task *Task) distributeFeePool() error {
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
 			return fmt.Errorf("distributorContract.DistributeFee tx reach retry limit")
 		}
 		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
@@ -99,6 +100,7 @@ func (task *Task) distributeSuperNodeFeePool() error {
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
 			return fmt.Errorf("distributorContract.DistributeSuperNodeFee tx reach retry limit")
 		}
 		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())

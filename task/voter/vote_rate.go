@@ -198,6 +198,7 @@ func (task *Task) voteRate() error {
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
 			return fmt.Errorf("networkBalancesContract.SubmitBalances tx reach retry limit")
 		}
 		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
