@@ -165,7 +165,8 @@ func (task *Task) Start() error {
 		return err
 	}
 
-	if chainId.Uint64() == 1 { // mainnet
+	switch chainId.Uint64() {
+	case 1:
 		domain, err := signing.ComputeDomain(
 			params.MainnetConfig().DomainDeposit,
 			params.MainnetConfig().GenesisForkVersion,
@@ -175,11 +176,20 @@ func (task *Task) Start() error {
 			return err
 		}
 		task.domain = domain
-
-	} else { // goerli
+	case 5: //goerli
 		domain, err := signing.ComputeDomain(
 			params.PraterConfig().DomainDeposit,
 			params.PraterConfig().GenesisForkVersion,
+			params.PraterConfig().ZeroHash[:],
+		)
+		if err != nil {
+			return err
+		}
+		task.domain = domain
+	case 1337803: //zhejiang
+		domain, err := signing.ComputeDomain(
+			params.PraterConfig().DomainDeposit,
+			[]byte{0x00, 0x00, 0x00, 0x69},
 			params.PraterConfig().ZeroHash[:],
 		)
 		if err != nil {
