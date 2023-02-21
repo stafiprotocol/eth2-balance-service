@@ -1,9 +1,9 @@
 rewardEpochInterval = 75
-eth1Endpoint = "xxxxx"
-eth2Endpoint = "xxxxxx"
+eth1Endpoint = "https://rpc.zhejiang.ethpandaops.io"
+eth2Endpoint = "https://beacon.zhejiang.ethpandaops.io"
 logFilePath = ""
 version = "dev"          # v1 v2 dev
-slashStartEpoch = 898
+slashStartEpoch = 4400
 
 [contracts]
 storageContractAddress = "0xA4efE44eE3D52211df575b9fD8F3409C5c1443eE"
@@ -14,7 +14,3 @@ name = "eth2_dev"  # the database this server used
 port = "3306"
 pwd = "123456"     # mysql password
 user = "root"      # mysql username
-
-[mock] # for dev
-eth1MainnetEndpoint = "xxx"
-rewardStartEpoch = 159000 ## for init dealedEpoch of balance syncer 

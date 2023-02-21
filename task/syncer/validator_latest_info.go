@@ -90,19 +90,19 @@ func (task *Task) syncValidatorLatestInfo() error {
 	validatorStatusMap := make(map[types.ValidatorPubkey]beacon.ValidatorStatus)
 
 	switch task.version {
-	case utils.Dev:
-		for _, pubkey := range willUsePubkeys {
-			index := fakeIndexFromPubkey(pubkey)
+	// case utils.Dev:
+	// for _, pubkey := range willUsePubkeys {
+	// 	index := fakeIndexFromPubkey(pubkey)
 
-			fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
-				Epoch: &finalEpoch,
-			})
-			if err != nil {
-				return fmt.Errorf("GetValidatorStatus err: %s", err)
-			}
-			validatorStatusMap[pubkey] = fakeStatus
-		}
-	case utils.V1, utils.V2:
+	// 	fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
+	// 		Epoch: &finalEpoch,
+	// 	})
+	// 	if err != nil {
+	// 		return fmt.Errorf("GetValidatorStatus err: %s", err)
+	// 	}
+	// 	validatorStatusMap[pubkey] = fakeStatus
+	// }
+	case utils.V1, utils.V2, utils.Dev:
 		validatorStatusMap, err = task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
 			Epoch: &finalEpoch,
 		})

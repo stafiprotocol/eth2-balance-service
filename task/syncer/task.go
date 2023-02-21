@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	deposit_contract "github.com/stafiprotocol/reth/bindings/DepositContract"
 	light_node "github.com/stafiprotocol/reth/bindings/LightNode"
@@ -42,7 +40,7 @@ type Task struct {
 	slashStartEpoch uint64
 
 	// used for dev mode
-	mock mock
+	// mock mock
 	// need init on start
 	db                      *db.WrapDb
 	connection              *shared.Connection
@@ -60,12 +58,12 @@ type Task struct {
 	rewardSlotInterval uint64
 }
 
-type mock struct {
-	rewardStartEpoch    uint64
-	eth1MainnetEndpoint string
+// type mock struct {
+// 	rewardStartEpoch    uint64
+// 	eth1MainnetEndpoint string
 
-	eth1MainnetClient ethclient.Client
-}
+// 	eth1MainnetClient ethclient.Client
+// }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
@@ -93,14 +91,14 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 		version:                cfg.Version,
 		slashStartEpoch:        cfg.SlashStartEpoch,
-		mock:                   mock{},
+		// mock:                   mock{},
 	}
 
 	if cfg.Version == utils.Dev {
-		s.mock.rewardStartEpoch = cfg.Mock.RewardStartEpoch
-		s.mock.eth1MainnetEndpoint = cfg.Mock.Eth1MainnetEndpoint
+		// s.mock.rewardStartEpoch = cfg.Mock.RewardStartEpoch
+		// s.mock.eth1MainnetEndpoint = cfg.Mock.Eth1MainnetEndpoint
 
-		s.eth1StartHeight = 0
+		s.eth1StartHeight = 133654
 	}
 
 	return s, nil
@@ -128,13 +126,13 @@ func (task *Task) Start() error {
 
 	task.rewardSlotInterval = utils.SlotInterval(task.eth2Config, task.rewardEpochInterval)
 
-	if task.version == utils.Dev {
-		client, err := ethclient.Dial(task.mock.eth1MainnetEndpoint)
-		if err != nil {
-			return errors.Wrap(err, "ethclient.Dial")
-		}
-		task.mock.eth1MainnetClient = *client
-	}
+	// if task.version == utils.Dev {
+	// 	client, err := ethclient.Dial(task.mock.eth1MainnetEndpoint)
+	// 	if err != nil {
+	// 		return errors.Wrap(err, "ethclient.Dial")
+	// 	}
+	// 	task.mock.eth1MainnetClient = *client
+	// }
 
 	utils.SafeGoWithRestart(task.syncEth1EventHandler)
 	utils.SafeGoWithRestart(task.syncEth2ValidatorHandler)
@@ -265,7 +263,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 			}
 			// will init if meta data not exist
 			meta.MetaType = utils.MetaTypeEth2InfoSyncer
-			meta.DealedEpoch = 0
+			meta.DealedEpoch = 4400
 
 			err = dao.UpOrInMetaData(task.db, meta)
 			if err != nil {
@@ -281,9 +279,24 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 			}
 			// will init if meta data not exist
 			meta.MetaType = utils.MetaTypeEth2BalanceSyncer
-			if task.mock.rewardStartEpoch > 0 {
-				meta.DealedEpoch = task.mock.rewardStartEpoch - 1
+			meta.DealedEpoch = 4400
+
+			err = dao.UpOrInMetaData(task.db, meta)
+			if err != nil {
+				return err
 			}
+		}
+
+		// init eth2 block syncer info
+		meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
+		if err != nil {
+			if err != gorm.ErrRecordNotFound {
+				return err
+			}
+			// will init if meta data not exist
+			meta.MetaType = utils.MetaTypeEth2BlockSyncer
+			meta.DealedEpoch = 4400
+
 			err = dao.UpOrInMetaData(task.db, meta)
 			if err != nil {
 				return err

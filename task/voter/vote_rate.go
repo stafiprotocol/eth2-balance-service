@@ -14,7 +14,7 @@ import (
 
 const balancesEpochOffset = uint64(1e10)
 
-var maxRateChangeDeci = decimal.NewFromInt(1e16)
+var maxRateChangeDeci = decimal.NewFromInt(1e14)
 
 func (task *Task) voteRate() error {
 
