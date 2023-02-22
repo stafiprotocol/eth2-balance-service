@@ -32,20 +32,28 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}
 
 	targetSlot := utils.SlotAt(task.eth2Config, finalEpoch)
-	targetBeaconBlock, exist, err := task.connection.GetBeaconBlock(fmt.Sprint(targetSlot))
-	if err != nil {
-		return err
-	}
+	var targetEth1BlockHeight uint64
+	retry := 0
+	for {
+		if retry > 5 {
+			return fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+		}
 
-	// maybe skiped by consensue
-	if !exist {
-		return nil
+		targetBeaconBlock, exist, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(targetSlot))
+		if err != nil {
+			return err
+		}
+		if !exist {
+			targetSlot++
+			retry++
+			continue
+		}
+		if targetBeaconBlock.ExecutionBlockNumber == 0 {
+			return fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+		}
+		targetEth1BlockHeight = targetBeaconBlock.ExecutionBlockNumber
+		break
 	}
-
-	if targetBeaconBlock.ExecutionBlockNumber == 0 {
-		return fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
-	}
-	targetEth1BlockHeight := targetBeaconBlock.ExecutionBlockNumber
 
 	eth1SyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
 	if err != nil {
@@ -87,21 +95,8 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}
 
 	willUsePubkeys := pubkeys
-	validatorStatusMap := make(map[types.ValidatorPubkey]beacon.ValidatorStatus)
-
+	var validatorStatusMap map[types.ValidatorPubkey]beacon.ValidatorStatus
 	switch task.version {
-	// case utils.Dev:
-	// for _, pubkey := range willUsePubkeys {
-	// 	index := fakeIndexFromPubkey(pubkey)
-
-	// 	fakeStatus, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(index), &beacon.ValidatorStatusOptions{
-	// 		Epoch: &finalEpoch,
-	// 	})
-	// 	if err != nil {
-	// 		return fmt.Errorf("GetValidatorStatus err: %s", err)
-	// 	}
-	// 	validatorStatusMap[pubkey] = fakeStatus
-	// }
 	case utils.V1, utils.V2, utils.Dev:
 		validatorStatusMap, err = task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
 			Epoch: &finalEpoch,
@@ -186,9 +181,4 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}
 	eth2InfoMetaData.DealedEpoch = finalEpoch
 	return dao.UpOrInMetaData(task.db, eth2InfoMetaData)
-}
-
-// dev test use
-func fakeIndexFromPubkey(pubkey types.ValidatorPubkey) int {
-	return 21100 + int(pubkey.Bytes()[5])*10 + int(pubkey.Bytes()[25]) + int(pubkey.Bytes()[25])/10
 }

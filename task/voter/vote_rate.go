@@ -62,14 +62,29 @@ func (task *Task) voteRate() error {
 		return nil
 	}
 
-	targetBeaconBlock, _, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(utils.SlotAt(task.eth2Config, targetEpoch)))
-	if err != nil {
-		return err
+	targetSlot := utils.SlotAt(task.eth2Config, targetEpoch)
+	var targetEth1BlockHeight uint64
+	retry := 0
+	for {
+		if retry > 5 {
+			return fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+		}
+
+		targetBeaconBlock, exist, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(targetSlot))
+		if err != nil {
+			return err
+		}
+		if !exist {
+			targetSlot++
+			retry++
+			continue
+		}
+		if targetBeaconBlock.ExecutionBlockNumber == 0 {
+			return fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+		}
+		targetEth1BlockHeight = targetBeaconBlock.ExecutionBlockNumber
+		break
 	}
-	if targetBeaconBlock.ExecutionBlockNumber == 0 {
-		return fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
-	}
-	targetEth1BlockHeight := targetBeaconBlock.ExecutionBlockNumber
 
 	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
 	if err != nil {
@@ -195,7 +210,7 @@ func (task *Task) voteRate() error {
 
 	logrus.Info("send submitBalances tx hash: ", tx.Hash().String())
 
-	retry := 0
+	retry = 0
 	for {
 		if retry > utils.RetryLimit {
 			utils.ShutdownRequestChannel <- struct{}{}

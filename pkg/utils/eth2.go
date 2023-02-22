@@ -111,7 +111,7 @@ func SlotInterval(config beacon.Eth2Config, epochInterval uint64) uint64 {
 	return config.SlotsPerEpoch * epochInterval
 }
 
-// Get an eth2 slot number by epoch
+// Get an eth2 first slot number by epoch
 func SlotAt(config beacon.Eth2Config, epoch uint64) uint64 {
 	return config.SlotsPerEpoch * epoch
 }

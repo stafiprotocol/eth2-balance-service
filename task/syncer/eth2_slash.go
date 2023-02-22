@@ -19,8 +19,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var mockEpochs = []uint64{104362, 167578, 163343, 168021}
-
 // sync feeRecipient and slash events
 // only cal slash amount of 1 2 3 5 slash type event
 func (task *Task) syncSlashEvent() error {
@@ -43,11 +41,6 @@ func (task *Task) syncSlashEvent() error {
 
 	for epoch := startEpoch; epoch <= endEpoch; epoch++ {
 		willUseEpoch := epoch
-
-		// for dev, we only deal mockEpochs
-		// if task.version == utils.Dev {
-		// 	willUseEpoch = mockEpochs[int(epoch)%len(mockEpochs)]
-		// }
 
 		startSlot := utils.SlotAt(task.eth2Config, willUseEpoch)
 		endSlot := startSlot + task.eth2Config.SlotsPerEpoch - 1
@@ -83,40 +76,6 @@ func (task *Task) syncSlashEvent() error {
 			if err != nil {
 				return err
 			}
-			// if task.version == utils.Dev {
-			// 	for _, validator := range validatorList {
-			// 		slashEvent, err := dao.GetSlashEvent(task.db, validator.ValidatorIndex, startSlot, utils.SlashTypeAttesterMiss)
-			// 		if err != nil && err != gorm.ErrRecordNotFound {
-			// 			return errors.Wrap(err, "dao.GetSlashEvent")
-			// 		}
-			// 		if err == nil {
-			// 			continue
-			// 		}
-			// 		slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeAttesterMiss)
-			// 		if err != nil {
-			// 			return errors.Wrap(err, "dao.GetSlashEvent")
-			// 		} else {
-			// 			if len(slashEventListThisType) > 0 {
-			// 				continue
-			// 			}
-			// 		}
-
-			// 		slashEvent.ValidatorIndex = validator.ValidatorIndex
-			// 		slashEvent.StartSlot = startSlot
-			// 		slashEvent.EndSlot = endSlot
-			// 		slashEvent.Epoch = willUseEpoch
-			// 		slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, startSlot)
-			// 		slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
-			// 		slashEvent.SlashType = utils.SlashTypeAttesterMiss
-			// 		slashEvent.SlashAmount = 5888
-
-			// 		err = dao.UpOrInSlashEvent(task.db, slashEvent)
-			// 		if err != nil {
-			// 			return errors.Wrap(err, "dao.UpOrInSlashEvent")
-			// 		}
-			// 	}
-			// 	return nil
-			// }
 
 			pubkeys := make([]rethTypes.ValidatorPubkey, 0)
 			for _, validator := range validatorList {
@@ -295,47 +254,6 @@ func (task *Task) syncBlockSlashEvent(epoch, slot, proposer uint64, syncCommitte
 }
 
 func (task *Task) saveProposerMissEvent(slot, epoch, proposer uint64) error {
-	// for dev, we replace with val in our pool
-	// if task.version == utils.Dev {
-	// 	list, err := dao.GetAllValidatorList(task.db)
-	// 	if err != nil {
-	// 		return errors.Wrap(err, "dao.GetAllValidatorList")
-	// 	}
-	// 	for _, validator := range list {
-	// 		slashEvent, err := dao.GetSlashEvent(task.db, validator.ValidatorIndex, slot, utils.SlashTypeProposerMiss)
-	// 		if err != nil && err != gorm.ErrRecordNotFound {
-	// 			return errors.Wrap(err, "dao.GetSlashEvent")
-	// 		}
-	// 		if err == nil {
-	// 			continue
-	// 		}
-	// 		slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeProposerMiss)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "dao.GetSlashEvent")
-	// 		} else {
-	// 			if len(slashEventListThisType) > 0 {
-	// 				continue
-	// 			}
-	// 		}
-
-	// 		slashEvent.ValidatorIndex = validator.ValidatorIndex
-	// 		slashEvent.StartSlot = slot
-	// 		slashEvent.EndSlot = slot
-	// 		slashEvent.Epoch = epoch
-	// 		slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
-	// 		slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, slot)
-	// 		slashEvent.SlashType = utils.SlashTypeProposerMiss
-	// 		slashEvent.SlashAmount = 0
-
-	// 		err = dao.UpOrInSlashEvent(task.db, slashEvent)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "dao.UpOrInSlashEvent")
-	// 		}
-	// 		return nil
-	// 	}
-	// 	return nil
-	// }
-
 	logrus.WithFields(logrus.Fields{
 		"slot":     slot,
 		"epoch":    epoch,
@@ -364,46 +282,6 @@ func (task *Task) saveProposerMissEvent(slot, epoch, proposer uint64) error {
 }
 
 func (task *Task) saveSyncMissEvent(slot, epoch, valIndex uint64) error {
-	// if task.version == utils.Dev {
-	// 	list, err := dao.GetAllValidatorList(task.db)
-	// 	if err != nil {
-	// 		return errors.Wrap(err, "dao.GetAllValidatorList")
-	// 	}
-
-	// 	for _, validator := range list {
-	// 		slashEvent, err := dao.GetSlashEvent(task.db, validator.ValidatorIndex, slot, utils.SlashTypeSyncMiss)
-	// 		if err != nil && err != gorm.ErrRecordNotFound {
-	// 			return errors.Wrap(err, "dao.GetSlashEvent")
-	// 		}
-	// 		if err == nil {
-	// 			continue
-	// 		}
-	// 		slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeSyncMiss)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "dao.GetSlashEvent")
-	// 		} else {
-	// 			if len(slashEventListThisType) > 0 {
-	// 				continue
-	// 			}
-	// 		}
-
-	// 		slashEvent.ValidatorIndex = validator.ValidatorIndex
-	// 		slashEvent.StartSlot = slot
-	// 		slashEvent.EndSlot = slot
-	// 		slashEvent.Epoch = epoch
-	// 		slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
-	// 		slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, slot)
-	// 		slashEvent.SlashType = utils.SlashTypeSyncMiss
-	// 		slashEvent.SlashAmount = 0
-
-	// 		err = dao.UpOrInSlashEvent(task.db, slashEvent)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "dao.UpOrInSlashEvent")
-	// 		}
-	// 	}
-	// 	return nil
-	// }
-
 	logrus.WithFields(logrus.Fields{
 		"type":     "sync committee miss",
 		"slot":     slot,
@@ -444,35 +322,18 @@ func (task *Task) saveRecipientUnMatchEvent(slot, epoch uint64, beaconBlock *bea
 
 	// cal total priority fee
 	var eth1Block *types.Block
-	// if task.version == utils.Dev {
-	// 	time.Sleep(time.Millisecond * 500)
-	// 	eth1Block, err = task.mock.eth1MainnetClient.BlockByNumber(context.Background(), big.NewInt(int64(beaconBlock.ExecutionBlockNumber)))
-	// 	if err != nil {
-	// 		return errors.Wrap(err, "Eth1Client().BlockByNumber")
-	// 	}
-
-	// } else {
 	eth1Block, err = task.connection.Eth1Client().BlockByNumber(context.Background(), big.NewInt(int64(beaconBlock.ExecutionBlockNumber)))
 	if err != nil {
 		return errors.Wrap(err, "Eth1Client().BlockByNumber")
 	}
-	// }
 
 	totalFee := big.NewInt(0)
 	for _, tx := range eth1Block.Transactions() {
 		var receipt *types.Receipt
-		// if task.version == utils.Dev {
-		// 	time.Sleep(time.Millisecond * 500)
-		// 	receipt, err = task.mock.eth1MainnetClient.TransactionReceipt(context.Background(), tx.Hash())
-		// 	if err != nil {
-		// 		return fmt.Errorf("Eth1Client().TransactionReceipt err: %w, tx: %s", err, tx.Hash())
-		// 	}
-		// } else {
 		receipt, err = task.connection.Eth1Client().TransactionReceipt(context.Background(), tx.Hash())
 		if err != nil {
 			return errors.Wrap(err, "Eth1Client().TransactionReceipt")
 		}
-		// }
 
 		priorityGasFee := tx.EffectiveGasTipValue(eth1Block.BaseFee())
 
@@ -485,51 +346,6 @@ func (task *Task) saveRecipientUnMatchEvent(slot, epoch uint64, beaconBlock *bea
 	if err != nil {
 		return errors.Wrap(err, "dao.UpOrInProposedBlock")
 	}
-
-	// if task.version == utils.Dev {
-	// 	list, err := dao.GetAllValidatorList(task.db)
-	// 	if err != nil {
-	// 		return errors.Wrap(err, "dao.GetAllValidatorList")
-	// 	}
-
-	// 	for _, validator := range list {
-	// 		slashEvent, err := dao.GetSlashEvent(task.db, validator.ValidatorIndex, proposedBlock.Slot, utils.SlashTypeFeeRecipient)
-	// 		if err != nil && err != gorm.ErrRecordNotFound {
-	// 			return errors.Wrap(err, "dao.GetSlashEvent")
-	// 		}
-	// 		if err == nil {
-	// 			continue
-	// 		}
-	// 		slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeFeeRecipient)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "dao.GetSlashEvent")
-	// 		} else {
-	// 			if len(slashEventListThisType) > 0 {
-	// 				continue
-	// 			}
-	// 		}
-
-	// 		feeAmountDeci, err := decimal.NewFromString(proposedBlock.FeeAmount)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "decimal.NewFromString")
-	// 		}
-
-	// 		slashEvent.ValidatorIndex = validator.ValidatorIndex
-	// 		slashEvent.StartSlot = proposedBlock.Slot
-	// 		slashEvent.EndSlot = proposedBlock.Slot
-	// 		slashEvent.Epoch = epoch
-	// 		slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, proposedBlock.Slot)
-	// 		slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, proposedBlock.Slot)
-	// 		slashEvent.SlashType = utils.SlashTypeFeeRecipient
-	// 		slashEvent.SlashAmount = feeAmountDeci.Div(utils.GweiDeci).BigInt().Uint64() // use Gwei as unit
-
-	// 		err = dao.UpOrInSlashEvent(task.db, slashEvent)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "dao.UpOrInSlashEvent")
-	// 		}
-	// 	}
-	// 	return nil
-	// }
 
 	// insert into table slashEvent if feeRecipient not match
 	shouldSlash := false
@@ -580,49 +396,6 @@ func (task *Task) saveRecipientUnMatchEvent(slot, epoch uint64, beaconBlock *bea
 }
 
 func (task *Task) saveAttesterSlashEvent(slot, epoch, valIndex uint64) error {
-	// if task.version == utils.Dev {
-	// 	list, err := dao.GetAllValidatorList(task.db)
-	// 	if err != nil {
-	// 		return errors.Wrap(err, "dao.GetAllValidatorList")
-	// 	}
-
-	// 	for _, validator := range list {
-	// 		slashEvent, err := dao.GetSlashEvent(task.db, validator.ValidatorIndex, slot, utils.SlashTypeAttesterSlash)
-	// 		if err != nil && err != gorm.ErrRecordNotFound {
-	// 			return errors.Wrap(err, "dao.GetSlashEvent")
-	// 		}
-	// 		if err == nil {
-	// 			continue
-	// 		}
-	// 		slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeAttesterSlash)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "dao.GetSlashEvent")
-	// 		} else {
-	// 			if len(slashEventListThisType) > 0 {
-	// 				continue
-	// 			}
-	// 		}
-
-	// 		slashEvent.ValidatorIndex = validator.ValidatorIndex
-	// 		slashEvent.StartSlot = slot
-	// 		slashEvent.Epoch = epoch
-	// 		slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
-	// 		slashEvent.SlashType = utils.SlashTypeAttesterSlash
-
-	// 		endSlot := utils.SlotAt(task.eth2Config, epoch+1)
-	// 		slashAmount := uint64(3888)
-
-	// 		slashEvent.EndSlot = endSlot
-	// 		slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
-	// 		slashEvent.SlashAmount = slashAmount
-
-	// 		err = dao.UpOrInSlashEvent(task.db, slashEvent)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "dao.UpOrInSlashEvent")
-	// 		}
-	// 	}
-	// 	return nil
-	// }
 	logrus.WithFields(logrus.Fields{
 		"slot":     slot,
 		"epoch":    epoch,
@@ -669,50 +442,6 @@ func (task *Task) saveAttesterSlashEvent(slot, epoch, valIndex uint64) error {
 }
 
 func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uint64) error {
-	// if task.version == utils.Dev {
-	// 	list, err := dao.GetAllValidatorList(task.db)
-	// 	if err != nil {
-	// 		return errors.Wrap(err, "dao.GetAllValidatorList")
-	// 	}
-
-	// 	for _, validator := range list {
-	// 		slashEvent, err := dao.GetSlashEvent(task.db, validator.ValidatorIndex, slot, utils.SlashTypeProposerSlash)
-	// 		if err != nil && err != gorm.ErrRecordNotFound {
-	// 			return errors.Wrap(err, "dao.GetSlashEvent")
-	// 		}
-	// 		if err == nil {
-	// 			continue
-	// 		}
-	// 		slashEventListThisType, err := dao.GetSlashEventListOfType(task.db, validator.ValidatorIndex, utils.SlashTypeProposerSlash)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "dao.GetSlashEvent")
-	// 		} else {
-	// 			if len(slashEventListThisType) > 0 {
-	// 				continue
-	// 			}
-	// 		}
-
-	// 		slashEvent.ValidatorIndex = validator.ValidatorIndex
-	// 		slashEvent.StartSlot = slot
-	// 		slashEvent.Epoch = epoch
-	// 		slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
-	// 		slashEvent.SlashType = utils.SlashTypeProposerSlash
-
-	// 		endSlot := utils.SlotAt(task.eth2Config, epoch+1)
-	// 		slashAmount := uint64(2888)
-
-	// 		slashEvent.EndSlot = endSlot
-	// 		slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
-	// 		slashEvent.SlashAmount = slashAmount
-
-	// 		err = dao.UpOrInSlashEvent(task.db, slashEvent)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "dao.UpOrInSlashEvent")
-	// 		}
-	// 	}
-	// 	return nil
-	// }
-
 	slashEvent, err := dao.GetSlashEvent(task.db, proposerValidatorIndex, slot, utils.SlashTypeProposerSlash)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return errors.Wrap(err, "dao.GetSlashEvent")
@@ -762,9 +491,6 @@ func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uin
 // validator will be reduced eth until WithdrawableEpoch
 // so, we sync total slashed amount after WithdrawableEpoch
 func (task *Task) syncSlashEventEndSlotInfo() error {
-	// if task.version == utils.Dev {
-	// 	return nil
-	// }
 
 	slashEventList, err := dao.GetProposerAttesterSlashEventList(task.db)
 	if err != nil {

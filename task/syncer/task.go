@@ -39,8 +39,6 @@ type Task struct {
 	// for eth2 block syncer
 	slashStartEpoch uint64
 
-	// used for dev mode
-	// mock mock
 	// need init on start
 	db                      *db.WrapDb
 	connection              *shared.Connection
@@ -57,13 +55,6 @@ type Task struct {
 	eth2Config         beacon.Eth2Config
 	rewardSlotInterval uint64
 }
-
-// type mock struct {
-// 	rewardStartEpoch    uint64
-// 	eth1MainnetEndpoint string
-
-// 	eth1MainnetClient ethclient.Client
-// }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
@@ -91,12 +82,9 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 		version:                cfg.Version,
 		slashStartEpoch:        cfg.SlashStartEpoch,
-		// mock:                   mock{},
 	}
 
 	if cfg.Version == utils.Dev {
-		// s.mock.rewardStartEpoch = cfg.Mock.RewardStartEpoch
-		// s.mock.eth1MainnetEndpoint = cfg.Mock.Eth1MainnetEndpoint
 
 		s.eth1StartHeight = 133654
 	}
@@ -126,14 +114,6 @@ func (task *Task) Start() error {
 
 	task.rewardSlotInterval = utils.SlotInterval(task.eth2Config, task.rewardEpochInterval)
 
-	// if task.version == utils.Dev {
-	// 	client, err := ethclient.Dial(task.mock.eth1MainnetEndpoint)
-	// 	if err != nil {
-	// 		return errors.Wrap(err, "ethclient.Dial")
-	// 	}
-	// 	task.mock.eth1MainnetClient = *client
-	// }
-
 	utils.SafeGoWithRestart(task.syncEth1EventHandler)
 	utils.SafeGoWithRestart(task.syncEth2ValidatorHandler)
 	utils.SafeGoWithRestart(task.syncEth2BlockHandler)
@@ -154,6 +134,7 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
+	logrus.Debugf("ethDepositContract address: %s", depositContractAddress.String())
 	task.depositContract, err = deposit_contract.NewDepositContract(depositContractAddress, task.connection.Eth1Client())
 	if err != nil {
 		return err

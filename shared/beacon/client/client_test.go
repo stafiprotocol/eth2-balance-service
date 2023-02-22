@@ -12,6 +12,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v3/config/params"
 	"github.com/prysmaticlabs/prysm/v3/contracts/deposit"
 	ethpb "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1"
+	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared/beacon"
 	"github.com/stafiprotocol/reth/shared/beacon/client"
 	"github.com/stafiprotocol/reth/types"
@@ -93,18 +94,24 @@ func TestBlock(t *testing.T) {
 }
 func TestBeaconBlock(t *testing.T) {
 	// c, err := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
-	c, err := client.NewStandardHttpClient("https://beaconcha-rpc2.stafi.io")
+	c, err := client.NewStandardHttpClient("https://beacon.zhejiang.ethpandaops.io")
 	if err != nil {
 		t.Fatal(err)
 	}
-	block, _, err := c.GetBeaconBlock("5155757")
+	block, exists, err := c.GetBeaconBlock("148878")
 	// block, _, err := c.GetBeaconBlock("5071581")
 	// block, _, err := c.GetBeaconBlock("3339591")
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	config, err := c.GetEth2Config()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Logf("%+v", block)
+	t.Logf("%v", exists)
+	t.Logf("%+v", utils.SlotAt(config, 4652))
 
 }
 func TestBeaconHead(t *testing.T) {
