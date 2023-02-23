@@ -147,6 +147,9 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	// cal validator apr
 	if len(activeValidator) != 0 {
 		du := len(activeValidator) / 10
+		if du == 0 {
+			du = 1
+		}
 
 		aprList := make([]float64, 0)
 		for i := range activeValidator {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -51,7 +52,11 @@ func (task *Task) syncSlashEvent() error {
 		}
 		syncCommittees, err := task.connection.GetSyncCommitteesForEpoch(willUseEpoch)
 		if err != nil {
-			return err
+			if strings.Contains(err.Error(), "has no sync committee") {
+				syncCommittees = []beacon.SyncCommittee{}
+			} else {
+				return err
+			}
 		}
 
 		g := new(errgroup.Group)
