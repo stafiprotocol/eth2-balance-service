@@ -40,7 +40,7 @@ func TestStatus(t *testing.T) {
 		Epoch: &epoch1,
 	})
 
-	t.Logf("%+v %v, %v", startStatus1.Balance, startStatus1.Slashed,startStatus1.Status)
+	t.Logf("%+v %v, %v", startStatus1.Balance, startStatus1.Slashed, startStatus1.Status)
 	// startStatus2, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
 	// 	Epoch: &epoch2,
 	// })
@@ -99,7 +99,7 @@ func TestBeaconBlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	block, exists, err := c.GetBeaconBlock("148878")
+	block, exists, err := c.GetBeaconBlock("147104")
 	// block, _, err := c.GetBeaconBlock("5071581")
 	// block, _, err := c.GetBeaconBlock("3339591")
 	if err != nil {

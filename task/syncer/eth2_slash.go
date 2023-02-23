@@ -20,8 +20,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// SlashType:
+// SlashTypeFeeRecipient  = uint8(1)
+// SlashTypeProposerSlash = uint8(2)
+// SlashTypeAttesterSlash = uint8(3)
+// SlashTypeSyncMiss      = uint8(4)
+// SlashTypeAttesterMiss  = uint8(5)
+// SlashTypeProposerMiss  = uint8(6)
+
 // sync feeRecipient and slash events
-// only cal slash amount of 1 2 3 5 slash type event
+// only cal slash amount of 1 2 3 5 slash type, 4 6 is 0
 func (task *Task) syncSlashEvent() error {
 	eth2InfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
 	if err != nil {
@@ -62,6 +70,7 @@ func (task *Task) syncSlashEvent() error {
 		g := new(errgroup.Group)
 		g.SetLimit(16)
 
+		// sync slash event of type 1 2 3 4 6
 		for slot := startSlot; slot <= endSlot; slot++ {
 
 			newSlot := slot
@@ -75,7 +84,7 @@ func (task *Task) syncSlashEvent() error {
 			})
 		}
 
-		// check attester miss
+		// sync slash of  type 5
 		g.Go(func() error {
 			validatorList, err := dao.GetValidatorListActive(task.db)
 			if err != nil {
@@ -151,17 +160,19 @@ func (task *Task) syncSlashEvent() error {
 	return nil
 }
 
+// sync 1 2 3 slash and slash amount
+// sync 4 6 slash and slash amount is zero
 func (task *Task) syncBlockSlashEvent(epoch, slot, proposer uint64, syncCommittees []beacon.SyncCommittee) error {
 	beaconBlock, exist, err := task.connection.GetBeaconBlock(fmt.Sprintf("%d", slot))
 	if err != nil {
 		return errors.Wrap(err, "GetBeaconBlock")
 	}
 
-	// skip by consensus, we should save slash event if proposer is in our pool
+	//slash type 6, slot skip by consensus, we should save slash event if proposer is in our pool
 	if !exist {
-		_, err := dao.GetValidatorByIndex(task.db, beaconBlock.ProposerIndex)
+		_, err := dao.GetValidatorByIndex(task.db, proposer)
 		if err != nil && err != gorm.ErrRecordNotFound {
-			return errors.Wrap(err, "dao.GetValidatorByIndex")
+			return errors.Wrap(err, "dao.GetValidatorByIndex failed")
 		}
 
 		if err == nil {
@@ -171,7 +182,7 @@ func (task *Task) syncBlockSlashEvent(epoch, slot, proposer uint64, syncCommitte
 		return nil
 	}
 
-	// save sync committee slash
+	//slash type 4, save sync committee slash
 	for i := uint64(0); i < beaconBlock.SyncAggregate.SyncCommitteeBits.Len(); i++ {
 		if !beaconBlock.SyncAggregate.SyncCommitteeBits.BitAt(i) && len(syncCommittees) > int(i) {
 			valIndex := syncCommittees[i].ValIndex
@@ -191,7 +202,7 @@ func (task *Task) syncBlockSlashEvent(epoch, slot, proposer uint64, syncCommitte
 		}
 	}
 
-	// deal recipient after merge
+	//slash type 1, deal recipient after merge
 	if beaconBlock.HasExecutionPayload {
 		validator, err := dao.GetValidatorByIndex(task.db, beaconBlock.ProposerIndex)
 		if err != nil && err != gorm.ErrRecordNotFound {
@@ -207,7 +218,7 @@ func (task *Task) syncBlockSlashEvent(epoch, slot, proposer uint64, syncCommitte
 		}
 	}
 
-	// save attester slash events
+	//slash type 3, save attester slash events
 	for _, attesterSlash := range beaconBlock.AttesterSlashing {
 		if len(attesterSlash.Attestation1.AttestingIndices) == 0 || len(attesterSlash.Attestation2.AttestingIndices) == 0 {
 			continue
@@ -239,7 +250,7 @@ func (task *Task) syncBlockSlashEvent(epoch, slot, proposer uint64, syncCommitte
 		}
 	}
 
-	// save proposer slash events
+	//slash type 2, save proposer slash events
 	for _, proposerSlash := range beaconBlock.ProposerSlashings {
 		proposerValidatorIndex := proposerSlash.SignedHeader1.ProposerIndex
 
