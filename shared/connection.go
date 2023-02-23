@@ -311,6 +311,9 @@ func (c *Connection) GetSyncCommitteesForEpoch(epoch uint64) ([]beacon.SyncCommi
 	for i := 0; i < retryLimit; i++ {
 		status, err := c.eth2Client.GetSyncCommitteesForEpoch(epoch)
 		if err != nil {
+			if strings.Contains(err.Error(), "has no sync committee") {
+				return []beacon.SyncCommittee{}, nil
+			}
 			retErr = err
 			logrus.Warnf("eth2Client.GetSyncCommitteesForEpoch err: %s", err)
 			time.Sleep(waitInterval)
