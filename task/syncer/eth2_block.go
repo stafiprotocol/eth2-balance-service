@@ -30,8 +30,8 @@ import (
 
 // sync feeRecipient and slash events
 // only cal slash amount of 1 2 3 5 slash type, 4 6 is 0
-func (task *Task) syncSlashEvent() error {
-	eth2InfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
+func (task *Task) syncEth2BlockInfo() error {
+	eth2InfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 	if err != nil {
 		return errors.Wrap(err, "dao.GetMetaData eth2infoSyncer")
 	}
@@ -84,7 +84,7 @@ func (task *Task) syncSlashEvent() error {
 			})
 		}
 
-		// sync slash of  type 5
+		// sync slash of type 5 attester miss
 		g.Go(func() error {
 			validatorList, err := dao.GetValidatorListActive(task.db)
 			if err != nil {
@@ -211,7 +211,7 @@ func (task *Task) syncBlockSlashEvent(epoch, slot, proposer uint64, syncCommitte
 
 		// we only save and deal blocks proposed by our pool validators
 		if err == nil {
-			err := task.saveRecipientUnMatchEvent(slot, epoch, &beaconBlock, validator)
+			err := task.saveProposedBlockAndRecipientUnMatchEvent(slot, epoch, &beaconBlock, validator)
 			if err != nil {
 				return errors.Wrap(err, "saveRecipientUnMatchEvent")
 			}
@@ -326,7 +326,7 @@ func (task *Task) saveSyncMissEvent(slot, epoch, valIndex uint64) error {
 	return nil
 }
 
-func (task *Task) saveRecipientUnMatchEvent(slot, epoch uint64, beaconBlock *beacon.BeaconBlock, validator *dao.Validator) error {
+func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, beaconBlock *beacon.BeaconBlock, validator *dao.Validator) error {
 	proposedBlock, err := dao.GetProposedBlock(task.db, slot)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return errors.Wrap(err, "dao.GetProposedBlock")

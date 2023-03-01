@@ -24,7 +24,7 @@ func (task *Task) voteRate() error {
 	}
 	targetEpoch := (beaconHead.FinalizedEpoch / task.rewardEpochInterval) * task.rewardEpochInterval
 
-	eth2BalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
+	eth2BalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
 	if err != nil {
 		return err
 	}
@@ -86,17 +86,17 @@ func (task *Task) voteRate() error {
 		break
 	}
 
-	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
+	metaEth1BlockSyncer, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
 	if err != nil {
 		return err
 	}
 
 	if task.version != utils.V2 {
-		targetEth1BlockHeight = meta.DealedBlockHeight
+		targetEth1BlockHeight = metaEth1BlockSyncer.DealedBlockHeight
 	}
 
 	// ensure all eth1 event synced
-	if meta.DealedBlockHeight < targetEth1BlockHeight {
+	if metaEth1BlockSyncer.DealedBlockHeight < targetEth1BlockHeight {
 		return nil
 	}
 

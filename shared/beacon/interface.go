@@ -67,12 +67,20 @@ type BeaconBlock struct {
 	Attestations      []AttestationInfo
 	ProposerSlashings []ProposerSlashing
 	AttesterSlashing  []AttesterSlashing
+	Withdrawals       []Withdrawal
 	SyncAggregate     SyncAggregate
 
 	// execute layer
 	HasExecutionPayload  bool
 	FeeRecipient         common.Address
 	ExecutionBlockNumber uint64
+}
+
+type Withdrawal struct {
+	WithdrawIndex  uint64
+	ValidatorIndex uint64
+	Address        common.Address
+	Amount         uint64
 }
 
 type SyncAggregate struct {

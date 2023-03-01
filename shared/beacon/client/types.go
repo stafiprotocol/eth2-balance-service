@@ -198,11 +198,20 @@ type BeaconBlockResponse struct {
 					BaseFeePerGas uinteger `json:"base_fee_per_gas"`
 					BlockHash     string   `json:"block_hash"`
 					Transactions  []string `json:"transactions"`
+					// present only after capella
+					Withdrawals []WithdrawalPayload `json:"withdrawals"`
 				} `json:"execution_payload"`
 			} `json:"body"`
 		} `json:"message"`
 		Signature string `json:"signature"`
 	} `json:"data"`
+}
+
+type WithdrawalPayload struct {
+	Index          uinteger `json:"index"`
+	ValidatorIndex uinteger `json:"validator_index"`
+	Address        string   `json:"address"`
+	Amount         uinteger `json:"amount"`
 }
 
 type ValidatorsResponse struct {

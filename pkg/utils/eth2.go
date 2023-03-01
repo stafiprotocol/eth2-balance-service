@@ -63,11 +63,11 @@ const (
 )
 
 const (
-	MetaTypeEth1Syncer        = uint8(1)
-	MetaTypeEth2InfoSyncer    = uint8(2)
-	MetaTypeEth2BalanceSyncer = uint8(3)
-	MetaTypeV1ValidatorSyncer = uint8(4)
-	MetaTypeEth2BlockSyncer   = uint8(5)
+	MetaTypeEth1BlockSyncer            = uint8(1)
+	MetaTypeEth2ValidatorInfoSyncer    = uint8(2)
+	MetaTypeEth2ValidatorBalanceSyncer = uint8(3)
+	MetaTypeV1ValidatorSyncer          = uint8(4)
+	MetaTypeEth2BlockSyncer            = uint8(5)
 )
 const (
 	SlashTypeFeeRecipient  = uint8(1)

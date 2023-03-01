@@ -63,6 +63,9 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	if cfg.RewardEpochInterval == 0 {
 		return nil, fmt.Errorf("reward epoch interval is zero")
 	}
+	if cfg.RewardEpochInterval != 75 {
+		return nil, fmt.Errorf("illegal RewardEpochInterval: %d", cfg.RewardEpochInterval)
+	}
 
 	switch cfg.Version {
 	case utils.V1, utils.V2, utils.Dev:
@@ -85,7 +88,6 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	}
 
 	if cfg.Version == utils.Dev {
-
 		s.eth1StartHeight = 133654
 	}
 
@@ -114,9 +116,9 @@ func (task *Task) Start() error {
 
 	task.rewardSlotInterval = utils.SlotInterval(task.eth2Config, task.rewardEpochInterval)
 
-	utils.SafeGoWithRestart(task.syncEth1EventHandler)
-	utils.SafeGoWithRestart(task.syncEth2ValidatorHandler)
+	utils.SafeGoWithRestart(task.syncEth1BlockHandler)
 	utils.SafeGoWithRestart(task.syncEth2BlockHandler)
+	utils.SafeGoWithRestart(task.syncEth2ValidatorHandler)
 	return nil
 }
 
@@ -214,7 +216,7 @@ func (task *Task) initContract() error {
 
 func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 	// init eth1Syncer metaData
-	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
+	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			return err
@@ -226,7 +228,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 			meta.DealedBlockHeight = task.eth1StartHeight - 1
 		}
 
-		meta.MetaType = utils.MetaTypeEth1Syncer
+		meta.MetaType = utils.MetaTypeEth1BlockSyncer
 
 		err = dao.UpOrInMetaData(task.db, meta)
 		if err != nil {
@@ -237,13 +239,13 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 	// only dev need, v1/v2 will init on v1Syncer
 	if task.version == utils.Dev {
 		// init eth2InfoSyncer metaData
-		meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
+		meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 		if err != nil {
 			if err != gorm.ErrRecordNotFound {
 				return err
 			}
 			// will init if meta data not exist
-			meta.MetaType = utils.MetaTypeEth2InfoSyncer
+			meta.MetaType = utils.MetaTypeEth2ValidatorInfoSyncer
 			meta.DealedEpoch = 4400
 
 			err = dao.UpOrInMetaData(task.db, meta)
@@ -253,13 +255,13 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 		}
 
 		// init eth2BalanceSyncer metaData
-		meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
+		meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
 		if err != nil {
 			if err != gorm.ErrRecordNotFound {
 				return err
 			}
 			// will init if meta data not exist
-			meta.MetaType = utils.MetaTypeEth2BalanceSyncer
+			meta.MetaType = utils.MetaTypeEth2ValidatorBalanceSyncer
 			meta.DealedEpoch = 4400
 
 			err = dao.UpOrInMetaData(task.db, meta)
@@ -286,7 +288,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 	}
 
 	// init pool info
-	err = task.syncPooInfo()
+	err = task.syncContractsInfo()
 	if err != nil {
 		return err
 	}
@@ -329,7 +331,7 @@ func (task *Task) getContractAddress(storage *storage.Storage, name string) (com
 	return address, nil
 }
 
-func (task *Task) syncEth1EventHandler() {
+func (task *Task) syncEth1BlockHandler() {
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0
@@ -345,25 +347,25 @@ func (task *Task) syncEth1EventHandler() {
 			return
 		case <-ticker.C:
 
-			logrus.Debug("syncEth1Event start -----------")
-			err := task.syncEth1Event()
+			logrus.Debug("syncEth1Block start -----------")
+			err := task.syncEth1Block()
 			if err != nil {
-				logrus.Warnf("syncEth1Event err: %s", err)
+				logrus.Warnf("syncEth1Block err: %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("syncEth1Event end -----------")
+			logrus.Debug("syncEth1Block end -----------")
 
-			logrus.Debug("syncPooInfo start -----------")
-			err = task.syncPooInfo()
+			logrus.Debug("syncContractsInfo start -----------")
+			err = task.syncContractsInfo()
 			if err != nil {
-				logrus.Warnf("syncPooInfo err: %s", err)
+				logrus.Warnf("syncContractsInfo err: %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("syncPooInfo end -----------")
+			logrus.Debug("syncContractsInfo end -----------")
 
 			retry = 0
 		}
@@ -426,15 +428,15 @@ func (task *Task) syncEth2BlockHandler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
-			logrus.Debug("syncSlashEvent start -----------")
-			err := task.syncSlashEvent()
+			logrus.Debug("syncEth2Block start -----------")
+			err := task.syncEth2BlockInfo()
 			if err != nil {
-				logrus.Warnf("syncSlashEvent err: %s , will retry", err.Error())
+				logrus.Warnf("syncEth2Block err: %s , will retry", err.Error())
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("syncSlashEvent end -----------")
+			logrus.Debug("syncEth2Block end -----------")
 
 			logrus.Debug("syncSlashEventEndSlotInfo start -----------")
 			err = task.syncSlashEventEndSlotInfo()

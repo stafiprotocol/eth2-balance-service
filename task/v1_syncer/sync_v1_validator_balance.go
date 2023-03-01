@@ -2,6 +2,7 @@ package task_v1_syncer
 
 import (
 	"fmt"
+
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
@@ -17,7 +18,7 @@ const fetchValidatorStatusLimit = 50
 func (task *Task) syncV1ValidatorEpochBalances() error {
 	finalEpoch := utils.V1EndEpoch
 
-	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
+	metaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
 	if err != nil {
 		return err
 	}

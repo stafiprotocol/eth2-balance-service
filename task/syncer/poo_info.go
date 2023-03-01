@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (task *Task) syncPooInfo() error {
+func (task *Task) syncContractsInfo() error {
 	poolBalance, err := task.userDepositContract.GetBalance(task.connection.CallOpts(nil))
 	if err != nil {
 		return err

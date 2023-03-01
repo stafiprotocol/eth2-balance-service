@@ -20,7 +20,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 		return err
 	}
 	finalEpoch := beaconHead.FinalizedEpoch
-	eth2InfoSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
+	eth2InfoSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 		finalEpoch = eth2InfoSyncerMetaData.DealedEpoch
 	}
 
-	eth2BalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
+	eth2BalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
 	if err != nil {
 		return err
 	}

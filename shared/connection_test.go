@@ -89,3 +89,26 @@ func TestBlockReward(t *testing.T) {
 	t.Log(totalFee)
 
 }
+
+func TestBlockDetail(t *testing.T) {
+
+	c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	eth1Block, err := c.Eth1Client().BlockByNumber(context.Background(), big.NewInt(190767))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, w := range eth1Block.Withdrawals() {
+		t.Logf("%+v", w)
+
+	}
+
+	beaconBlock, _, err := c.Eth2Client().GetBeaconBlock(fmt.Sprintf("%d", 199214))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%+v", beaconBlock.Withdrawals)
+
+}

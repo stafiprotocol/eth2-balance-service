@@ -14,11 +14,11 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/stafiprotocol/reth/bindings/FeePool"
+	fee_pool "github.com/stafiprotocol/reth/bindings/FeePool"
 	reth "github.com/stafiprotocol/reth/bindings/Reth"
-	"github.com/stafiprotocol/reth/bindings/Settings"
+	network_settings "github.com/stafiprotocol/reth/bindings/Settings"
 	storage "github.com/stafiprotocol/reth/bindings/Storage"
-	"github.com/stafiprotocol/reth/bindings/SuperNodeFeePool"
+	super_node_fee_pool "github.com/stafiprotocol/reth/bindings/SuperNodeFeePool"
 	user_deposit "github.com/stafiprotocol/reth/bindings/UserDeposit"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/config"
@@ -253,7 +253,7 @@ func statisticCmd() *cobra.Command {
 			logrus.Info("sync distribute events end")
 
 			// get metadata of balancy syncer
-			eth2BalanceSyncerMetaData, err := dao.GetMetaData(db, utils.MetaTypeEth2BalanceSyncer)
+			eth2BalanceSyncerMetaData, err := dao.GetMetaData(db, utils.MetaTypeEth2ValidatorBalanceSyncer)
 			if err != nil {
 				return err
 			}

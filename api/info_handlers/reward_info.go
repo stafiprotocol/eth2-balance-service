@@ -5,6 +5,7 @@ package info_handlers
 
 import (
 	"encoding/json"
+
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -131,7 +132,7 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 	}
 
 	// cal chartData *********************
-	eth2BalanceMetaData, err := dao.GetMetaData(h.db, utils.MetaTypeEth2BalanceSyncer)
+	eth2BalanceMetaData, err := dao.GetMetaData(h.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetMetaData err %s", err)

@@ -5,7 +5,7 @@ package dao
 
 import "github.com/stafiprotocol/reth/pkg/db"
 
-// deposit event in ethereum deposit contract
+// deposit event in ethereum deposit contract(includs all nodes deposit on etherum)
 type Deposit struct {
 	db.BaseModel
 	TxHash   string `gorm:"type:varchar(80) not null;default:'';column:tx_hash;uniqueIndex:uni_idx_hash_log"`       //hex string

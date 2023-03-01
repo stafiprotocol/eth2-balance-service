@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	reth "github.com/stafiprotocol/reth/bindings/Reth"
+	storage "github.com/stafiprotocol/reth/bindings/Storage"
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
@@ -66,4 +67,21 @@ func TestGetApy(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(apys)
+}
+func TestStorage(t *testing.T) {
+	client, err := ethclient.Dial("https://rpc.zhejiang.ethpandaops.io")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := storage.NewStorage(common.HexToAddress("0x126d3C08Fb282d5417793B7677E3F7DA8347A384"), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	address, err := s.GetAddress(&bind.CallOpts{
+		Context: context.Background(),
+	}, utils.ContractStorageKey("stafiWithdraw"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(address)
 }

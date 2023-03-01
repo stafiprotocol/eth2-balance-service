@@ -78,7 +78,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		SlashEventList:   []SlashEvent{},
 	}
 
-	eth2InfoMetaData, err := dao.GetMetaData(h.db, utils.MetaTypeEth2InfoSyncer)
+	eth2InfoMetaData, err := dao.GetMetaData(h.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetMetaData err %s", err)
@@ -212,7 +212,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 			return
 		}
 
-		eth2BalanceMetaData, err := dao.GetMetaData(h.db, utils.MetaTypeEth2BalanceSyncer)
+		eth2BalanceMetaData, err := dao.GetMetaData(h.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
 		if err != nil {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
 			logrus.Errorf("dao.GetMetaData err %s", err)

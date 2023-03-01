@@ -3,6 +3,7 @@ package task_v1_syncer
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/sirupsen/logrus"
 	staking_pool_manager "github.com/stafiprotocol/reth/bindings/StakingPoolManager"
@@ -104,7 +105,7 @@ func (task *Task) initContract() error {
 
 func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 	// init eth2Info metaData
-	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
+	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			return err
@@ -115,7 +116,7 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 		} else {
 			meta.DealedEpoch = task.rewardStartEpoch - 1
 		}
-		meta.MetaType = utils.MetaTypeEth2InfoSyncer
+		meta.MetaType = utils.MetaTypeEth2ValidatorInfoSyncer
 
 	} else {
 
@@ -143,7 +144,7 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 	}
 
 	// init eth2BalanceSyncer metaData
-	meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2BalanceSyncer)
+	meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			return err
@@ -154,7 +155,7 @@ func (task *Task) mabyUpdateStartHeightOrEpoch() error {
 		} else {
 			meta.DealedEpoch = task.rewardStartEpoch - 1
 		}
-		meta.MetaType = utils.MetaTypeEth2BalanceSyncer
+		meta.MetaType = utils.MetaTypeEth2ValidatorBalanceSyncer
 
 	} else {
 		if meta.DealedEpoch+1 < task.rewardStartEpoch {

@@ -20,7 +20,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return err
 	}
 
-	eth2InfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2InfoSyncer)
+	eth2InfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 	if err != nil {
 		return err
 	}
@@ -43,6 +43,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		if err != nil {
 			return err
 		}
+		// fetch next slot if not exist
 		if !exist {
 			targetSlot++
 			retry++
@@ -55,7 +56,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		break
 	}
 
-	eth1SyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1Syncer)
+	eth1SyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
 	if err != nil {
 		return err
 	}

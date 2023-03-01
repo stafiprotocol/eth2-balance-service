@@ -86,7 +86,7 @@ func syncMintEventCmd() *cobra.Command {
 				return err
 			}
 
-			eth1SyncMetaData, err := dao.GetMetaData(db, utils.MetaTypeEth1Syncer)
+			eth1SyncMetaData, err := dao.GetMetaData(db, utils.MetaTypeEth1BlockSyncer)
 			if err != nil {
 				return err
 			}
