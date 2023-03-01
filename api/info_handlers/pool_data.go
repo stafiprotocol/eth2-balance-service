@@ -185,6 +185,12 @@ func getValidatorApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
 		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
 		return 0, err
 	}
+	validator, err := dao.GetValidatorByIndex(db, validatorIndex)
+	if err != nil {
+		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+		return 0, err
+	}
+	nodeDepositAmount := validator.NodeDepositAmount
 
 	if len(validatorBalanceList) >= 2 {
 		first := validatorBalanceList[0]
@@ -192,7 +198,7 @@ func getValidatorApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
 
 		duBalance := uint64(0)
 		if first.Balance > end.Balance {
-			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositBalance) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositBalance)
+			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, nodeDepositAmount) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, nodeDepositAmount)
 		}
 
 		du := int64(first.Timestamp - end.Timestamp)
@@ -200,7 +206,7 @@ func getValidatorApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
 			apr, _ := decimal.NewFromInt(int64(duBalance)).
 				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
 				Div(decimal.NewFromInt(du)).
-				Div(decimal.NewFromInt(int64(utils.StandardLightNodeDepositBalance))).Float64()
+				Div(decimal.NewFromInt(int64(nodeDepositAmount))).Float64()
 			return apr, nil
 		}
 	}

@@ -118,11 +118,11 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	case utils.ValidatorStatusDeposited,
 		utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch,
 		utils.ValidatorStatusOffBoard, utils.ValidatorStatusOffBoardCanWithdraw:
-
+		nodeDepositAmount := validator.NodeDepositAmount
 		switch validator.NodeType {
 		case utils.NodeTypeLight:
-			rsp.CurrentBalance = decimal.NewFromInt(int64(utils.StandardLightNodeDepositBalance)).Mul(utils.GweiDeci).String()
-			rsp.EffectiveBalance = decimal.NewFromInt(int64(utils.StandardLightNodeDepositBalance)).Mul(utils.GweiDeci).String()
+			rsp.CurrentBalance = decimal.NewFromInt(int64(nodeDepositAmount)).Mul(utils.GweiDeci).String()
+			rsp.EffectiveBalance = decimal.NewFromInt(int64(nodeDepositAmount)).Mul(utils.GweiDeci).String()
 
 		case utils.NodeTypeSuper:
 			rsp.CurrentBalance = decimal.NewFromInt(int64(utils.StandardSuperNodeFakeDepositBalance)).Mul(utils.GweiDeci).String()
