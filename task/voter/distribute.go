@@ -13,10 +13,6 @@ import (
 var minDistributeAmount = big.NewInt(5e17) // 0.5eth
 
 func (task *Task) distributeFee() error {
-	err := task.distributeFeePool()
-	if err != nil {
-		return err
-	}
 	return task.distributeSuperNodeFeePool()
 }
 
