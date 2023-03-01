@@ -331,6 +331,8 @@ func (task *Task) getContractAddress(storage *storage.Storage, name string) (com
 	return address, nil
 }
 
+// --------------- handlers -------------
+
 func (task *Task) syncEth1BlockHandler() {
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()

@@ -203,7 +203,6 @@ func (task *Task) Start() error {
 	}
 
 	utils.SafeGoWithRestart(task.voteHandler)
-	// utils.SafeGoWithRestart(task.statisticHandler)
 	return nil
 }
 
