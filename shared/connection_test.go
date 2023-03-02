@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	// "github.com/ethereum/go-ethereum/common"
+	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared"
+	"github.com/stafiprotocol/reth/shared/beacon"
 )
 
 func TestCallOpts(t *testing.T) {
@@ -110,5 +112,63 @@ func TestBlockDetail(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("%+v", beaconBlock.Withdrawals)
+
+}
+
+func TestBalance(t *testing.T) {
+
+	c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	startSlot := uint64(204864)
+	endSlot := uint64(204895)
+	withdrawSlot := uint64(204886)
+	epoch := uint64(6402)
+
+	startStatus, err := c.GetValidatorStatusByIndex(fmt.Sprint(62947), &beacon.ValidatorStatusOptions{
+		Slot: &startSlot,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(startStatus.Balance)
+
+	withdrawStatus, err := c.GetValidatorStatusByIndex(fmt.Sprint(62947), &beacon.ValidatorStatusOptions{
+		Slot: &withdrawSlot,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(withdrawStatus.Balance)
+
+	endStatus, err := c.GetValidatorStatusByIndex(fmt.Sprint(62947), &beacon.ValidatorStatusOptions{
+		Slot: &endSlot,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(endStatus.Balance)
+
+	epochStatus, err := c.GetValidatorStatusByIndex(fmt.Sprint(62947), &beacon.ValidatorStatusOptions{
+		Epoch: &epoch,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(epochStatus.Balance)
+
+	config, err := c.Eth2Client().GetEth2Config()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(utils.SlotAt(config, epoch))
+
+	proposers, err := c.GetValidatorProposerDuties(epoch)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(proposers)
 
 }

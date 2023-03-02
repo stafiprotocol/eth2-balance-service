@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	reth "github.com/stafiprotocol/reth/bindings/Reth"
 	storage "github.com/stafiprotocol/reth/bindings/Storage"
+	user_deposit "github.com/stafiprotocol/reth/bindings/UserDeposit"
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
@@ -77,11 +78,41 @@ func TestStorage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	address, err := s.GetAddress(&bind.CallOpts{
+	withdrawPoolAddress, err := s.GetAddress(&bind.CallOpts{
 		Context: context.Background(),
 	}, utils.ContractStorageKey("stafiWithdraw"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(address)
+	t.Log("withdrawPoolAddress", withdrawPoolAddress)
+	withdrawPoolBalance, err := client.BalanceAt(context.Background(), withdrawPoolAddress, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("withdrawPoolBalance", withdrawPoolBalance)
+
+	userDepositPoolAddress, err := s.GetAddress(&bind.CallOpts{
+		Context: context.Background(),
+	}, utils.ContractStorageKey("stafiUserDeposit"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("userDepositPoolAddress", userDepositPoolAddress)
+	userDepositContract, err := user_deposit.NewUserDeposit(userDepositPoolAddress, client)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userDepositPoolBalance, err := userDepositContract.GetBalance(&bind.CallOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("userDepositPoolBalance", userDepositPoolBalance)
+
+	oldWithdrawPoolBalance, err := client.BalanceAt(context.Background(), common.HexToAddress("0xcabAaE1D00e697c81a9E2c5fA30D8A99735aC6a6"), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("oldWithdrawPoolBalance", oldWithdrawPoolBalance)
+
 }

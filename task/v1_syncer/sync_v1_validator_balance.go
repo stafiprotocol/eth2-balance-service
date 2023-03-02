@@ -8,7 +8,7 @@ import (
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared/beacon"
-	"github.com/stafiprotocol/reth/types"
+	"github.com/stafiprotocol/reth/shared/types"
 	"gorm.io/gorm"
 )
 

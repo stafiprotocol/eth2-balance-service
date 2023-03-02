@@ -15,7 +15,8 @@ import (
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"github.com/stafiprotocol/reth/shared/beacon"
-	rethTypes "github.com/stafiprotocol/reth/types"
+
+	// rethTypes "github.com/stafiprotocol/reth/shared/types"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 )
@@ -85,64 +86,64 @@ func (task *Task) syncEth2BlockInfo() error {
 		}
 
 		// sync slash of type 5 attester miss
-		g.Go(func() error {
-			validatorList, err := dao.GetValidatorListActive(task.db)
-			if err != nil {
-				return err
-			}
+		// g.Go(func() error {
+		// 	validatorList, err := dao.GetValidatorListActive(task.db)
+		// 	if err != nil {
+		// 		return err
+		// 	}
 
-			pubkeys := make([]rethTypes.ValidatorPubkey, 0)
-			for _, validator := range validatorList {
-				pubkey, err := rethTypes.HexToValidatorPubkey(validator.Pubkey[2:])
-				if err != nil {
-					return err
-				}
-				pubkeys = append(pubkeys, pubkey)
-			}
+		// 	pubkeys := make([]rethTypes.ValidatorPubkey, 0)
+		// 	for _, validator := range validatorList {
+		// 		pubkey, err := rethTypes.HexToValidatorPubkey(validator.Pubkey[2:])
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		// 		pubkeys = append(pubkeys, pubkey)
+		// 	}
 
-			validatorsStatus, err := task.connection.GetValidatorStatuses(pubkeys, &beacon.ValidatorStatusOptions{
-				Epoch: &willUseEpoch,
-			})
-			if err != nil {
-				return errors.Wrap(err, "syncSlashEvent GetValidatorStatuses failed")
-			}
+		// 	validatorsStatus, err := task.connection.GetValidatorStatuses(pubkeys, &beacon.ValidatorStatusOptions{
+		// 		Epoch: &willUseEpoch,
+		// 	})
+		// 	if err != nil {
+		// 		return errors.Wrap(err, "syncSlashEvent GetValidatorStatuses failed")
+		// 	}
 
-			preEpoch := willUseEpoch - 1
-			validatorsStatusPre, err := task.connection.GetValidatorStatuses(pubkeys, &beacon.ValidatorStatusOptions{
-				Epoch: &preEpoch,
-			})
-			if err != nil {
-				return errors.Wrap(err, "syncSlashEvent GetValidatorStatuses preEpoch failed")
-			}
+		// 	preEpoch := willUseEpoch - 1
+		// 	validatorsStatusPre, err := task.connection.GetValidatorStatuses(pubkeys, &beacon.ValidatorStatusOptions{
+		// 		Epoch: &preEpoch,
+		// 	})
+		// 	if err != nil {
+		// 		return errors.Wrap(err, "syncSlashEvent GetValidatorStatuses preEpoch failed")
+		// 	}
 
-			for pubkey, status := range validatorsStatus {
-				if statusPre, exist := validatorsStatusPre[pubkey]; exist {
-					if status.Balance < statusPre.Balance && !status.Slashed {
+		// 	for pubkey, status := range validatorsStatus {
+		// 		if statusPre, exist := validatorsStatusPre[pubkey]; exist {
+		// 			if status.Balance < statusPre.Balance && !status.Slashed {
 
-						slashEvent, err := dao.GetSlashEvent(task.db, status.Index, startSlot, utils.SlashTypeAttesterMiss)
-						if err != nil && err != gorm.ErrRecordNotFound {
-							return errors.Wrap(err, "dao.GetSlashEvent")
-						}
+		// 				slashEvent, err := dao.GetSlashEvent(task.db, status.Index, startSlot, utils.SlashTypeAttesterMiss)
+		// 				if err != nil && err != gorm.ErrRecordNotFound {
+		// 					return errors.Wrap(err, "dao.GetSlashEvent")
+		// 				}
 
-						slashEvent.ValidatorIndex = status.Index
-						slashEvent.StartSlot = startSlot
-						slashEvent.EndSlot = endSlot
-						slashEvent.Epoch = willUseEpoch
-						slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, startSlot)
-						slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
-						slashEvent.SlashType = utils.SlashTypeAttesterMiss
-						slashEvent.SlashAmount = statusPre.Balance - status.Balance
+		// 				slashEvent.ValidatorIndex = status.Index
+		// 				slashEvent.StartSlot = startSlot
+		// 				slashEvent.EndSlot = endSlot
+		// 				slashEvent.Epoch = willUseEpoch
+		// 				slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, startSlot)
+		// 				slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
+		// 				slashEvent.SlashType = utils.SlashTypeAttesterMiss
+		// 				slashEvent.SlashAmount = statusPre.Balance - status.Balance
 
-						err = dao.UpOrInSlashEvent(task.db, slashEvent)
-						if err != nil {
-							return errors.Wrap(err, "dao.UpOrInSlashEvent")
-						}
-					}
-				}
-			}
+		// 				err = dao.UpOrInSlashEvent(task.db, slashEvent)
+		// 				if err != nil {
+		// 					return errors.Wrap(err, "dao.UpOrInSlashEvent")
+		// 				}
+		// 			}
+		// 		}
+		// 	}
 
-			return nil
-		})
+		// 	return nil
+		// })
 
 		err = g.Wait()
 		if err != nil {
@@ -196,6 +197,7 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return errors.Wrap(err, "dao.GetWithdrawal")
 			}
+
 			withdraw.WithdrawIndex = w.WithdrawIndex
 			withdraw.ValidatorIndex = w.ValidatorIndex
 			withdraw.Slot = beaconBlock.Slot

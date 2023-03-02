@@ -11,12 +11,12 @@ import (
 	"github.com/prysmaticlabs/prysm/v3/contracts/deposit"
 	ethpb "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/reth/bindings/LightNode"
-	"github.com/stafiprotocol/reth/bindings/StakingPool"
-	"github.com/stafiprotocol/reth/bindings/SuperNode"
+	light_node "github.com/stafiprotocol/reth/bindings/LightNode"
+	staking_pool "github.com/stafiprotocol/reth/bindings/StakingPool"
+	super_node "github.com/stafiprotocol/reth/bindings/SuperNode"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
-	"github.com/stafiprotocol/reth/types"
+	"github.com/stafiprotocol/reth/shared/types"
 )
 
 const batchVoteLimit = 30

@@ -20,7 +20,7 @@ import (
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
 	"github.com/stafiprotocol/reth/shared/beacon"
 	"github.com/stafiprotocol/reth/shared/beacon/client"
-	"github.com/stafiprotocol/reth/types"
+	"github.com/stafiprotocol/reth/shared/types"
 )
 
 var Gwei5 = big.NewInt(5e9)

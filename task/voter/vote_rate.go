@@ -163,8 +163,16 @@ func (task *Task) voteRate() error {
 	}
 	totalUserUndistributedWithdrawalsDeci := decimal.NewFromInt(int64(totalUserUndistributedWithdrawals)).Mul(utils.GweiDeci)
 
-	// total user eth = total user eth from validator + deposit pool balance + undistributed withdrawals
-	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).Add(totalUserUndistributedWithdrawalsDeci)
+	// fetch totalMissingAmountForWithdraw
+
+	totalMissingAmountForWithdraw, err := task.withdrawContract.TotalMissingAmountForWithdraw(callOpts)
+	if err != nil {
+		return err
+	}
+	totalMissingAmountForWithdrawDeci := decimal.NewFromBigInt(totalMissingAmountForWithdraw, 0)
+
+	// total user eth = total user eth from validator + deposit pool balance + undistributed withdrawals - totalMissingAmountForWithdraw
+	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).Add(totalUserUndistributedWithdrawalsDeci).Sub(totalMissingAmountForWithdrawDeci)
 
 	rethTotalSupplyDeci := decimal.NewFromBigInt(rethTotalSupply, 0)
 	totalStakingEthDeci := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(utils.GweiDeci)
