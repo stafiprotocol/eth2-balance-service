@@ -293,7 +293,7 @@ func statisticCmd() *cobra.Command {
 				targetEth1BlockHeight := targetBeaconBlock.ExecutionBlockNumber
 
 				//get deposited validator before target height
-				valDepositedList, err := dao.GetValidatorDepositedListBefore(db, targetEth1BlockHeight)
+				valDepositedList, err := dao.GetValidatorDepositedListBeforeEqual(db, targetEth1BlockHeight)
 				if err != nil {
 					return err
 				}

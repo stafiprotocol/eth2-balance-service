@@ -1,11 +1,9 @@
 package task_voter
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math/big"
-	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -23,6 +21,7 @@ import (
 	storage "github.com/stafiprotocol/reth/bindings/Storage"
 	super_node "github.com/stafiprotocol/reth/bindings/SuperNode"
 	user_deposit "github.com/stafiprotocol/reth/bindings/UserDeposit"
+	withdraw "github.com/stafiprotocol/reth/bindings/Withdraw"
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
@@ -56,6 +55,7 @@ type Task struct {
 	userDepositContract     *user_deposit.UserDeposit
 	distributorContract     *distributor.Distributor
 	storageContract         *storage.Storage
+	withdrawContract        *withdraw.Withdraw
 
 	feePoolAddress          common.Address
 	superNodeFeePoolAddress common.Address
@@ -93,7 +93,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 	}
 
 	switch cfg.Version {
-	case utils.V1, utils.V2, utils.Dev:
+	case utils.V2, utils.Dev:
 	default:
 		return nil, fmt.Errorf("unsupport version: %s", cfg.Version)
 	}
@@ -262,147 +262,4 @@ func (task *Task) voteHandler() {
 			retry = 0
 		}
 	}
-}
-
-func (task *Task) initContract() error {
-
-	storageContract, err := storage.NewStorage(task.storageContractAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
-	}
-	task.storageContract = storageContract
-
-	if task.version != utils.V1 {
-		lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
-		if err != nil {
-			return err
-		}
-		task.lightNodeContract, err = light_node.NewLightNode(lightNodeAddress, task.connection.Eth1Client())
-		if err != nil {
-			return err
-		}
-
-		superNodeAddress, err := task.getContractAddress(storageContract, "stafiSuperNode")
-		if err != nil {
-			return err
-		}
-		task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connection.Eth1Client())
-		if err != nil {
-			return err
-		}
-
-		if task.enableDistribute {
-			stafiDistributorAddress, err := task.getContractAddress(storageContract, "stafiDistributor")
-			if err != nil {
-				return err
-			}
-			task.distributorContract, err = distributor.NewDistributor(stafiDistributorAddress, task.connection.Eth1Client())
-			if err != nil {
-				return err
-			}
-
-			stafiFeePoolAddress, err := task.getContractAddress(storageContract, "stafiFeePool")
-			if err != nil {
-				return err
-			}
-			task.feePoolAddress = stafiFeePoolAddress
-
-			stafiSuperNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiSuperNodeFeePool")
-			if err != nil {
-				return err
-			}
-			task.superNodeFeePoolAddress = stafiSuperNodeFeePoolAddress
-		}
-
-	}
-
-	networkBalancesAddress, err := task.getContractAddress(storageContract, "stafiNetworkBalances")
-	if err != nil {
-		return err
-	}
-	task.networkBalancesContract, err = network_balances.NewNetworkBalances(networkBalancesAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
-	}
-
-	rethAddress, err := task.getContractAddress(storageContract, "rETHToken")
-	if err != nil {
-		return err
-	}
-	task.rethContract, err = reth.NewReth(rethAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
-	}
-
-	userDepositAddress, err := task.getContractAddress(storageContract, "stafiUserDeposit")
-	if err != nil {
-		return err
-	}
-	task.userDepositContract, err = user_deposit.NewUserDeposit(userDepositAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
-	}
-
-	networkSettingsAddress, err := task.getContractAddress(storageContract, "stafiNetworkSettings")
-	if err != nil {
-		return err
-	}
-	task.networkSettingsContract, err = network_settings.NewNetworkSettings(networkSettingsAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (task *Task) getContractAddress(storage *storage.Storage, name string) (common.Address, error) {
-	address, err := storage.GetAddress(task.connection.CallOpts(nil), utils.ContractStorageKey(name))
-	if err != nil {
-		return common.Address{}, err
-	}
-	if bytes.Equal(address.Bytes(), common.Address{}.Bytes()) {
-		return common.Address{}, fmt.Errorf("address empty")
-	}
-	return address, nil
-}
-
-func (task *Task) NodeVoted(storage *storage.Storage, sender common.Address, _block *big.Int, _totalEth *big.Int, _stakingEth *big.Int, _rethSupply *big.Int) (bool, error) {
-	return storage.GetBool(task.connection.CallOpts(nil), utils.NodeSubmissionKey(sender, _block, _totalEth, _stakingEth, _rethSupply))
-}
-
-func (task *Task) AlreadyStatisticToday() (bool, error) {
-	now := time.Now().UTC()
-	if now.Hour() > 1 {
-		return true, nil
-	}
-
-	lastLine, err := utils.ReadLastLine(task.statisticFilePath)
-	if err != nil {
-		return false, err
-	}
-
-	if len(lastLine) > 0 {
-		splits := strings.Split(lastLine, " ")
-		if len(splits) > 0 {
-			lastLineTime, err := time.Parse(time.RFC3339, splits[0])
-			if err != nil {
-				return false, err
-			}
-			lastLineTime = lastLineTime.UTC()
-
-			if lastLineTime.Year() == now.Year() && lastLineTime.Month() == now.Month() && lastLineTime.Day() == now.Day() {
-				return true, nil
-			}
-
-		}
-	}
-	return false, nil
-}
-
-func (task *Task) AppendToStatistic(content string) error {
-	now := time.Now().UTC()
-
-	useTime := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	newLine := fmt.Sprintf("\n%s %s", useTime.Format(time.RFC3339), content)
-
-	return utils.AppendToFile(task.statisticFilePath, newLine)
 }

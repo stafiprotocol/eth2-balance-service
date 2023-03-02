@@ -16,6 +16,7 @@ const balancesEpochOffset = uint64(1e10)
 
 var maxRateChangeDeci = decimal.NewFromInt(1e14)
 
+// update rate every rewardEpochInterval(default: 75 epoch)
 func (task *Task) voteRate() error {
 
 	beaconHead, err := task.connection.Eth2BeaconHead()
@@ -24,7 +25,7 @@ func (task *Task) voteRate() error {
 	}
 	targetEpoch := (beaconHead.FinalizedEpoch / task.rewardEpochInterval) * task.rewardEpochInterval
 
-	eth2BalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
+	eth2ValidatorBalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
 	if err != nil {
 		return err
 	}
@@ -34,12 +35,12 @@ func (task *Task) voteRate() error {
 	}
 	logrus.WithFields(logrus.Fields{
 		"targetEpoch":                  targetEpoch,
-		"eth2BalanceSyncerDealedEpoch": eth2BalanceSyncerMetaData.DealedEpoch,
+		"eth2BalanceSyncerDealedEpoch": eth2ValidatorBalanceSyncerMetaData.DealedEpoch,
 		"eth2BlockSyncerDealedEpoch":   eth2BlockSyncerMetaData.DealedEpoch,
 	}).Debug("epocheInfo")
 
 	// ensure eth2 balances have synced
-	if eth2BalanceSyncerMetaData.DealedEpoch < targetEpoch {
+	if eth2ValidatorBalanceSyncerMetaData.DealedEpoch < targetEpoch {
 		return nil
 	}
 	// ensure eth2 block have synced
@@ -74,6 +75,7 @@ func (task *Task) voteRate() error {
 		if err != nil {
 			return err
 		}
+		// we will use next slot if not exist
 		if !exist {
 			targetSlot++
 			retry++
@@ -91,10 +93,6 @@ func (task *Task) voteRate() error {
 		return err
 	}
 
-	if task.version != utils.V2 {
-		targetEth1BlockHeight = metaEth1BlockSyncer.DealedBlockHeight
-	}
-
 	// ensure all eth1 event synced
 	if metaEth1BlockSyncer.DealedBlockHeight < targetEth1BlockHeight {
 		return nil
@@ -106,6 +104,7 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return err
 	}
+	// sub initial issue if dev mode
 	if task.version == utils.Dev {
 		rethTotalSupply = new(big.Int).Sub(rethTotalSupply, utils.OldRethSupply)
 	}
@@ -113,13 +112,14 @@ func (task *Task) voteRate() error {
 		return nil
 	}
 
+	// get deposit pool balance
 	userDepositPoolBalance, err := task.userDepositContract.GetBalance(callOpts)
 	if err != nil {
 		return fmt.Errorf("userDepositContract.GetBalance err: %s", err)
 	}
 
-	// get all validator deposited before targetHeight
-	validatorDepositedList, err := dao.GetValidatorDepositedListBefore(task.db, targetEth1BlockHeight)
+	// get all validator deposited before or equal targetHeight
+	validatorDepositedList, err := dao.GetValidatorDepositedListBeforeEqual(task.db, targetEth1BlockHeight)
 	if err != nil {
 		return err
 	}
@@ -127,6 +127,7 @@ func (task *Task) voteRate() error {
 		"validatorDepositedList len": len(validatorDepositedList),
 	}).Debug("validatorDepositedList")
 
+	// cal total user eth from validator
 	totalUserEthFromValidator := uint64(0)
 	totalStakingEthFromValidator := uint64(0)
 	for _, validator := range validatorDepositedList {
@@ -137,23 +138,45 @@ func (task *Task) voteRate() error {
 		totalUserEthFromValidator += userAllEth
 		totalStakingEthFromValidator += userStakingEth
 	}
-
 	totalUserEthFromValidatorDeci := decimal.NewFromInt(int64(totalUserEthFromValidator)).Mul(utils.GweiDeci)
 
-	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0))
-	rethTotalSupplyDeci := decimal.NewFromBigInt(rethTotalSupply, 0)
+	// cal user undistributed withdrawals
+	totalUserUndistributedWithdrawals := uint64(0)
+	latestDistributeHeight, err := task.withdrawContract.LatestDistributeHeight(callOpts)
+	if err != nil {
+		return err
+	}
+	if latestDistributeHeight.Uint64() < targetEth1BlockHeight {
+		withdrawals, err := dao.GetWithdrawalsBetween(task.db, latestDistributeHeight.Uint64(), targetEth1BlockHeight)
+		if err != nil {
+			return err
+		}
+		for _, withdraw := range withdrawals {
+			validator, err := dao.GetValidatorByIndex(task.db, withdraw.ValidatorIndex)
+			if err != nil {
+				return err
+			}
 
+			userReward, _, _ := utils.GetUserNodePlatformRewardV2(utils.StandardEffectiveBalance-validator.NodeDepositAmount, decimal.NewFromInt(int64(withdraw.Amount)))
+			totalUserUndistributedWithdrawals += userReward.BigInt().Uint64()
+		}
+	}
+	totalUserUndistributedWithdrawalsDeci := decimal.NewFromInt(int64(totalUserUndistributedWithdrawals)).Mul(utils.GweiDeci)
+
+	// total user eth = total user eth from validator + deposit pool balance + undistributed withdrawals
+	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).Add(totalUserUndistributedWithdrawalsDeci)
+
+	rethTotalSupplyDeci := decimal.NewFromBigInt(rethTotalSupply, 0)
 	totalStakingEthDeci := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(utils.GweiDeci)
 	balancesEpoch := big.NewInt(int64(targetEpoch + balancesEpochOffset))
 
-	if task.version != utils.V1 {
-		voted, err := task.NodeVoted(task.storageContract, task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEthDeci.BigInt(), totalStakingEthDeci.BigInt(), rethTotalSupplyDeci.BigInt())
-		if err != nil {
-			return fmt.Errorf("networkBalancesContract.NodeVoted err: %s", err)
-		}
-		if voted {
-			return nil
-		}
+	// check voted
+	voted, err := task.NodeVoted(task.storageContract, task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEthDeci.BigInt(), totalStakingEthDeci.BigInt(), rethTotalSupplyDeci.BigInt())
+	if err != nil {
+		return fmt.Errorf("networkBalancesContract.NodeVoted err: %s", err)
+	}
+	if voted {
+		return nil
 	}
 
 	// send vote tx
@@ -169,6 +192,7 @@ func (task *Task) voteRate() error {
 	}
 	oldExchangeRateDeci := decimal.NewFromBigInt(oldExchangeRate, 0)
 
+	// cal new exchange rate
 	newExchangeRateDeci := totalUserEthDeci.Mul(decimal.NewFromInt(1e18)).Div(rethTotalSupplyDeci)
 
 	logrus.WithFields(logrus.Fields{
@@ -177,6 +201,10 @@ func (task *Task) voteRate() error {
 	}).Debug("exchangeInfo")
 
 	if newExchangeRateDeci.LessThanOrEqual(oldExchangeRateDeci) {
+		logrus.WithFields(logrus.Fields{
+			"newExchangeRate": newExchangeRateDeci.StringFixed(0),
+			"oldExchangeRate": oldExchangeRate.String(),
+		}).Warn("new exchangeRate less than old")
 		return nil
 	}
 	if task.version != utils.Dev {

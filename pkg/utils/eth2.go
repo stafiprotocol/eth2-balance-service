@@ -265,3 +265,25 @@ func GetUserNodePlatformReward(userDepositBalance uint64, rewardDeci, platformFe
 	return userRewardDeci, nodeRewardDeci, platformFeeDeci
 
 }
+
+// platform = 5%  node = 5% + (90% * nodedeposit/32)
+// return (user reward, node reward, paltform fee)
+func GetUserNodePlatformRewardV2(userDepositBalance uint64, rewardDeci decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
+
+	if !rewardDeci.IsPositive() || userDepositBalance > StandardEffectiveBalance {
+		return decimal.Zero, decimal.Zero, decimal.Zero
+	}
+	userDepositBalanceDeci := decimal.NewFromInt(int64(userDepositBalance))
+	standEffectiveBalanceDeci := decimal.NewFromInt(int64(StandardEffectiveBalance))
+	// platform Fee
+	platformFeeDeci := rewardDeci.Mul(decimal.NewFromFloat(0.05))
+	nodeRewardDeci := platformFeeDeci.Add(rewardDeci.Mul(decimal.NewFromFloat(0.9)).Mul(userDepositBalanceDeci).Div(standEffectiveBalanceDeci))
+
+	userRewardDeci := rewardDeci.Sub(platformFeeDeci).Sub(nodeRewardDeci)
+	if userRewardDeci.IsNegative() {
+		userRewardDeci = decimal.Zero
+	}
+
+	return userRewardDeci, nodeRewardDeci, platformFeeDeci
+
+}

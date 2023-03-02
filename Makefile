@@ -40,6 +40,7 @@ abi:
 	abigen --abi ./bindings/Distributor/distributor_abi.json --pkg distributor --type Distributor --out ./bindings/Distributor/Distributor.go
 	abigen --abi ./bindings/FeePool/feepool_abi.json --pkg fee_pool --type FeePool --out ./bindings/FeePool/FeePool.go
 	abigen --abi ./bindings/SuperNodeFeePool/supernodefeepool_abi.json --pkg super_node_fee_pool --type SuperNodeFeePool --out ./bindings/SuperNodeFeePool/SuperNodeFeePool.go
+	abigen --abi ./bindings/Withdraw/withdraw_abi.json --pkg withdraw --type Withdraw --out ./bindings/Withdraw/Withdraw.go
 
 
 clean:

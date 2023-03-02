@@ -70,7 +70,7 @@ func (task *Task) syncEth2BlockInfo() error {
 		g := new(errgroup.Group)
 		g.SetLimit(16)
 
-		// sync slash event of type 1 2 3 4 6
+		// sync slash event of type 1 2 3 4 6 and withdrawals/proposed block
 		for slot := startSlot; slot <= endSlot; slot++ {
 
 			newSlot := slot
@@ -80,7 +80,7 @@ func (task *Task) syncEth2BlockInfo() error {
 				if !ok {
 					return fmt.Errorf("slot %d proposerDuties not exit", newSlot)
 				}
-				return task.syncBlockSlashEvent(willUseEpoch, newSlot, proposer, syncCommittees)
+				return task.syncBlockInfoAndSlashEvent(willUseEpoch, newSlot, proposer, syncCommittees)
 			})
 		}
 
@@ -162,7 +162,9 @@ func (task *Task) syncEth2BlockInfo() error {
 
 // sync 1 2 3 slash and slash amount
 // sync 4 6 slash and slash amount is zero
-func (task *Task) syncBlockSlashEvent(epoch, slot, proposer uint64, syncCommittees []beacon.SyncCommittee) error {
+// sync withdrawals
+// sync proposaled block
+func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncCommittees []beacon.SyncCommittee) error {
 	beaconBlock, exist, err := task.connection.GetBeaconBlock(fmt.Sprintf("%d", slot))
 	if err != nil {
 		return errors.Wrap(err, "GetBeaconBlock")
@@ -180,6 +182,30 @@ func (task *Task) syncBlockSlashEvent(epoch, slot, proposer uint64, syncCommitte
 		}
 
 		return nil
+	}
+
+	// save withdrawals of nodes in our pool
+	for _, w := range beaconBlock.Withdrawals {
+		_, err := dao.GetValidatorByIndex(task.db, w.ValidatorIndex)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return errors.Wrap(err, "dao.GetValidatorByIndex")
+		}
+
+		if err == nil {
+			withdraw, err := dao.GetWithdrawal(task.db, w.WithdrawIndex)
+			if err != nil && err != gorm.ErrRecordNotFound {
+				return errors.Wrap(err, "dao.GetWithdrawal")
+			}
+			withdraw.WithdrawIndex = w.WithdrawIndex
+			withdraw.ValidatorIndex = w.ValidatorIndex
+			withdraw.Slot = beaconBlock.Slot
+			withdraw.BlockNumber = beaconBlock.ExecutionBlockNumber
+			withdraw.Amount = w.Amount
+			err = dao.UpOrInWithdrawal(task.db, withdraw)
+			if err != nil {
+				return errors.Wrap(err, "dao.UpOrInWithdrawal")
+			}
+		}
 	}
 
 	//slash type 4, save sync committee slash
