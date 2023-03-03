@@ -52,8 +52,7 @@ type Task struct {
 	lightNodeFeePoolAddress common.Address
 	superNodeFeePoolAddress common.Address
 
-	eth2Config         beacon.Eth2Config
-	rewardSlotInterval uint64
+	eth2Config beacon.Eth2Config
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
@@ -113,8 +112,6 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
-
-	task.rewardSlotInterval = utils.SlotInterval(task.eth2Config, task.rewardEpochInterval)
 
 	utils.SafeGoWithRestart(task.syncEth1BlockHandler)
 	utils.SafeGoWithRestart(task.syncEth2BlockHandler)

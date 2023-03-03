@@ -52,7 +52,7 @@ func (task *Task) syncEth2BlockInfo() error {
 	for epoch := startEpoch; epoch <= endEpoch; epoch++ {
 		willUseEpoch := epoch
 
-		startSlot := utils.SlotAt(task.eth2Config, willUseEpoch)
+		startSlot := utils.StartSlotOfEpoch(task.eth2Config, willUseEpoch)
 		endSlot := startSlot + task.eth2Config.SlotsPerEpoch - 1
 
 		proposerDuties, err := task.connection.GetValidatorProposerDuties(willUseEpoch)
@@ -129,8 +129,8 @@ func (task *Task) syncEth2BlockInfo() error {
 		// 				slashEvent.StartSlot = startSlot
 		// 				slashEvent.EndSlot = endSlot
 		// 				slashEvent.Epoch = willUseEpoch
-		// 				slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, startSlot)
-		// 				slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
+		// 				slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, startSlot)
+		// 				slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, endSlot)
 		// 				slashEvent.SlashType = utils.SlashTypeAttesterMiss
 		// 				slashEvent.SlashAmount = statusPre.Balance - status.Balance
 
@@ -313,8 +313,8 @@ func (task *Task) saveProposerMissEvent(slot, epoch, proposer uint64) error {
 	slashEvent.StartSlot = slot
 	slashEvent.EndSlot = slot
 	slashEvent.Epoch = epoch
-	slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
-	slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, slot)
+	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
 	slashEvent.SlashType = utils.SlashTypeProposerMiss
 	slashEvent.SlashAmount = 0
 
@@ -342,8 +342,8 @@ func (task *Task) saveSyncMissEvent(slot, epoch, valIndex uint64) error {
 	slashEvent.StartSlot = slot
 	slashEvent.EndSlot = slot
 	slashEvent.Epoch = epoch
-	slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
-	slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, slot)
+	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
 	slashEvent.SlashType = utils.SlashTypeSyncMiss
 	slashEvent.SlashAmount = 0
 
@@ -426,8 +426,8 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 		slashEvent.StartSlot = proposedBlock.Slot
 		slashEvent.EndSlot = proposedBlock.Slot
 		slashEvent.Epoch = epoch
-		slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, proposedBlock.Slot)
-		slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, proposedBlock.Slot)
+		slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, proposedBlock.Slot)
+		slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, proposedBlock.Slot)
 		slashEvent.SlashType = utils.SlashTypeFeeRecipient
 		slashEvent.SlashAmount = feeAmountDeci.Div(utils.GweiDeci).BigInt().Uint64() // use Gwei as unit
 
@@ -453,7 +453,7 @@ func (task *Task) saveAttesterSlashEvent(slot, epoch, valIndex uint64) error {
 	slashEvent.ValidatorIndex = valIndex
 	slashEvent.StartSlot = slot
 	slashEvent.Epoch = epoch
-	slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
+	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
 	slashEvent.SlashType = utils.SlashTypeAttesterSlash
 
 	validatorStart, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(valIndex), &beacon.ValidatorStatusOptions{
@@ -462,7 +462,7 @@ func (task *Task) saveAttesterSlashEvent(slot, epoch, valIndex uint64) error {
 	if err != nil {
 		return err
 	}
-	endSlot := utils.SlotAt(task.eth2Config, epoch+1)
+	endSlot := utils.StartSlotOfEpoch(task.eth2Config, epoch+1)
 	validatorEnd, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(valIndex), &beacon.ValidatorStatusOptions{
 		Slot: &endSlot,
 	})
@@ -475,7 +475,7 @@ func (task *Task) saveAttesterSlashEvent(slot, epoch, valIndex uint64) error {
 	}
 
 	slashEvent.EndSlot = endSlot
-	slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
+	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, endSlot)
 	slashEvent.SlashAmount = slashAmount
 
 	err = dao.UpOrInSlashEvent(task.db, slashEvent)
@@ -500,7 +500,7 @@ func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uin
 	slashEvent.ValidatorIndex = proposerValidatorIndex
 	slashEvent.StartSlot = slot
 	slashEvent.Epoch = epoch
-	slashEvent.StartTimestamp = utils.SlotTime(task.eth2Config, slot)
+	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
 	slashEvent.SlashType = utils.SlashTypeProposerSlash
 
 	validatorStart, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(proposerValidatorIndex), &beacon.ValidatorStatusOptions{
@@ -509,7 +509,7 @@ func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uin
 	if err != nil {
 		return err
 	}
-	endSlot := utils.SlotAt(task.eth2Config, epoch+1)
+	endSlot := utils.StartSlotOfEpoch(task.eth2Config, epoch+1)
 	validatorEnd, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(proposerValidatorIndex), &beacon.ValidatorStatusOptions{
 		Slot: &endSlot,
 	})
@@ -522,7 +522,7 @@ func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uin
 	}
 
 	slashEvent.EndSlot = endSlot
-	slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
+	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, endSlot)
 	slashEvent.SlashAmount = slashAmount
 
 	err = dao.UpOrInSlashEvent(task.db, slashEvent)
@@ -570,7 +570,7 @@ func (task *Task) syncSlashEventEndSlotInfo() error {
 		if validatorNow.WithdrawableEpoch != uint64(math.MaxUint64) && validatorNow.WithdrawableEpoch < beaconHead.FinalizedEpoch {
 			endEpoch = validatorNow.WithdrawableEpoch
 		}
-		endSlot := utils.SlotAt(task.eth2Config, endEpoch)
+		endSlot := utils.StartSlotOfEpoch(task.eth2Config, endEpoch)
 
 		// already dealed
 		if slashEvent.EndSlot == endSlot {
@@ -599,7 +599,7 @@ func (task *Task) syncSlashEventEndSlotInfo() error {
 		}
 
 		slashEvent.EndSlot = endSlot
-		slashEvent.EndTimestamp = utils.SlotTime(task.eth2Config, endSlot)
+		slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, endSlot)
 		slashEvent.SlashAmount = slashAmount
 
 		err = dao.UpOrInSlashEvent(task.db, slashEvent)

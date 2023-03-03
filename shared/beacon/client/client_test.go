@@ -112,7 +112,7 @@ func TestBeaconBlock(t *testing.T) {
 	}
 	t.Logf("%+v", block)
 	t.Logf("%v", exists)
-	t.Logf("%+v", utils.SlotAt(config, 4652))
+	t.Logf("%+v", utils.StartSlotOfEpoch(config, 4652))
 
 }
 func TestBeaconHead(t *testing.T) {

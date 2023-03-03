@@ -11,6 +11,7 @@ import (
 	reth "github.com/stafiprotocol/reth/bindings/Reth"
 	storage "github.com/stafiprotocol/reth/bindings/Storage"
 	user_deposit "github.com/stafiprotocol/reth/bindings/UserDeposit"
+	withdraw "github.com/stafiprotocol/reth/bindings/Withdraw"
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
@@ -91,6 +92,11 @@ func TestStorage(t *testing.T) {
 	}
 	t.Log("withdrawPoolBalance", withdrawPoolBalance)
 
+	withdrawPoolContract, err := withdraw.NewWithdraw(withdrawPoolAddress, client)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	userDepositPoolAddress, err := s.GetAddress(&bind.CallOpts{
 		Context: context.Background(),
 	}, utils.ContractStorageKey("stafiUserDeposit"))
@@ -115,4 +121,9 @@ func TestStorage(t *testing.T) {
 	}
 	t.Log("oldWithdrawPoolBalance", oldWithdrawPoolBalance)
 
+	totalMissingAmountForWithdraw, err := withdrawPoolContract.TotalMissingAmountForWithdraw(&bind.CallOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("totalMissingAmountForWithdraw", totalMissingAmountForWithdraw)
 }

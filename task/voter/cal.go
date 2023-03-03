@@ -9,7 +9,7 @@ import (
 )
 
 // return stakingEth and stakingEth + reward (Gwei)
-func (task *Task) getStakerEthInfoOfValidator(validator *dao.Validator, targetEpoch uint64) (userStakingEth uint64, userAllEth uint64, err error) {
+func (task *Task) getUserEthInfoOfValidator(validator *dao.Validator, targetEpoch uint64) (userStakingEth uint64, userAllEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusOffBoardCanWithdraw, utils.ValidatorStatusOffBoardWithdrawed:
 		switch validator.NodeType {
@@ -78,11 +78,11 @@ func (task Task) getUserDepositAndReward(validatorBalance, nodeDepositAmount, sl
 
 		// total staking reward
 		reward := validatorBalance - utils.StandardEffectiveBalance
-		userReward, nodeReward, _ := utils.GetUserNodePlatformReward(userDepositBalance, decimal.NewFromInt(int64(reward)), task.platformFee, task.nodeFee)
+		userReward, nodeReward, _ := utils.GetUserNodePlatformRewardV1(userDepositBalance, decimal.NewFromInt(int64(reward)))
 		nodeDepositAndReward := decimal.NewFromInt(int64(nodeDepositAmount)).Add(nodeReward)
 
 		// slash related
-		userSlash, _, platformSlash := utils.GetUserNodePlatformReward(userDepositBalance, decimal.NewFromInt(int64(slashAmount)), task.platformFee, task.nodeFee)
+		userSlash, _, platformSlash := utils.GetUserNodePlatformRewardV1(userDepositBalance, decimal.NewFromInt(int64(slashAmount)))
 		nodeShouldPaySlash := userSlash.Add(platformSlash)
 		nodeShouldPayUserSlash := decimal.Zero
 		if nodeShouldPaySlash.IsPositive() {

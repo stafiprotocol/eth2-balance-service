@@ -163,7 +163,7 @@ func TestBalance(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(utils.SlotAt(config, epoch))
+	t.Log(utils.StartSlotOfEpoch(config, epoch))
 
 	proposers, err := c.GetValidatorProposerDuties(epoch)
 	if err != nil {

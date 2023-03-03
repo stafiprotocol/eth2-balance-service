@@ -121,7 +121,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 			validatorBalance.EffectiveBalance = status.EffectiveBalance
 			validatorBalance.Epoch = epoch
 			validatorBalance.ValidatorIndex = validatorIndex
-			validatorBalance.Timestamp = utils.EpochTime(task.eth2Config, epoch)
+			validatorBalance.Timestamp = utils.StartTimestampOfEpoch(task.eth2Config, epoch)
 
 			err = dao.UpOrInValidatorBalance(task.db, validatorBalance)
 			if err != nil {
@@ -143,7 +143,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 			}
 			nodeBalance.NodeAddress = node
 			nodeBalance.Epoch = epoch
-			nodeBalance.Timestamp = utils.EpochTime(task.eth2Config, epoch)
+			nodeBalance.Timestamp = utils.StartTimestampOfEpoch(task.eth2Config, epoch)
 
 			for _, l := range list {
 				valInfo, err := dao.GetValidatorByIndex(task.db, l.ValidatorIndex)

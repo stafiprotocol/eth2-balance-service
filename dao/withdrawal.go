@@ -12,10 +12,11 @@ type Withdrawal struct {
 	db.BaseModel
 	WithdrawIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:withdraw_index;uinqueIndex"`
 
-	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index"`
-	Slot           uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:slot"`
-	BlockNumber    uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:block_number"`
-	Amount         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:amount"` //Gwei
+	ValidatorIndex     uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index"`
+	Slot               uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:slot"`
+	BlockNumber        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:block_number"`
+	Amount             uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:amount"` //Gwei
+	ClaimedBlockNumber uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:claimed_block_number"`
 }
 
 func (f Withdrawal) TableName() string {

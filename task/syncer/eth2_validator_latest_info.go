@@ -31,7 +31,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return nil
 	}
 
-	targetSlot := utils.SlotAt(task.eth2Config, finalEpoch)
+	targetSlot := utils.StartSlotOfEpoch(task.eth2Config, finalEpoch)
 	var targetEth1BlockHeight uint64
 	retry := 0
 	for {

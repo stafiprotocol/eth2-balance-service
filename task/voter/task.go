@@ -41,12 +41,12 @@ type Task struct {
 	rewardEpochInterval    uint64
 	version                string
 	enableDistribute       bool
-	statisticFilePath      string
 
 	// need init on start()
-	connection              *shared.Connection
-	db                      *db.WrapDb
-	withdrawCredientials    string
+	connection           *shared.Connection
+	db                   *db.WrapDb
+	withdrawCredientials string
+
 	lightNodeContract       *light_node.LightNode
 	superNodeContract       *super_node.SuperNode
 	networkSettingsContract *network_settings.NetworkSettings
@@ -60,12 +60,9 @@ type Task struct {
 	feePoolAddress          common.Address
 	superNodeFeePoolAddress common.Address
 
-	rewardSlotInterval uint64
-	eth2Config         beacon.Eth2Config
-	platformFee        decimal.Decimal // 0.1
-	nodeFee            decimal.Decimal // 0.1
+	eth2Config beacon.Eth2Config
 
-	domain []byte
+	domain []byte // for eth2 sigs
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*Task, error) {
@@ -117,7 +114,6 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 		version:                cfg.Version,
 		enableDistribute:       cfg.EnableDistribute,
-		statisticFilePath:      statisticFilePath,
 	}
 	return s, nil
 }
@@ -133,7 +129,6 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
-	task.rewardSlotInterval = utils.SlotInterval(task.eth2Config, task.rewardEpochInterval)
 
 	err = task.initContract()
 	if err != nil {
@@ -146,25 +141,11 @@ func (task *Task) Start() error {
 	}
 	task.withdrawCredientials = hexutil.Encode(credentials)
 
-	platformFee, err := task.networkSettingsContract.GetPlatformFee(task.connection.CallOpts(nil))
-	if err != nil {
-		return err
-	}
-	task.platformFee = decimal.NewFromBigInt(platformFee, -18)
-	logrus.Infof("platformFee: %s", task.platformFee.String())
-
-	nodeFee, err := task.networkSettingsContract.GetNodeFee(task.connection.CallOpts(nil))
-	if err != nil {
-		return err
-	}
-	task.nodeFee = decimal.NewFromBigInt(nodeFee, -18)
-	logrus.Infof("nodeFee: %s", task.nodeFee.String())
-
+	// set domain by chainId
 	chainId, err := task.connection.Eth1Client().ChainID(context.Background())
 	if err != nil {
 		return err
 	}
-
 	switch chainId.Uint64() {
 	case 1:
 		domain, err := signing.ComputeDomain(
@@ -196,6 +177,8 @@ func (task *Task) Start() error {
 			return err
 		}
 		task.domain = domain
+	default:
+		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
 	}
 
 	if len(task.domain) == 0 {

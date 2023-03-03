@@ -31,7 +31,7 @@ import (
 func statisticCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "statistic",
-		Short: "Statistic history reward info",
+		Short: "Statistic history reward info and save to statistic_info.txt",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configPath, err := cmd.Flags().GetString(flagConfigPath)
 			if err != nil {
@@ -283,7 +283,7 @@ func statisticCmd() *cobra.Command {
 				}
 
 				// get eth1 block height
-				targetBeaconBlock, _, err := connection.Eth2Client().GetBeaconBlock(fmt.Sprint(utils.SlotAt(eth2Config, willDealEpoch)))
+				targetBeaconBlock, _, err := connection.Eth2Client().GetBeaconBlock(fmt.Sprint(utils.StartSlotOfEpoch(eth2Config, willDealEpoch)))
 				if err != nil {
 					return err
 				}
@@ -317,7 +317,7 @@ func statisticCmd() *cobra.Command {
 				for _, validatorBalance := range valBalanceList {
 					validator := valIndex[validatorBalance.ValidatorIndex]
 
-					userDeposit, userReward, valDeposit, valReward, platformFee := utils.GetUserValPlatformDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount, platformFeeDeci, nodeFeeDeci)
+					userDeposit, userReward, valDeposit, valReward, platformFee := utils.GetUserValPlatformDepositAndRewardV1(validatorBalance.Balance, validator.NodeDepositAmount, platformFeeDeci, nodeFeeDeci)
 
 					totalUserEthFromValidator += userDeposit
 					totalUserEthFromValidator += userReward
@@ -342,7 +342,7 @@ func statisticCmd() *cobra.Command {
 
 				//we should deal val deposited before target height but not in balance list
 				for _, val := range depositedIndex {
-					userDeposit, userReward, valDeposit, valReward, platformFee := utils.GetUserValPlatformDepositAndReward(utils.StandardEffectiveBalance, val.NodeDepositAmount, platformFeeDeci, nodeFeeDeci)
+					userDeposit, userReward, valDeposit, valReward, platformFee := utils.GetUserValPlatformDepositAndRewardV1(utils.StandardEffectiveBalance, val.NodeDepositAmount, platformFeeDeci, nodeFeeDeci)
 
 					totalUserEthFromValidator += userDeposit
 					totalUserEthFromValidator += userReward
@@ -382,7 +382,7 @@ func statisticCmd() *cobra.Command {
 						userDepositBalance = 32e9
 					}
 
-					userReward, valReward, platformFee := utils.GetUserNodePlatformReward(userDepositBalance, rewardDeci, platformFeeDeci, nodeFeeDeci)
+					userReward, valReward, platformFee := utils.GetUserNodePlatformRewardV1(userDepositBalance, rewardDeci)
 
 					totalRewardFromFeeDeci = totalRewardFromFeeDeci.Add(rewardDeci)
 					totalUserRewardFromFeeDeci = totalUserRewardFromFeeDeci.Add(userReward)
@@ -450,7 +450,7 @@ epoch: %d timestamp: %d
 	all -> totalEth: %s totalDepositEth: %s totalReward: %s
 	exchangeRate -> rate: %s
 `,
-					willDealEpoch, utils.EpochTime(eth2Config, willDealEpoch),
+					willDealEpoch, utils.StartTimestampOfEpoch(eth2Config, willDealEpoch),
 					totalStakerEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), totalStakerDepositEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), totalStakerRewardDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6),
 					totalValidatorEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), totalValidatorDepositEthDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6), totalValidatorRewardDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6),
 					totalPlatformFeeDeci.Div(decimal.NewFromInt(1e18)).StringFixed(6),

@@ -165,13 +165,13 @@ func (c *StandardHttpClient) GetBeaconHead() (beacon.BeaconHead, error) {
 		return beacon.BeaconHead{}, err
 	}
 
-	epoch := utils.EpochAt(c.eth2Config, uint64(time.Now().Unix()))
+	epoch := utils.EpochAtTimestamp(c.eth2Config, uint64(time.Now().Unix()))
 	// Return response
 	return beacon.BeaconHead{
 		Epoch:                  epoch,
-		Slot:                   utils.SlotAt(c.eth2Config, epoch),
+		Slot:                   utils.StartSlotOfEpoch(c.eth2Config, epoch),
 		FinalizedEpoch:         uint64(finalityCheckpoints.Data.Finalized.Epoch),
-		FinalizedSlot:          utils.SlotAt(c.eth2Config, uint64(finalityCheckpoints.Data.Finalized.Epoch)),
+		FinalizedSlot:          utils.StartSlotOfEpoch(c.eth2Config, uint64(finalityCheckpoints.Data.Finalized.Epoch)),
 		JustifiedEpoch:         uint64(finalityCheckpoints.Data.CurrentJustified.Epoch),
 		PreviousJustifiedEpoch: uint64(finalityCheckpoints.Data.PreviousJustified.Epoch),
 	}, nil

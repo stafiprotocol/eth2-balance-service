@@ -91,27 +91,29 @@ var (
 	OldRethSupply, _ = new(big.Int).SetString("25642334000000000000", 10)
 
 	GweiDeci = decimal.NewFromInt(1e9)
+
+	PlatformFeeV1Deci = decimal.NewFromFloat(0.1)
+	NodeFeeV1Deci     = decimal.NewFromFloat(0.1)
+
+	Percent5Deci  = decimal.NewFromFloat(0.05)
+	Percent90Deci = decimal.NewFromFloat(0.9)
 )
 
 // Get an eth2 epoch number by time
-func EpochAt(config beacon.Eth2Config, time uint64) uint64 {
+func EpochAtTimestamp(config beacon.Eth2Config, time uint64) uint64 {
 	return config.GenesisEpoch + (time-config.GenesisTime)/config.SecondsPerEpoch
 }
 
-func EpochTime(config beacon.Eth2Config, epoch uint64) uint64 {
+func StartTimestampOfEpoch(config beacon.Eth2Config, epoch uint64) uint64 {
 	return (epoch-config.GenesisEpoch)*config.SecondsPerEpoch + config.GenesisTime
 }
 
-func SlotTime(config beacon.Eth2Config, slot uint64) uint64 {
+func TimestampOfSlot(config beacon.Eth2Config, slot uint64) uint64 {
 	return slot*config.SecondsPerSlot + config.GenesisTime
 }
 
-func SlotInterval(config beacon.Eth2Config, epochInterval uint64) uint64 {
-	return config.SlotsPerEpoch * epochInterval
-}
-
 // Get an eth2 first slot number by epoch
-func SlotAt(config beacon.Eth2Config, epoch uint64) uint64 {
+func StartSlotOfEpoch(config beacon.Eth2Config, epoch uint64) uint64 {
 	return config.SlotsPerEpoch * epoch
 }
 
@@ -190,8 +192,9 @@ type ResGasPrice struct {
 	} `json:"priorityFee"`
 }
 
+// statistic use
 // return (user deposit, user reward, val deposit, val reward, paltform fee)
-func GetUserValPlatformDepositAndReward(validatorBalance, nodeDepositAmount uint64, platformFee, nodeFee decimal.Decimal) (uint64, uint64, uint64, uint64, uint64) {
+func GetUserValPlatformDepositAndRewardV1(validatorBalance, nodeDepositAmount uint64, platformFee, nodeFee decimal.Decimal) (uint64, uint64, uint64, uint64, uint64) {
 	userDepositBalance := StandardEffectiveBalance - nodeDepositAmount
 
 	switch {
@@ -235,16 +238,15 @@ func GetUserValPlatformDepositAndReward(validatorBalance, nodeDepositAmount uint
 	}
 }
 
-// todo unit test
 // return (user reward, node reward, paltform fee)
-func GetUserNodePlatformReward(userDepositBalance uint64, rewardDeci, platformFee, nodeFee decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
+func GetUserNodePlatformRewardV1(userDepositBalance uint64, rewardDeci decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
 
-	if !rewardDeci.IsPositive() || platformFee.IsNegative() || nodeFee.IsNegative() || userDepositBalance > StandardEffectiveBalance {
+	if !rewardDeci.IsPositive() || userDepositBalance > StandardEffectiveBalance {
 		return decimal.Zero, decimal.Zero, decimal.Zero
 	}
 
 	// platform Fee
-	platformFeeDeci := rewardDeci.Mul(platformFee)
+	platformFeeDeci := rewardDeci.Mul(PlatformFeeV1Deci)
 
 	// node+user stake reward
 	nodeAndUserStakeRewardDeci := rewardDeci.Sub(platformFeeDeci)
@@ -255,7 +257,7 @@ func GetUserNodePlatformReward(userDepositBalance uint64, rewardDeci, platformFe
 	nodeStakeRewardDeci := nodeAndUserStakeRewardDeci.Sub(userStakeRewardDeci)
 
 	// node commisson reward from user
-	nodeCommissionRewardFromUserDeci := userStakeRewardDeci.Mul(nodeFee)
+	nodeCommissionRewardFromUserDeci := userStakeRewardDeci.Mul(NodeFeeV1Deci)
 
 	// user reward
 	userRewardDeci := userStakeRewardDeci.Sub(nodeCommissionRewardFromUserDeci)
@@ -276,8 +278,8 @@ func GetUserNodePlatformRewardV2(userDepositBalance uint64, rewardDeci decimal.D
 	userDepositBalanceDeci := decimal.NewFromInt(int64(userDepositBalance))
 	standEffectiveBalanceDeci := decimal.NewFromInt(int64(StandardEffectiveBalance))
 	// platform Fee
-	platformFeeDeci := rewardDeci.Mul(decimal.NewFromFloat(0.05))
-	nodeRewardDeci := platformFeeDeci.Add(rewardDeci.Mul(decimal.NewFromFloat(0.9)).Mul(userDepositBalanceDeci).Div(standEffectiveBalanceDeci))
+	platformFeeDeci := rewardDeci.Mul(Percent5Deci)
+	nodeRewardDeci := platformFeeDeci.Add(rewardDeci.Mul(Percent90Deci).Mul(userDepositBalanceDeci).Div(standEffectiveBalanceDeci))
 
 	userRewardDeci := rewardDeci.Sub(platformFeeDeci).Sub(nodeRewardDeci)
 	if userRewardDeci.IsNegative() {
