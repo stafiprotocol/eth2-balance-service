@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
-var minDistributeAmount = big.NewInt(5e17) // 0.5eth
+var minDistributeAmountDeci = decimal.NewFromInt(5e17) // 0.5eth
 var distributeWithdrawalsDuBlocks = uint64(320)
 
 func (task *Task) distributeFee() error {
@@ -34,7 +35,7 @@ func (task *Task) distributeFeePool() error {
 		return err
 	}
 
-	if balance.Cmp(minDistributeAmount) < 0 {
+	if balance.Cmp(minDistributeAmountDeci.BigInt()) < 0 {
 		return nil
 	}
 
@@ -89,7 +90,7 @@ func (task *Task) distributeSuperNodeFeePool() error {
 		return err
 	}
 
-	if balance.Cmp(minDistributeAmount) < 0 {
+	if balance.Cmp(minDistributeAmountDeci.BigInt()) < 0 {
 		return nil
 	}
 
@@ -139,22 +140,18 @@ func (task *Task) distributeSuperNodeFeePool() error {
 }
 
 func (task *Task) distributeWithdrawals() error {
-	eth1LatestBlock, err := task.connection.Eth1LatestBlock()
+	latestDistributeHeight, targetEth1BlockHeight, stateOk, err := task.checkSyncAndVoteState()
 	if err != nil {
-		return err
-	}
-	targetEth1BlockHeight := (eth1LatestBlock / distributeWithdrawalsDuBlocks) * distributeWithdrawalsDuBlocks
-
-	latestDistributeHeight, err := task.withdrawContract.LatestDistributeHeight(&bind.CallOpts{})
-	if err != nil {
-		return err
+		return errors.Wrap(err, "distributeWithdrawals checkSyncState failed")
 	}
 
-	if latestDistributeHeight.Uint64() >= targetEth1BlockHeight {
+	if !stateOk {
 		return nil
 	}
 
-	withdrawals, err := dao.GetWithdrawalsBetween(task.db, latestDistributeHeight.Uint64(), targetEth1BlockHeight)
+	// ----1 cal eth of user/node/platform
+	// withdrawals in (latestDistributeHeight,targetEth1BlockHeight]
+	withdrawals, err := dao.GetValidatorWithdrawalsBetween(task.db, latestDistributeHeight, targetEth1BlockHeight)
 	if err != nil {
 		return err
 	}
@@ -162,8 +159,8 @@ func (task *Task) distributeWithdrawals() error {
 	for _, w := range withdrawals {
 		totalAmount += w.Amount
 	}
-
-	if totalAmount < 5e8 {
+	totalAmountDeci := decimal.NewFromInt(int64(totalAmount)).Mul(utils.GweiDeci)
+	if totalAmountDeci.LessThan(minDistributeAmountDeci) {
 		return nil
 	}
 
@@ -175,52 +172,81 @@ func (task *Task) distributeWithdrawals() error {
 		if err != nil {
 			return err
 		}
-		//todo full withdraw
-		userDeci, nodeDeci, platformDeci := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, decimal.NewFromInt(int64(w.Amount)))
 
-		totalUserEthDeci = totalUserEthDeci.Add(userDeci)
-		totalNodeEthDeci = totalNodeEthDeci.Add(nodeDeci)
-		totalPlatformEthDeci = totalPlatformEthDeci.Add(platformDeci)
+		totalReward := int64(w.Amount)
+		userDeposit := int64(0)
+		nodeDeposit := int64(0)
+		// maybe full withdraw > 16eth ? sub slash ?
+		if w.Amount > utils.StandardEffectiveBalance {
+			totalReward = totalReward - int64(utils.StandardEffectiveBalance)
+			userDeposit = int64(utils.StandardEffectiveBalance - validator.NodeDepositAmount)
+			nodeDeposit = int64(validator.NodeDepositAmount)
+		}
+
+		userRewardDeci, nodeRewardDeci, platformFeeDeci := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, decimal.NewFromInt(totalReward))
+
+		totalUserEthDeci = totalUserEthDeci.Add(userRewardDeci).Add(decimal.NewFromInt(userDeposit))
+		totalNodeEthDeci = totalNodeEthDeci.Add(nodeRewardDeci).Add(decimal.NewFromInt(nodeDeposit))
+		totalPlatformEthDeci = totalPlatformEthDeci.Add(platformFeeDeci)
 	}
 	totalUserEthDeci = totalUserEthDeci.Mul(utils.GweiDeci)
 	totalNodeEthDeci = totalNodeEthDeci.Mul(utils.GweiDeci)
 	totalPlatformEthDeci = totalPlatformEthDeci.Mul(utils.GweiDeci)
 
-	calOpts := task.connection.CallOpts(big.NewInt(int64(targetEth1BlockHeight) + 1))
+	// -----2 cal maxClaimableWithdrawIndex
+	calOpts := task.connection.CallOpts(big.NewInt(int64(targetEth1BlockHeight)))
 	maxClaimableWithdrawIndex, err := task.withdrawContract.MaxClaimableWithdrawIndex(calOpts)
 	if err != nil {
 		return err
 	}
+	// nextWithdrawIndex <= real value
 	nextWithdrawIndex, err := task.withdrawContract.NextWithdrawIndex(calOpts)
 	if err != nil {
 		return err
 	}
-
+	totalMissingAmountForWithdraw, err := task.withdrawContract.TotalMissingAmountForWithdraw(calOpts)
+	if err != nil {
+		return err
+	}
 	newMaxClaimableWithdrawIndex := uint64(0)
-	totalWithdrawAmountWait := decimal.Zero
-	for i := maxClaimableWithdrawIndex.Uint64() + 1; i < nextWithdrawIndex.Uint64(); i++ {
-		withdrawal, err := dao.GetWithdrawal(task.db, i)
-		if err != nil {
-			return err
+	totalMissingAmountForWithdrawDeci := decimal.NewFromBigInt(totalMissingAmountForWithdraw, 0)
+	if totalMissingAmountForWithdrawDeci.LessThanOrEqual(totalUserEthDeci) {
+		if nextWithdrawIndex.Uint64() >= 1 {
+			newMaxClaimableWithdrawIndex = nextWithdrawIndex.Uint64() - 1
 		}
-		if withdrawal.ClaimedBlockNumber != 0 {
-			continue
-		}
+	} else {
+		willMissingAmountDeci := totalMissingAmountForWithdrawDeci.Sub(totalUserEthDeci)
+		if nextWithdrawIndex.Uint64() >= 1 {
+			latestUsersWaitAmountDeci := decimal.Zero
+			for i := nextWithdrawIndex.Uint64() - 1; i > maxClaimableWithdrawIndex.Uint64(); i-- {
+				withdrawal, err := dao.GetUserWithdrawal(task.db, i)
+				if err != nil {
+					return err
+				}
+				// skip instantly withdrawal
+				if withdrawal.ClaimedBlockNumber == withdrawal.BlockNumber {
+					continue
+				}
+				latestUsersWaitAmountDeci = latestUsersWaitAmountDeci.Add(decimal.NewFromInt(int64(withdrawal.Amount)))
+				if latestUsersWaitAmountDeci.GreaterThan(willMissingAmountDeci) {
+					newMaxClaimableWithdrawIndex = i - 1
+					break
+				}
+			}
 
-		totalWithdrawAmountWait = totalWithdrawAmountWait.Add(decimal.NewFromInt(int64(withdrawal.Amount)))
-
-		if totalWithdrawAmountWait.GreaterThan(totalUserEthDeci) {
-			newMaxClaimableWithdrawIndex = i - 1
-			break
 		}
 	}
+	if newMaxClaimableWithdrawIndex < maxClaimableWithdrawIndex.Uint64() {
+		newMaxClaimableWithdrawIndex = maxClaimableWithdrawIndex.Uint64()
+	}
 
-	// send vote tx
+	// -----3 send vote tx
 	err = task.connection.LockAndUpdateTxOpts()
 	if err != nil {
 		return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 	}
 	defer task.connection.UnlockTxOpts()
+
 	tx, err := task.withdrawContract.DistributeWithdrawals(task.connection.TxOpts(), big.NewInt(int64(targetEth1BlockHeight)),
 		totalUserEthDeci.BigInt(), totalNodeEthDeci.BigInt(), totalPlatformEthDeci.BigInt(), big.NewInt(int64(newMaxClaimableWithdrawIndex)))
 	if err != nil {
@@ -260,4 +286,89 @@ func (task *Task) distributeWithdrawals() error {
 	}).Info("DistributeWithdrawals tx send ok")
 
 	return nil
+}
+
+// check sync and vote state
+// return (latestDistributeHeight, targetEth1Blocknumber, sync state/vote ok, err)
+func (task *Task) checkSyncAndVoteState() (uint64, uint64, bool, error) {
+	eth1LatestBlock, err := task.connection.Eth1LatestBlock()
+	if err != nil {
+		return 0, 0, false, err
+	}
+	targetEth1BlockHeight := (eth1LatestBlock / distributeWithdrawalsDuBlocks) * distributeWithdrawalsDuBlocks
+
+	latestDistributeHeight, err := task.withdrawContract.LatestDistributeHeight(&bind.CallOpts{})
+	if err != nil {
+		return 0, 0, false, err
+	}
+
+	if latestDistributeHeight.Uint64() >= targetEth1BlockHeight {
+		return 0, 0, false, nil
+	}
+
+	eth2ValidatorBalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
+	if err != nil {
+		return 0, 0, false, err
+	}
+	eth2ValidatorBalanceSyncerBlockHeight, err := task.getEpochStartBlocknumber(eth2ValidatorBalanceSyncerMetaData.DealedEpoch)
+	if err != nil {
+		return 0, 0, false, err
+	}
+
+	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
+	if err != nil {
+		return 0, 0, false, err
+	}
+	eth2BlockSyncerBlockHeight, err := task.getEpochStartBlocknumber(eth2BlockSyncerMetaData.DealedEpoch)
+	if err != nil {
+		return 0, 0, false, err
+	}
+
+	metaEth1BlockSyncer, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
+	if err != nil {
+		return 0, 0, false, err
+	}
+
+	// ensure all eth1 event synced
+	if metaEth1BlockSyncer.DealedBlockHeight < targetEth1BlockHeight {
+		return 0, 0, false, nil
+	}
+
+	// ensure eth2 balances have synced
+	if eth2ValidatorBalanceSyncerBlockHeight < targetEth1BlockHeight {
+		return 0, 0, false, nil
+	}
+	// ensure eth2 block have synced
+	if eth2BlockSyncerBlockHeight < targetEth1BlockHeight {
+		return 0, 0, false, nil
+	}
+	return latestDistributeHeight.Uint64(), targetEth1BlockHeight, true, nil
+}
+
+func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
+	eth2ValidatorBalanceSyncerStartSlot := utils.StartSlotOfEpoch(task.eth2Config, epoch)
+	blocknumber := uint64(0)
+	retry := 0
+	for {
+		if retry > 5 {
+			return 0, fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+		}
+
+		targetBeaconBlock, exist, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(eth2ValidatorBalanceSyncerStartSlot))
+		if err != nil {
+			return 0, err
+		}
+		// we will use next slot if not exist
+		if !exist {
+			eth2ValidatorBalanceSyncerStartSlot++
+			retry++
+			continue
+		}
+		if targetBeaconBlock.ExecutionBlockNumber == 0 {
+			return 0, fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+		}
+		blocknumber = targetBeaconBlock.ExecutionBlockNumber
+		break
+	}
+	return blocknumber, nil
 }

@@ -193,7 +193,7 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 		}
 
 		if err == nil {
-			withdraw, err := dao.GetWithdrawal(task.db, w.WithdrawIndex)
+			withdraw, err := dao.GetValidatorWithdrawal(task.db, w.WithdrawIndex)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return errors.Wrap(err, "dao.GetWithdrawal")
 			}
@@ -203,7 +203,7 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 			withdraw.Slot = beaconBlock.Slot
 			withdraw.BlockNumber = beaconBlock.ExecutionBlockNumber
 			withdraw.Amount = w.Amount
-			err = dao.UpOrInWithdrawal(task.db, withdraw)
+			err = dao.UpOrInValidatorWithdrawal(task.db, withdraw)
 			if err != nil {
 				return errors.Wrap(err, "dao.UpOrInWithdrawal")
 			}

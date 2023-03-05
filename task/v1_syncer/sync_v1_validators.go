@@ -3,6 +3,8 @@ package task_v1_syncer
 import (
 	// "fmt"
 	// "math"
+	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -12,29 +14,29 @@ import (
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
 
-	// "github.com/stafiprotocol/reth/shared/beacon"
-	// "github.com/stafiprotocol/reth/shared/types"
+	"github.com/stafiprotocol/reth/shared/beacon"
+	"github.com/stafiprotocol/reth/shared/types"
 	"gorm.io/gorm"
 )
 
 func (task *Task) syncV1Validators() error {
-	// beconHead, err := task.connection.Eth2BeaconHead()
-	// if err != nil {
-	// 	return err
-	// }
+	beconHead, err := task.connection.Eth2BeaconHead()
+	if err != nil {
+		return err
+	}
 	stakingPoolCount, err := task.stakingPoolManagerContract.GetStakingPoolCount(task.connection.CallOpts(nil))
 	if err != nil {
 		return err
 	}
 	logrus.Info("stakingPoolCount ", stakingPoolCount.String())
 
-	// metadata, err := dao.GetMetaData(task.db, utils.MetaTypeV1ValidatorSyncer)
-	// if err != nil {
-	// 	return err
-	// }
-	// i := int64(metadata.DealedBlockHeight)
+	metadata, err := dao.GetMetaData(task.db, utils.MetaTypeV1ValidatorSyncer)
+	if err != nil {
+		return err
+	}
+	i := int64(metadata.DealedBlockHeight)
 
-	for i := int64(0); i < stakingPoolCount.Int64(); i++ {
+	for ; i < stakingPoolCount.Int64(); i++ {
 		stakingPoolAddress, err := task.stakingPoolManagerContract.GetStakingPoolAt(task.connection.CallOpts(nil), big.NewInt(i))
 		if err != nil {
 			return err
@@ -93,22 +95,22 @@ func (task *Task) syncV1Validators() error {
 			continue
 		}
 
-		// pubkey, err := types.HexToValidatorPubkey(pubkeyStr[2:])
-		// if err != nil {
-		// 	return err
-		// }
-		// status, err := task.connection.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{Epoch: &beconHead.Epoch})
-		// if err != nil {
-		// 	return err
-		// }
-		// if !status.Exists || status.ActivationEpoch == math.MaxUint64 {
-		// 	return fmt.Errorf("validator status err, status: %+v", status)
-		// }
+		pubkey, err := types.HexToValidatorPubkey(pubkeyStr[2:])
+		if err != nil {
+			return err
+		}
+		status, err := task.connection.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{Epoch: &beconHead.Epoch})
+		if err != nil {
+			return err
+		}
+		if !status.Exists || status.ActivationEpoch == math.MaxUint64 {
+			return fmt.Errorf("validator status err, status: %+v", status)
+		}
 
-		// validator.ActiveEpoch = status.ActivationEpoch
-		// validator.Balance = status.Balance
-		// validator.EffectiveBalance = status.EffectiveBalance
-		// validator.EligibleEpoch = status.ActivationEligibilityEpoch
+		validator.ActiveEpoch = status.ActivationEpoch
+		validator.Balance = status.Balance
+		validator.EffectiveBalance = status.EffectiveBalance
+		validator.EligibleEpoch = status.ActivationEligibilityEpoch
 		validator.NodeAddress = nodeAddress.String()
 		validator.NodeDepositAmount = decimal.NewFromBigInt(depositBalance, 0).Div(utils.GweiDeci).BigInt().Uint64()
 		validator.NodeType = nodeType
@@ -121,17 +123,17 @@ func (task *Task) syncV1Validators() error {
 		if err != nil {
 			return err
 		}
-		// metaData, err := dao.GetMetaData(task.db, utils.MetaTypeV1ValidatorSyncer)
-		// if err != nil {
-		// 	return err
-		// }
+		metaData, err := dao.GetMetaData(task.db, utils.MetaTypeV1ValidatorSyncer)
+		if err != nil {
+			return err
+		}
 
-		// metaData.DealedBlockHeight = uint64(i)
+		metaData.DealedBlockHeight = uint64(i)
 
-		// err = dao.UpOrInMetaData(task.db, metaData)
-		// if err != nil {
-		// 	return err
-		// }
+		err = dao.UpOrInMetaData(task.db, metaData)
+		if err != nil {
+			return err
+		}
 
 		logrus.WithFields(logrus.Fields{
 			"nodeAddress": nodeAddress.String(),

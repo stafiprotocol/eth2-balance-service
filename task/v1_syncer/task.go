@@ -49,7 +49,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		taskTicker:       10,
 		stop:             make(chan struct{}),
 		db:               dao,
-		rewardStartEpoch: cfg.Mock.RewardStartEpoch,
+		rewardStartEpoch: cfg.RewardStartEpoch,
 		eth1Endpoint:     cfg.Eth1Endpoint,
 		eth2Endpoint:     cfg.Eth2Endpoint,
 
@@ -186,12 +186,12 @@ func (task *Task) syncHandler() error {
 	}
 	logrus.Debug("syncValidatorLatestInfo end -----------")
 
-	// logrus.Debug("syncValidatorEpochBalances start -----------")
-	// err = task.syncV1ValidatorEpochBalances()
-	// if err != nil {
-	// 	logrus.Warnf("syncValidatorEpochBalances err: %s", err)
-	// 	return err
-	// }
-	// logrus.Debug("syncValidatorEpochBalances end -----------")
+	logrus.Debug("syncValidatorEpochBalances start -----------")
+	err = task.syncV1ValidatorEpochBalances()
+	if err != nil {
+		logrus.Warnf("syncValidatorEpochBalances err: %s", err)
+		return err
+	}
+	logrus.Debug("syncValidatorEpochBalances end -----------")
 	return nil
 }

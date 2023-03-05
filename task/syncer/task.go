@@ -15,6 +15,7 @@ import (
 	storage "github.com/stafiprotocol/reth/bindings/Storage"
 	super_node "github.com/stafiprotocol/reth/bindings/SuperNode"
 	user_deposit "github.com/stafiprotocol/reth/bindings/UserDeposit"
+	withdraw "github.com/stafiprotocol/reth/bindings/Withdraw"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
@@ -22,6 +23,11 @@ import (
 	"github.com/stafiprotocol/reth/shared"
 	"github.com/stafiprotocol/reth/shared/beacon"
 	"gorm.io/gorm"
+)
+
+var (
+	devStartEpoch      = uint64(4400)
+	devStartBlocHeight = uint64(133654)
 )
 
 // sync deposit/stake events and pool latest info from execute chain
@@ -49,6 +55,7 @@ type Task struct {
 	rethContract            *reth.Reth
 	userDepositContract     *user_deposit.UserDeposit
 	networkBalancesContract *network_balances.NetworkBalances
+	withdrawContract        *withdraw.Withdraw
 	lightNodeFeePoolAddress common.Address
 	superNodeFeePoolAddress common.Address
 
@@ -87,7 +94,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	}
 
 	if cfg.Version == utils.Dev {
-		s.eth1StartHeight = 133654
+		s.eth1StartHeight = devStartBlocHeight
 	}
 
 	return s, nil
@@ -171,6 +178,14 @@ func (task *Task) initContract() error {
 		}
 		task.lightNodeFeePoolAddress = lightNodeFeePoolAddress
 
+		withdrawAddress, err := task.getContractAddress(storageContract, "stafiWithdraw")
+		if err != nil {
+			return err
+		}
+		task.withdrawContract, err = withdraw.NewWithdraw(withdrawAddress, task.connection.Eth1Client())
+		if err != nil {
+			return err
+		}
 	}
 
 	nodeDepositAddress, err := task.getContractAddress(storageContract, "stafiNodeDeposit")
@@ -243,7 +258,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 			}
 			// will init if meta data not exist
 			meta.MetaType = utils.MetaTypeEth2ValidatorInfoSyncer
-			meta.DealedEpoch = 4400
+			meta.DealedEpoch = devStartEpoch
 
 			err = dao.UpOrInMetaData(task.db, meta)
 			if err != nil {
@@ -259,7 +274,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 			}
 			// will init if meta data not exist
 			meta.MetaType = utils.MetaTypeEth2ValidatorBalanceSyncer
-			meta.DealedEpoch = 4400
+			meta.DealedEpoch = devStartEpoch
 
 			err = dao.UpOrInMetaData(task.db, meta)
 			if err != nil {
@@ -275,7 +290,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 			}
 			// will init if meta data not exist
 			meta.MetaType = utils.MetaTypeEth2BlockSyncer
-			meta.DealedEpoch = 4400
+			meta.DealedEpoch = devStartEpoch
 
 			err = dao.UpOrInMetaData(task.db, meta)
 			if err != nil {

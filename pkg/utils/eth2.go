@@ -277,6 +277,7 @@ func GetUserNodePlatformRewardV2(userDepositBalance uint64, rewardDeci decimal.D
 	}
 	userDepositBalanceDeci := decimal.NewFromInt(int64(userDepositBalance))
 	standEffectiveBalanceDeci := decimal.NewFromInt(int64(StandardEffectiveBalance))
+	
 	// platform Fee
 	platformFeeDeci := rewardDeci.Mul(Percent5Deci)
 	nodeRewardDeci := platformFeeDeci.Add(rewardDeci.Mul(Percent90Deci).Mul(userDepositBalanceDeci).Div(standEffectiveBalanceDeci))

@@ -20,24 +20,18 @@ type Config struct {
 	GasLimit                string
 	MaxGasPrice             string
 	RewardEpochInterval     uint64
-	Version                 string
-	EnableDistribute        bool
-	SlashStartEpoch         uint64 // used for eth2block syncer
-	UnstakingStartTimestamp uint64 // used for eth2block syncer
-	StafiInfoEndpoint       string // used for api
+	Version                 string // v1/dev/v2
+	EnableDistribute        bool   // used by voter
+	SlashStartEpoch         uint64 // used by eth2block syncer
+	UnstakingStartTimestamp uint64 // used by api server
+	StafiInfoEndpoint       string // used by api server
+	RewardStartEpoch        uint64 // used by v1 syncer to fetch history epoch balance info from start epoch
 
 	EraCount uint64 // used for statistic
 
 	Contracts Contracts
 
 	Db Db
-
-	Mock Mock
-}
-
-type Mock struct {
-	Eth1MainnetEndpoint string // used for dev
-	RewardStartEpoch    uint64 // used for fetch history balance info by syncer
 }
 
 type Contracts struct {

@@ -60,6 +60,10 @@ func (task *Task) syncEth1Block() error {
 			if err != nil {
 				return err
 			}
+			err = task.fetchWithdrawContractEvents(subStart, subEnd)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = task.fetchRateUpdateEvents(subStart, subEnd)

@@ -21,7 +21,7 @@ var maxRateChangeDeci = decimal.NewFromInt(1e14) //0.0001
 func (task *Task) voteRate() error {
 	targetEpoch, targetEth1BlockHeight, syncStateOk, err := task.checkSyncState()
 	if err != nil {
-		return errors.Wrap(err, "checkSyncState failed")
+		return errors.Wrap(err, "voteRate checkSyncState failed")
 	}
 	if !syncStateOk {
 		return nil
