@@ -26,6 +26,16 @@ func (task *Task) syncContractsInfo() error {
 		rethSupply = new(big.Int).Sub(rethSupply, utils.OldRethSupply)
 	}
 
+	latestDistributeHeight, err := task.withdrawContract.LatestDistributeHeight(task.connection.CallOpts(nil))
+	if err != nil {
+		return err
+	}
+
+	totalMissingAmountForWithdraw, err := task.withdrawContract.TotalMissingAmountForWithdraw(task.connection.CallOpts(nil))
+	if err != nil {
+		return err
+	}
+
 	poolInfo, err := dao.GetPoolInfo(task.db)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return err
@@ -53,6 +63,9 @@ func (task *Task) syncContractsInfo() error {
 
 	poolInfo.PoolEthBalance = poolBalance.String()
 	poolInfo.REthSupply = rethSupply.String()
+	poolInfo.LatestDistributeHeight = latestDistributeHeight.Uint64()
+	poolInfo.TotalMissingAmountForWithdraw = totalMissingAmountForWithdraw.String()
+
 	logrus.WithFields(logrus.Fields{
 		"poolBalance": poolInfo.PoolEthBalance,
 		"rethsupply":  poolInfo.REthSupply,

@@ -174,6 +174,13 @@ func (task *Task) syncValidatorLatestInfo() error {
 				return fmt.Errorf("unsupported validator status %d", status.Status)
 			}
 
+			// cal total withdrawal
+			totalWithdrawal, err := dao.GetValidatorTotalWithdrawal(task.db, validator.ValidatorIndex)
+			if err != nil {
+				return err
+			}
+			validator.TotalWithdrawal = totalWithdrawal
+
 			err = dao.UpOrInValidator(task.db, validator)
 			if err != nil {
 				return err

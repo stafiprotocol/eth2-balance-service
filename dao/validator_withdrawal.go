@@ -4,6 +4,9 @@
 package dao
 
 import (
+	"database/sql"
+	"fmt"
+
 	"github.com/stafiprotocol/reth/pkg/db"
 )
 
@@ -35,5 +38,38 @@ func GetValidatorWithdrawal(db *db.WrapDb, withdrawalIndex uint64) (c *Validator
 
 func GetValidatorWithdrawalsBetween(db *db.WrapDb, startBlock, endBlock uint64) (c []*ValidatorWithdrawal, err error) {
 	err = db.Find(&c, "block_number > ? and block_number <= ?", startBlock, endBlock).Error
+	return
+}
+
+func GetValidatorTotalWithdrawal(db *db.WrapDb, valIndex uint64) (totalWithdrawal uint64, err error) {
+	value := sql.NullInt64{}
+	err = db.Raw("select sum(amount) as totalWithdrawal from reth_validator_withdrawals where validator_index = ?",
+		valIndex).Scan(&value).Error
+
+	return uint64(value.Int64), err
+}
+
+func GetValidatorTotalWithdrawalBeforeSlot(db *db.WrapDb, valIndex, slot uint64) (totalWithdrawal uint64, err error) {
+	value := sql.NullInt64{}
+	err = db.Raw("select sum(amount) as totalWithdrawal from reth_validator_withdrawals where validator_index = ? and slot <= ?",
+		valIndex, slot).Scan(&value).Error
+
+	return uint64(value.Int64), err
+}
+
+func GetValidatorWithdrawalsIn(db *db.WrapDb, valIndexList []uint64) (c []*ValidatorWithdrawal, err error) {
+	if len(valIndexList) == 0 {
+		return nil, nil
+	}
+	InStatus := "( "
+	for index := range valIndexList {
+		InStatus += fmt.Sprintf("%d", index)
+		InStatus += ","
+	}
+	InStatus = InStatus[:len(InStatus)-1]
+	InStatus += " )"
+	sqlWhere := fmt.Sprintf("validator_index in %s", InStatus)
+
+	err = db.Find(&c, sqlWhere).Error
 	return
 }

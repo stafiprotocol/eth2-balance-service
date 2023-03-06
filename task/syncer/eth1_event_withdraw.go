@@ -2,6 +2,7 @@ package task_syncer
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -11,6 +12,7 @@ import (
 )
 
 func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
+	// unstake
 	iterUnstake, err := task.withdrawContract.FilterUnstake(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,
@@ -49,6 +51,7 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 		}
 	}
 
+	// withdraw
 	iterWithdraw, err := task.withdrawContract.FilterWithdraw(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,
@@ -67,6 +70,43 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 
 			withdraw.ClaimedBlockNumber = iterWithdraw.Event.Raw.BlockNumber
 			err = dao.UpOrInStakerWithdrawal(task.db, withdraw)
+			if err != nil {
+				return err
+			}
+
+		}
+	}
+
+	// election
+	iterElection, err := task.withdrawContract.FilterNotifyValidatorExit(&bind.FilterOpts{
+		Start:   start,
+		End:     &end,
+		Context: context.Background(),
+	})
+	if err != nil {
+		return err
+	}
+
+	for iterElection.Next() {
+		for _, validator := range iterElection.Event.EjectedValidators {
+			election, err := dao.GetValidatorExitElection(task.db, validator.Uint64())
+			if err != nil {
+				if err != gorm.ErrRecordNotFound {
+					return errors.Wrap(err, "fetchWithdrawContractEvents GetValidatorExitElection failed")
+				}
+			} else {
+				return fmt.Errorf("fetchWithdrawContractEvents ValidatorExitElection %d already exist", validator.Int64())
+			}
+
+			election.NotifyBlockNumber = iterElection.Event.Raw.BlockNumber
+			block, err := task.connection.Eth1Client().BlockByNumber(context.Background(), big.NewInt(int64(election.NotifyBlockNumber)))
+			if err != nil {
+				return err
+			}
+			election.NotifyTimestamp = block.Header().Time
+			election.ValidatorIndex = validator.Uint64()
+
+			err = dao.UpOrInValidatorExitElection(task.db, election)
 			if err != nil {
 				return err
 			}

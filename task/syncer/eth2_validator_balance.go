@@ -24,9 +24,18 @@ func (task *Task) syncValidatorEpochBalances() error {
 	if err != nil {
 		return err
 	}
+
+	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
+	if err != nil {
+		return err
+	}
 	// ensure validators latest info already synced
 	if finalEpoch > eth2ValidatorInfoSyncerMetaData.DealedEpoch {
 		finalEpoch = eth2ValidatorInfoSyncerMetaData.DealedEpoch
+	}
+	// ensure validators block info(withdrawals) already synced
+	if finalEpoch > eth2BlockSyncerMetaData.DealedEpoch {
+		finalEpoch = eth2BlockSyncerMetaData.DealedEpoch
 	}
 
 	eth2ValidatorBalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
@@ -115,6 +124,12 @@ func (task *Task) syncValidatorEpochBalances() error {
 			if !exist {
 				return fmt.Errorf("node address not exist in pubkeyToNodeAddress")
 			}
+
+			totalWithdrawal, err := dao.GetValidatorTotalWithdrawalBeforeSlot(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch))
+			if err != nil {
+				return errors.Wrap(err, "GetValidatorTotalWithdrawalBeforeSlot failed")
+			}
+
 			validatorBalance, err := dao.GetValidatorBalance(task.db, validatorIndex, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err
@@ -122,6 +137,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 
 			validatorBalance.NodeAddress = nodeAddress
 			validatorBalance.Balance = status.Balance
+			validatorBalance.TotalWithdrawal = totalWithdrawal
 			validatorBalance.EffectiveBalance = status.EffectiveBalance
 			validatorBalance.Epoch = epoch
 			validatorBalance.ValidatorIndex = validatorIndex
