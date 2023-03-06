@@ -26,70 +26,16 @@ func (task *Task) distributeWithdrawals() error {
 	}
 
 	// ----1 cal eth(from withdrawals) of user/node/platform
-	// withdrawals in (latestDistributeHeight,targetEth1BlockHeight]
-	withdrawals, err := dao.GetValidatorWithdrawalsBetween(task.db, latestDistributeHeight, targetEth1BlockHeight)
+	totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, err := task.getUserNodePlatformFromWithdrawals(latestDistributeHeight, targetEth1BlockHeight)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "getUserNodePlatformFromWithdrawals failed")
 	}
-	totalAmount := uint64(0)
-	for _, w := range withdrawals {
-		totalAmount += w.Amount
-	}
-	totalAmountDeci := decimal.NewFromInt(int64(totalAmount)).Mul(utils.GweiDeci)
+
 	// return if smaller than minDistributeAmount
 	if totalAmountDeci.LessThan(minDistributeAmountDeci) {
 		logrus.Debugf("distributeWithdrawals totalAmountDeci: %s less than minDistributeAmountDeci: %s", totalAmountDeci.String(), minDistributeAmountDeci.String())
 		return nil
 	}
-
-	totalUserEthDeci := decimal.Zero
-	totalNodeEthDeci := decimal.Zero
-	totalPlatformEthDeci := decimal.Zero
-	for _, w := range withdrawals {
-		validator, err := dao.GetValidatorByIndex(task.db, w.ValidatorIndex)
-		if err != nil {
-			return err
-		}
-
-		totalReward := int64(w.Amount)
-		userDeposit := int64(0)
-		nodeDeposit := int64(0)
-
-		switch {
-
-		case w.Amount >= utils.StandardEffectiveBalance/2 && w.Amount < utils.StandardEffectiveBalance: // slash
-			totalReward = 0
-
-			userDeposit = int64(utils.StandardEffectiveBalance - validator.NodeDepositAmount)
-			if userDeposit > int64(w.Amount) {
-				userDeposit = int64(w.Amount)
-				nodeDeposit = 0
-			} else {
-				nodeDeposit = int64(w.Amount) - userDeposit
-			}
-
-		case w.Amount >= utils.StandardEffectiveBalance: // full withdrawal
-			totalReward = totalReward - int64(utils.StandardEffectiveBalance)
-
-			userDeposit = int64(utils.StandardEffectiveBalance - validator.NodeDepositAmount)
-			nodeDeposit = int64(validator.NodeDepositAmount)
-
-		case w.Amount < utils.StandardEffectiveBalance/2: // partial withdrawal
-		default:
-			return fmt.Errorf("unknown withdrawal's amount")
-		}
-
-		// cal rewards
-		userRewardDeci, nodeRewardDeci, platformFeeDeci := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, decimal.NewFromInt(totalReward))
-		// cal reward + deposit
-		totalUserEthDeci = totalUserEthDeci.Add(userRewardDeci).Add(decimal.NewFromInt(userDeposit))
-		totalNodeEthDeci = totalNodeEthDeci.Add(nodeRewardDeci).Add(decimal.NewFromInt(nodeDeposit))
-		totalPlatformEthDeci = totalPlatformEthDeci.Add(platformFeeDeci)
-
-	}
-	totalUserEthDeci = totalUserEthDeci.Mul(utils.GweiDeci)
-	totalNodeEthDeci = totalNodeEthDeci.Mul(utils.GweiDeci)
-	totalPlatformEthDeci = totalPlatformEthDeci.Mul(utils.GweiDeci)
 
 	// -----2 cal maxClaimableWithdrawIndex
 	calOpts := task.connection.CallOpts(big.NewInt(int64(targetEth1BlockHeight)))
@@ -228,6 +174,15 @@ func (task *Task) checkSyncAndVoteState() (uint64, uint64, bool, error) {
 		return 0, 0, false, nil
 	}
 
+	eth2ValidatorInfoSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
+	if err != nil {
+		return 0, 0, false, err
+	}
+	eth2ValidatorInfoSyncerBlockHeight, err := task.getEpochStartBlocknumber(eth2ValidatorInfoSyncerMetaData.DealedEpoch)
+	if err != nil {
+		return 0, 0, false, err
+	}
+
 	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
 	if err != nil {
 		return 0, 0, false, err
@@ -242,17 +197,22 @@ func (task *Task) checkSyncAndVoteState() (uint64, uint64, bool, error) {
 		return 0, 0, false, err
 	}
 
+	// ensure eth2 info have synced
+	if eth2ValidatorInfoSyncerBlockHeight < targetEth1BlockHeight {
+		logrus.Debugf("eth2ValidatorInfoSyncerBlockHeight %d < targetEth1BlockHeight %d", eth2BlockSyncerBlockHeight, targetEth1BlockHeight)
+		return 0, 0, false, nil
+	}
+	// ensure eth2 block have synced
+	if eth2BlockSyncerBlockHeight < targetEth1BlockHeight {
+		logrus.Debugf("eth2BlockSyncerBlockHeight %d < targetEth1BlockHeight %d", eth2BlockSyncerBlockHeight, targetEth1BlockHeight)
+		return 0, 0, false, nil
+	}
 	// ensure all eth1 event synced
 	if eth1BlockSyncerMetaData.DealedBlockHeight < targetEth1BlockHeight {
 		logrus.Debug("eth1BlockSyncerMetaData.DealedBlockHeight < targetEth1BlockHeight")
 		return 0, 0, false, nil
 	}
 
-	// ensure eth2 block have synced
-	if eth2BlockSyncerBlockHeight < targetEth1BlockHeight {
-		logrus.Debugf("eth2BlockSyncerBlockHeight %d < targetEth1BlockHeight %d", eth2BlockSyncerBlockHeight, targetEth1BlockHeight)
-		return 0, 0, false, nil
-	}
 	return latestDistributeHeight.Uint64(), targetEth1BlockHeight, true, nil
 }
 
@@ -282,4 +242,69 @@ func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
 		break
 	}
 	return blocknumber, nil
+}
+
+// return (user reward, node reward, platform fee, totalWithdrawAmount)
+func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targetEth1BlockHeight uint64) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, error) {
+	withdrawals, err := dao.GetValidatorWithdrawalsBetween(task.db, latestDistributeHeight, targetEth1BlockHeight)
+	if err != nil {
+		return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+	}
+	totalAmount := uint64(0)
+	for _, w := range withdrawals {
+		totalAmount += w.Amount
+	}
+	totalAmountDeci := decimal.NewFromInt(int64(totalAmount)).Mul(utils.GweiDeci)
+
+	totalUserEthDeci := decimal.Zero
+	totalNodeEthDeci := decimal.Zero
+	totalPlatformEthDeci := decimal.Zero
+	for _, w := range withdrawals {
+		validator, err := dao.GetValidatorByIndex(task.db, w.ValidatorIndex)
+		if err != nil {
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+		}
+
+		totalReward := int64(w.Amount)
+		userDeposit := int64(0)
+		nodeDeposit := int64(0)
+
+		switch {
+
+		case w.Amount >= utils.StandardEffectiveBalance/2 && w.Amount < utils.StandardEffectiveBalance: // slash
+			totalReward = 0
+
+			userDeposit = int64(utils.StandardEffectiveBalance - validator.NodeDepositAmount)
+			if userDeposit > int64(w.Amount) {
+				userDeposit = int64(w.Amount)
+				nodeDeposit = 0
+			} else {
+				nodeDeposit = int64(w.Amount) - userDeposit
+			}
+
+		case w.Amount >= utils.StandardEffectiveBalance: // full withdrawal
+			totalReward = totalReward - int64(utils.StandardEffectiveBalance)
+
+			userDeposit = int64(utils.StandardEffectiveBalance - validator.NodeDepositAmount)
+			nodeDeposit = int64(validator.NodeDepositAmount)
+
+		case w.Amount < utils.StandardEffectiveBalance/2: // partial withdrawal
+		default:
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, fmt.Errorf("unknown withdrawal's amount")
+		}
+
+		// cal rewards
+		userRewardDeci, nodeRewardDeci, platformFeeDeci := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, decimal.NewFromInt(totalReward))
+		// cal reward + deposit
+		totalUserEthDeci = totalUserEthDeci.Add(userRewardDeci).Add(decimal.NewFromInt(userDeposit))
+		totalNodeEthDeci = totalNodeEthDeci.Add(nodeRewardDeci).Add(decimal.NewFromInt(nodeDeposit))
+		totalPlatformEthDeci = totalPlatformEthDeci.Add(platformFeeDeci)
+
+	}
+
+	totalUserEthDeci = totalUserEthDeci.Mul(utils.GweiDeci)
+	totalNodeEthDeci = totalNodeEthDeci.Mul(utils.GweiDeci)
+	totalPlatformEthDeci = totalPlatformEthDeci.Mul(utils.GweiDeci)
+
+	return totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, nil
 }

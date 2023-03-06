@@ -72,27 +72,14 @@ func (task *Task) voteRate() error {
 	totalStakingEthDeci := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(utils.GweiDeci)
 
 	// // ----3 cal user undistributed withdrawals
-	// totalUserUndistributedWithdrawals := uint64(0)
-	// latestDistributeHeight, err := task.withdrawContract.LatestDistributeHeight(callOpts)
-	// if err != nil {
-	// 	return err
-	// }
-	// if latestDistributeHeight.Uint64() < targetEth1BlockHeight {
-	// 	withdrawals, err := dao.GetWithdrawalsBetween(task.db, latestDistributeHeight.Uint64(), targetEth1BlockHeight)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	for _, withdraw := range withdrawals {
-	// 		validator, err := dao.GetValidatorByIndex(task.db, withdraw.ValidatorIndex)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-
-	// 		userReward, _, _ := utils.GetUserNodePlatformRewardV2(utils.StandardEffectiveBalance-validator.NodeDepositAmount, decimal.NewFromInt(int64(withdraw.Amount)))
-	// 		totalUserUndistributedWithdrawals += userReward.BigInt().Uint64()
-	// 	}
-	// }
-	// totalUserUndistributedWithdrawalsDeci := decimal.NewFromInt(int64(totalUserUndistributedWithdrawals)).Mul(utils.GweiDeci)
+	latestDistributeHeight, err := task.withdrawContract.LatestDistributeHeight(callOpts)
+	if err != nil {
+		return err
+	}
+	totalUserUndistributedWithdrawalsDeci, _, _, _, err := task.getUserNodePlatformFromWithdrawals(latestDistributeHeight.Uint64(), targetEth1BlockHeight)
+	if err != nil {
+		return errors.Wrap(err, "getUserNodePlatformFromWithdrawals failed")
+	}
 
 	// ----4 fetch totalMissingAmountForWithdraw
 	totalMissingAmountForWithdraw, err := task.withdrawContract.TotalMissingAmountForWithdraw(callOpts)
@@ -101,8 +88,8 @@ func (task *Task) voteRate() error {
 	}
 	totalMissingAmountForWithdrawDeci := decimal.NewFromBigInt(totalMissingAmountForWithdraw, 0)
 
-	// ----final: total user eth = total user eth from validator + deposit pool balance - totalMissingAmountForWithdraw
-	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).Sub(totalMissingAmountForWithdrawDeci)
+	// ----final: total user eth = total user eth from validator + deposit pool balance + user undistributedWithdrawals - totalMissingAmountForWithdraw
+	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).Add(totalUserUndistributedWithdrawalsDeci).Sub(totalMissingAmountForWithdrawDeci)
 
 	// check voted
 	balancesEpoch := big.NewInt(int64(targetEpoch + balancesEpochOffset))
@@ -216,29 +203,6 @@ func (task *Task) checkSyncState() (uint64, uint64, bool, error) {
 	}
 	targetEpoch := (beaconHead.FinalizedEpoch / task.rewardEpochInterval) * task.rewardEpochInterval
 
-	eth2ValidatorBalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
-	if err != nil {
-		return 0, 0, false, err
-	}
-	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
-	if err != nil {
-		return 0, 0, false, err
-	}
-	logrus.WithFields(logrus.Fields{
-		"targetEpoch":                  targetEpoch,
-		"eth2BalanceSyncerDealedEpoch": eth2ValidatorBalanceSyncerMetaData.DealedEpoch,
-		"eth2BlockSyncerDealedEpoch":   eth2BlockSyncerMetaData.DealedEpoch,
-	}).Debug("epocheInfo")
-
-	// ensure eth2 balances have synced
-	if eth2ValidatorBalanceSyncerMetaData.DealedEpoch < targetEpoch {
-		return 0, 0, false, nil
-	}
-	// ensure eth2 block have synced
-	if eth2BlockSyncerMetaData.DealedEpoch < targetEpoch {
-		return 0, 0, false, nil
-	}
-
 	balancesBlockOnChain, err := task.networkBalancesContract.GetBalancesBlock(task.connection.CallOpts(nil))
 	if err != nil {
 		return 0, 0, false, fmt.Errorf("networkBalancesContract.GetBalancesBlock err: %s", err)
@@ -254,40 +218,52 @@ func (task *Task) checkSyncState() (uint64, uint64, bool, error) {
 		return 0, 0, false, nil
 	}
 
-	targetSlot := utils.StartSlotOfEpoch(task.eth2Config, targetEpoch)
-	var targetEth1BlockHeight uint64
-	retry := 0
-	for {
-		if retry > 5 {
-			return 0, 0, false, fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
-		}
+	eth2ValidatorInfoSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
+	if err != nil {
+		return 0, 0, false, err
+	}
+	eth2ValidatorBalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
+	if err != nil {
+		return 0, 0, false, err
+	}
+	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
+	if err != nil {
+		return 0, 0, false, err
+	}
+	logrus.WithFields(logrus.Fields{
+		"targetEpoch":                  targetEpoch,
+		"eth2BalanceSyncerDealedEpoch": eth2ValidatorBalanceSyncerMetaData.DealedEpoch,
+		"eth2BlockSyncerDealedEpoch":   eth2BlockSyncerMetaData.DealedEpoch,
+	}).Debug("epocheInfo")
 
-		targetBeaconBlock, exist, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(targetSlot))
-		if err != nil {
-			return 0, 0, false, err
-		}
-		// we will use next slot if not exist
-		if !exist {
-			targetSlot++
-			retry++
-			continue
-		}
-		if targetBeaconBlock.ExecutionBlockNumber == 0 {
-			return 0, 0, false, fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
-		}
-		targetEth1BlockHeight = targetBeaconBlock.ExecutionBlockNumber
-		break
+	// ensure eth2 info have synced
+	if eth2ValidatorInfoSyncerMetaData.DealedEpoch < targetEpoch {
+		return 0, 0, false, nil
+	}
+	// ensure eth2 balances have synced
+	if eth2ValidatorBalanceSyncerMetaData.DealedEpoch < targetEpoch {
+		return 0, 0, false, nil
+	}
+	// ensure eth2 block have synced
+	if eth2BlockSyncerMetaData.DealedEpoch < targetEpoch {
+		return 0, 0, false, nil
 	}
 
-	metaEth1BlockSyncer, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
+	// cal targetEth1BlockHeight
+	targetEpochStartBlockHeight, err := task.getEpochStartBlocknumber(targetEpoch)
+	if err != nil {
+		return 0, 0, false, err
+	}
+
+	eth1BlockSynceMetaDatar, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
 	if err != nil {
 		return 0, 0, false, err
 	}
 
 	// ensure all eth1 event synced
-	if metaEth1BlockSyncer.DealedBlockHeight < targetEth1BlockHeight {
+	if eth1BlockSynceMetaDatar.DealedBlockHeight < targetEpochStartBlockHeight {
 		return 0, 0, false, nil
 	}
 
-	return targetEpoch, targetEth1BlockHeight, true, nil
+	return targetEpoch, targetEpochStartBlockHeight, true, nil
 }
