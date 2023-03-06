@@ -95,12 +95,6 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		return nil, fmt.Errorf("unsupport version: %s", cfg.Version)
 	}
 
-	statisticFilePath := cfg.LogFilePath + "/statistic.txt"
-	logrus.WithFields(
-		logrus.Fields{
-			"path": statisticFilePath,
-		}).Info("statistic file")
-
 	s := &Task{
 		taskTicker:             10,
 		stop:                   make(chan struct{}),
@@ -208,16 +202,16 @@ func (task *Task) voteHandler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
-			logrus.Debug("voteWithdrawal start -----------")
+			logrus.Debug("voteWithdrawalCredential start -----------")
 
-			err := task.voteWithdrawal()
+			err := task.voteWithdrawalCredential()
 			if err != nil {
-				logrus.Warnf("vote withdrawal err %s", err)
+				logrus.Warnf("vote voteWithdrawalCredential err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("voteWithdrawal end -----------\n")
+			logrus.Debug("voteWithdrawalCredential end -----------\n")
 
 			if task.version != utils.V1 && task.enableDistribute {
 				logrus.Debug("distributeFee start -----------")

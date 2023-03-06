@@ -16,10 +16,11 @@ type ValidatorWithdrawal struct {
 	Slot           uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:slot"`
 	BlockNumber    uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:block_number;index"`
 	Amount         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:amount"` //Gwei
+	Timestamp      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
 }
 
 func (f ValidatorWithdrawal) TableName() string {
-	return "reth_withdrawals"
+	return "reth_validator_withdrawals"
 }
 
 func UpOrInValidatorWithdrawal(db *db.WrapDb, c *ValidatorWithdrawal) error {

@@ -186,7 +186,18 @@ func ContractStorageKey(name string) [32]byte {
 
 func NodeSubmissionKey(sender common.Address, _block *big.Int, _totalEth *big.Int, _stakingEth *big.Int, _rethSupply *big.Int) [32]byte {
 	// keccak256(abi.encodePacked("network.balances.submitted.node", sender, _block, _totalEth, _stakingEth, _rethSupply))
-	return crypto.Keccak256Hash([]byte("network.balances.submitted.node"), sender.Bytes(), common.LeftPadBytes(_block.Bytes(), 32), common.LeftPadBytes(_totalEth.Bytes(), 32), common.LeftPadBytes(_stakingEth.Bytes(), 32), common.LeftPadBytes(_rethSupply.Bytes(), 32))
+	return crypto.Keccak256Hash([]byte("network.balances.submitted.node"), sender.Bytes(), common.LeftPadBytes(_block.Bytes(), 32),
+		common.LeftPadBytes(_totalEth.Bytes(), 32), common.LeftPadBytes(_stakingEth.Bytes(), 32), common.LeftPadBytes(_rethSupply.Bytes(), 32))
+}
+
+func ProposalNokeKey(sender common.Address, proposalId [32]byte) [32]byte {
+	return crypto.Keccak256Hash([]byte("stafiWithdraw.proposal.node.key"), proposalId[:], sender.Bytes())
+}
+
+func DistributeWithdrawalsProposalNodeKey(sender common.Address, _dealedHeight, _userAmount, _nodeAmount, _platformAmount, _maxClaimableWithdrawIndex *big.Int) [32]byte {
+	proposalId := crypto.Keccak256Hash(common.LeftPadBytes(_dealedHeight.Bytes(), 32), common.LeftPadBytes(_userAmount.Bytes(), 32),
+		common.LeftPadBytes(_nodeAmount.Bytes(), 32), common.LeftPadBytes(_platformAmount.Bytes(), 32), common.LeftPadBytes(_maxClaimableWithdrawIndex.Bytes(), 32))
+	return ProposalNokeKey(sender, proposalId)
 }
 
 func AppendToFile(filePath, content string) error {

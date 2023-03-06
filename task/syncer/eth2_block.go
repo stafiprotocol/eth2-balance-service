@@ -32,7 +32,7 @@ import (
 // sync feeRecipient and slash events
 // only cal slash amount of 1 2 3 5 slash type, 4 6 is 0
 func (task *Task) syncEth2BlockInfo() error {
-	eth2InfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
+	eth2ValidatorLatestInfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 	if err != nil {
 		return errors.Wrap(err, "dao.GetMetaData eth2infoSyncer")
 	}
@@ -42,12 +42,9 @@ func (task *Task) syncEth2BlockInfo() error {
 		return errors.Wrap(err, "dao.GetMetaData eth2BlockSyncer")
 	}
 
+	// ensure eth2 validator info synced
 	startEpoch := eth2BlockSyncerMetaData.DealedEpoch + 1
-	endEpoch := eth2InfoMetaData.DealedEpoch
-
-	if endEpoch > startEpoch && endEpoch-startEpoch > 10 {
-		endEpoch = startEpoch + 10
-	}
+	endEpoch := eth2ValidatorLatestInfoMetaData.DealedEpoch
 
 	for epoch := startEpoch; epoch <= endEpoch; epoch++ {
 		willUseEpoch := epoch
@@ -69,7 +66,7 @@ func (task *Task) syncEth2BlockInfo() error {
 		}
 
 		g := new(errgroup.Group)
-		g.SetLimit(16)
+		g.SetLimit(32)
 
 		// sync slash event of type 1 2 3 4 6 and withdrawals/proposed block
 		for slot := startSlot; slot <= endSlot; slot++ {
@@ -193,19 +190,9 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 		}
 
 		if err == nil {
-			withdraw, err := dao.GetValidatorWithdrawal(task.db, w.WithdrawIndex)
-			if err != nil && err != gorm.ErrRecordNotFound {
-				return errors.Wrap(err, "dao.GetWithdrawal")
-			}
-
-			withdraw.WithdrawIndex = w.WithdrawIndex
-			withdraw.ValidatorIndex = w.ValidatorIndex
-			withdraw.Slot = beaconBlock.Slot
-			withdraw.BlockNumber = beaconBlock.ExecutionBlockNumber
-			withdraw.Amount = w.Amount
-			err = dao.UpOrInValidatorWithdrawal(task.db, withdraw)
+			err := task.saveValidatorWithdrawal(w, beaconBlock.Slot, beaconBlock.ExecutionBlockNumber)
 			if err != nil {
-				return errors.Wrap(err, "dao.UpOrInWithdrawal")
+				return errors.Wrap(err, "saveValidatorWithdrawal failed")
 			}
 		}
 	}
@@ -354,6 +341,24 @@ func (task *Task) saveSyncMissEvent(slot, epoch, valIndex uint64) error {
 	return nil
 }
 
+func (task *Task) saveValidatorWithdrawal(w beacon.Withdrawal, slot, blockNumber uint64) error {
+	withdraw, err := dao.GetValidatorWithdrawal(task.db, w.WithdrawIndex)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return errors.Wrap(err, "dao.GetWithdrawal")
+	}
+
+	withdraw.WithdrawIndex = w.WithdrawIndex
+	withdraw.ValidatorIndex = w.ValidatorIndex
+	withdraw.Slot = slot
+	withdraw.BlockNumber = blockNumber
+	withdraw.Amount = w.Amount
+	withdraw.Timestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	err = dao.UpOrInValidatorWithdrawal(task.db, withdraw)
+	if err != nil {
+		return errors.Wrap(err, "dao.UpOrInWithdrawal")
+	}
+	return nil
+}
 func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, beaconBlock *beacon.BeaconBlock, validator *dao.Validator) error {
 	proposedBlock, err := dao.GetProposedBlock(task.db, slot)
 	if err != nil && err != gorm.ErrRecordNotFound {

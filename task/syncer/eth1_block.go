@@ -84,7 +84,7 @@ func (task *Task) syncEth1Block() error {
 		logrus.WithFields(logrus.Fields{
 			"start": subStart,
 			"end":   subEnd,
-		}).Info("already dealed blocks")
+		}).Debug("already dealed blocks")
 	}
 
 	return nil

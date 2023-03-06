@@ -2,6 +2,7 @@ package task_syncer
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
@@ -20,7 +21,7 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 	}
 	for iterUnstake.Next() {
 		withdrawIndex := iterUnstake.Event.WithdrawIndex.Uint64()
-		withdraw, err := dao.GetUserWithdrawal(task.db, withdrawIndex)
+		withdraw, err := dao.GetStakerWithdrawal(task.db, withdrawIndex)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
@@ -28,15 +29,21 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 			continue
 		}
 		withdraw.WithdrawIndex = withdrawIndex
-		withdraw.Address = iterUnstake.Event.RethAmount.String()
-
+		withdraw.Address = iterUnstake.Event.From.String()
 		withdraw.Amount = iterUnstake.Event.EthAmount.Uint64()
 		withdraw.BlockNumber = iterUnstake.Event.Raw.BlockNumber
+
+		block, err := task.connection.Eth1Client().BlockByNumber(context.Background(), big.NewInt(int64(withdraw.BlockNumber)))
+		if err != nil {
+			return err
+		}
+		withdraw.Timestamp = block.Header().Time
+
 		if iterUnstake.Event.Instantly {
 			withdraw.ClaimedBlockNumber = iterUnstake.Event.Raw.BlockNumber
 		}
 
-		err = dao.UpOrInUserWithdrawal(task.db, withdraw)
+		err = dao.UpOrInStakerWithdrawal(task.db, withdraw)
 		if err != nil {
 			return err
 		}
@@ -53,13 +60,13 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 
 	for iterWithdraw.Next() {
 		for _, withdrawIndex := range iterWithdraw.Event.WithdrawIndexList {
-			withdraw, err := dao.GetUserWithdrawal(task.db, withdrawIndex.Uint64())
+			withdraw, err := dao.GetStakerWithdrawal(task.db, withdrawIndex.Uint64())
 			if err != nil {
 				return errors.Wrap(err, "fetchWithdrawContractEvents GetUserWithdrawal failed")
 			}
 
 			withdraw.ClaimedBlockNumber = iterWithdraw.Event.Raw.BlockNumber
-			err = dao.UpOrInUserWithdrawal(task.db, withdraw)
+			err = dao.UpOrInStakerWithdrawal(task.db, withdraw)
 			if err != nil {
 				return err
 			}

@@ -20,26 +20,26 @@ func (task *Task) syncValidatorEpochBalances() error {
 		return err
 	}
 	finalEpoch := beaconHead.FinalizedEpoch
-	eth2InfoSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
+	eth2ValidatorInfoSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 	if err != nil {
 		return err
 	}
 	// ensure validators latest info already synced
-	if finalEpoch > eth2InfoSyncerMetaData.DealedEpoch {
-		finalEpoch = eth2InfoSyncerMetaData.DealedEpoch
+	if finalEpoch > eth2ValidatorInfoSyncerMetaData.DealedEpoch {
+		finalEpoch = eth2ValidatorInfoSyncerMetaData.DealedEpoch
 	}
 
-	eth2BalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
+	eth2ValidatorBalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
 	if err != nil {
 		return err
 	}
 
 	// no need fetch new balance
-	if finalEpoch <= eth2BalanceMetaData.DealedEpoch {
+	if finalEpoch <= eth2ValidatorBalanceMetaData.DealedEpoch {
 		return nil
 	}
 
-	for epoch := eth2BalanceMetaData.DealedEpoch + 1; epoch <= finalEpoch; epoch++ {
+	for epoch := eth2ValidatorBalanceMetaData.DealedEpoch + 1; epoch <= finalEpoch; epoch++ {
 		// we fetch epoch info every 75 epoch
 		if epoch%task.rewardEpochInterval != 0 {
 			continue
@@ -50,15 +50,15 @@ func (task *Task) syncValidatorEpochBalances() error {
 			return err
 		}
 		logrus.WithFields(logrus.Fields{
-			"dealedEpoch":              eth2BalanceMetaData.DealedEpoch,
+			"dealedEpoch":              eth2ValidatorBalanceMetaData.DealedEpoch,
 			"willDealEpoch":            epoch,
 			"willDealValidatorListLen": len(validatorList),
 		}).Debug("syncValidatorEpochBalances")
 
 		// should skip if no validator
 		if len(validatorList) == 0 {
-			eth2BalanceMetaData.DealedEpoch = epoch
-			err = dao.UpOrInMetaData(task.db, eth2BalanceMetaData)
+			eth2ValidatorBalanceMetaData.DealedEpoch = epoch
+			err = dao.UpOrInMetaData(task.db, eth2ValidatorBalanceMetaData)
 			if err != nil {
 				return err
 			}
@@ -66,7 +66,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 		}
 
 		pubkeys := make([]types.ValidatorPubkey, 0)
-		pubkeyNodeMap := make(map[string]string)
+		pubkeyToNodeAddress := make(map[string]string)
 		nodeAddressMap := make(map[string]struct{})
 		pubkeyToIndex := make(map[string]uint64)
 		for _, validator := range validatorList {
@@ -75,7 +75,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 				return err
 			}
 			pubkeys = append(pubkeys, pubkey)
-			pubkeyNodeMap[validator.Pubkey] = validator.NodeAddress
+			pubkeyToNodeAddress[validator.Pubkey] = validator.NodeAddress
 			nodeAddressMap[validator.NodeAddress] = struct{}{}
 			pubkeyToIndex[validator.Pubkey] = validator.ValidatorIndex
 		}
@@ -109,14 +109,18 @@ func (task *Task) syncValidatorEpochBalances() error {
 			}
 			validatorIndex, exist := pubkeyToIndex[pubkeyStr]
 			if !exist {
-				return fmt.Errorf("validator index not exit in pubkeyToIndex")
+				return fmt.Errorf("validator index not exist in pubkeyToIndex")
+			}
+			nodeAddress, exist := pubkeyToNodeAddress[pubkeyStr]
+			if !exist {
+				return fmt.Errorf("node address not exist in pubkeyToNodeAddress")
 			}
 			validatorBalance, err := dao.GetValidatorBalance(task.db, validatorIndex, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err
 			}
 
-			validatorBalance.NodeAddress = pubkeyNodeMap[pubkeyStr]
+			validatorBalance.NodeAddress = nodeAddress
 			validatorBalance.Balance = status.Balance
 			validatorBalance.EffectiveBalance = status.EffectiveBalance
 			validatorBalance.Epoch = epoch
@@ -127,70 +131,10 @@ func (task *Task) syncValidatorEpochBalances() error {
 			if err != nil {
 				return err
 			}
-
 		}
 
-		// collect node address
-		for node := range nodeAddressMap {
-			list, err := dao.GetValidatorBalanceList(task.db, node, epoch)
-			if err != nil {
-				return err
-			}
-
-			nodeBalance, err := dao.GetNodeBalance(task.db, node, epoch)
-			if err != nil && err != gorm.ErrRecordNotFound {
-				return err
-			}
-			nodeBalance.NodeAddress = node
-			nodeBalance.Epoch = epoch
-			nodeBalance.Timestamp = utils.StartTimestampOfEpoch(task.eth2Config, epoch)
-
-			for _, l := range list {
-				valInfo, err := dao.GetValidatorByIndex(task.db, l.ValidatorIndex)
-				if err != nil {
-					return err
-				}
-
-				nodeBalance.TotalNodeDepositAmount += valInfo.NodeDepositAmount
-
-				nodeBalance.TotalBalance += l.Balance
-				nodeBalance.TotalEffectiveBalance += l.EffectiveBalance
-
-				nodeBalance.TotalSelfReward += utils.GetNodeReward(l.Balance, l.EffectiveBalance, valInfo.NodeDepositAmount)
-
-				reward := uint64(0)
-				if l.Balance > l.EffectiveBalance {
-					reward = l.Balance - l.EffectiveBalance
-				}
-				nodeBalance.TotalReward += reward
-			}
-
-			preEpochNodeBalance, err := dao.GetNodeBalanceBefore(task.db, node, epoch)
-			if err != nil && err != gorm.ErrRecordNotFound {
-				return err
-			}
-			if err == nil {
-				totalSelfEraReward := uint64(0)
-				if nodeBalance.TotalSelfReward > preEpochNodeBalance.TotalSelfReward {
-					totalSelfEraReward = nodeBalance.TotalSelfReward - preEpochNodeBalance.TotalSelfReward
-				}
-				nodeBalance.TotalSelfEraReward = totalSelfEraReward
-
-				totalEraReward := uint64(0)
-				if nodeBalance.TotalReward > preEpochNodeBalance.TotalReward {
-					totalEraReward = nodeBalance.TotalReward - preEpochNodeBalance.TotalReward
-				}
-				nodeBalance.TotalEraReward = totalEraReward
-			}
-
-			err = dao.UpOrInNodeBalance(task.db, nodeBalance)
-			if err != nil {
-				return err
-			}
-		}
-
-		eth2BalanceMetaData.DealedEpoch = epoch
-		err = dao.UpOrInMetaData(task.db, eth2BalanceMetaData)
+		eth2ValidatorBalanceMetaData.DealedEpoch = epoch
+		err = dao.UpOrInMetaData(task.db, eth2ValidatorBalanceMetaData)
 		if err != nil {
 			return err
 		}

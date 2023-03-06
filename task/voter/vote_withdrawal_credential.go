@@ -21,7 +21,7 @@ import (
 
 const batchVoteLimit = 30
 
-func (task *Task) voteWithdrawal() error {
+func (task *Task) voteWithdrawalCredential() error {
 	validatorListNeedVote, err := dao.GetValidatorListNeedVote(task.db)
 	if err != nil {
 		return err

@@ -45,7 +45,7 @@ type Task struct {
 	// for eth2 block syncer
 	slashStartEpoch uint64
 
-	// need init on start
+	// --- need init on start
 	db                      *db.WrapDb
 	connection              *shared.Connection
 	depositContract         *deposit_contract.DepositContract
@@ -56,6 +56,7 @@ type Task struct {
 	userDepositContract     *user_deposit.UserDeposit
 	networkBalancesContract *network_balances.NetworkBalances
 	withdrawContract        *withdraw.Withdraw
+
 	lightNodeFeePoolAddress common.Address
 	superNodeFeePoolAddress common.Address
 
@@ -122,7 +123,8 @@ func (task *Task) Start() error {
 
 	utils.SafeGoWithRestart(task.syncEth1BlockHandler)
 	utils.SafeGoWithRestart(task.syncEth2BlockHandler)
-	utils.SafeGoWithRestart(task.syncEth2ValidatorHandler)
+	utils.SafeGoWithRestart(task.syncEth2ValidatorLatestInfoHandler)
+	utils.SafeGoWithRestart(task.syncEth2ValidatorEpochBalanceHandler)
 	return nil
 }
 
@@ -228,21 +230,21 @@ func (task *Task) initContract() error {
 
 func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 	// init eth1Syncer metaData
-	meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
+	eth1Meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			return err
 		}
 		// will init if meta data not exist
 		if task.eth1StartHeight == 0 {
-			meta.DealedBlockHeight = 0
+			eth1Meta.DealedBlockHeight = 0
 		} else {
-			meta.DealedBlockHeight = task.eth1StartHeight - 1
+			eth1Meta.DealedBlockHeight = task.eth1StartHeight - 1
 		}
 
-		meta.MetaType = utils.MetaTypeEth1BlockSyncer
+		eth1Meta.MetaType = utils.MetaTypeEth1BlockSyncer
 
-		err = dao.UpOrInMetaData(task.db, meta)
+		err = dao.UpOrInMetaData(task.db, eth1Meta)
 		if err != nil {
 			return err
 		}
@@ -250,49 +252,49 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 
 	// only dev need, v1/v2 will init on v1Syncer
 	if task.version == utils.Dev {
-		// init eth2InfoSyncer metaData
-		meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
+		// init eth2ValidatorInfoSyncer metaData
+		validatorInfoMeta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 		if err != nil {
 			if err != gorm.ErrRecordNotFound {
 				return err
 			}
 			// will init if meta data not exist
-			meta.MetaType = utils.MetaTypeEth2ValidatorInfoSyncer
-			meta.DealedEpoch = devStartEpoch
+			validatorInfoMeta.MetaType = utils.MetaTypeEth2ValidatorInfoSyncer
+			validatorInfoMeta.DealedEpoch = devStartEpoch
 
-			err = dao.UpOrInMetaData(task.db, meta)
+			err = dao.UpOrInMetaData(task.db, validatorInfoMeta)
 			if err != nil {
 				return err
 			}
 		}
 
-		// init eth2BalanceSyncer metaData
-		meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
+		// init eth2ValidatorBalanceSyncer metaData
+		validatorBalanceMeta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
 		if err != nil {
 			if err != gorm.ErrRecordNotFound {
 				return err
 			}
 			// will init if meta data not exist
-			meta.MetaType = utils.MetaTypeEth2ValidatorBalanceSyncer
-			meta.DealedEpoch = devStartEpoch
+			validatorBalanceMeta.MetaType = utils.MetaTypeEth2ValidatorBalanceSyncer
+			validatorBalanceMeta.DealedEpoch = devStartEpoch
 
-			err = dao.UpOrInMetaData(task.db, meta)
+			err = dao.UpOrInMetaData(task.db, validatorBalanceMeta)
 			if err != nil {
 				return err
 			}
 		}
 
-		// init eth2 block syncer info
-		meta, err = dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
+		// init eth2NodeCollector metaData
+		nodeBalanceMeta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2NodeBalanceCollector)
 		if err != nil {
 			if err != gorm.ErrRecordNotFound {
 				return err
 			}
 			// will init if meta data not exist
-			meta.MetaType = utils.MetaTypeEth2BlockSyncer
-			meta.DealedEpoch = devStartEpoch
+			nodeBalanceMeta.MetaType = utils.MetaTypeEth2NodeBalanceCollector
+			nodeBalanceMeta.DealedEpoch = devStartEpoch
 
-			err = dao.UpOrInMetaData(task.db, meta)
+			err = dao.UpOrInMetaData(task.db, nodeBalanceMeta)
 			if err != nil {
 				return err
 			}
@@ -386,7 +388,7 @@ func (task *Task) syncEth1BlockHandler() {
 	}
 }
 
-func (task *Task) syncEth2ValidatorHandler() {
+func (task *Task) syncEth2ValidatorLatestInfoHandler() {
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0
@@ -412,8 +414,29 @@ func (task *Task) syncEth2ValidatorHandler() {
 			}
 			logrus.Debug("syncValidatorLatestInfo end -----------")
 
+			retry = 0
+		}
+	}
+}
+
+func (task *Task) syncEth2ValidatorEpochBalanceHandler() {
+	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
+	defer ticker.Stop()
+	retry := 0
+	for {
+		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
+			return
+		}
+
+		select {
+		case <-task.stop:
+			logrus.Info("task has stopped")
+			return
+		case <-ticker.C:
+
 			logrus.Debug("syncValidatorEpochBalances start -----------")
-			err = task.syncValidatorEpochBalances()
+			err := task.syncValidatorEpochBalances()
 			if err != nil {
 				logrus.Warnf("syncValidatorEpochBalances err: %s", err)
 				time.Sleep(utils.RetryInterval)
@@ -421,6 +444,37 @@ func (task *Task) syncEth2ValidatorHandler() {
 				continue
 			}
 			logrus.Debug("syncValidatorEpochBalances end -----------")
+
+			retry = 0
+		}
+	}
+}
+
+func (task *Task) collectEth2NodeEpochBalanceHandler() {
+	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
+	defer ticker.Stop()
+	retry := 0
+	for {
+		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
+			return
+		}
+
+		select {
+		case <-task.stop:
+			logrus.Info("task has stopped")
+			return
+		case <-ticker.C:
+
+			logrus.Debug("collectNodeEpochBalances start -----------")
+			err := task.collectNodeEpochBalances()
+			if err != nil {
+				logrus.Warnf("collectNodeEpochBalances err: %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("collectNodeEpochBalances end -----------")
 
 			retry = 0
 		}

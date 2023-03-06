@@ -19,11 +19,11 @@ var maxRateChangeDeci = decimal.NewFromInt(1e14) //0.0001
 
 // update rate every rewardEpochInterval(default: 75 epoch)
 func (task *Task) voteRate() error {
-	targetEpoch, targetEth1BlockHeight, syncStateOk, err := task.checkSyncState()
+	targetEpoch, targetEth1BlockHeight, shouldGoNext, err := task.checkSyncState()
 	if err != nil {
 		return errors.Wrap(err, "voteRate checkSyncState failed")
 	}
-	if !syncStateOk {
+	if !shouldGoNext {
 		return nil
 	}
 
@@ -106,7 +106,7 @@ func (task *Task) voteRate() error {
 
 	// check voted
 	balancesEpoch := big.NewInt(int64(targetEpoch + balancesEpochOffset))
-	voted, err := task.NodeVoted(task.storageContract, task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEthDeci.BigInt(), totalStakingEthDeci.BigInt(), rethTotalSupplyDeci.BigInt())
+	voted, err := task.NodeVotedBalanceSubmission(task.storageContract, task.connection.Keypair().CommonAddress(), balancesEpoch, totalUserEthDeci.BigInt(), totalStakingEthDeci.BigInt(), rethTotalSupplyDeci.BigInt())
 	if err != nil {
 		return fmt.Errorf("networkBalancesContract.NodeVoted err: %s", err)
 	}
@@ -208,7 +208,7 @@ func (task *Task) voteRate() error {
 }
 
 // check sync state
-// return (targetEpoch, targetEth1Blocknumber, sync state ok, err)
+// return (targetEpoch, targetEth1Blocknumber, shouldGoNext, err)
 func (task *Task) checkSyncState() (uint64, uint64, bool, error) {
 	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {

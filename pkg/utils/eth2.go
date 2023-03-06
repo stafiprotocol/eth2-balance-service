@@ -34,14 +34,15 @@ const (
 	ValidatorStatusWithdrawDone = uint8(12)
 
 	// after distribute reward
-	ValidatorStatusDistributed = uint8(13)
+	ValidatorStatusDistributed = uint8(13) // distribute full withdrawal
 
 	// after slash
 	ValidatorStatusActiveSlash       = uint8(51)
 	ValidatorStatusExitedSlash       = uint8(52)
 	ValidatorStatusWithdrawableSlash = uint8(53)
 	ValidatorStatusWithdrawDoneSlash = uint8(54)
-	ValidatorStatusDistributedSlash  = uint8(55)
+
+	ValidatorStatusDistributedSlash = uint8(55) // distribute full withdrawal
 )
 
 // 1 common node 2 trust node 3 light node 4 super node
@@ -63,11 +64,12 @@ const (
 )
 
 const (
-	MetaTypeEth1BlockSyncer            = uint8(1)
-	MetaTypeEth2ValidatorInfoSyncer    = uint8(2)
-	MetaTypeEth2ValidatorBalanceSyncer = uint8(3)
-	MetaTypeV1ValidatorSyncer          = uint8(4)
-	MetaTypeEth2BlockSyncer            = uint8(5)
+	MetaTypeEth1BlockSyncer            = uint8(1) // dealed block height
+	MetaTypeEth2ValidatorInfoSyncer    = uint8(2) // dealed epoch
+	MetaTypeEth2ValidatorBalanceSyncer = uint8(3) // dealed epoch
+	MetaTypeV1ValidatorSyncer          = uint8(4) // dealed block height
+	MetaTypeEth2BlockSyncer            = uint8(5) // dealed epoch
+	MetaTypeEth2NodeBalanceCollector   = uint8(6) // dealed epoch
 )
 const (
 	SlashTypeFeeRecipient  = uint8(1)
@@ -277,7 +279,7 @@ func GetUserNodePlatformRewardV2(userDepositBalance uint64, rewardDeci decimal.D
 	}
 	userDepositBalanceDeci := decimal.NewFromInt(int64(userDepositBalance))
 	standEffectiveBalanceDeci := decimal.NewFromInt(int64(StandardEffectiveBalance))
-	
+
 	// platform Fee
 	platformFeeDeci := rewardDeci.Mul(Percent5Deci)
 	nodeRewardDeci := platformFeeDeci.Add(rewardDeci.Mul(Percent90Deci).Mul(userDepositBalanceDeci).Div(standEffectiveBalanceDeci))

@@ -126,6 +126,10 @@ func (task *Task) getContractAddress(storage *storage.Storage, name string) (com
 	return address, nil
 }
 
-func (task *Task) NodeVoted(storage *storage.Storage, sender common.Address, _block *big.Int, _totalEth *big.Int, _stakingEth *big.Int, _rethSupply *big.Int) (bool, error) {
+func (task *Task) NodeVotedBalanceSubmission(storage *storage.Storage, sender common.Address, _block *big.Int, _totalEth *big.Int, _stakingEth *big.Int, _rethSupply *big.Int) (bool, error) {
 	return storage.GetBool(task.connection.CallOpts(nil), utils.NodeSubmissionKey(sender, _block, _totalEth, _stakingEth, _rethSupply))
+}
+
+func (task *Task) NodeVotedDistributeWithdrawals(storage *storage.Storage, sender common.Address, _dealedHeight, _userAmount, _nodeAmount, _platformAmount, _maxClaimableWithdrawIndex *big.Int) (bool, error) {
+	return storage.GetBool(task.connection.CallOpts(nil), utils.DistributeWithdrawalsProposalNodeKey(sender, _dealedHeight, _userAmount, _nodeAmount, _platformAmount, _maxClaimableWithdrawIndex))
 }

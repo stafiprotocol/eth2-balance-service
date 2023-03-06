@@ -20,14 +20,14 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return err
 	}
 
-	eth2InfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
+	eth2ValidatorInfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 	if err != nil {
 		return err
 	}
 	finalEpoch := beaconHead.FinalizedEpoch
 
 	// no need fetch, if allready dealed
-	if finalEpoch <= eth2InfoMetaData.DealedEpoch {
+	if finalEpoch <= eth2ValidatorInfoMetaData.DealedEpoch {
 		return nil
 	}
 
@@ -82,8 +82,8 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}).Debug("syncValidatorLatestInfo")
 
 	if len(validatorList) == 0 {
-		eth2InfoMetaData.DealedEpoch = finalEpoch
-		return dao.UpOrInMetaData(task.db, eth2InfoMetaData)
+		eth2ValidatorInfoMetaData.DealedEpoch = finalEpoch
+		return dao.UpOrInMetaData(task.db, eth2ValidatorInfoMetaData)
 	}
 
 	pubkeys := make([]types.ValidatorPubkey, 0)
@@ -180,6 +180,6 @@ func (task *Task) syncValidatorLatestInfo() error {
 			}
 		}
 	}
-	eth2InfoMetaData.DealedEpoch = finalEpoch
-	return dao.UpOrInMetaData(task.db, eth2InfoMetaData)
+	eth2ValidatorInfoMetaData.DealedEpoch = finalEpoch
+	return dao.UpOrInMetaData(task.db, eth2ValidatorInfoMetaData)
 }
