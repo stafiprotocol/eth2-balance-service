@@ -3,11 +3,13 @@ package task_syncer
 import (
 	"bytes"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/sirupsen/logrus"
 	deposit_contract "github.com/stafiprotocol/reth/bindings/DepositContract"
+	distributor "github.com/stafiprotocol/reth/bindings/Distributor"
 	light_node "github.com/stafiprotocol/reth/bindings/LightNode"
 	network_balances "github.com/stafiprotocol/reth/bindings/NetworkBalances"
 	node_deposit "github.com/stafiprotocol/reth/bindings/NodeDeposit"
@@ -33,7 +35,7 @@ var (
 // sync deposit/stake events and pool latest info from execute chain
 // sync validator latest info and epoch balance from consensus chain
 // sync beacon block info from consensus chain
-// sort by head: eth1 syncer -> latestInfo syncer -> eth2Block syncer -> valBalance syncer -> nodeBalance collector
+// sort by head: eth1 syncer -> latestInfo syncer -> eth2Block syncer -> valBalance syncer -> nodeBalance collector -> merkle tree
 type Task struct {
 	taskTicker             int64
 	stop                   chan struct{}
@@ -57,6 +59,8 @@ type Task struct {
 	userDepositContract     *user_deposit.UserDeposit
 	networkBalancesContract *network_balances.NetworkBalances
 	withdrawContract        *withdraw.Withdraw
+	distributorContract     *distributor.Distributor
+	storageContract         *storage.Storage
 
 	lightNodeFeePoolAddress common.Address
 	superNodeFeePoolAddress common.Address
@@ -123,10 +127,11 @@ func (task *Task) Start() error {
 	}
 
 	utils.SafeGoWithRestart(task.syncEth1BlockHandler)
-	utils.SafeGoWithRestart(task.syncEth2BlockHandler)
 	utils.SafeGoWithRestart(task.syncEth2ValidatorLatestInfoHandler)
+	utils.SafeGoWithRestart(task.syncEth2BlockHandler)
 	utils.SafeGoWithRestart(task.syncEth2ValidatorEpochBalanceHandler)
 	utils.SafeGoWithRestart(task.collectEth2NodeEpochBalanceHandler)
+	utils.SafeGoWithRestart(task.calAndSaveMerkleTreeHandler)
 	return nil
 }
 
@@ -139,6 +144,8 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
+
+	task.storageContract = storageContract
 
 	depositContractAddress, err := task.getContractAddress(storageContract, "ethDeposit")
 	if err != nil {
@@ -187,6 +194,14 @@ func (task *Task) initContract() error {
 			return err
 		}
 		task.withdrawContract, err = withdraw.NewWithdraw(withdrawAddress, task.connection.Eth1Client())
+		if err != nil {
+			return err
+		}
+		stafiDistributorAddress, err := task.getContractAddress(storageContract, "stafiDistributor")
+		if err != nil {
+			return err
+		}
+		task.distributorContract, err = distributor.NewDistributor(stafiDistributorAddress, task.connection.Eth1Client())
 		if err != nil {
 			return err
 		}
@@ -483,6 +498,37 @@ func (task *Task) collectEth2NodeEpochBalanceHandler() {
 	}
 }
 
+func (task *Task) calAndSaveMerkleTreeHandler() {
+	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
+	defer ticker.Stop()
+	retry := 0
+	for {
+		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
+			return
+		}
+
+		select {
+		case <-task.stop:
+			logrus.Info("task has stopped")
+			return
+		case <-ticker.C:
+
+			logrus.Debug("calAndSaveMerkleTree start -----------")
+			err := task.calAndSaveMerkleTree()
+			if err != nil {
+				logrus.Warnf("calAndSaveMerkleTree err: %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("calAndSaveMerkleTree end -----------")
+
+			retry = 0
+		}
+	}
+}
+
 func (task *Task) syncEth2BlockHandler() {
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
@@ -549,4 +595,8 @@ func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
 		break
 	}
 	return blocknumber, nil
+}
+
+func (task *Task) MerkleTreeDealedEpoch(storage *storage.Storage) (*big.Int, error) {
+	return storage.GetUint(task.connection.CallOpts(nil), utils.MerkleTreeDealedEpochStorageKey())
 }

@@ -1,5 +1,27 @@
 basePath: /reth
 definitions:
+  info_handlers.Election:
+    properties:
+      choosenTime:
+        type: integer
+      ethReward:
+        type: string
+      exitTime:
+        type: integer
+      publicKey:
+        type: string
+      status:
+        type: integer
+    type: object
+  info_handlers.ReqElectionList:
+    properties:
+      nodeAddress:
+        type: string
+      pageCount:
+        type: integer
+      pageIndex:
+        type: integer
+    type: object
   info_handlers.ReqNodeInfo:
     properties:
       nodeAddress:
@@ -16,6 +38,11 @@ definitions:
         items:
           type: integer
         type: array
+    type: object
+  info_handlers.ReqProof:
+    properties:
+      nodeAddress:
+        type: string
     type: object
   info_handlers.ReqPubkeyDetail:
     properties:
@@ -63,6 +90,12 @@ definitions:
         description: hex string
         type: string
     type: object
+  info_handlers.ReqWithdrawRemainingTime:
+    properties:
+      stakerAddress:
+        description: hex string
+        type: string
+    type: object
   info_handlers.ResPubkey:
     properties:
       pubkey:
@@ -84,6 +117,15 @@ definitions:
         type: string
       totalStakedEth:
         type: string
+    type: object
+  info_handlers.RspElectionList:
+    properties:
+      electionList:
+        items:
+          $ref: '#/definitions/info_handlers.Election'
+        type: array
+      electionTotalCount:
+        type: integer
     type: object
   info_handlers.RspGasPrice:
     properties:
@@ -148,6 +190,19 @@ definitions:
         type: string
       validatorApr:
         type: number
+    type: object
+  info_handlers.RspProof:
+    properties:
+      address:
+        type: string
+      amount:
+        type: string
+      index:
+        type: integer
+      proof:
+        items:
+          type: string
+        type: array
     type: object
   info_handlers.RspPubkeyDetail:
     properties:
@@ -231,6 +286,12 @@ definitions:
       exist:
         type: boolean
     type: object
+  info_handlers.RspWithdrawRemainingTime:
+    properties:
+      remainingSeconds:
+        description: staked waiting actived
+        type: integer
+    type: object
   info_handlers.SlashEvent:
     properties:
       endBlock:
@@ -263,6 +324,33 @@ info:
   title: reth API
   version: "1.0"
 paths:
+  /v1/exitElectionList:
+    post:
+      consumes:
+      - application/json
+      description: exit election list
+      parameters:
+      - description: election list
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqElectionList'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspElectionList'
+              type: object
+      summary: exit election list
+      tags:
+      - v1
   /v1/gasPrice:
     get:
       description: gas price
@@ -324,6 +412,33 @@ paths:
                   $ref: '#/definitions/info_handlers.RspPoolData'
               type: object
       summary: pool data
+      tags:
+      - v1
+  /v1/proof:
+    post:
+      consumes:
+      - application/json
+      description: proof
+      parameters:
+      - description: proof
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqProof'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspProof'
+              type: object
+      summary: get proof of claim
       tags:
       - v1
   /v1/pubkeyDetail:
@@ -472,6 +587,33 @@ paths:
           schema:
             $ref: '#/definitions/utils.Rsp'
       summary: unstaking plan
+      tags:
+      - v1
+  /v1/staker/withdrawRemainingTime:
+    post:
+      consumes:
+      - application/json
+      description: staker withdraw remaining time
+      parameters:
+      - description: staker address
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqWithdrawRemainingTime'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspWithdrawRemainingTime'
+              type: object
+      summary: staker withdraw remaining time
       tags:
       - v1
 swagger: "2.0"

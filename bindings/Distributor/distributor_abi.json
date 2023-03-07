@@ -16,12 +16,6 @@
             {
                 "indexed": false,
                 "internalType": "uint256",
-                "name": "round",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
                 "name": "index",
                 "type": "uint256"
             },
@@ -34,7 +28,13 @@
             {
                 "indexed": false,
                 "internalType": "uint256",
-                "name": "amount",
+                "name": "claimedAmount",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "totalAmount",
                 "type": "uint256"
             }
         ],
@@ -42,31 +42,58 @@
         "type": "event"
     },
     {
+        "anonymous": false,
         "inputs": [
             {
-                "internalType": "uint256[]",
-                "name": "claimRoundList",
-                "type": "uint256[]"
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "proposalId",
+                "type": "bytes32"
+            }
+        ],
+        "name": "ProposalExecuted",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "proposalId",
+                "type": "bytes32"
             },
             {
-                "internalType": "uint256[]",
-                "name": "indexList",
-                "type": "uint256[]"
+                "indexed": false,
+                "internalType": "address",
+                "name": "voter",
+                "type": "address"
+            }
+        ],
+        "name": "VoteProposal",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_index",
+                "type": "uint256"
             },
             {
-                "internalType": "address[]",
-                "name": "accountList",
-                "type": "address[]"
+                "internalType": "address",
+                "name": "_account",
+                "type": "address"
             },
             {
-                "internalType": "uint256[]",
-                "name": "amountList",
-                "type": "uint256[]"
+                "internalType": "uint256",
+                "name": "_totalAmount",
+                "type": "uint256"
             },
             {
-                "internalType": "bytes32[][]",
-                "name": "merkleProofList",
-                "type": "bytes32[][]"
+                "internalType": "bytes32[]",
+                "name": "_merkleProof",
+                "type": "bytes32[]"
             }
         ],
         "name": "claim",
@@ -78,24 +105,49 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "amount",
+                "name": "_amount",
                 "type": "uint256"
             }
         ],
         "name": "distributeFee",
         "outputs": [],
-        "stateMutability": "payable",
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "amount",
+                "name": "_dealedHeight",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "distributeSlashAmount",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_amount",
                 "type": "uint256"
             }
         ],
         "name": "distributeSuperNodeFee",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "distributeWithdrawals",
         "outputs": [],
         "stateMutability": "payable",
         "type": "function"
@@ -114,30 +166,6 @@
         "type": "function"
     },
     {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "claimRound",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "index",
-                "type": "uint256"
-            }
-        ],
-        "name": "isClaimed",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
         "inputs": [],
         "name": "receiveEtherWithdrawal",
         "outputs": [],
@@ -148,12 +176,12 @@
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "claimRound",
+                "name": "_dealedEpoch",
                 "type": "uint256"
             },
             {
                 "internalType": "bytes32",
-                "name": "merkleRoot",
+                "name": "_merkleRoot",
                 "type": "bytes32"
             }
         ],

@@ -19,6 +19,52 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/v1/exitElectionList": {
+            "post": {
+                "description": "exit election list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "exit election list",
+                "parameters": [
+                    {
+                        "description": "election list",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqElectionList"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspElectionList"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/gasPrice": {
             "get": {
                 "description": "gas price",
@@ -120,6 +166,52 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/info_handlers.RspPoolData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proof": {
+            "post": {
+                "description": "proof",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "get proof of claim",
+                "parameters": [
+                    {
+                        "description": "proof",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqProof"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspProof"
                                         }
                                     }
                                 }
@@ -378,9 +470,89 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/staker/withdrawRemainingTime": {
+            "post": {
+                "description": "staker withdraw remaining time",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "staker withdraw remaining time",
+                "parameters": [
+                    {
+                        "description": "staker address",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqWithdrawRemainingTime"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspWithdrawRemainingTime"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "info_handlers.Election": {
+            "type": "object",
+            "properties": {
+                "choosenTime": {
+                    "type": "integer"
+                },
+                "ethReward": {
+                    "type": "string"
+                },
+                "exitTime": {
+                    "type": "integer"
+                },
+                "publicKey": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "info_handlers.ReqElectionList": {
+            "type": "object",
+            "properties": {
+                "nodeAddress": {
+                    "type": "string"
+                },
+                "pageCount": {
+                    "type": "integer"
+                },
+                "pageIndex": {
+                    "type": "integer"
+                }
+            }
+        },
         "info_handlers.ReqNodeInfo": {
             "type": "object",
             "properties": {
@@ -403,6 +575,14 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "info_handlers.ReqProof": {
+            "type": "object",
+            "properties": {
+                "nodeAddress": {
+                    "type": "string"
                 }
             }
         },
@@ -475,6 +655,15 @@ const docTemplate = `{
                 }
             }
         },
+        "info_handlers.ReqWithdrawRemainingTime": {
+            "type": "object",
+            "properties": {
+                "stakerAddress": {
+                    "description": "hex string",
+                    "type": "string"
+                }
+            }
+        },
         "info_handlers.ResPubkey": {
             "type": "object",
             "properties": {
@@ -506,6 +695,20 @@ const docTemplate = `{
                 },
                 "totalStakedEth": {
                     "type": "string"
+                }
+            }
+        },
+        "info_handlers.RspElectionList": {
+            "type": "object",
+            "properties": {
+                "electionList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/info_handlers.Election"
+                    }
+                },
+                "electionTotalCount": {
+                    "type": "integer"
                 }
             }
         },
@@ -599,6 +802,26 @@ const docTemplate = `{
                 },
                 "validatorApr": {
                     "type": "number"
+                }
+            }
+        },
+        "info_handlers.RspProof": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "amount": {
+                    "type": "string"
+                },
+                "index": {
+                    "type": "integer"
+                },
+                "proof": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -724,6 +947,15 @@ const docTemplate = `{
             "properties": {
                 "exist": {
                     "type": "boolean"
+                }
+            }
+        },
+        "info_handlers.RspWithdrawRemainingTime": {
+            "type": "object",
+            "properties": {
+                "remainingSeconds": {
+                    "description": "staked waiting actived",
+                    "type": "integer"
                 }
             }
         },

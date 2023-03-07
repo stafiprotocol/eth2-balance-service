@@ -184,6 +184,10 @@ func ContractStorageKey(name string) [32]byte {
 	return crypto.Keccak256Hash([]byte("contract.address"), []byte(name))
 }
 
+func MerkleTreeDealedEpochStorageKey() [32]byte {
+	return crypto.Keccak256Hash([]byte("stafiDistributor.merkleRoot.dealedEpoch"))
+}
+
 func NodeSubmissionKey(sender common.Address, _block *big.Int, _totalEth *big.Int, _stakingEth *big.Int, _rethSupply *big.Int) [32]byte {
 	// keccak256(abi.encodePacked("network.balances.submitted.node", sender, _block, _totalEth, _stakingEth, _rethSupply))
 	return crypto.Keccak256Hash([]byte("network.balances.submitted.node"), sender.Bytes(), common.LeftPadBytes(_block.Bytes(), 32),

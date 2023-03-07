@@ -86,6 +86,14 @@ func TestStorage(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("withdrawPoolAddress", withdrawPoolAddress)
+
+	stafiDistributorAddress, err := s.GetAddress(&bind.CallOpts{
+		Context: context.Background(),
+	}, utils.ContractStorageKey("stafiDistributor"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("stafiDistributorAddress", stafiDistributorAddress)
 	withdrawPoolBalance, err := client.BalanceAt(context.Background(), withdrawPoolAddress, nil)
 	if err != nil {
 		t.Fatal(err)

@@ -19,6 +19,7 @@ type PoolInfo struct {
 	PriorityFee uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:priority_fee"` // gwei
 
 	LatestDistributeHeight        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:latest_distribute_height"`    // withdraw pool latestDistributeHeight
+	LatestMerkleTreeEpoch         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:latest_merkle_tree_epoch"`    // distributor  latest merkle tree epoch
 	TotalMissingAmountForWithdraw string `gorm:"type:varchar(40) not null;default:'0';column:total_missing_amount_for_withdraw"` // withdraw pool totalMissingAmountForWithdraw
 }
 

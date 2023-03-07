@@ -19,7 +19,7 @@ type ExitElection struct {
 }
 
 func (f ExitElection) TableName() string {
-	return "reth_exit_election"
+	return "reth_exit_elections"
 }
 
 func UpOrInExitElection(db *db.WrapDb, c *ExitElection) error {

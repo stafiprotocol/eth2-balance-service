@@ -35,6 +35,10 @@ func (task *Task) syncContractsInfo() error {
 	if err != nil {
 		return err
 	}
+	merkleTreeDealedEpochOnchain, err := task.MerkleTreeDealedEpoch(task.storageContract)
+	if err != nil {
+		return err
+	}
 
 	poolInfo, err := dao.GetPoolInfo(task.db)
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -65,6 +69,7 @@ func (task *Task) syncContractsInfo() error {
 	poolInfo.REthSupply = rethSupply.String()
 	poolInfo.LatestDistributeHeight = latestDistributeHeight.Uint64()
 	poolInfo.TotalMissingAmountForWithdraw = totalMissingAmountForWithdraw.String()
+	poolInfo.LatestMerkleTreeEpoch = merkleTreeDealedEpochOnchain.Uint64()
 
 	logrus.WithFields(logrus.Fields{
 		"poolBalance": poolInfo.PoolEthBalance,

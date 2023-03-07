@@ -475,3 +475,43 @@ no
 | message | N/A              | N/A     | string | Yes         | null        | status info                             |
 | data    | N/A              | N/A     | object | Yes         | null        | data                                    |
 |         | remainingSeconds | N/A     | number | Yes         | null        | staker withdraw remaining time(seconds) |
+
+## 12. get proof of claim
+
+### (1) description
+
+*  get proof of claim
+
+### (2) path
+
+* /reth/v1/proof
+
+### (3) request method
+
+* post
+
+### (4) request payload 
+
+* data format: application/json
+* data detail:
+
+| field       | type   | notice                  |
+| :---------- | :----- | :---------------------- |
+| nodeAddress | string | node addres, hex string |
+
+ 
+### (5) response
+* include status、data、message fields
+* status、message must be string format,data must be object
+
+
+| grade 1 | grade 2 | type        | must exist? | encode type | description                     |
+| :------ | :------ | :---------- | :---------- | :---------- | :------------------------------ |
+| status  | N/A     | string      | Yes         | null        | status code                     |
+| message | N/A     | string      | Yes         | null        | status info                     |
+| data    | N/A     | object      | Yes         | null        | data                            |
+|         | index   | number      | Yes         | null        | user index of this epoch        |
+|         | address | string      | Yes         | null        | node address                    |
+|         | amount  | string      | Yes         | null        | total amount decimals 18        |
+|         | proof   | string list | Yes         | null        | proof of claim, hex string list |
+

@@ -90,6 +90,13 @@ func (task *Task) voteRate() error {
 
 	// ----final: total user eth = total user eth from validator + deposit pool balance + user undistributedWithdrawals - totalMissingAmountForWithdraw
 	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).Add(totalUserUndistributedWithdrawalsDeci).Sub(totalMissingAmountForWithdrawDeci)
+	// should sub totalMissingAmountForWithdrawDeci, as there are checks on networkbalances `require(_stakingEth <= _totalEth, "Invalid network balances");`
+	totalStakingEthDeci = totalStakingEthDeci.Sub(totalMissingAmountForWithdrawDeci)
+
+	// check total user eth and staking eth
+	if totalUserEthDeci.LessThan(totalStakingEthDeci) {
+		return fmt.Errorf("totalUserEthDeci %s less than totalStakingEthDeci %s", totalUserEthDeci, totalStakingEthDeci)
+	}
 
 	// check voted
 	balancesEpoch := big.NewInt(int64(targetEpoch + balancesEpochOffset))
@@ -160,14 +167,14 @@ func (task *Task) voteRate() error {
 	}
 
 	logrus.Info("send submitBalances tx hash: ", tx.Hash().String())
-
+	// todo extract and check tx status
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {
 			utils.ShutdownRequestChannel <- struct{}{}
 			return fmt.Errorf("networkBalancesContract.SubmitBalances tx reach retry limit")
 		}
-		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
+		tx, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
 		if err == nil && !pending {
 			break
 		} else {
@@ -186,6 +193,7 @@ func (task *Task) voteRate() error {
 			retry++
 			continue
 		}
+
 	}
 	logrus.WithFields(logrus.Fields{
 		"tx": tx.Hash(),

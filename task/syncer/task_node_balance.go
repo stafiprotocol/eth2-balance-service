@@ -107,6 +107,8 @@ func (task *Task) collectNodeEpochBalances() error {
 
 				if l.Balance > 0 {
 					nodeBalance.TotalNodeDepositAmount += valInfo.NodeDepositAmount
+				} else {
+					nodeBalance.TotalExitNodeDepositAmount += valInfo.NodeDepositAmount
 				}
 
 				nodeBalance.TotalBalance += l.Balance

@@ -13,15 +13,16 @@ type NodeBalance struct {
 	NodeAddress string `gorm:"type:varchar(100) not null;default:'';column:node_address;index;uniqueIndex:uni_idx_node_epoch"` //hex with 0x prefix
 	Epoch       uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:epoch;uniqueIndex:uni_idx_node_epoch;index"`
 
-	TotalNodeDepositAmount uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_node_deposit_amount"` //Gwei deposit amount at beacon chain
-	TotalBalance           uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_balance"`             //Gwei total balance at beacon chain
-	TotalWithdrawal        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_withdrawal"`          //Gwei total withdrawal at beacon chain
-	TotalEffectiveBalance  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_effective_balance"`   //Gwei total effective balance at beacon chain
-	TotalEraReward         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_era_reward"`          //Gwei total reward of this era
-	TotalReward            uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_reward"`              //Gwei total reward up to this era
-	TotalSelfEraReward     uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_self_era_reward"`     //Gwei total node reward of this era
-	TotalSelfReward        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_self_reward"`         //Gwei total node reward up to this era
-	Timestamp              uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
+	TotalNodeDepositAmount     uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_node_deposit_amount"`      //Gwei total deposit amount on beacon chain
+	TotalExitNodeDepositAmount uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_exit_node_deposit_amount"` //Gwei deposit amount at beacon chain
+	TotalBalance               uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_balance"`                  //Gwei total balance at beacon chain
+	TotalWithdrawal            uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_withdrawal"`               //Gwei total withdrawal at beacon chain
+	TotalEffectiveBalance      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_effective_balance"`        //Gwei total effective balance at beacon chain
+	TotalEraReward             uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_era_reward"`               //Gwei total reward of this era
+	TotalReward                uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_reward"`                   //Gwei total reward up to this era
+	TotalSelfEraReward         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_self_era_reward"`          //Gwei total node reward of this era
+	TotalSelfReward            uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_self_reward"`              //Gwei total node reward up to this era
+	Timestamp                  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
 }
 
 func (f NodeBalance) TableName() string {
@@ -55,6 +56,11 @@ func GetNodeBalanceListByNodeWithPage(db *db.WrapDb, nodeAddress string, pageInd
 	}
 
 	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ?", nodeAddress).Error
+	return
+}
+
+func GetNodeBalanceListByEpoch(db *db.WrapDb, epoch uint64) (c []*NodeBalance, err error) {
+	err = db.Order("id asc").Find(&c, "epoch = ?", epoch).Error
 	return
 }
 

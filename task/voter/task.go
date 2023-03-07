@@ -237,6 +237,17 @@ func (task *Task) voteHandler() {
 			}
 
 			logrus.Debug("voteRate end -----------\n")
+
+			logrus.Debug("setMerkleTree start -----------")
+			err = task.setMerkleTree()
+			if err != nil {
+				logrus.Warnf("setMerkleTree err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("setMerkleTree end -----------\n")
+
 			retry = 0
 		}
 	}
