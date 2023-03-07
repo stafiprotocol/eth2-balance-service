@@ -126,6 +126,7 @@ func (task *Task) Start() error {
 	utils.SafeGoWithRestart(task.syncEth2BlockHandler)
 	utils.SafeGoWithRestart(task.syncEth2ValidatorLatestInfoHandler)
 	utils.SafeGoWithRestart(task.syncEth2ValidatorEpochBalanceHandler)
+	utils.SafeGoWithRestart(task.collectEth2NodeEpochBalanceHandler)
 	return nil
 }
 

@@ -1,6 +1,7 @@
 package task_syncer
 
 import (
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
@@ -18,7 +19,7 @@ func (task *Task) collectNodeEpochBalances() error {
 	if err != nil {
 		return err
 	}
-	// ensure validators latest info already synced
+	// ---1 ensure validators latest info already synced
 	if finalEpoch > eth2ValidatorInfoSyncerMetaData.DealedEpoch {
 		finalEpoch = eth2ValidatorInfoSyncerMetaData.DealedEpoch
 	}
@@ -27,7 +28,7 @@ func (task *Task) collectNodeEpochBalances() error {
 	if err != nil {
 		return err
 	}
-	// ensure validators epoch balances  already synced
+	// ---2 ensure validators epoch balances  already synced
 	if finalEpoch > eth2ValidatorBalanceMetaData.DealedEpoch {
 		finalEpoch = eth2ValidatorBalanceMetaData.DealedEpoch
 	}
@@ -36,7 +37,7 @@ func (task *Task) collectNodeEpochBalances() error {
 	if err != nil {
 		return err
 	}
-	// ensure eth2 blocks info(slash/withdrawals) already synced
+	// ---3 ensure eth2 blocks info(slash/withdrawals) already synced
 	if finalEpoch > eth2BlockSyncerMetaData.DealedEpoch {
 		finalEpoch = eth2BlockSyncerMetaData.DealedEpoch
 	}
@@ -77,13 +78,9 @@ func (task *Task) collectNodeEpochBalances() error {
 			continue
 		}
 
-		pubkeyToNodeAddress := make(map[string]string)
 		nodeAddressMap := make(map[string]struct{})
-		pubkeyToIndex := make(map[string]uint64)
 		for _, validator := range validatorList {
-			pubkeyToNodeAddress[validator.Pubkey] = validator.NodeAddress
 			nodeAddressMap[validator.NodeAddress] = struct{}{}
-			pubkeyToIndex[validator.Pubkey] = validator.ValidatorIndex
 		}
 
 		// collect node address info
@@ -108,22 +105,23 @@ func (task *Task) collectNodeEpochBalances() error {
 					return err
 				}
 
-				if valInfo.Status != utils.ValidatorStatusDistributed && valInfo.Status != utils.ValidatorStatusDistributedSlash {
+				if l.Balance > 0 {
 					nodeBalance.TotalNodeDepositAmount += valInfo.NodeDepositAmount
 				}
 
 				nodeBalance.TotalBalance += l.Balance
+				nodeBalance.TotalWithdrawal += l.TotalWithdrawal
 				nodeBalance.TotalEffectiveBalance += l.EffectiveBalance
 
-				nodeBalance.TotalSelfReward += utils.GetNodeReward(l.Balance, l.EffectiveBalance, valInfo.NodeDepositAmount)
+				valTotalReward := decimal.NewFromInt(int64(utils.GetTotalReward(l.Balance, l.TotalWithdrawal)))
 
-				reward := uint64(0)
-				if l.Balance > l.EffectiveBalance {
-					reward = l.Balance - l.EffectiveBalance
-				}
-				nodeBalance.TotalReward += reward
+				_, nodeReward, _ := utils.GetUserNodePlatformRewardV2(utils.StandardEffectiveBalance-valInfo.NodeDepositAmount, valTotalReward)
+
+				nodeBalance.TotalSelfReward += nodeReward.BigInt().Uint64()
+				nodeBalance.TotalReward += valTotalReward.BigInt().Uint64()
 			}
 
+			// cal era reward
 			preEpochNodeBalance, err := dao.GetNodeBalanceBefore(task.db, nodeAddress, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err
@@ -133,12 +131,13 @@ func (task *Task) collectNodeEpochBalances() error {
 				if nodeBalance.TotalSelfReward > preEpochNodeBalance.TotalSelfReward {
 					totalSelfEraReward = nodeBalance.TotalSelfReward - preEpochNodeBalance.TotalSelfReward
 				}
-				nodeBalance.TotalSelfEraReward = totalSelfEraReward
 
 				totalEraReward := uint64(0)
 				if nodeBalance.TotalReward > preEpochNodeBalance.TotalReward {
 					totalEraReward = nodeBalance.TotalReward - preEpochNodeBalance.TotalReward
 				}
+
+				nodeBalance.TotalSelfEraReward = totalSelfEraReward
 				nodeBalance.TotalEraReward = totalEraReward
 			}
 
@@ -153,7 +152,6 @@ func (task *Task) collectNodeEpochBalances() error {
 		if err != nil {
 			return err
 		}
-
 	}
 	return nil
 }

@@ -271,9 +271,9 @@ func GetUserNodePlatformRewardV1(userDepositBalance uint64, rewardDeci decimal.D
 }
 
 // platform = 5%  node = 5% + (90% * nodedeposit/32)
+// rewardDeci decimals maybe 9/18, also the returns
 // return (user reward, node reward, paltform fee)
 func GetUserNodePlatformRewardV2(userDepositBalance uint64, rewardDeci decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
-
 	if !rewardDeci.IsPositive() || userDepositBalance > StandardEffectiveBalance {
 		return decimal.Zero, decimal.Zero, decimal.Zero
 	}
@@ -291,4 +291,12 @@ func GetUserNodePlatformRewardV2(userDepositBalance uint64, rewardDeci decimal.D
 
 	return userRewardDeci, nodeRewardDeci, platformFeeDeci
 
+}
+
+func GetTotalReward(balance, withdrawal uint64) uint64 {
+	totalBalance := balance + withdrawal
+	if totalBalance > StandardEffectiveBalance {
+		return totalBalance - StandardEffectiveBalance
+	}
+	return 0
 }

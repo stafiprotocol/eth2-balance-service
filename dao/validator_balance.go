@@ -15,7 +15,7 @@ type ValidatorBalance struct {
 
 	NodeAddress      string `gorm:"type:varchar(100) not null;default:'';column:node_address;index;"` //hex with 0x prefix
 	Balance          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance"`
-	TotalWithdrawal  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_withdrawal"` // total withdrawal amount until the start slot of this epoch
+	TotalWithdrawal  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_withdrawal"` // total withdrawal amount up to the start slot of this epoch
 	EffectiveBalance uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:effective_balance"`
 	Timestamp        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
 }
