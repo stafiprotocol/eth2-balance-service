@@ -33,6 +33,7 @@ var (
 // sync deposit/stake events and pool latest info from execute chain
 // sync validator latest info and epoch balance from consensus chain
 // sync beacon block info from consensus chain
+// sort by head: eth1 syncer -> latestInfo syncer -> eth2Block syncer -> valBalance syncer -> nodeBalance collector
 type Task struct {
 	taskTicker             int64
 	stop                   chan struct{}
@@ -519,4 +520,32 @@ func (task *Task) syncEth2BlockHandler() {
 			retry = 0
 		}
 	}
+}
+
+func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
+	eth2ValidatorBalanceSyncerStartSlot := utils.StartSlotOfEpoch(task.eth2Config, epoch)
+	blocknumber := uint64(0)
+	retry := 0
+	for {
+		if retry > 5 {
+			return 0, fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+		}
+
+		targetBeaconBlock, exist, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(eth2ValidatorBalanceSyncerStartSlot))
+		if err != nil {
+			return 0, err
+		}
+		// we will use next slot if not exist
+		if !exist {
+			eth2ValidatorBalanceSyncerStartSlot++
+			retry++
+			continue
+		}
+		if targetBeaconBlock.ExecutionBlockNumber == 0 {
+			return 0, fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+		}
+		blocknumber = targetBeaconBlock.ExecutionBlockNumber
+		break
+	}
+	return blocknumber, nil
 }

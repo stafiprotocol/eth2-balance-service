@@ -26,44 +26,19 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}
 	finalEpoch := beaconHead.FinalizedEpoch
 
-	// no need fetch, if allready dealed
+	// no need fetch, if already dealed
 	if finalEpoch <= eth2ValidatorInfoMetaData.DealedEpoch {
 		return nil
 	}
 
-	targetSlot := utils.StartSlotOfEpoch(task.eth2Config, finalEpoch)
-	var targetEth1BlockHeight uint64
-	retry := 0
-	for {
-		if retry > 5 {
-			return fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
-		}
-
-		targetBeaconBlock, exist, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(targetSlot))
-		if err != nil {
-			return err
-		}
-		// fetch next slot if not exist
-		if !exist {
-			targetSlot++
-			retry++
-			continue
-		}
-		if targetBeaconBlock.ExecutionBlockNumber == 0 {
-			return fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
-		}
-		targetEth1BlockHeight = targetBeaconBlock.ExecutionBlockNumber
-		break
+	targetEth1BlockHeight, err := task.getEpochStartBlocknumber(finalEpoch)
+	if err != nil {
+		return nil
 	}
 
 	eth1SyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
 	if err != nil {
 		return err
-	}
-
-	// for v1/dev only
-	if task.version != utils.V2 {
-		targetEth1BlockHeight = eth1SyncerMetaData.DealedBlockHeight
 	}
 
 	// ensure all eth1 event synced before targetEth1BlockHeight

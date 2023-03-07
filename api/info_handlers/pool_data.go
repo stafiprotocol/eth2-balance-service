@@ -29,16 +29,6 @@ type RspPoolData struct {
 	ValidatorApr      float64 `json:"validatorApr"`
 	EthPrice          float64 `json:"ethPrice"`
 	AllEth            string  `json:"allEth"` // staker principal + validator principal + reward
-
-	ElectionTotalCount uint64     `json:"electionTotalCount"`
-	ElectionList       []Election `json:"electionList"`
-}
-
-type Election struct {
-	PublicKey   string `json:"publicKey"`
-	ChoosenTime uint64 `json:"choosenTime"`
-	EthReward   string `json:"ethReward"`
-	Status      uint8  `json:"status"`
 }
 
 // @Summary pool data
@@ -48,8 +38,6 @@ type Election struct {
 // @Success 200 {object} utils.Rsp{data=RspPoolData}
 // @Router /v1/poolData [get]
 func (h *Handler) HandleGetPoolData(c *gin.Context) {
-	pageIndex := c.GetInt("pageIndex")
-	pageCount := c.GetInt("pageCount")
 
 	rsp := RspPoolData{
 		DepositedEth: "0",
@@ -92,11 +80,8 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	allEth := uint64(0)
 	matchedValidatorsNum := uint64(0)
 	activeValidator := make([]*dao.Validator, 0)
-	validatorMap := make(map[uint64]*dao.Validator)
 	// cal eth info on Deposit contract and operator
 	for _, l := range list {
-		validatorMap[l.ValidatorIndex] = l
-
 		switch l.Status {
 		case utils.ValidatorStatusDeposited,
 			utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch,
@@ -185,32 +170,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 			sort.Float64s(aprList)
 			rsp.ValidatorApr = aprList[len(aprList)/2]
 		}
-	}
-	// election list
-	exitElections, totalCount, err := dao.GetValidatorExitElectionList(h.db, pageIndex, pageCount)
-	if err != nil {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao.GetValidatorExitElectionList err %v", err)
-		return
-	}
-
-	rsp.ElectionTotalCount = uint64(totalCount)
-	for _, election := range exitElections {
-		validator := validatorMap[election.ValidatorIndex]
-		totalWithdrawAndBalance := validator.Balance + validator.TotalWithdrawal
-
-		totalRewardAmount := uint64(0)
-		if totalWithdrawAndBalance > utils.StandardEffectiveBalance {
-			totalRewardAmount = totalWithdrawAndBalance - utils.StandardEffectiveBalance
-		}
-		totalRewardAmountDeci := decimal.NewFromInt(int64(totalRewardAmount)).Mul(utils.GweiDeci)
-
-		rsp.ElectionList = append(rsp.ElectionList, Election{
-			PublicKey:   validator.Pubkey,
-			ChoosenTime: election.NotifyTimestamp,
-			EthReward:   totalRewardAmountDeci.StringFixed(0),
-			Status:      validator.Status,
-		})
 	}
 
 	// rsp

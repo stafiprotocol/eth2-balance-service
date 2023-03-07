@@ -22,6 +22,7 @@ import (
 	super_node "github.com/stafiprotocol/reth/bindings/SuperNode"
 	user_deposit "github.com/stafiprotocol/reth/bindings/UserDeposit"
 	withdraw "github.com/stafiprotocol/reth/bindings/Withdraw"
+	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/config"
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
@@ -239,4 +240,97 @@ func (task *Task) voteHandler() {
 			retry = 0
 		}
 	}
+}
+
+func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
+	eth2ValidatorBalanceSyncerStartSlot := utils.StartSlotOfEpoch(task.eth2Config, epoch)
+	blocknumber := uint64(0)
+	retry := 0
+	for {
+		if retry > 5 {
+			return 0, fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+		}
+
+		targetBeaconBlock, exist, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprint(eth2ValidatorBalanceSyncerStartSlot))
+		if err != nil {
+			return 0, err
+		}
+		// we will use next slot if not exist
+		if !exist {
+			eth2ValidatorBalanceSyncerStartSlot++
+			retry++
+			continue
+		}
+		if targetBeaconBlock.ExecutionBlockNumber == 0 {
+			return 0, fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+		}
+		blocknumber = targetBeaconBlock.ExecutionBlockNumber
+		break
+	}
+	return blocknumber, nil
+}
+
+// return (user reward, node reward, platform fee, totalWithdrawAmount)
+func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targetEth1BlockHeight uint64) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, error) {
+	withdrawals, err := dao.GetValidatorWithdrawalsBetween(task.db, latestDistributeHeight, targetEth1BlockHeight)
+	if err != nil {
+		return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+	}
+	totalAmount := uint64(0)
+	for _, w := range withdrawals {
+		totalAmount += w.Amount
+	}
+	totalAmountDeci := decimal.NewFromInt(int64(totalAmount)).Mul(utils.GweiDeci)
+
+	totalUserEthDeci := decimal.Zero
+	totalNodeEthDeci := decimal.Zero
+	totalPlatformEthDeci := decimal.Zero
+	for _, w := range withdrawals {
+		validator, err := dao.GetValidatorByIndex(task.db, w.ValidatorIndex)
+		if err != nil {
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+		}
+
+		totalReward := int64(w.Amount)
+		userDeposit := int64(0)
+		nodeDeposit := int64(0)
+
+		switch {
+
+		case w.Amount >= utils.StandardEffectiveBalance/2 && w.Amount < utils.StandardEffectiveBalance: // slash
+			totalReward = 0
+
+			userDeposit = int64(utils.StandardEffectiveBalance - validator.NodeDepositAmount)
+			if userDeposit > int64(w.Amount) {
+				userDeposit = int64(w.Amount)
+				nodeDeposit = 0
+			} else {
+				nodeDeposit = int64(w.Amount) - userDeposit
+			}
+
+		case w.Amount >= utils.StandardEffectiveBalance: // full withdrawal
+			totalReward = totalReward - int64(utils.StandardEffectiveBalance)
+
+			userDeposit = int64(utils.StandardEffectiveBalance - validator.NodeDepositAmount)
+			nodeDeposit = int64(validator.NodeDepositAmount)
+
+		case w.Amount < utils.StandardEffectiveBalance/2: // partial withdrawal
+		default:
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, fmt.Errorf("unknown withdrawal's amount")
+		}
+
+		// cal rewards
+		userRewardDeci, nodeRewardDeci, platformFeeDeci := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, decimal.NewFromInt(totalReward))
+		// cal reward + deposit
+		totalUserEthDeci = totalUserEthDeci.Add(userRewardDeci).Add(decimal.NewFromInt(userDeposit))
+		totalNodeEthDeci = totalNodeEthDeci.Add(nodeRewardDeci).Add(decimal.NewFromInt(nodeDeposit))
+		totalPlatformEthDeci = totalPlatformEthDeci.Add(platformFeeDeci)
+
+	}
+
+	totalUserEthDeci = totalUserEthDeci.Mul(utils.GweiDeci)
+	totalNodeEthDeci = totalNodeEthDeci.Mul(utils.GweiDeci)
+	totalPlatformEthDeci = totalPlatformEthDeci.Mul(utils.GweiDeci)
+
+	return totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, nil
 }

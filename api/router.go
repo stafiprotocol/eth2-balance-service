@@ -27,13 +27,16 @@ func InitRouters(db *db.WrapDb) http.Handler {
 	router.POST("/reth/v1/rewardInfo", infoHandler.HandlePostRewardInfo)
 	router.POST("/reth/v1/pubkeyDetail", infoHandler.HandlePostPubkeyDetail)
 	router.POST("/reth/v1/pubkeyStatusList", infoHandler.HandlePostPubkeyStatusList)
+	router.POST("/reth/v1/exitElectionList", infoHandler.HandlePostExitElectionList)
 
 	router.GET("/reth/v1/poolData", infoHandler.HandleGetPoolData)
 	router.GET("/reth/v1/gasPrice", infoHandler.HandleGetGasPrice)
 
+	// staker related
 	router.POST("/reth/v1/staker/uploadUnstakingPlan", infoHandler.HandlePostUploadUnstakingPlan)
 	router.POST("/reth/v1/staker/unstakingPlanExist", infoHandler.HandlePostUnstakingPlanExist)
 	router.GET("/reth/v1/staker/unstakingLeftSeconds", infoHandler.HandleGetUnstakingLeftSeconds)
+	router.POST("/reth/v1/staker/withdrawRemainingTime", infoHandler.HandleGetWithdrawRemainingTime)
 
 	return router
 

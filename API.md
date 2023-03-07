@@ -203,35 +203,28 @@ slash : 51 52 53 54 55
 
 ### (4) request payload 
 
-* pageIndex
-* pageCount
+no
 
 ### (5) response
 * include status、data、message fields
 * status、message must be string format, data must be object
 
 
-| grade 1 | grade 2            | grade 3     | type   | must exist? | encode type | description                    |
-| :------ | :----------------- | :---------- | :----- | :---------- | :---------- | :----------------------------- |
-| status  | N/A                | N/A         | string | Yes         | null        | status code                    |
-| message | N/A                | N/A         | string | Yes         | null        | status info                    |
-| data    | N/A                | N/A         | object | Yes         | null        | data                           |
-|         | depositedEth       | N/A         | string | Yes         | null        | decimal format string          |
-|         | mintedREth         | N/A         | string | Yes         | null        | decimal format string          |
-|         | stakedEth          | N/A         | string | Yes         | null        | decimal format string          |
-|         | poolEth            | N/A         | string | Yes         | null        | decimal format string          |
-|         | allEth             | N/A         | string | Yes         | null        | decimal format string          |
-|         | unmatchedEth       | N/A         | string | Yes         | null        | decimal format string          |
-|         | matchedValidators  | N/A         | number | Yes         | null        | number                         |
-|         | stakeApr           | N/A         | number | Yes         | null        | apr                            |
-|         | validatorApr       | N/A         | number | Yes         | null        | apr                            |
-|         | ethPrice           | N/A         | number | Yes         | null        | eth price                      |
-|         | electionTotalCount | N/A         | number | Yes         | null        | election total count           |
-|         | electionList       | N/A         | list   | Yes         | null        | election history list          |
-|         |                    | publicKey   | string | Yes         | null        | validator pubkey               |
-|         |                    | choosenTime | number | Yes         | null        | choosen time                   |
-|         |                    | ethReward   | string | Yes         | null        | eth reward  amount decimals 18 |
-|         |                    | status      | number | Yes         | null        | validator status               |
+| grade 1 | grade 2           | grade 3 | type   | must exist? | encode type | description           |
+| :------ | :---------------- | :------ | :----- | :---------- | :---------- | :-------------------- |
+| status  | N/A               | N/A     | string | Yes         | null        | status code           |
+| message | N/A               | N/A     | string | Yes         | null        | status info           |
+| data    | N/A               | N/A     | object | Yes         | null        | data                  |
+|         | depositedEth      | N/A     | string | Yes         | null        | decimal format string |
+|         | mintedREth        | N/A     | string | Yes         | null        | decimal format string |
+|         | stakedEth         | N/A     | string | Yes         | null        | decimal format string |
+|         | poolEth           | N/A     | string | Yes         | null        | decimal format string |
+|         | allEth            | N/A     | string | Yes         | null        | decimal format string |
+|         | unmatchedEth      | N/A     | string | Yes         | null        | decimal format string |
+|         | matchedValidators | N/A     | number | Yes         | null        | number                |
+|         | stakeApr          | N/A     | number | Yes         | null        | apr                   |
+|         | validatorApr      | N/A     | number | Yes         | null        | apr                   |
+|         | ethPrice          | N/A     | number | Yes         | null        | eth price             |
 
 ## 5. gas price
 
@@ -404,3 +397,81 @@ no
 | message | N/A     | N/A     | string | Yes         | null        | status info                 |
 | data    | N/A     | N/A     | object | Yes         | null        | data                        |
 |         | exist   | N/A     | bool   | Yes         | null        | staker unstaking plan exist |
+
+
+## 10. validator exit election list
+
+### (1) description
+
+*  validator exit election list
+
+### (2) path
+
+* /reth/v1/exitElectionList
+
+### (3) request method
+
+* post
+
+### (4) request payload 
+
+| field         | type   | notice                                                               |
+| :------------ | :----- | :------------------------------------------------------------------- |
+| stakerAddress | string | staker address, hex string (will return all if nodeAddress is empty) |
+| pageIndex     | string | page index                                                           |
+| pageCount     | string | page count                                                           |
+
+
+### (5) response
+* include status、data、message fields
+* status、message must be string format, data must be object
+
+
+| grade 1 | grade 2      | grade 3     | type   | must exist? | encode type | description                    |
+| :------ | :----------- | :---------- | :----- | :---------- | :---------- | :----------------------------- |
+| status  | N/A          | N/A         | string | Yes         | null        | status code                    |
+| message | N/A          | N/A         | string | Yes         | null        | status info                    |
+| data    | N/A          | N/A         | object | Yes         | null        | data                           |
+|         | totalCount   | N/A         | number | Yes         | null        | election total count           |
+|         | electionList | N/A         | list   | Yes         | null        | election history list          |
+|         |              | publicKey   | string | Yes         | null        | validator pubkey               |
+|         |              | choosenTime | number | Yes         | null        | choosen timestamp              |
+|         |              | exitTime    | number | Yes         | null        | exit timestamp                 |
+|         |              | ethReward   | string | Yes         | null        | eth reward  amount decimals 18 |
+|         |              | status      | number | Yes         | null        | validator status               |
+
+## 11. staker withdrawal remaining time
+
+### (1) description
+
+* staker withdrawal remaining time
+
+### (2) path
+
+* /reth/v1/staker/withdrawRemainingTime
+
+### (3) request method
+
+* post
+
+### (4) request payload 
+
+* data format: application/json
+* data detail:
+
+| field         | type   | notice                     |
+| :------------ | :----- | :------------------------- |
+| stakerAddress | string | staker address, hex string |
+
+
+### (5) response
+* include status、data、message fields
+* status、message must be string format, data must be object
+
+
+| grade 1 | grade 2          | grade 3 | type   | must exist? | encode type | description                             |
+| :------ | :--------------- | :------ | :----- | :---------- | :---------- | :-------------------------------------- |
+| status  | N/A              | N/A     | string | Yes         | null        | status code                             |
+| message | N/A              | N/A     | string | Yes         | null        | status info                             |
+| data    | N/A              | N/A     | object | Yes         | null        | data                                    |
+|         | remainingSeconds | N/A     | number | Yes         | null        | staker withdraw remaining time(seconds) |

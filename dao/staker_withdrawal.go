@@ -7,7 +7,7 @@ import (
 	"github.com/stafiprotocol/reth/pkg/db"
 )
 
-// withdrawals of validators in our pool
+// withdrawals of stakers
 type StakerWithdrawal struct {
 	db.BaseModel
 	WithdrawIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:withdraw_index;uinqueIndex"`

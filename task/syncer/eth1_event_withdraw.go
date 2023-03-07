@@ -89,7 +89,7 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 
 	for iterElection.Next() {
 		for _, validator := range iterElection.Event.EjectedValidators {
-			election, err := dao.GetValidatorExitElection(task.db, validator.Uint64())
+			election, err := dao.GetExitElection(task.db, validator.Uint64())
 			if err != nil {
 				if err != gorm.ErrRecordNotFound {
 					return errors.Wrap(err, "fetchWithdrawContractEvents GetValidatorExitElection failed")
@@ -106,7 +106,7 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 			election.NotifyTimestamp = block.Header().Time
 			election.ValidatorIndex = validator.Uint64()
 
-			err = dao.UpOrInValidatorExitElection(task.db, election)
+			err = dao.UpOrInExitElection(task.db, election)
 			if err != nil {
 				return err
 			}
