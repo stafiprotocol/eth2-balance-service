@@ -117,7 +117,7 @@ func (task *Task) collectNodeEpochBalances() error {
 
 				valTotalReward := decimal.NewFromInt(int64(utils.GetTotalReward(l.Balance, l.TotalWithdrawal)))
 
-				_, nodeReward, _ := utils.GetUserNodePlatformRewardV2(utils.StandardEffectiveBalance-valInfo.NodeDepositAmount, valTotalReward)
+				_, nodeReward, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, valTotalReward)
 
 				nodeBalance.TotalSelfReward += nodeReward.BigInt().Uint64()
 				nodeBalance.TotalReward += valTotalReward.BigInt().Uint64()

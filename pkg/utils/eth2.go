@@ -270,19 +270,20 @@ func GetUserNodePlatformRewardV1(userDepositBalance uint64, rewardDeci decimal.D
 
 }
 
+// todo split v1/v2 by height
 // platform = 5%  node = 5% + (90% * nodedeposit/32)
 // rewardDeci decimals maybe 9/18, also the returns
 // return (user reward, node reward, paltform fee)
-func GetUserNodePlatformRewardV2(userDepositBalance uint64, rewardDeci decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
-	if !rewardDeci.IsPositive() || userDepositBalance > StandardEffectiveBalance {
+func GetUserNodePlatformRewardV2(nodeDepositAmount uint64, rewardDeci decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
+	if !rewardDeci.IsPositive() || nodeDepositAmount > StandardEffectiveBalance {
 		return decimal.Zero, decimal.Zero, decimal.Zero
 	}
-	userDepositBalanceDeci := decimal.NewFromInt(int64(userDepositBalance))
+	nodeDepositAmountDeci := decimal.NewFromInt(int64(nodeDepositAmount))
 	standEffectiveBalanceDeci := decimal.NewFromInt(int64(StandardEffectiveBalance))
 
 	// platform Fee
 	platformFeeDeci := rewardDeci.Mul(Percent5Deci)
-	nodeRewardDeci := platformFeeDeci.Add(rewardDeci.Mul(Percent90Deci).Mul(userDepositBalanceDeci).Div(standEffectiveBalanceDeci))
+	nodeRewardDeci := platformFeeDeci.Add(rewardDeci.Mul(Percent90Deci).Mul(nodeDepositAmountDeci).Div(standEffectiveBalanceDeci))
 
 	userRewardDeci := rewardDeci.Sub(platformFeeDeci).Sub(nodeRewardDeci)
 	if userRewardDeci.IsNegative() {

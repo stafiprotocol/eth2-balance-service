@@ -112,16 +112,16 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
+	task.eth2Config, err = task.connection.Eth2Client().GetEth2Config()
+	if err != nil {
+		return err
+	}
 
 	err = task.initContract()
 	if err != nil {
 		return err
 	}
 	err = task.mabyUpdateEth1StartHeightAndPoolInfo()
-	if err != nil {
-		return err
-	}
-	task.eth2Config, err = task.connection.Eth2Client().GetEth2Config()
 	if err != nil {
 		return err
 	}
@@ -365,6 +365,7 @@ func (task *Task) getContractAddress(storage *storage.Storage, name string) (com
 // --------------- handlers -------------
 
 func (task *Task) syncEth1BlockHandler() {
+	logrus.Info("start syncEth1BlockHandler")
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0
@@ -406,6 +407,7 @@ func (task *Task) syncEth1BlockHandler() {
 }
 
 func (task *Task) syncEth2ValidatorLatestInfoHandler() {
+	logrus.Info("start syncEth2ValidatorLatestInfoHandler")
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0
@@ -437,6 +439,7 @@ func (task *Task) syncEth2ValidatorLatestInfoHandler() {
 }
 
 func (task *Task) syncEth2ValidatorEpochBalanceHandler() {
+	logrus.Info("start syncEth2ValidatorEpochBalanceHandler")
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0
@@ -468,6 +471,7 @@ func (task *Task) syncEth2ValidatorEpochBalanceHandler() {
 }
 
 func (task *Task) collectEth2NodeEpochBalanceHandler() {
+	logrus.Info("start collectEth2NodeEpochBalanceHandler")
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0
@@ -499,6 +503,7 @@ func (task *Task) collectEth2NodeEpochBalanceHandler() {
 }
 
 func (task *Task) calAndSaveMerkleTreeHandler() {
+	logrus.Info("start calAndSaveMerkleTreeHandler")
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0
@@ -530,6 +535,7 @@ func (task *Task) calAndSaveMerkleTreeHandler() {
 }
 
 func (task *Task) syncEth2BlockHandler() {
+	logrus.Info("start syncEth2BlockHandler")
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0

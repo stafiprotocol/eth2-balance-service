@@ -119,7 +119,6 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
-
 	task.eth2Config, err = task.connection.Eth2Client().GetEth2Config()
 	if err != nil {
 		return err
@@ -189,6 +188,7 @@ func (task *Task) Stop() {
 }
 
 func (task *Task) voteHandler() {
+	logrus.Info("start voteHandler")
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0

@@ -105,7 +105,6 @@ func startVoterCmd() *cobra.Command {
 				logrus.Errorf("task start err: %s", err)
 				return err
 			}
-			logrus.Info("voter task started.")
 			defer func() {
 				logrus.Infof("shutting down task ...")
 				t.Stop()

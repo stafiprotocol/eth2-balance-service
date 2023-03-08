@@ -82,8 +82,16 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	selfRewardEth := uint64(0)
 	totalManagedEth := uint64(0)
 	for _, l := range totalList {
-		selfDepositedEth += l.NodeDepositAmount
-		selfRewardEth += utils.GetNodeReward(l.Balance, l.EffectiveBalance, l.NodeDepositAmount)
+		if l.Balance > 0 {
+			selfDepositedEth += l.NodeDepositAmount
+		}
+
+		totalReward := utils.GetTotalReward(l.Balance, l.TotalWithdrawal)
+		_, nodeReward, _ := utils.GetUserNodePlatformRewardV2(l.NodeDepositAmount, decimal.NewFromInt(int64(totalReward)))
+		selfRewardEth += nodeReward.BigInt().Uint64()
+
+		totalManagedEth += utils.GetNodeManagedEth(l.NodeDepositAmount, l.Balance, l.Status)
+
 		logrus.WithFields(logrus.Fields{
 			"balance":           l.Balance,
 			"nodeDepositAmount": l.NodeDepositAmount,
@@ -91,7 +99,6 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 			"nodeType":          l.NodeType,
 			"selfRewardEth":     selfRewardEth,
 		}).Debug("GetNodeReward")
-		totalManagedEth += utils.GetNodeManagedEth(l.NodeDepositAmount, l.Balance, l.Status)
 	}
 
 	_, pendingCount, err := dao.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{20}, req.PageIndex, req.PageCount)

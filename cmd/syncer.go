@@ -91,6 +91,7 @@ func startSyncerCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			logrus.Info("syncer task starting...")
 			err = t.Start()
 			if err != nil {
 				logrus.Errorf("task start err: %s", err)

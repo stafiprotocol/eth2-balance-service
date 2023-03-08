@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
@@ -19,9 +20,10 @@ func (task *Task) calAndSaveMerkleTree() error {
 		return err
 	}
 
-	calMerkleTree := task.rewardEpochInterval * 3
+	// todo mainnet config
+	calMerkleTreeDu := task.rewardEpochInterval / 4 // 2 hours for test
 
-	targetEpoch := (beaconHead.FinalizedEpoch / calMerkleTree) * calMerkleTree
+	targetEpoch := (beaconHead.FinalizedEpoch / calMerkleTreeDu) * calMerkleTreeDu
 	eth2NodeBalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2NodeBalanceCollector)
 	if err != nil {
 		return err
@@ -50,10 +52,34 @@ func (task *Task) calAndSaveMerkleTree() error {
 	for i, nodeBalance := range nodeBalanceList {
 		proof, err := dao.GetProof(task.db, targetEpoch, nodeBalance.NodeAddress)
 		if err != nil && err != gorm.ErrRecordNotFound {
+			return errors.Wrap(err, "dao.GetProof failed")
+		}
+		// fetch total slash amount
+		valList, err := dao.GetValidatorListByNode(task.db, nodeBalance.NodeAddress, 0)
+		if err != nil {
 			return err
 		}
 
-		totalClaimableAmount := decimal.NewFromInt(int64(nodeBalance.TotalExitNodeDepositAmount)).Add(decimal.NewFromInt(int64(nodeBalance.TotalReward))).Mul(utils.GweiDeci)
+		valIndexList := make([]uint64, len(valList))
+		for i, val := range valList {
+			valIndexList[i] = val.ValidatorIndex
+		}
+		totalSlashAmount, err := dao.GetTotalSlashAmountWithIndexList(task.db, valIndexList, targetEpoch)
+		if err != nil {
+			return errors.Wrap(err, "GetTotalSlashAmountWithIndexList failed")
+		}
+		totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).
+			Mul(utils.GweiDeci)
+
+		totalRewardAndDepositAmountDeci := decimal.NewFromInt(int64(nodeBalance.TotalExitNodeDepositAmount)).
+			Add(decimal.NewFromInt(int64(nodeBalance.TotalReward))).
+			Mul(utils.GweiDeci)
+
+		totalClaimableAmount := totalRewardAndDepositAmountDeci.Sub(totalSlashAmountDeci)
+		if totalClaimableAmount.IsNegative() {
+			totalClaimableAmount = decimal.Zero
+		}
+
 		proof.Address = nodeBalance.NodeAddress
 		proof.Amount = totalClaimableAmount.StringFixed(0)
 		proof.Index = uint32(i)
@@ -71,6 +97,7 @@ func (task *Task) calAndSaveMerkleTree() error {
 		return err
 	}
 
+	// cal and save  proof
 	for _, proof := range proofList {
 		amountDeci, err := decimal.NewFromString(proof.Amount)
 		if err != nil {
@@ -117,12 +144,10 @@ func BuildMerkleTree(datas []*dao.Proof) (*utils.MerkleTree, error) {
 	}
 	list := make(utils.NodeHashList, len(datas))
 	for i, data := range datas {
-
 		amountDeci, err := decimal.NewFromString(data.Amount)
 		if err != nil {
 			return nil, err
 		}
-
 		list[i] = utils.GetNodeHash(big.NewInt(int64(data.Index)), common.HexToAddress(data.Address), amountDeci.BigInt())
 	}
 	mt := utils.NewMerkleTree(list)

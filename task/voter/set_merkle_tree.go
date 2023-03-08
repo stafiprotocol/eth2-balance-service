@@ -7,9 +7,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
@@ -91,22 +89,4 @@ func (task *Task) setMerkleTree() error {
 	}).Info("SetMerkleRoot tx send ok")
 
 	return nil
-}
-
-func BuildMerkleTree(datas []*dao.Proof) (*utils.MerkleTree, error) {
-	if len(datas) == 0 {
-		return nil, fmt.Errorf("proof list empty")
-	}
-	list := make(utils.NodeHashList, len(datas))
-	for i, data := range datas {
-
-		amountDeci, err := decimal.NewFromString(data.Amount)
-		if err != nil {
-			return nil, err
-		}
-
-		list[i] = utils.GetNodeHash(big.NewInt(int64(data.Index)), common.HexToAddress(data.Address), amountDeci.BigInt())
-	}
-	mt := utils.NewMerkleTree(list)
-	return mt, nil
 }

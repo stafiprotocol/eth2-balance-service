@@ -68,6 +68,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		return
 	}
 
+	// fetch price
 	ethPriceDeci, err := decimal.NewFromString(poolInfo.EthPrice)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -76,11 +77,11 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	}
 	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
 
+	// cal eth info from validator balance
 	stakerValidatorDepositAmount := uint64(0)
 	allEth := uint64(0)
 	matchedValidatorsNum := uint64(0)
 	activeValidator := make([]*dao.Validator, 0)
-	// cal eth info on Deposit contract and operator
 	for _, l := range list {
 		switch l.Status {
 		case utils.ValidatorStatusDeposited,
@@ -126,15 +127,23 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		}
 	}
 
-	rsp.DepositedEth = poolEthBalanceDeci.Add(decimal.NewFromInt(int64(stakerValidatorDepositAmount)).Mul(utils.GweiDeci)).String()
+	rsp.DepositedEth = poolEthBalanceDeci.
+		Add(decimal.NewFromInt(int64(stakerValidatorDepositAmount)).Mul(utils.GweiDeci)).
+		String()
 	// cal minitedReth
 	rsp.MintedREth = poolInfo.REthSupply
 	// cal stakedEth
-	rsp.StakedEth = decimal.NewFromInt(int64(stakerValidatorDepositAmount)).Mul(utils.GweiDeci).String()
+	rsp.StakedEth = decimal.NewFromInt(int64(stakerValidatorDepositAmount)).
+		Mul(utils.GweiDeci).
+		String()
 	// pool eth
-	rsp.PoolEth = poolEthBalanceDeci.Add(decimal.NewFromInt(int64(allEth)).Mul(utils.GweiDeci)).String()
+	rsp.PoolEth = poolEthBalanceDeci.
+		Add(decimal.NewFromInt(int64(allEth)).Mul(utils.GweiDeci)).
+		String()
 	// all eth
-	rsp.AllEth = poolEthBalanceDeci.Add(decimal.NewFromInt(int64(allEth)).Mul(utils.GweiDeci)).String()
+	rsp.AllEth = poolEthBalanceDeci.
+		Add(decimal.NewFromInt(int64(allEth)).Mul(utils.GweiDeci)).
+		String()
 
 	rsp.UnmatchedEth = poolInfo.PoolEthBalance
 	rsp.MatchedValidators = matchedValidatorsNum
@@ -191,8 +200,14 @@ func getValidatorApr(db *db.WrapDb, validator *dao.Validator) (float64, error) {
 		end := validatorBalanceList[len(validatorBalanceList)-1]
 
 		duBalance := uint64(0)
-		if first.Balance > end.Balance {
-			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, nodeDepositAmount) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, nodeDepositAmount)
+		if first.Balance+first.TotalWithdrawal > end.Balance+end.TotalWithdrawal {
+			firstTotalReward := utils.GetTotalReward(first.Balance, first.TotalWithdrawal)
+			endTotalReward := utils.GetTotalReward(end.Balance, end.TotalWithdrawal)
+
+			_, firstNodeReward, _ := utils.GetUserNodePlatformRewardV2(nodeDepositAmount, decimal.NewFromInt(int64(firstTotalReward)))
+			_, endNodeReward, _ := utils.GetUserNodePlatformRewardV2(nodeDepositAmount, decimal.NewFromInt(int64(endTotalReward)))
+
+			duBalance = firstNodeReward.Sub(endNodeReward).BigInt().Uint64()
 		}
 
 		du := int64(first.Timestamp - end.Timestamp)

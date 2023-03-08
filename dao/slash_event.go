@@ -5,6 +5,7 @@ package dao
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
@@ -81,10 +82,33 @@ func GetTotalSlashAmount(db *db.WrapDb, validatorIndex uint64) (totalSlashAmount
 	return uint64(value.Int64), nil
 }
 
-func GetTotalSlashAmountBefore(db *db.WrapDb, validatorIndex, targetEpoch uint64) (totalSlashAmount uint64, err error) {
+func GetTotalSlashAmountBefore(db *db.WrapDb, validatorIndex, epoch uint64) (totalSlashAmount uint64, err error) {
 	value := sql.NullInt64{}
 	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where validator_index = ? and epoch <= ? and slash_type in (1,2,3,5)",
-		validatorIndex, targetEpoch).Scan(&value).Error
+		epoch, validatorIndex).Scan(&value).Error
+	if err != nil {
+		return 0, err
+	}
+	return uint64(value.Int64), nil
+}
+
+func GetTotalSlashAmountWithIndexList(db *db.WrapDb, valIndexList []uint64, targetEpoch uint64) (totalSlashAmount uint64, err error) {
+	if len(valIndexList) == 0 {
+		return 0, nil
+	}
+
+	InStatus := "( "
+	for index := range valIndexList {
+		InStatus += fmt.Sprintf("%d", index)
+		InStatus += ","
+	}
+	InStatus = InStatus[:len(InStatus)-1]
+	InStatus += " )"
+	sqlWhere := fmt.Sprintf("validator_index in %s", InStatus)
+
+	value := sql.NullInt64{}
+	err = db.Raw(fmt.Sprintf("select sum(slash_amount) as total_slash_amount from reth_slash_events where %s and epoch <= ? and slash_type in (1,2,3,5)", sqlWhere),
+		targetEpoch).Scan(&value).Error
 	if err != nil {
 		return 0, err
 	}
