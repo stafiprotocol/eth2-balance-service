@@ -82,8 +82,9 @@ const (
 	V1EndEpoch      = uint64(148000)
 	Eth1StartHeight = uint64(15572967)
 
-	StandardEffectiveBalance            = uint64(32e9) //gwei
-	StandardSuperNodeFakeDepositBalance = uint64(1e9)  //gwei
+	StandardEffectiveBalance               = uint64(32e9) //gwei
+	StandardSuperNodeFakeDepositBalance    = uint64(1e9)  //gwei
+	StandardLightNodeDepositBalanceBalance = uint64(12e9) //gwei
 )
 
 var (
