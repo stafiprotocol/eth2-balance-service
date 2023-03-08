@@ -249,6 +249,11 @@ definitions:
     type: object
   info_handlers.RspPubkeyStatusList:
     properties:
+      nodeDepositAmountList:
+        description: decimals 18
+        items:
+          type: string
+        type: array
       statusList:
         items:
           type: integer

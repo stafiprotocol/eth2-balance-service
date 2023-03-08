@@ -4,13 +4,10 @@
 package info_handlers
 
 import (
-	"sort"
-
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
-	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
@@ -81,7 +78,8 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	stakerValidatorDepositAmount := uint64(0)
 	allEth := uint64(0)
 	matchedValidatorsNum := uint64(0)
-	activeValidator := make([]*dao.Validator, 0)
+
+	// cal eth info on Deposit contract and operator
 	for _, l := range list {
 		switch l.Status {
 		case utils.ValidatorStatusDeposited,
@@ -118,8 +116,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 			matchedValidatorsNum += 1
 
-			activeValidator = append(activeValidator, l)
-
 		case utils.ValidatorStatusDistributed, utils.ValidatorStatusDistributedSlash:
 			matchedValidatorsNum += 1
 
@@ -149,114 +145,10 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	rsp.MatchedValidators = matchedValidatorsNum
 	rsp.EthPrice = ethPrice
 
-	// cal staker apr
+	// apr
 	rsp.StakeApr = utils.REthTotalApy
-
-	// cal validator apr
-	if len(activeValidator) != 0 {
-		du := len(activeValidator) / 10
-		if du == 0 {
-			du = 1
-		}
-		aprList := make([]float64, 0)
-		for i := range activeValidator {
-			if i%du == 0 {
-				apr, err := getValidatorAprForPoolData(h.db, activeValidator[i])
-
-				logrus.WithFields(logrus.Fields{
-					"du":             du,
-					"validatorIndex": activeValidator[i].ValidatorIndex,
-					"apr":            apr,
-					"err":            err,
-				}).Debug("selected apr info")
-
-				if err == nil && apr != 0 {
-					aprList = append(aprList, apr)
-				}
-			}
-		}
-		if len(aprList) != 0 {
-			sort.Float64s(aprList)
-			rsp.ValidatorApr = aprList[len(aprList)/2]
-		}
-	}
+	rsp.ValidatorApr = utils.ValidatorAverageApr
 
 	// rsp
 	utils.Ok(c, "success", rsp)
-}
-
-// return 0 if no data used to cal rate
-func getValidatorAprForPoolData(db *db.WrapDb, validator *dao.Validator) (float64, error) {
-	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(db, validator.ValidatorIndex)
-	if err != nil {
-		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
-		return 0, err
-	}
-	nodeDepositAmount := utils.StandardLightNodeDepositAmount
-
-	if len(validatorBalanceList) >= 2 {
-		first := validatorBalanceList[0]
-		end := validatorBalanceList[len(validatorBalanceList)-1]
-
-		duBalance := uint64(0)
-		if first.Balance+first.TotalWithdrawal > end.Balance+end.TotalWithdrawal {
-			firstTotalReward := utils.GetTotalReward(first.Balance, first.TotalWithdrawal)
-			endTotalReward := utils.GetTotalReward(end.Balance, end.TotalWithdrawal)
-
-			_, firstNodeReward, _ := utils.GetUserNodePlatformRewardV2(nodeDepositAmount, decimal.NewFromInt(int64(firstTotalReward)))
-			_, endNodeReward, _ := utils.GetUserNodePlatformRewardV2(nodeDepositAmount, decimal.NewFromInt(int64(endTotalReward)))
-
-			duBalance = firstNodeReward.Sub(endNodeReward).BigInt().Uint64()
-		}
-
-		du := int64(first.Timestamp - end.Timestamp)
-		if du > 0 {
-			apr, _ := decimal.NewFromInt(int64(duBalance)).
-				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
-				Div(decimal.NewFromInt(du)).
-				Div(decimal.NewFromInt(int64(nodeDepositAmount))).Float64()
-			return apr, nil
-		}
-	}
-	return 0, nil
-}
-
-// return 0 if no data used to cal rate
-func getValidatorAprForPubkeyDetail(db *db.WrapDb, validator *dao.Validator) (float64, error) {
-	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(db, validator.ValidatorIndex)
-	if err != nil {
-		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
-		return 0, err
-	}
-
-	nodeDepositAmount := validator.NodeDepositAmount
-	if nodeDepositAmount == 0 {
-		nodeDepositAmount = utils.StandardSuperNodeFakeDepositBalance
-	}
-	if len(validatorBalanceList) >= 2 {
-		first := validatorBalanceList[0]
-		end := validatorBalanceList[len(validatorBalanceList)-1]
-
-		duBalance := uint64(0)
-		if first.Balance+first.TotalWithdrawal > end.Balance+end.TotalWithdrawal {
-			firstTotalReward := utils.GetTotalReward(first.Balance, first.TotalWithdrawal)
-			endTotalReward := utils.GetTotalReward(end.Balance, end.TotalWithdrawal)
-
-			_, firstNodeReward, _ := utils.GetUserNodePlatformRewardV2(nodeDepositAmount, decimal.NewFromInt(int64(firstTotalReward)))
-			_, endNodeReward, _ := utils.GetUserNodePlatformRewardV2(nodeDepositAmount, decimal.NewFromInt(int64(endTotalReward)))
-
-			duBalance = firstNodeReward.Sub(endNodeReward).BigInt().Uint64()
-		}
-
-		du := int64(first.Timestamp - end.Timestamp)
-
-		if du > 0 {
-			apr, _ := decimal.NewFromInt(int64(duBalance)).
-				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
-				Div(decimal.NewFromInt(du)).
-				Div(decimal.NewFromInt(int64(nodeDepositAmount))).Float64()
-			return apr, nil
-		}
-	}
-	return 0, nil
 }

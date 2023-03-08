@@ -45,3 +45,4 @@ conf_v1.toml
 conf_v2.toml
 conf_dev.toml
 conf_goerli.toml
+conf.api.toml

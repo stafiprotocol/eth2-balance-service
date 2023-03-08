@@ -893,6 +893,13 @@ const docTemplate = `{
         "info_handlers.RspPubkeyStatusList": {
             "type": "object",
             "properties": {
+                "nodeDepositAmountList": {
+                    "description": "decimals 18",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "statusList": {
                     "type": "array",
                     "items": {
