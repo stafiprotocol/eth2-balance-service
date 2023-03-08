@@ -234,6 +234,8 @@ definitions:
         type: number
       last24hRewardEth:
         type: string
+      nodeDepositAmount:
+        type: string
       slashEventList:
         items:
           $ref: '#/definitions/info_handlers.SlashEvent'

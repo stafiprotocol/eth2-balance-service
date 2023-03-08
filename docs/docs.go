@@ -870,6 +870,9 @@ const docTemplate = `{
                 "last24hRewardEth": {
                     "type": "string"
                 },
+                "nodeDepositAmount": {
+                    "type": "string"
+                },
                 "slashEventList": {
                     "type": "array",
                     "items": {
