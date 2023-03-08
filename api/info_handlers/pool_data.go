@@ -4,6 +4,7 @@
 package info_handlers
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/gin-gonic/gin"
@@ -192,15 +193,26 @@ func getValidatorApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
 
 		duBalance := uint64(0)
 		if first.Balance > end.Balance {
-			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositBalanceBalance) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositBalanceBalance)
+			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositAmount) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositAmount)
 		}
 
 		du := int64(first.Timestamp - end.Timestamp)
+
+		//cal all apr
+		testDuBalance := first.Balance - end.Balance
+		if du > 0 {
+			apr, _ := decimal.NewFromInt(int64(testDuBalance)).
+				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
+				Div(decimal.NewFromInt(int64(du))).
+				Div(decimal.NewFromInt(int64(utils.StandardEffectiveBalance))).Float64()
+			logrus.Info(fmt.Sprintf("-------node %d apr: ", validatorIndex), apr)
+		}
+
 		if du > 0 {
 			apr, _ := decimal.NewFromInt(int64(duBalance)).
 				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
 				Div(decimal.NewFromInt(du)).
-				Div(decimal.NewFromInt(int64(utils.StandardLightNodeDepositBalanceBalance))).Float64()
+				Div(decimal.NewFromInt(int64(utils.StandardLightNodeDepositAmount))).Float64()
 			return apr, nil
 		}
 	}
