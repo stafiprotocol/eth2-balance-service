@@ -19,6 +19,7 @@ require (
 	github.com/swaggo/gin-swagger v1.5.2
 	github.com/swaggo/swag v1.8.5
 	github.com/wealdtech/go-eth2-types/v2 v2.6.0
+	golang.org/x/crypto v0.1.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af
 	gorm.io/driver/mysql v1.4.0
@@ -89,7 +90,6 @@ require (
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/term v0.3.0 // indirect

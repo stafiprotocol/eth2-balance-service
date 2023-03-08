@@ -282,6 +282,19 @@ definitions:
       totalStakedEth:
         type: string
     type: object
+  info_handlers.RspUnstakePoolData:
+    properties:
+      ejectedValidators:
+        type: integer
+      poolEth:
+        type: string
+      todayUnstakedEth:
+        type: string
+      unstakeableEth:
+        type: string
+      waitingStakers:
+        type: integer
+    type: object
   info_handlers.RspUnstakingLeftSeconds:
     properties:
       leftSeconds:
@@ -621,6 +634,24 @@ paths:
                   $ref: '#/definitions/info_handlers.RspWithdrawRemainingTime'
               type: object
       summary: staker withdraw remaining time
+      tags:
+      - v1
+  /v1/unstakePoolData:
+    get:
+      description: unstake pool data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspUnstakePoolData'
+              type: object
+      summary: unstake pool data
       tags:
       - v1
 swagger: "2.0"

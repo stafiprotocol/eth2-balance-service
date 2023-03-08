@@ -516,6 +516,38 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/unstakePoolData": {
+            "get": {
+                "description": "unstake pool data",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "unstake pool data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspUnstakePoolData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -940,6 +972,26 @@ const docTemplate = `{
                 },
                 "totalStakedEth": {
                     "type": "string"
+                }
+            }
+        },
+        "info_handlers.RspUnstakePoolData": {
+            "type": "object",
+            "properties": {
+                "ejectedValidators": {
+                    "type": "integer"
+                },
+                "poolEth": {
+                    "type": "string"
+                },
+                "todayUnstakedEth": {
+                    "type": "string"
+                },
+                "unstakeableEth": {
+                    "type": "string"
+                },
+                "waitingStakers": {
+                    "type": "integer"
                 }
             }
         },

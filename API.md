@@ -517,3 +517,37 @@ no
 |         | amount  | string      | Yes         | null        | total amount decimals 18        |
 |         | proof   | string list | Yes         | null        | proof of claim, hex string list |
 
+
+## 13. unstake pool data
+
+### (1) description
+
+*  get unstake pool data
+
+### (2) path
+
+* /reth/v1/unstakePoolData
+
+### (3) request method
+
+* get
+
+### (4) request payload 
+
+no
+
+### (5) response
+* include status、data、message fields
+* status、message must be string format, data must be object
+
+
+| grade 1 | grade 2           | grade 3 | type   | must exist? | encode type | description           |
+| :------ | :---------------- | :------ | :----- | :---------- | :---------- | :-------------------- |
+| status  | N/A               | N/A     | string | Yes         | null        | status code           |
+| message | N/A               | N/A     | string | Yes         | null        | status info           |
+| data    | N/A               | N/A     | object | Yes         | null        | data                  |
+|         | poolEth           | N/A     | string | Yes         | null        | decimal format string |
+|         | unstakeableEth    | N/A     | string | Yes         | null        | decimal format string |
+|         | todayUnstakedEth  | N/A     | string | Yes         | null        | decimal format string |
+|         | waitingStakers    | N/A     | number | Yes         | null        | number                |
+|         | ejectedValidators | N/A     | number | Yes         | null        | number                |

@@ -52,6 +52,14 @@ func GetExitElectionList(db *db.WrapDb, pageIndex, pageCount int) (c []*ExitElec
 	return
 }
 
+func GetExitElectionTotalCount(db *db.WrapDb) (count int64, err error) {
+	err = db.Model(&ExitElection{}).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return
+}
+
 func GetExitElectionListIn(db *db.WrapDb, pageIndex, pageCount int, valIndexList []uint64) (c []*ExitElection, count int64, err error) {
 	if len(valIndexList) == 0 {
 		return nil, 0, nil
