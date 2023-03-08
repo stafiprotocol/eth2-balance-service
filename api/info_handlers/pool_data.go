@@ -161,7 +161,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		aprList := make([]float64, 0)
 		for i := range activeValidator {
 			if i%du == 0 {
-				apr, err := getValidatorApr(h.db, activeValidator[i])
+				apr, err := getValidatorAprForPoolData(h.db, activeValidator[i])
 
 				logrus.WithFields(logrus.Fields{
 					"du":             du,
@@ -186,7 +186,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 }
 
 // return 0 if no data used to cal rate
-func getValidatorApr(db *db.WrapDb, validator *dao.Validator) (float64, error) {
+func getValidatorAprForPoolData(db *db.WrapDb, validator *dao.Validator) (float64, error) {
 	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(db, validator.ValidatorIndex)
 	if err != nil {
 		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
@@ -194,6 +194,46 @@ func getValidatorApr(db *db.WrapDb, validator *dao.Validator) (float64, error) {
 	}
 
 	nodeDepositAmount := validator.NodeDepositAmount
+	if nodeDepositAmount == 0 {
+		nodeDepositAmount = utils.StandardSuperNodeFakeDepositBalance
+	}
+
+	if len(validatorBalanceList) >= 2 {
+		first := validatorBalanceList[0]
+		end := validatorBalanceList[len(validatorBalanceList)-1]
+
+		duBalance := uint64(0)
+		if first.Balance+first.TotalWithdrawal > end.Balance+end.TotalWithdrawal {
+			firstTotalReward := utils.GetTotalReward(first.Balance, first.TotalWithdrawal)
+			endTotalReward := utils.GetTotalReward(end.Balance, end.TotalWithdrawal)
+
+			_, firstNodeReward, _ := utils.GetUserNodePlatformRewardV2(nodeDepositAmount, decimal.NewFromInt(int64(firstTotalReward)))
+			_, endNodeReward, _ := utils.GetUserNodePlatformRewardV2(nodeDepositAmount, decimal.NewFromInt(int64(endTotalReward)))
+
+			duBalance = firstNodeReward.Sub(endNodeReward).BigInt().Uint64()
+		}
+
+		du := int64(first.Timestamp - end.Timestamp)
+		if du > 0 {
+			apr, _ := decimal.NewFromInt(int64(duBalance)).
+				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
+				Div(decimal.NewFromInt(du)).
+				Div(decimal.NewFromInt(int64(nodeDepositAmount))).Float64()
+			return apr, nil
+		}
+	}
+	return 0, nil
+}
+
+// return 0 if no data used to cal rate
+func getValidatorAprForPubkeyDetail(db *db.WrapDb, validator *dao.Validator) (float64, error) {
+	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(db, validator.ValidatorIndex)
+	if err != nil {
+		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+		return 0, err
+	}
+
+	nodeDepositAmount := utils.StandardLightNodeDepositAmount
 
 	if len(validatorBalanceList) >= 2 {
 		first := validatorBalanceList[0]

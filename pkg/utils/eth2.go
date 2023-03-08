@@ -86,6 +86,7 @@ const (
 
 	StandardEffectiveBalance            = uint64(32e9) //gwei
 	StandardSuperNodeFakeDepositBalance = uint64(1e9)  //gwei
+	StandardLightNodeDepositAmount      = uint64(12e9) //gwei
 )
 
 var (

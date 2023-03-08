@@ -187,7 +187,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	}
 
 	// cal validator apr
-	apr, err := getValidatorApr(h.db, validator)
+	apr, err := getValidatorAprForPubkeyDetail(h.db, validator)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("getValidatorApr err: %s", err)
