@@ -192,11 +192,7 @@ func getValidatorAprForPoolData(db *db.WrapDb, validator *dao.Validator) (float6
 		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
 		return 0, err
 	}
-
-	nodeDepositAmount := validator.NodeDepositAmount
-	if nodeDepositAmount == 0 {
-		nodeDepositAmount = utils.StandardSuperNodeFakeDepositBalance
-	}
+	nodeDepositAmount := utils.StandardLightNodeDepositAmount
 
 	if len(validatorBalanceList) >= 2 {
 		first := validatorBalanceList[0]
@@ -233,8 +229,10 @@ func getValidatorAprForPubkeyDetail(db *db.WrapDb, validator *dao.Validator) (fl
 		return 0, err
 	}
 
-	nodeDepositAmount := utils.StandardLightNodeDepositAmount
-
+	nodeDepositAmount := validator.NodeDepositAmount
+	if nodeDepositAmount == 0 {
+		nodeDepositAmount = utils.StandardSuperNodeFakeDepositBalance
+	}
 	if len(validatorBalanceList) >= 2 {
 		first := validatorBalanceList[0]
 		end := validatorBalanceList[len(validatorBalanceList)-1]
