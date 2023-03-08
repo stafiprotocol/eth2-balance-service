@@ -23,19 +23,20 @@ type ReqPubkeyDetail struct {
 }
 
 type RspPubkeyDetail struct {
-	Status           uint8    `json:"status"`
-	CurrentBalance   string   `json:"currentBalance"`
-	DepositBalance   string   `json:"depositBalance"`
-	EffectiveBalance string   `json:"effectiveBalance"`
-	Last24hRewardEth string   `json:"last24hRewardEth"`
-	Apr              float64  `json:"apr"`
-	EthPrice         float64  `json:"ethPrice"`
-	EligibleEpoch    uint64   `json:"eligibleEpoch"`
-	EligibleDays     uint64   `json:"eligibleDays"`
-	ActiveEpoch      uint64   `json:"activeEpoch"`
-	ActiveDays       uint64   `json:"activeDays"`
-	ChartXData       []uint64 `json:"chartXData"`
-	ChartYData       []string `json:"chartYData"`
+	Status            uint8    `json:"status"`
+	CurrentBalance    string   `json:"currentBalance"`
+	DepositBalance    string   `json:"depositBalance"`
+	NodeDepositAmount string   `json:"nodeDepositAmount"`
+	EffectiveBalance  string   `json:"effectiveBalance"`
+	Last24hRewardEth  string   `json:"last24hRewardEth"`
+	Apr               float64  `json:"apr"`
+	EthPrice          float64  `json:"ethPrice"`
+	EligibleEpoch     uint64   `json:"eligibleEpoch"`
+	EligibleDays      uint64   `json:"eligibleDays"`
+	ActiveEpoch       uint64   `json:"activeEpoch"`
+	ActiveDays        uint64   `json:"activeDays"`
+	ChartXData        []uint64 `json:"chartXData"`
+	ChartYData        []string `json:"chartYData"`
 
 	TotalCount       int64        `json:"totalCount"`
 	TotalSlashAmount string       `json:"totalSlashAmount"`
@@ -112,6 +113,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
 
 	rsp.DepositBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.GweiDeci).String()
+	rsp.NodeDepositAmount = decimal.NewFromInt(int64(validator.NodeDepositAmount)).Mul(utils.GweiDeci).String()
 	rsp.Status = validator.Status
 
 	switch validator.Status {
