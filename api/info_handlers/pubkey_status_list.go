@@ -5,7 +5,9 @@ package info_handlers
 
 import (
 	"encoding/json"
+
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
 	"github.com/stafiprotocol/reth/pkg/utils"
@@ -17,7 +19,8 @@ type ReqPubkeyStatusList struct {
 }
 
 type RspPubkeyStatusList struct {
-	StatusList []uint64 `json:"statusList"`
+	StatusList            []uint64 `json:"statusList"`
+	NodeDepositAmountList []string `json:"nodeDepositAmountList"` //decimals 18
 }
 
 // @Summary pubkey status list
@@ -40,7 +43,8 @@ func (h *Handler) HandlePostPubkeyStatusList(c *gin.Context) {
 	logrus.Debugf("HandlePostPubkeyDetail req parm:\n %s", string(reqBytes))
 
 	rsp := RspPubkeyStatusList{
-		StatusList: make([]uint64, len(req.PubkeyList)),
+		StatusList:            make([]uint64, len(req.PubkeyList)),
+		NodeDepositAmountList: make([]string, len(req.PubkeyList)),
 	}
 
 	for i, pubkey := range req.PubkeyList {
@@ -58,8 +62,8 @@ func (h *Handler) HandlePostPubkeyStatusList(c *gin.Context) {
 		}
 
 		rsp.StatusList[i] = uint64(validator.Status)
+		rsp.NodeDepositAmountList[i] = decimal.NewFromInt(int64(validator.NodeDepositAmount)).Mul(utils.GweiDeci).StringFixed(0)
 	}
-	logrus.Debug("rsp", rsp)
 
 	utils.Ok(c, "success", rsp)
 }
