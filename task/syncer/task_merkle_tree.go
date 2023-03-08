@@ -21,7 +21,7 @@ func (task *Task) calAndSaveMerkleTree() error {
 	}
 
 	// todo mainnet config
-	calMerkleTreeDu := task.rewardEpochInterval / 4 // 2 hours for test
+	calMerkleTreeDu := task.rewardEpochInterval // 8 hours for test
 
 	targetEpoch := (beaconHead.FinalizedEpoch / calMerkleTreeDu) * calMerkleTreeDu
 	eth2NodeBalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2NodeBalanceCollector)
