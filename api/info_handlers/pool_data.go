@@ -249,6 +249,7 @@ func getValidatorAprForPubkeyDetail(db *db.WrapDb, validator *dao.Validator) (fl
 		}
 
 		du := int64(first.Timestamp - end.Timestamp)
+
 		if du > 0 {
 			apr, _ := decimal.NewFromInt(int64(duBalance)).
 				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).

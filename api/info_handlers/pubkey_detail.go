@@ -113,8 +113,8 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
 
 	rsp.DepositBalance = decimal.NewFromInt(int64(utils.StandardEffectiveBalance)).Mul(utils.GweiDeci).String()
-	rsp.Status = validator.Status
 	rsp.NodeDepositAmount = decimal.NewFromInt(int64(validator.NodeDepositAmount)).Mul(utils.GweiDeci).String()
+	rsp.Status = validator.Status
 
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited,
