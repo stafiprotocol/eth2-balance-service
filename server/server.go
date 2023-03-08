@@ -67,7 +67,7 @@ func (svr *Server) Start() error {
 	utils.REthTotalApy = apy
 
 	utils.SafeGoWithRestart(svr.ApiServer)
-	utils.SafeGoWithRestart(svr.FetchREthTotalApy)
+	utils.SafeGoWithRestart(svr.taskCache)
 	return nil
 }
 

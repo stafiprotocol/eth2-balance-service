@@ -11,6 +11,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
+	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -187,7 +188,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	}
 
 	// cal validator apr
-	apr, err := getValidatorApr(h.db, validator.ValidatorIndex)
+	apr, err := getValidatorApr(h.db, validator.ValidatorIndex, validator.NodeDepositAmount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("getValidatorApr err: %s", err)
@@ -306,4 +307,38 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	rsp.TotalSlashAmount = totalSlashAmountDeci.StringFixed(0)
 
 	utils.Ok(c, "success", rsp)
+}
+
+// return 0 if no data used to cal rate
+func getValidatorApr(db *db.WrapDb, validatorIndex, nodeDepositAmount uint64) (float64, error) {
+	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(db, validatorIndex)
+	if err != nil {
+		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+		return 0, err
+	}
+
+	if nodeDepositAmount == 0 {
+		nodeDepositAmount = utils.StandardLightNodeDepositAmount
+	}
+
+	if len(validatorBalanceList) >= 2 {
+		first := validatorBalanceList[0]
+		end := validatorBalanceList[len(validatorBalanceList)-1]
+
+		duBalance := uint64(0)
+		if first.Balance > end.Balance {
+			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, nodeDepositAmount) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, nodeDepositAmount)
+		}
+
+		du := int64(first.Timestamp - end.Timestamp)
+
+		if du > 0 {
+			apr, _ := decimal.NewFromInt(int64(duBalance)).
+				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
+				Div(decimal.NewFromInt(du)).
+				Div(decimal.NewFromInt(int64(nodeDepositAmount))).Float64()
+			return apr, nil
+		}
+	}
+	return 0, nil
 }

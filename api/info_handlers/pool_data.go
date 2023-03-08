@@ -4,14 +4,10 @@
 package info_handlers
 
 import (
-	"fmt"
-	"sort"
-
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/reth/dao"
-	"github.com/stafiprotocol/reth/pkg/db"
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
@@ -80,7 +76,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	stakerValidatorDepositAmount := uint64(0)
 	allEth := uint64(0)
 	matchedValidatorsNum := uint64(0)
-	activeValidator := make([]*dao.Validator, 0)
 
 	// cal eth info on Deposit contract and operator
 	for _, l := range list {
@@ -119,8 +114,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 			matchedValidatorsNum += 1
 
-			activeValidator = append(activeValidator, l)
-
 		case utils.ValidatorStatusDistributed, utils.ValidatorStatusDistributedSlash:
 			matchedValidatorsNum += 1
 
@@ -142,79 +135,9 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	rsp.MatchedValidators = matchedValidatorsNum
 	rsp.EthPrice = ethPrice
 
-	// cal staker apr
+	// apr
 	rsp.StakeApr = utils.REthTotalApy
-
-	// cal validator apr
-	if len(activeValidator) != 0 {
-		du := len(activeValidator) / 10
-		if du == 0 {
-			du = 1
-		}
-
-		aprList := make([]float64, 0)
-		for i := range activeValidator {
-			if i%du == 0 {
-				selectedValidatorIndex := activeValidator[i].ValidatorIndex
-				apr, err := getValidatorApr(h.db, selectedValidatorIndex)
-
-				logrus.WithFields(logrus.Fields{
-					"du":             du,
-					"validatorIndex": selectedValidatorIndex,
-					"apr":            apr,
-					"err":            err,
-				}).Debug("selected apr info")
-
-				if err == nil && apr != 0 {
-					aprList = append(aprList, apr)
-				}
-			}
-		}
-		if len(aprList) != 0 {
-			sort.Float64s(aprList)
-			rsp.ValidatorApr = aprList[len(aprList)/2]
-		}
-	}
+	rsp.ValidatorApr = utils.ValidatorAverageApr
 
 	utils.Ok(c, "success", rsp)
-}
-
-// return 0 if no data used to cal rate
-func getValidatorApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
-	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(db, validatorIndex)
-	if err != nil {
-		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
-		return 0, err
-	}
-
-	if len(validatorBalanceList) >= 2 {
-		first := validatorBalanceList[0]
-		end := validatorBalanceList[len(validatorBalanceList)-1]
-
-		duBalance := uint64(0)
-		if first.Balance > end.Balance {
-			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositAmount) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositAmount)
-		}
-
-		du := int64(first.Timestamp - end.Timestamp)
-
-		//cal all apr
-		testDuBalance := first.Balance - end.Balance
-		if du > 0 {
-			apr, _ := decimal.NewFromInt(int64(testDuBalance)).
-				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
-				Div(decimal.NewFromInt(int64(du))).
-				Div(decimal.NewFromInt(int64(utils.StandardEffectiveBalance))).Float64()
-			logrus.Info(fmt.Sprintf("-------node %d apr: ", validatorIndex), apr)
-		}
-
-		if du > 0 {
-			apr, _ := decimal.NewFromInt(int64(duBalance)).
-				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
-				Div(decimal.NewFromInt(du)).
-				Div(decimal.NewFromInt(int64(utils.StandardLightNodeDepositAmount))).Float64()
-			return apr, nil
-		}
-	}
-	return 0, nil
 }
