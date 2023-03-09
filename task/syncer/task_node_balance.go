@@ -99,6 +99,13 @@ func (task *Task) collectNodeEpochBalances() error {
 			nodeBalance.Epoch = epoch
 			nodeBalance.Timestamp = utils.StartTimestampOfEpoch(task.eth2Config, epoch)
 
+			TotalNodeDepositAmount := uint64(0)
+			TotalExitNodeDepositAmount := uint64(0)
+			TotalBalance := uint64(0)
+			TotalWithdrawal := uint64(0)
+			TotalEffectiveBalance := uint64(0)
+			TotalSelfReward := uint64(0)
+			TotalReward := uint64(0)
 			for _, l := range list {
 				valInfo, err := dao.GetValidatorByIndex(task.db, l.ValidatorIndex)
 				if err != nil {
@@ -106,22 +113,30 @@ func (task *Task) collectNodeEpochBalances() error {
 				}
 
 				if l.Balance > 0 {
-					nodeBalance.TotalNodeDepositAmount += valInfo.NodeDepositAmount
+					TotalNodeDepositAmount += valInfo.NodeDepositAmount
 				} else {
-					nodeBalance.TotalExitNodeDepositAmount += valInfo.NodeDepositAmount
+					TotalExitNodeDepositAmount += valInfo.NodeDepositAmount
 				}
 
-				nodeBalance.TotalBalance += l.Balance
-				nodeBalance.TotalWithdrawal += l.TotalWithdrawal
-				nodeBalance.TotalEffectiveBalance += l.EffectiveBalance
+				TotalBalance += l.Balance
+				TotalWithdrawal += l.TotalWithdrawal
+				TotalEffectiveBalance += l.EffectiveBalance
 
+				// todo add fee pool/super fee pool
 				valTotalReward := decimal.NewFromInt(int64(utils.GetTotalReward(l.Balance, l.TotalWithdrawal)))
 
 				_, nodeReward, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, valTotalReward)
 
-				nodeBalance.TotalSelfReward += nodeReward.BigInt().Uint64()
-				nodeBalance.TotalReward += valTotalReward.BigInt().Uint64()
+				TotalSelfReward += nodeReward.BigInt().Uint64()
+				TotalReward += valTotalReward.BigInt().Uint64()
 			}
+			nodeBalance.TotalNodeDepositAmount = TotalNodeDepositAmount
+			nodeBalance.TotalExitNodeDepositAmount = TotalExitNodeDepositAmount
+			nodeBalance.TotalBalance = TotalBalance
+			nodeBalance.TotalWithdrawal = TotalWithdrawal
+			nodeBalance.TotalEffectiveBalance = TotalEffectiveBalance
+			nodeBalance.TotalSelfReward = TotalSelfReward
+			nodeBalance.TotalReward = TotalReward
 
 			// cal era reward
 			preEpochNodeBalance, err := dao.GetNodeBalanceBefore(task.db, nodeAddress, epoch)
