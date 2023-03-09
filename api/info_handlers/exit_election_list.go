@@ -13,18 +13,18 @@ import (
 	"github.com/stafiprotocol/reth/pkg/utils"
 )
 
-type ReqElectionList struct {
+type ReqExitElectionList struct {
 	NodeAddress string `json:"nodeAddress"`
 	PageIndex   int    `json:"pageIndex"`
 	PageCount   int    `json:"pageCount"`
 }
 
-type RspElectionList struct {
-	ElectionTotalCount uint64     `json:"electionTotalCount"`
-	ElectionList       []Election `json:"electionList"`
+type RspExitElectionList struct {
+	ElectionTotalCount uint64         `json:"electionTotalCount"`
+	ElectionList       []ExitElection `json:"electionList"`
 }
 
-type Election struct {
+type ExitElection struct {
 	PublicKey   string `json:"publicKey"`
 	ChoosenTime uint64 `json:"choosenTime"`
 	ExitTime    uint64 `json:"exitTime"`
@@ -37,11 +37,11 @@ type Election struct {
 // @Tags v1
 // @Accept json
 // @Produce json
-// @Param param body ReqElectionList true "election list"
-// @Success 200 {object} utils.Rsp{data=RspElectionList}
+// @Param param body ReqExitElectionList true "election list"
+// @Success 200 {object} utils.Rsp{data=RspExitElectionList}
 // @Router /v1/exitElectionList [post]
 func (h *Handler) HandlePostExitElectionList(c *gin.Context) {
-	req := ReqElectionList{}
+	req := ReqExitElectionList{}
 	err := c.Bind(&req)
 	if err != nil {
 		utils.Err(c, utils.CodeParamParseErr, err.Error())
@@ -51,9 +51,9 @@ func (h *Handler) HandlePostExitElectionList(c *gin.Context) {
 	reqBytes, _ := json.Marshal(req)
 	logrus.Debugf("HandlePostExitElectionList req parm:\n %s", string(reqBytes))
 
-	rsp := RspElectionList{
+	rsp := RspExitElectionList{
 		ElectionTotalCount: 0,
-		ElectionList:       []Election{},
+		ElectionList:       []ExitElection{},
 	}
 
 	// election list
@@ -112,7 +112,7 @@ func (h *Handler) HandlePostExitElectionList(c *gin.Context) {
 		}
 		totalRewardAmountDeci := decimal.NewFromInt(int64(totalRewardAmount)).Mul(utils.GweiDeci)
 
-		rsp.ElectionList = append(rsp.ElectionList, Election{
+		rsp.ElectionList = append(rsp.ElectionList, ExitElection{
 			PublicKey:   validator.Pubkey,
 			ChoosenTime: election.NotifyTimestamp,
 			ExitTime:    election.ExitTimestamp,

@@ -98,7 +98,7 @@ func GetTotalSlashAmountWithIndexList(db *db.WrapDb, valIndexList []uint64, targ
 	}
 
 	InStatus := "( "
-	for index := range valIndexList {
+	for _,index := range valIndexList {
 		InStatus += fmt.Sprintf("%d", index)
 		InStatus += ","
 	}

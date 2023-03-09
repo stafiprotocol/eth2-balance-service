@@ -32,7 +32,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqElectionList"
+                            "$ref": "#/definitions/info_handlers.ReqExitElectionList"
                         }
                     }
                 ],
@@ -48,7 +48,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspElectionList"
+                                            "$ref": "#/definitions/info_handlers.RspExitElectionList"
                                         }
                                     }
                                 }
@@ -205,6 +205,52 @@
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/info_handlers.RspProof"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proposeElectionList": {
+            "post": {
+                "description": "propose election list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "propose election list",
+                "parameters": [
+                    {
+                        "description": "election list",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqProposeElectionList"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspProposeElectionList"
                                         }
                                     }
                                 }
@@ -544,7 +590,7 @@
         }
     },
     "definitions": {
-        "info_handlers.Election": {
+        "info_handlers.ExitElection": {
             "type": "object",
             "properties": {
                 "choosenTime": {
@@ -564,7 +610,24 @@
                 }
             }
         },
-        "info_handlers.ReqElectionList": {
+        "info_handlers.ProposeElection": {
+            "type": "object",
+            "properties": {
+                "choosenTime": {
+                    "type": "integer"
+                },
+                "ethReward": {
+                    "type": "string"
+                },
+                "publicKey": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "info_handlers.ReqExitElectionList": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -608,6 +671,20 @@
             "properties": {
                 "nodeAddress": {
                     "type": "string"
+                }
+            }
+        },
+        "info_handlers.ReqProposeElectionList": {
+            "type": "object",
+            "properties": {
+                "nodeAddress": {
+                    "type": "string"
+                },
+                "pageCount": {
+                    "type": "integer"
+                },
+                "pageIndex": {
+                    "type": "integer"
                 }
             }
         },
@@ -723,13 +800,13 @@
                 }
             }
         },
-        "info_handlers.RspElectionList": {
+        "info_handlers.RspExitElectionList": {
             "type": "object",
             "properties": {
                 "electionList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.Election"
+                        "$ref": "#/definitions/info_handlers.ExitElection"
                     }
                 },
                 "electionTotalCount": {
@@ -847,6 +924,20 @@
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "info_handlers.RspProposeElectionList": {
+            "type": "object",
+            "properties": {
+                "electionList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/info_handlers.ProposeElection"
+                    }
+                },
+                "electionTotalCount": {
+                    "type": "integer"
                 }
             }
         },

@@ -39,7 +39,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqElectionList"
+                            "$ref": "#/definitions/info_handlers.ReqExitElectionList"
                         }
                     }
                 ],
@@ -55,7 +55,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspElectionList"
+                                            "$ref": "#/definitions/info_handlers.RspExitElectionList"
                                         }
                                     }
                                 }
@@ -212,6 +212,52 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/info_handlers.RspProof"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/proposeElectionList": {
+            "post": {
+                "description": "propose election list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "propose election list",
+                "parameters": [
+                    {
+                        "description": "election list",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqProposeElectionList"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspProposeElectionList"
                                         }
                                     }
                                 }
@@ -551,7 +597,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "info_handlers.Election": {
+        "info_handlers.ExitElection": {
             "type": "object",
             "properties": {
                 "choosenTime": {
@@ -571,7 +617,24 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ReqElectionList": {
+        "info_handlers.ProposeElection": {
+            "type": "object",
+            "properties": {
+                "choosenTime": {
+                    "type": "integer"
+                },
+                "ethReward": {
+                    "type": "string"
+                },
+                "publicKey": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "info_handlers.ReqExitElectionList": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -615,6 +678,20 @@ const docTemplate = `{
             "properties": {
                 "nodeAddress": {
                     "type": "string"
+                }
+            }
+        },
+        "info_handlers.ReqProposeElectionList": {
+            "type": "object",
+            "properties": {
+                "nodeAddress": {
+                    "type": "string"
+                },
+                "pageCount": {
+                    "type": "integer"
+                },
+                "pageIndex": {
+                    "type": "integer"
                 }
             }
         },
@@ -730,13 +807,13 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspElectionList": {
+        "info_handlers.RspExitElectionList": {
             "type": "object",
             "properties": {
                 "electionList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.Election"
+                        "$ref": "#/definitions/info_handlers.ExitElection"
                     }
                 },
                 "electionTotalCount": {
@@ -854,6 +931,20 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "info_handlers.RspProposeElectionList": {
+            "type": "object",
+            "properties": {
+                "electionList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/info_handlers.ProposeElection"
+                    }
+                },
+                "electionTotalCount": {
+                    "type": "integer"
                 }
             }
         },

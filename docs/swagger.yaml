@@ -1,6 +1,6 @@
 basePath: /reth
 definitions:
-  info_handlers.Election:
+  info_handlers.ExitElection:
     properties:
       choosenTime:
         type: integer
@@ -13,7 +13,18 @@ definitions:
       status:
         type: integer
     type: object
-  info_handlers.ReqElectionList:
+  info_handlers.ProposeElection:
+    properties:
+      choosenTime:
+        type: integer
+      ethReward:
+        type: string
+      publicKey:
+        type: string
+      status:
+        type: integer
+    type: object
+  info_handlers.ReqExitElectionList:
     properties:
       nodeAddress:
         type: string
@@ -43,6 +54,15 @@ definitions:
     properties:
       nodeAddress:
         type: string
+    type: object
+  info_handlers.ReqProposeElectionList:
+    properties:
+      nodeAddress:
+        type: string
+      pageCount:
+        type: integer
+      pageIndex:
+        type: integer
     type: object
   info_handlers.ReqPubkeyDetail:
     properties:
@@ -118,11 +138,11 @@ definitions:
       totalStakedEth:
         type: string
     type: object
-  info_handlers.RspElectionList:
+  info_handlers.RspExitElectionList:
     properties:
       electionList:
         items:
-          $ref: '#/definitions/info_handlers.Election'
+          $ref: '#/definitions/info_handlers.ExitElection'
         type: array
       electionTotalCount:
         type: integer
@@ -203,6 +223,15 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  info_handlers.RspProposeElectionList:
+    properties:
+      electionList:
+        items:
+          $ref: '#/definitions/info_handlers.ProposeElection'
+        type: array
+      electionTotalCount:
+        type: integer
     type: object
   info_handlers.RspPubkeyDetail:
     properties:
@@ -355,7 +384,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqElectionList'
+          $ref: '#/definitions/info_handlers.ReqExitElectionList'
       produces:
       - application/json
       responses:
@@ -366,7 +395,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspElectionList'
+                  $ref: '#/definitions/info_handlers.RspExitElectionList'
               type: object
       summary: exit election list
       tags:
@@ -459,6 +488,33 @@ paths:
                   $ref: '#/definitions/info_handlers.RspProof'
               type: object
       summary: get proof of claim
+      tags:
+      - v1
+  /v1/proposeElectionList:
+    post:
+      consumes:
+      - application/json
+      description: propose election list
+      parameters:
+      - description: election list
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqProposeElectionList'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspProposeElectionList'
+              type: object
+      summary: propose election list
       tags:
       - v1
   /v1/pubkeyDetail:

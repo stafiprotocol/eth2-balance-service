@@ -48,7 +48,7 @@ func GetExitElectionList(db *db.WrapDb, pageIndex, pageCount int) (c []*ExitElec
 		return nil, 0, err
 	}
 
-	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex - 1) * pageCount).Find(&c).Error
+	err = db.Order("notify_timestamp desc").Limit(pageCount).Offset((pageIndex - 1) * pageCount).Find(&c).Error
 	return
 }
 
@@ -75,7 +75,7 @@ func GetExitElectionListIn(db *db.WrapDb, pageIndex, pageCount int, valIndexList
 		pageCount = 50
 	}
 	InStatus := "( "
-	for index := range valIndexList {
+	for _, index := range valIndexList {
 		InStatus += fmt.Sprintf("%d", index)
 		InStatus += ","
 	}
@@ -88,6 +88,6 @@ func GetExitElectionListIn(db *db.WrapDb, pageIndex, pageCount int, valIndexList
 		return nil, 0, err
 	}
 
-	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, sqlWhere).Error
+	err = db.Order("notify_timestamp desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, sqlWhere).Error
 	return
 }

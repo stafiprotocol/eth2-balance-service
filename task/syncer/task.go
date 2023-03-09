@@ -126,6 +126,19 @@ func (task *Task) Start() error {
 		return err
 	}
 
+	// fetch proposed timestamp
+	list, err := dao.GetProposedBlockListTimestampZero(task.db)
+	if err != nil {
+		return err
+	}
+	for _, l := range list {
+		l.Timestamp = utils.TimestampOfSlot(task.eth2Config, l.Slot)
+		err := dao.UpOrInProposedBlock(task.db, l)
+		if err != nil {
+			return err
+		}
+	}
+
 	utils.SafeGoWithRestart(task.syncEth1BlockHandler)
 	utils.SafeGoWithRestart(task.syncEth2ValidatorLatestInfoHandler)
 	utils.SafeGoWithRestart(task.syncEth2BlockHandler)

@@ -62,7 +62,7 @@ func GetValidatorWithdrawalsIn(db *db.WrapDb, valIndexList []uint64) (c []*Valid
 		return nil, nil
 	}
 	InStatus := "( "
-	for index := range valIndexList {
+	for _, index := range valIndexList {
 		InStatus += fmt.Sprintf("%d", index)
 		InStatus += ","
 	}
