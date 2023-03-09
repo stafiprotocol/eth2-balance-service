@@ -18,9 +18,9 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
-	"github.com/stafiprotocol/reth/shared/beacon"
-	"github.com/stafiprotocol/reth/shared/beacon/client"
-	"github.com/stafiprotocol/reth/shared/types"
+	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
+	"github.com/stafiprotocol/eth2-balance-service/shared/beacon/client"
+	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 )
 
 var Gwei5 = big.NewInt(5e9)

@@ -7,7 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/stafiprotocol/reth/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
 // withdrawals of validators in our pool

@@ -6,16 +6,16 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	distributor "github.com/stafiprotocol/reth/bindings/Distributor"
-	light_node "github.com/stafiprotocol/reth/bindings/LightNode"
-	network_balances "github.com/stafiprotocol/reth/bindings/NetworkBalances"
-	reth "github.com/stafiprotocol/reth/bindings/Reth"
-	"github.com/stafiprotocol/reth/bindings/Settings"
-	storage "github.com/stafiprotocol/reth/bindings/Storage"
-	super_node "github.com/stafiprotocol/reth/bindings/SuperNode"
-	user_deposit "github.com/stafiprotocol/reth/bindings/UserDeposit"
-	withdraw "github.com/stafiprotocol/reth/bindings/Withdraw"
-	"github.com/stafiprotocol/reth/pkg/utils"
+	distributor "github.com/stafiprotocol/eth2-balance-service/bindings/Distributor"
+	light_node "github.com/stafiprotocol/eth2-balance-service/bindings/LightNode"
+	network_balances "github.com/stafiprotocol/eth2-balance-service/bindings/NetworkBalances"
+	reth "github.com/stafiprotocol/eth2-balance-service/bindings/Reth"
+	"github.com/stafiprotocol/eth2-balance-service/bindings/Settings"
+	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
+	super_node "github.com/stafiprotocol/eth2-balance-service/bindings/SuperNode"
+	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
+	withdraw "github.com/stafiprotocol/eth2-balance-service/bindings/Withdraw"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
 func (task *Task) initContract() error {

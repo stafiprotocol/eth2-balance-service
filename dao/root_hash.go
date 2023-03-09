@@ -1,6 +1,6 @@
 package dao
 
-import "github.com/stafiprotocol/reth/pkg/db"
+import "github.com/stafiprotocol/eth2-balance-service/pkg/db"
 
 type RootHash struct {
 	db.BaseModel

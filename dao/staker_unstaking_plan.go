@@ -4,7 +4,7 @@
 package dao
 
 import (
-	"github.com/stafiprotocol/reth/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
 type StakerUnstakingPlan struct {

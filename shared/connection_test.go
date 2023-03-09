@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	// "github.com/ethereum/go-ethereum/common"
-	"github.com/stafiprotocol/reth/pkg/utils"
-	"github.com/stafiprotocol/reth/shared"
-	"github.com/stafiprotocol/reth/shared/beacon"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/shared"
+	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
 )
 
 func TestCallOpts(t *testing.T) {

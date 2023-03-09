@@ -3,7 +3,7 @@
 
 package dao
 
-import "github.com/stafiprotocol/reth/pkg/db"
+import "github.com/stafiprotocol/eth2-balance-service/pkg/db"
 
 type Proof struct {
 	db.BaseModel

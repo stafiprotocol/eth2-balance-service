@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
 func (task *Task) distributeSuperNodeFeePool() error {

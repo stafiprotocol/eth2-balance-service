@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stafiprotocol/reth/shared/types"
+	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 	eth2types "github.com/wealdtech/go-eth2-types/v2"
 	"golang.org/x/sync/errgroup"
 
 	ethpb "github.com/prysmaticlabs/prysm/v3/proto/eth/v1"
-	"github.com/stafiprotocol/reth/pkg/utils"
-	"github.com/stafiprotocol/reth/shared/beacon"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
 )
 
 // Config

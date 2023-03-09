@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/shopspring/decimal"
-	"github.com/stafiprotocol/reth/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao"
 	"gorm.io/gorm"
 )
 

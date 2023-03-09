@@ -12,10 +12,10 @@ import (
 	"github.com/prysmaticlabs/prysm/v3/config/params"
 	"github.com/prysmaticlabs/prysm/v3/contracts/deposit"
 	ethpb "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1"
-	"github.com/stafiprotocol/reth/pkg/utils"
-	"github.com/stafiprotocol/reth/shared/beacon"
-	"github.com/stafiprotocol/reth/shared/beacon/client"
-	"github.com/stafiprotocol/reth/shared/types"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
+	"github.com/stafiprotocol/eth2-balance-service/shared/beacon/client"
+	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 )
 
 func TestStatus(t *testing.T) {

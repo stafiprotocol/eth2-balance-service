@@ -12,11 +12,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/reth/dao"
-	"github.com/stafiprotocol/reth/pkg/utils"
-	"github.com/stafiprotocol/reth/shared/beacon"
+	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
 
-	// rethTypes "github.com/stafiprotocol/reth/shared/types"
+	// rethTypes "github.com/stafiprotocol/eth2-balance-service/shared/types"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 )

@@ -1,6 +1,6 @@
 package dao
 
-import "github.com/stafiprotocol/reth/pkg/db"
+import "github.com/stafiprotocol/eth2-balance-service/pkg/db"
 
 // metadata of different chain
 // meta type:

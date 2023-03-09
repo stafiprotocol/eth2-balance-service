@@ -1,4 +1,4 @@
-module github.com/stafiprotocol/reth
+module github.com/stafiprotocol/eth2-balance-service
 
 go 1.19
 

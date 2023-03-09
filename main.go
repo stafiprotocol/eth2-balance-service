@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/stafiprotocol/reth/cmd"
-	_ "github.com/stafiprotocol/reth/docs"
+	"github.com/stafiprotocol/eth2-balance-service/cmd"
+	_ "github.com/stafiprotocol/eth2-balance-service/docs"
 )
 
 // @title reth API

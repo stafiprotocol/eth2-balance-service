@@ -10,12 +10,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
 	"github.com/stafiprotocol/chainbridge/utils/keystore"
-	"github.com/stafiprotocol/reth/dao"
-	"github.com/stafiprotocol/reth/pkg/config"
-	"github.com/stafiprotocol/reth/pkg/db"
-	"github.com/stafiprotocol/reth/pkg/log"
-	"github.com/stafiprotocol/reth/pkg/utils"
-	"github.com/stafiprotocol/reth/task/voter"
+	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/log"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/task/voter"
 )
 
 func startVoterCmd() *cobra.Command {

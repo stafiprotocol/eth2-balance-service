@@ -6,14 +6,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/sirupsen/logrus"
-	staking_pool_manager "github.com/stafiprotocol/reth/bindings/StakingPoolManager"
-	storage "github.com/stafiprotocol/reth/bindings/Storage"
-	"github.com/stafiprotocol/reth/dao"
-	"github.com/stafiprotocol/reth/pkg/config"
-	"github.com/stafiprotocol/reth/pkg/db"
-	"github.com/stafiprotocol/reth/pkg/utils"
-	"github.com/stafiprotocol/reth/shared"
-	"github.com/stafiprotocol/reth/shared/beacon"
+	staking_pool_manager "github.com/stafiprotocol/eth2-balance-service/bindings/StakingPoolManager"
+	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
+	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/shared"
+	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
 	"gorm.io/gorm"
 )
 

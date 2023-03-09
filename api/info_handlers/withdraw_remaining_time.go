@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
 type ReqWithdrawRemainingTime struct {

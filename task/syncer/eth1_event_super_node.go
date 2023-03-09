@@ -2,10 +2,11 @@ package task_syncer
 
 import (
 	"context"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/stafiprotocol/reth/dao"
-	"github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
 

@@ -6,8 +6,8 @@ package dao
 import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/reth/pkg/db"
-	"github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
 type RateInfo struct {

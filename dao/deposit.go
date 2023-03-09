@@ -3,7 +3,7 @@
 
 package dao
 
-import "github.com/stafiprotocol/reth/pkg/db"
+import "github.com/stafiprotocol/eth2-balance-service/pkg/db"
 
 // deposit event in ethereum deposit contract(includs all nodes deposit on etherum)
 type Deposit struct {

@@ -6,8 +6,8 @@ package dao
 import (
 	"fmt"
 
-	"github.com/stafiprotocol/reth/pkg/db"
-	"github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
 // all validators info, update by eth1Syncer and eth2Info syncer

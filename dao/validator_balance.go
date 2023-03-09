@@ -4,7 +4,7 @@
 package dao
 
 import (
-	"github.com/stafiprotocol/reth/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
 // balance info  of actived validators, update by eth2BalanceSyncer

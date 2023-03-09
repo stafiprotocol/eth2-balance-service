@@ -6,7 +6,7 @@ package dao
 import (
 	"fmt"
 
-	"github.com/stafiprotocol/reth/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
 type ExitElection struct {

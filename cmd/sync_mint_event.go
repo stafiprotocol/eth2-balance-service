@@ -16,12 +16,12 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	reth "github.com/stafiprotocol/reth/bindings/Reth"
-	storage "github.com/stafiprotocol/reth/bindings/Storage"
-	"github.com/stafiprotocol/reth/dao"
-	"github.com/stafiprotocol/reth/pkg/config"
-	"github.com/stafiprotocol/reth/pkg/db"
-	"github.com/stafiprotocol/reth/pkg/utils"
+	reth "github.com/stafiprotocol/eth2-balance-service/bindings/Reth"
+	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
+	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
 

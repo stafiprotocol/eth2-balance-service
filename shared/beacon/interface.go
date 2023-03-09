@@ -4,7 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prysmaticlabs/go-bitfield"
 	ethpb "github.com/prysmaticlabs/prysm/v3/proto/eth/v1"
-	"github.com/stafiprotocol/reth/shared/types"
+	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 )
 
 // API request options

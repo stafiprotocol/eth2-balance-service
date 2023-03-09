@@ -7,10 +7,10 @@ import (
 	"github.com/pkg/errors"
 	ethpb "github.com/prysmaticlabs/prysm/v3/proto/eth/v1"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/reth/dao"
-	"github.com/stafiprotocol/reth/pkg/utils"
-	"github.com/stafiprotocol/reth/shared/beacon"
-	"github.com/stafiprotocol/reth/shared/types"
+	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
+	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 )
 
 // get latest info of validators from beacon chain on finalized epoch, and update in db

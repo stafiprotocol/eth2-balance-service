@@ -4,7 +4,7 @@
 package info_handlers
 
 import (
-	"github.com/stafiprotocol/reth/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
 type Handler struct {

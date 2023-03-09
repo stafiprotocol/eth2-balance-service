@@ -7,8 +7,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/stafiprotocol/reth/pkg/db"
-	"github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
 type SlashEvent struct {
@@ -98,7 +98,7 @@ func GetTotalSlashAmountWithIndexList(db *db.WrapDb, valIndexList []uint64, targ
 	}
 
 	InStatus := "( "
-	for _,index := range valIndexList {
+	for _, index := range valIndexList {
 		InStatus += fmt.Sprintf("%d", index)
 		InStatus += ","
 	}

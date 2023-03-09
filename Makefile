@@ -3,8 +3,8 @@ COMMIT  := $(shell git log -1 --format='%H')
 
 all: build
 
-LD_FLAGS = -X github.com/stafiprotocol/reth/cmd.Version=$(VERSION) \
-	-X github.com/stafiprotocol/reth/cmd.Commit=$(COMMIT) \
+LD_FLAGS = -X github.com/stafiprotocol/eth2-balance-service/cmd.Version=$(VERSION) \
+	-X github.com/stafiprotocol/eth2-balance-service/cmd.Commit=$(COMMIT) \
 
 BUILD_FLAGS := -ldflags '$(LD_FLAGS)'
 

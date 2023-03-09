@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stafiprotocol/reth/api/info_handlers"
-	"github.com/stafiprotocol/reth/pkg/db"
-	"github.com/swaggo/files"
+	"github.com/stafiprotocol/eth2-balance-service/api/info_handlers"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
+	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 

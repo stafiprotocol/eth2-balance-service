@@ -8,11 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	reth "github.com/stafiprotocol/reth/bindings/Reth"
-	storage "github.com/stafiprotocol/reth/bindings/Storage"
-	user_deposit "github.com/stafiprotocol/reth/bindings/UserDeposit"
-	withdraw "github.com/stafiprotocol/reth/bindings/Withdraw"
-	"github.com/stafiprotocol/reth/pkg/utils"
+	reth "github.com/stafiprotocol/eth2-balance-service/bindings/Reth"
+	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
+	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
+	withdraw "github.com/stafiprotocol/eth2-balance-service/bindings/Withdraw"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
 func TestAppendFile(t *testing.T) {

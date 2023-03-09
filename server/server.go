@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/reth/api"
-	"github.com/stafiprotocol/reth/pkg/config"
-	"github.com/stafiprotocol/reth/pkg/db"
-	"github.com/stafiprotocol/reth/pkg/utils"
+	"github.com/stafiprotocol/eth2-balance-service/api"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
 type Server struct {
