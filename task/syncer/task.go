@@ -86,7 +86,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	}
 
 	s := &Task{
-		taskTicker:      10,
+		taskTicker:      15,
 		stop:            make(chan struct{}),
 		db:              dao,
 		eth1StartHeight: utils.Eth1StartHeight,
@@ -366,8 +366,7 @@ func (task *Task) getContractAddress(storage *storage.Storage, name string) (com
 
 func (task *Task) syncEth1BlockHandler() {
 	logrus.Info("start syncEth1BlockHandler")
-	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
-	defer ticker.Stop()
+
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {
@@ -379,7 +378,7 @@ func (task *Task) syncEth1BlockHandler() {
 		case <-task.stop:
 			logrus.Info("task has stopped")
 			return
-		case <-ticker.C:
+		default:
 
 			logrus.Debug("syncEth1Block start -----------")
 			err := task.syncEth1Block()
@@ -403,6 +402,8 @@ func (task *Task) syncEth1BlockHandler() {
 
 			retry = 0
 		}
+
+		time.Sleep(15 * time.Second)
 	}
 }
 
