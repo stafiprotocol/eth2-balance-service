@@ -417,11 +417,11 @@ no
 
 ### (4) request payload 
 
-| field         | type   | notice                                                               |
-| :------------ | :----- | :------------------------------------------------------------------- |
-| stakerAddress | string | staker address, hex string (will return all if nodeAddress is empty) |
-| pageIndex     | string | page index                                                           |
-| pageCount     | string | page count                                                           |
+| field       | type   | notice                                                             |
+| :---------- | :----- | :----------------------------------------------------------------- |
+| nodeAddress | string | node address, hex string (will return all if nodeAddress is empty) |
+| pageIndex   | string | page index                                                         |
+| pageCount   | string | page count                                                         |
 
 
 ### (5) response
@@ -552,7 +552,7 @@ no
 |         | waitingStakers    | N/A     | number | Yes         | null        | number                |
 |         | ejectedValidators | N/A     | number | Yes         | null        | number                |
 
-## 10. validator propose block election list
+## 14. validator propose block election list
 
 ### (1) description
 
@@ -568,11 +568,11 @@ no
 
 ### (4) request payload 
 
-| field         | type   | notice                                                               |
-| :------------ | :----- | :------------------------------------------------------------------- |
-| stakerAddress | string | staker address, hex string (will return all if nodeAddress is empty) |
-| pageIndex     | string | page index                                                           |
-| pageCount     | string | page count                                                           |
+| field       | type   | notice                                                             |
+| :---------- | :----- | :----------------------------------------------------------------- |
+| nodeAddress | string | node address, hex string (will return all if nodeAddress is empty) |
+| pageIndex   | string | page index                                                         |
+| pageCount   | string | page count                                                         |
 
 
 ### (5) response
