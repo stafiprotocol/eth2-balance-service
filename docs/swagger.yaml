@@ -215,14 +215,16 @@ definitions:
     properties:
       address:
         type: string
-      amount:
-        type: string
       index:
         type: integer
       proof:
         items:
           type: string
         type: array
+      totalExitDepositAmount:
+        type: string
+      totalRewardAmount:
+        type: string
     type: object
   info_handlers.RspProposeElectionList:
     properties:

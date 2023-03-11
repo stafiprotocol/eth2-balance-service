@@ -920,9 +920,6 @@ const docTemplate = `{
                 "address": {
                     "type": "string"
                 },
-                "amount": {
-                    "type": "string"
-                },
                 "index": {
                     "type": "integer"
                 },
@@ -931,6 +928,12 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "totalExitDepositAmount": {
+                    "type": "string"
+                },
+                "totalRewardAmount": {
+                    "type": "string"
                 }
             }
         },

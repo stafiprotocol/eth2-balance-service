@@ -913,9 +913,6 @@
                 "address": {
                     "type": "string"
                 },
-                "amount": {
-                    "type": "string"
-                },
                 "index": {
                     "type": "integer"
                 },
@@ -924,6 +921,12 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "totalExitDepositAmount": {
+                    "type": "string"
+                },
+                "totalRewardAmount": {
+                    "type": "string"
                 }
             }
         },
