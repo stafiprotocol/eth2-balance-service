@@ -43,10 +43,15 @@ func (task *Task) calcMerkleTree() error {
 		return nil
 	}
 
-	// -- start cal
+	// -- start calc
 	nodeBalanceList, err := dao.GetNodeBalanceListByEpoch(task.db, targetEpoch)
 	if err != nil {
 		return err
+	}
+
+	// return if no node
+	if len(nodeBalanceList) == 0 {
+		return nil
 	}
 
 	proofList := make([]*dao.Proof, len(nodeBalanceList))
@@ -75,16 +80,18 @@ func (task *Task) calcMerkleTree() error {
 		totalExitDepositAmountDeci := decimal.NewFromInt(int64(nodeBalance.TotalExitNodeDepositAmount)).
 			Mul(utils.GweiDeci)
 
-		totalRewardAmountDeci := decimal.NewFromInt(int64(nodeBalance.TotalReward)).
-			Mul(utils.GweiDeci).
+		totalClaimableNodeRewardAmountDeci := decimal.NewFromInt(int64(nodeBalance.TotalSelfClaimableReward)).
+			Mul(utils.GweiDeci)
+
+		finalTotalClaimableNodeRewardAmountDeci := totalClaimableNodeRewardAmountDeci.
 			Sub(totalSlashAmountDeci)
 
-		if totalRewardAmountDeci.IsNegative() {
-			totalRewardAmountDeci = decimal.Zero
+		if finalTotalClaimableNodeRewardAmountDeci.IsNegative() {
+			finalTotalClaimableNodeRewardAmountDeci = decimal.Zero
 		}
 
 		proof.Address = nodeBalance.NodeAddress
-		proof.TotalRewardAmount = totalRewardAmountDeci.StringFixed(0)
+		proof.TotalRewardAmount = finalTotalClaimableNodeRewardAmountDeci.StringFixed(0)
 		proof.TotalExitDepositAmount = totalExitDepositAmountDeci.StringFixed(0)
 		proof.Index = uint32(i)
 		proof.DealedEpoch = uint32(targetEpoch)

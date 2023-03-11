@@ -109,6 +109,7 @@ func (task *Task) collectNodeEpochBalances() error {
 			TotalFee := uint64(0)
 			TotalReward := uint64(0)
 			TotalSelfReward := uint64(0)
+			TotalSelfClaimableReward := uint64(0)
 			for _, l := range list {
 				valInfo, err := dao.GetValidatorByIndex(task.db, l.ValidatorIndex)
 				if err != nil {
@@ -126,6 +127,7 @@ func (task *Task) collectNodeEpochBalances() error {
 				TotalEffectiveBalance += l.EffectiveBalance
 				TotalFee += l.TotalFee
 
+				// ---------total reward
 				validatorTotalReward := utils.GetValidatorTotalReward(l.Balance, l.TotalWithdrawal, l.TotalFee)
 				TotalReward += validatorTotalReward
 
@@ -133,6 +135,13 @@ func (task *Task) collectNodeEpochBalances() error {
 				_, nodeRewardOfThisValidator, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(validatorTotalReward)))
 
 				TotalSelfReward += nodeRewardOfThisValidator.BigInt().Uint64()
+
+				// -----total claimable reward
+				valTotalClaimableReward := l.TotalWithdrawal + l.TotalFee
+
+				// todo calc by two sections on mainnet
+				_, nodeClaimableRewardOfThisValidator, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(valTotalClaimableReward)))
+				TotalSelfClaimableReward += nodeClaimableRewardOfThisValidator.BigInt().Uint64()
 			}
 			nodeBalance.TotalNodeDepositAmount = TotalNodeDepositAmount
 			nodeBalance.TotalExitNodeDepositAmount = TotalExitNodeDepositAmount
@@ -143,6 +152,7 @@ func (task *Task) collectNodeEpochBalances() error {
 			nodeBalance.TotalReward = TotalReward
 
 			nodeBalance.TotalSelfReward = TotalSelfReward
+			nodeBalance.TotalSelfClaimableReward = TotalSelfClaimableReward
 
 			// calc era reward
 			preEpochNodeBalance, err := dao.GetNodeBalanceBefore(task.db, nodeAddress, epoch)

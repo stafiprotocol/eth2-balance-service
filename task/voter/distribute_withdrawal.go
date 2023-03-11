@@ -14,13 +14,13 @@ import (
 )
 
 func (task *Task) distributeWithdrawals() error {
-	latestDistributeHeight, targetEth1BlockHeight, shouldGoNext, err := task.checkStateForDistriWithdraw()
+	latestDistributeHeight, targetEth1BlockHeight, shouldGoNext, skipMinLimit, err := task.checkStateForDistriWithdraw()
 	if err != nil {
 		return errors.Wrap(err, "distributeWithdrawals checkSyncState failed")
 	}
 
 	if !shouldGoNext {
-		logrus.Debug("distributeWithdrawals state not ok")
+		logrus.Debug("distributeWithdrawals should not go next")
 		return nil
 	}
 
@@ -28,15 +28,19 @@ func (task *Task) distributeWithdrawals() error {
 		"latestDistributeHeight": latestDistributeHeight,
 		"targetEth1BlockHeight":  targetEth1BlockHeight,
 	}).Debug("distributeWithdrawals")
+
 	// ----1 cal eth(from withdrawals) of user/node/platform
 	totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, err := task.getUserNodePlatformFromWithdrawals(latestDistributeHeight, targetEth1BlockHeight)
 	if err != nil {
 		return errors.Wrap(err, "getUserNodePlatformFromWithdrawals failed")
 	}
-
+	willUseMinLimitDeci := minDistributeAmountDeci.Copy()
+	if skipMinLimit {
+		willUseMinLimitDeci = decimal.Zero
+	}
 	// return if smaller than minDistributeAmount
-	if totalAmountDeci.LessThan(minDistributeAmountDeci) {
-		logrus.Debugf("distributeWithdrawals totalAmountDeci: %s less than minDistributeAmountDeci: %s", totalAmountDeci.String(), minDistributeAmountDeci.String())
+	if totalAmountDeci.LessThanOrEqual(willUseMinLimitDeci) {
+		logrus.Debugf("distributeWithdrawals totalAmountDeci: %s lessThanOrEqual minDistributeAmountDeci: %s", totalAmountDeci.String(), minDistributeAmountDeci.String())
 		return nil
 	}
 
@@ -156,65 +160,84 @@ func (task *Task) distributeWithdrawals() error {
 }
 
 // check sync and vote state
-// return (latestDistributeHeight, targetEth1Blocknumber, shouldGoNext, err)
-func (task *Task) checkStateForDistriWithdraw() (uint64, uint64, bool, error) {
+// return (latestDistributeHeight, targetEth1Blocknumber, shouldGoNext,skipMinLimit, err)
+func (task *Task) checkStateForDistriWithdraw() (uint64, uint64, bool, bool, error) {
+	skipMinLimit := false
 	eth1LatestBlock, err := task.connection.Eth1LatestBlock()
 	if err != nil {
-		return 0, 0, false, err
+		return 0, 0, false, skipMinLimit, err
 	}
 	eth1LatestBlock -= eth2FinalDelayBlocknumber
 
 	logrus.Debugf("eth1LatestBlock %d", eth1LatestBlock)
 	targetEth1BlockHeight := (eth1LatestBlock / distributeWithdrawalsDuBlocks) * distributeWithdrawalsDuBlocks
 
+	// ensure target eth1blockHeight >= LatestMerkleTreeEpoch, so the distributor balance is enough for claim
+	poolInfo, err := dao.GetPoolInfo(task.db)
+	if err != nil {
+		return 0, 0, false, skipMinLimit, err
+	}
+	merkleTreeBlocknumber, err := task.getEpochStartBlocknumber(poolInfo.LatestMerkleTreeEpoch)
+	if err != nil {
+		return 0, 0, false, skipMinLimit, err
+	}
+	if targetEth1BlockHeight < merkleTreeBlocknumber {
+		targetEth1BlockHeight = merkleTreeBlocknumber
+	}
+
 	latestDistributeHeight, err := task.withdrawContract.LatestDistributeHeight(task.connection.CallOpts(nil))
 	if err != nil {
-		return 0, 0, false, err
+		return 0, 0, false, skipMinLimit, err
+	}
+
+	// should skip min limit if latestDistributeHeight < merkleTreeBlocknumber
+	if latestDistributeHeight.Uint64() < merkleTreeBlocknumber {
+		skipMinLimit = true
 	}
 
 	if latestDistributeHeight.Uint64() >= targetEth1BlockHeight {
 		logrus.Debug("latestDistributeHeight.Uint64() >= targetEth1BlockHeight")
-		return 0, 0, false, nil
+		return 0, 0, false, skipMinLimit, nil
 	}
 
 	eth2ValidatorInfoSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 	if err != nil {
-		return 0, 0, false, err
+		return 0, 0, false, skipMinLimit, err
 	}
 	eth2ValidatorInfoSyncerBlockHeight, err := task.getEpochStartBlocknumber(eth2ValidatorInfoSyncerMetaData.DealedEpoch)
 	if err != nil {
-		return 0, 0, false, err
+		return 0, 0, false, skipMinLimit, err
 	}
 
 	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
 	if err != nil {
-		return 0, 0, false, err
+		return 0, 0, false, skipMinLimit, err
 	}
 	eth2BlockSyncerBlockHeight, err := task.getEpochStartBlocknumber(eth2BlockSyncerMetaData.DealedEpoch)
 	if err != nil {
-		return 0, 0, false, err
+		return 0, 0, false, skipMinLimit, err
 	}
 
 	eth1BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
 	if err != nil {
-		return 0, 0, false, err
+		return 0, 0, false, skipMinLimit, err
 	}
 
 	// ensure all eth1 event synced
 	if eth1BlockSyncerMetaData.DealedBlockHeight < targetEth1BlockHeight {
 		logrus.Debug("eth1BlockSyncerMetaData.DealedBlockHeight < targetEth1BlockHeight")
-		return 0, 0, false, nil
+		return 0, 0, false, skipMinLimit, nil
 	}
 	// ensure eth2 info have synced
 	if eth2ValidatorInfoSyncerBlockHeight < targetEth1BlockHeight {
 		logrus.Debugf("eth2ValidatorInfoSyncerBlockHeight %d < targetEth1BlockHeight %d", eth2BlockSyncerBlockHeight, targetEth1BlockHeight)
-		return 0, 0, false, nil
+		return 0, 0, false, skipMinLimit, nil
 	}
 	// ensure eth2 block have synced
 	if eth2BlockSyncerBlockHeight < targetEth1BlockHeight {
 		logrus.Debugf("eth2BlockSyncerBlockHeight %d < targetEth1BlockHeight %d", eth2BlockSyncerBlockHeight, targetEth1BlockHeight)
-		return 0, 0, false, nil
+		return 0, 0, false, skipMinLimit, nil
 	}
 
-	return latestDistributeHeight.Uint64(), targetEth1BlockHeight, true, nil
+	return latestDistributeHeight.Uint64(), targetEth1BlockHeight, true, skipMinLimit, nil
 }

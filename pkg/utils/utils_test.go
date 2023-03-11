@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	reth "github.com/stafiprotocol/eth2-balance-service/bindings/Reth"
+	stafi_ether "github.com/stafiprotocol/eth2-balance-service/bindings/StafiEther"
 	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
 	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
 	withdraw "github.com/stafiprotocol/eth2-balance-service/bindings/Withdraw"
@@ -79,13 +80,17 @@ func TestStorage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	withdrawPoolAddress, err := s.GetAddress(&bind.CallOpts{
+	stafiEtherAddress, err := s.GetAddress(&bind.CallOpts{
 		Context: context.Background(),
-	}, utils.ContractStorageKey("stafiWithdraw"))
+	}, utils.ContractStorageKey("stafiEther"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("withdrawPoolAddress", withdrawPoolAddress)
+	t.Log("stafiEtherAddress: ", stafiEtherAddress)
+	stafiEtherContract, err := stafi_ether.NewStafiEther(stafiEtherAddress, client)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	stafiDistributorAddress, err := s.GetAddress(&bind.CallOpts{
 		Context: context.Background(),
@@ -93,25 +98,43 @@ func TestStorage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("stafiDistributorAddress", stafiDistributorAddress)
+	t.Log("stafiDistributorAddress: ", stafiDistributorAddress)
+	distributorBalance, err := stafiEtherContract.BalanceOf(&bind.CallOpts{}, stafiDistributorAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("stafiDistributor balance: ", distributorBalance)
+
+	withdrawPoolAddress, err := s.GetAddress(&bind.CallOpts{
+		Context: context.Background(),
+	}, utils.ContractStorageKey("stafiWithdraw"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("withdrawPoolAddress: ", withdrawPoolAddress)
+
 	withdrawPoolBalance, err := client.BalanceAt(context.Background(), withdrawPoolAddress, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("withdrawPoolBalance", withdrawPoolBalance)
+	t.Log("withdrawPoolBalance: ", withdrawPoolBalance)
 
 	withdrawPoolContract, err := withdraw.NewWithdraw(withdrawPoolAddress, client)
 	if err != nil {
 		t.Fatal(err)
 	}
-
+	totalMissingAmountForWithdraw, err := withdrawPoolContract.TotalMissingAmountForWithdraw(&bind.CallOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("totalMissingAmountForWithdraw: ", totalMissingAmountForWithdraw)
 	userDepositPoolAddress, err := s.GetAddress(&bind.CallOpts{
 		Context: context.Background(),
 	}, utils.ContractStorageKey("stafiUserDeposit"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("userDepositPoolAddress", userDepositPoolAddress)
+	t.Log("userDepositPoolAddress: ", userDepositPoolAddress)
 	userDepositContract, err := user_deposit.NewUserDeposit(userDepositPoolAddress, client)
 	if err != nil {
 		t.Fatal(err)
@@ -121,17 +144,5 @@ func TestStorage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("userDepositPoolBalance", userDepositPoolBalance)
-
-	oldWithdrawPoolBalance, err := client.BalanceAt(context.Background(), common.HexToAddress("0xcabAaE1D00e697c81a9E2c5fA30D8A99735aC6a6"), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("oldWithdrawPoolBalance", oldWithdrawPoolBalance)
-
-	totalMissingAmountForWithdraw, err := withdrawPoolContract.TotalMissingAmountForWithdraw(&bind.CallOpts{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("totalMissingAmountForWithdraw", totalMissingAmountForWithdraw)
+	t.Log("userDepositPoolBalance: ", userDepositPoolBalance)
 }

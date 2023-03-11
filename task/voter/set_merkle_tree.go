@@ -88,5 +88,10 @@ func (task *Task) setMerkleTree() error {
 		"tx": tx.Hash(),
 	}).Info("SetMerkleRoot tx send ok")
 
+	err = task.sendTxDistributeSuperNodeFeePool()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
