@@ -77,7 +77,6 @@ func (task *Task) syncValidatorEpochBalances() error {
 
 		pubkeys := make([]types.ValidatorPubkey, 0)
 		pubkeyToNodeAddress := make(map[string]string)
-		pubkeyToIndex := make(map[string]uint64)
 		pubkeyToValidator := make(map[string]*dao.Validator)
 		for _, validator := range validatorList {
 			pubkey, err := types.HexToValidatorPubkey(validator.Pubkey[2:])
@@ -86,7 +85,6 @@ func (task *Task) syncValidatorEpochBalances() error {
 			}
 			pubkeys = append(pubkeys, pubkey)
 			pubkeyToNodeAddress[validator.Pubkey] = validator.NodeAddress
-			pubkeyToIndex[validator.Pubkey] = validator.ValidatorIndex
 			pubkeyToValidator[validator.Pubkey] = validator
 		}
 		willUsePubkeys := pubkeys
@@ -118,10 +116,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 			if !status.Exists {
 				return fmt.Errorf("should exist status on beacon chain, pubkey: %s, epoch: %d", pubkeyStr, epoch)
 			}
-			validatorIndex, exist := pubkeyToIndex[pubkeyStr]
-			if !exist {
-				return fmt.Errorf("validator index not exist in pubkeyToIndex")
-			}
+			validatorIndex := status.Index
 			nodeAddress, exist := pubkeyToNodeAddress[pubkeyStr]
 			if !exist {
 				return fmt.Errorf("node address not exist in pubkeyToNodeAddress")

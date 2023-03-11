@@ -99,7 +99,7 @@ func TestBeaconBlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	block, exists, err := c.GetBeaconBlock("147104")
+	block, exists, err := c.GetBeaconBlock("263205")
 	// block, _, err := c.GetBeaconBlock("5071581")
 	// block, _, err := c.GetBeaconBlock("3339591")
 	if err != nil {
@@ -113,6 +113,7 @@ func TestBeaconBlock(t *testing.T) {
 	t.Logf("%+v", block)
 	t.Logf("%v", exists)
 	t.Logf("%+v", utils.StartSlotOfEpoch(config, 4652))
+	t.Logf("%+v", block.Withdrawals)
 
 }
 func TestBeaconHead(t *testing.T) {

@@ -36,7 +36,12 @@ func GetProposedBlock(db *db.WrapDb, slot uint64) (c *ProposedBlock, err error) 
 }
 
 func GetProposedBlockListTimestampZero(db *db.WrapDb) (c []*ProposedBlock, err error) {
-	err = db.Order("id desc").Find(&c, "timestamp = 0").Error
+	err = db.Find(&c, "timestamp = 0").Error
+	return
+}
+
+func GetProposedBlockListBlockNumberZero(db *db.WrapDb) (c []*ProposedBlock, err error) {
+	err = db.Find(&c, "block_number = 0").Error
 	return
 }
 

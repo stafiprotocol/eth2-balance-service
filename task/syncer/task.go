@@ -126,7 +126,8 @@ func (task *Task) Start() error {
 		return err
 	}
 
-	// fetch proposed timestamp
+	// --- clean db -----
+	// fetch proposed timestamp/ block number
 	list, err := dao.GetProposedBlockListTimestampZero(task.db)
 	if err != nil {
 		return err
@@ -137,6 +138,30 @@ func (task *Task) Start() error {
 		if err != nil {
 			return err
 		}
+	}
+	listBlockZero, err := dao.GetProposedBlockListBlockNumberZero(task.db)
+	if err != nil {
+		return err
+	}
+	for _, l := range listBlockZero {
+		l.Timestamp = utils.TimestampOfSlot(task.eth2Config, l.Slot)
+		beaconBlock, exit, err := task.connection.Eth2Client().GetBeaconBlock(fmt.Sprintf("%d", l.Slot))
+		if err != nil {
+			return err
+		}
+		if !exit {
+			return fmt.Errorf("beacon block %d not exist", l.Slot)
+		}
+		l.BlockNumber = beaconBlock.ExecutionBlockNumber
+		err = dao.UpOrInProposedBlock(task.db, l)
+		if err != nil {
+			return err
+		}
+	}
+	// delete val index zero form val withdrawals
+	err = dao.DeleteValidatorWithdrawalsValIndexZero(task.db)
+	if err != nil {
+		return err
 	}
 
 	utils.SafeGoWithRestart(task.syncEth1BlockHandler)

@@ -24,6 +24,10 @@ func (task *Task) distributeWithdrawals() error {
 		return nil
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"latestDistributeHeight": latestDistributeHeight,
+		"targetEth1BlockHeight":  targetEth1BlockHeight,
+	}).Debug("distributeWithdrawals")
 	// ----1 cal eth(from withdrawals) of user/node/platform
 	totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, err := task.getUserNodePlatformFromWithdrawals(latestDistributeHeight, targetEth1BlockHeight)
 	if err != nil {

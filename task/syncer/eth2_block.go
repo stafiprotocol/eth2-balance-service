@@ -175,11 +175,14 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 			return errors.Wrap(err, "dao.GetValidatorByIndex failed")
 		}
 
-		if err == nil {
+		if proposer != 0 && err == nil {
 			return task.saveProposerMissEvent(slot, epoch, proposer)
 		}
 
 		return nil
+	}
+	if beaconBlock.ProposerIndex != proposer {
+		return fmt.Errorf("beaconBlock.ProposerIndex %d not euqal proposer %d", beaconBlock.ProposerIndex, proposer)
 	}
 
 	// save withdrawals of nodes in our pool
@@ -189,7 +192,7 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 			return errors.Wrap(err, "dao.GetValidatorByIndex")
 		}
 
-		if err == nil {
+		if w.ValidatorIndex != 0 && err == nil {
 			err := task.saveValidatorWithdrawal(w, beaconBlock.Slot, beaconBlock.ExecutionBlockNumber)
 			if err != nil {
 				return errors.Wrap(err, "saveValidatorWithdrawal failed")
@@ -207,7 +210,7 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 				return errors.Wrap(err, "dao.GetValidatorByIndex")
 			}
 
-			if err == nil {
+			if valIndex != 0 && err == nil {
 				err := task.saveSyncMissEvent(slot, epoch, valIndex)
 				if err != nil {
 					return errors.Wrap(err, "saveSyncMissEvent")
@@ -225,7 +228,7 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 		}
 
 		// we only save and deal blocks proposed by our pool validators
-		if err == nil {
+		if beaconBlock.ProposerIndex != 0 && err == nil {
 			err := task.saveProposedBlockAndRecipientUnMatchEvent(slot, epoch, &beaconBlock, validator)
 			if err != nil {
 				return errors.Wrap(err, "saveRecipientUnMatchEvent")
@@ -254,7 +257,7 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 					return errors.Wrap(err, "dao.GetValidatorByIndex")
 				}
 
-				if err == nil {
+				if valIndex != 0 && err == nil {
 					err := task.saveAttesterSlashEvent(slot, epoch, valIndex)
 					if err != nil {
 						return errors.Wrap(err, "saveAttesterSlashEvent")
@@ -274,7 +277,7 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 			return errors.Wrap(err, "dao.GetValidatorByIndex")
 		}
 
-		if err == nil {
+		if proposerValidatorIndex != 0 && err == nil {
 			err := task.saveProposerSlashEvent(slot, epoch, proposerValidatorIndex)
 			if err != nil {
 				return errors.Wrap(err, "saveProposerSlashEvent")

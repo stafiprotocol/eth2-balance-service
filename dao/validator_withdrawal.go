@@ -41,6 +41,11 @@ func GetValidatorWithdrawalsBetween(db *db.WrapDb, startBlock, endBlock uint64) 
 	return
 }
 
+func DeleteValidatorWithdrawalsValIndexZero(db *db.WrapDb) (err error) {
+	err = db.Delete(&ValidatorWithdrawal{}, "validator_index = 0").Error
+	return
+}
+
 func GetValidatorTotalWithdrawal(db *db.WrapDb, valIndex uint64) (totalWithdrawal uint64, err error) {
 	value := sql.NullInt64{}
 	err = db.Raw("select sum(amount) as totalWithdrawal from reth_validator_withdrawals where validator_index = ?",
