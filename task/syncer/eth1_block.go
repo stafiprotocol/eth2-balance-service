@@ -15,10 +15,8 @@ func (task *Task) syncEth1Block() error {
 		return err
 	}
 
-	if task.version != utils.Dev {
-		if latestBlockNumber > fetchEth1WaitBlockNumbers {
-			latestBlockNumber -= fetchEth1WaitBlockNumbers
-		}
+	if latestBlockNumber > fetchEth1WaitBlockNumbers {
+		latestBlockNumber -= fetchEth1WaitBlockNumbers
 	}
 
 	metaEth1BlockSyncer, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)

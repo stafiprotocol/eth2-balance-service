@@ -35,7 +35,7 @@ var (
 // sync deposit/stake events and pool latest info from execute chain
 // sync validator latest info and epoch balance from consensus chain
 // sync beacon block info from consensus chain
-// sort by head: eth1 syncer -> latestInfo syncer -> eth2Block syncer -> valBalance syncer -> nodeBalance collector -> merkle tree
+// sort by head: 0 eth1 syncer -> 1 latestInfo syncer -> 2 eth2Block syncer -> 3 valBalance syncer -> 4 nodeBalance collector -> 5 merkle tree
 type Task struct {
 	taskTicker             int64
 	stop                   chan struct{}
@@ -144,7 +144,7 @@ func (task *Task) Start() error {
 	utils.SafeGoWithRestart(task.syncEth2BlockHandler)
 	utils.SafeGoWithRestart(task.syncEth2ValidatorEpochBalanceHandler)
 	utils.SafeGoWithRestart(task.collectEth2NodeEpochBalanceHandler)
-	utils.SafeGoWithRestart(task.calAndSaveMerkleTreeHandler)
+	utils.SafeGoWithRestart(task.calcMerkleTreeHandler)
 	return nil
 }
 
@@ -516,8 +516,8 @@ func (task *Task) collectEth2NodeEpochBalanceHandler() {
 	}
 }
 
-func (task *Task) calAndSaveMerkleTreeHandler() {
-	logrus.Info("start calAndSaveMerkleTreeHandler")
+func (task *Task) calcMerkleTreeHandler() {
+	logrus.Info("start calcMerkleTreeHandler")
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
 	retry := 0
@@ -533,15 +533,15 @@ func (task *Task) calAndSaveMerkleTreeHandler() {
 			return
 		case <-ticker.C:
 
-			logrus.Debug("calAndSaveMerkleTree start -----------")
-			err := task.calAndSaveMerkleTree()
+			logrus.Debug("calcMerkleTree start -----------")
+			err := task.calcMerkleTree()
 			if err != nil {
-				logrus.Warnf("calAndSaveMerkleTree err: %s", err)
+				logrus.Warnf("calcMerkleTree err: %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("calAndSaveMerkleTree end -----------")
+			logrus.Debug("calcMerkleTree end -----------")
 
 			retry = 0
 		}

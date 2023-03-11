@@ -13,7 +13,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 )
 
-// get latest info of validators from beacon chain on finalized epoch, and update in db
+// get validator latest info of from beacon chain on finalized epoch
 func (task *Task) syncValidatorLatestInfo() error {
 	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {
@@ -145,6 +145,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 					validator.Status = utils.ValidatorStatusWithdrawDoneSlash
 				}
 				updateBaseInfo()
+				updateBalance()
 			default:
 				return fmt.Errorf("unsupported validator status %d", status.Status)
 			}

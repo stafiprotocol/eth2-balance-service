@@ -80,43 +80,13 @@ func TestBuildMerkleTree(t *testing.T) {
 	}
 }
 
-func TestNodeHash(t *testing.T) {
-	type claim struct {
-		index   *big.Int
-		account common.Address
-		amount  *big.Int
-	}
-
-	claims := []claim{
-		{big.NewInt(0), common.HexToAddress("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"), big.NewInt(1e18)},
-		{big.NewInt(1), common.HexToAddress("0x14dC79964da2C08b23698B3D3cc7Ca32193d9955"), big.NewInt(2e18)},
-		{big.NewInt(2), common.HexToAddress("0x14dC79964da2C08b23698B3D3cc7Ca32193d9955"), big.NewInt(3e18)},
-		{big.NewInt(3), common.HexToAddress("0x14dC79964da2C08b23698B3D3cc7Ca32193d9955"), big.NewInt(4e18)},
-	}
-
-	list := make(utils.NodeHashList, len(claims))
-	for i, data := range claims {
-		list[i] = utils.GetNodeHash(data.index, data.account, data.amount)
-	}
-	mt := utils.NewMerkleTree(list)
-
-	rootHash, err := mt.GetRootHash()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if rootHash.String() != "b04c9d382e83099b628bb1f8a0f1e7a4b13837394a12d212bd0eea2300ee9203" {
-		t.Fatal("root hash not match")
-	}
-}
-
 func TestProofNodeHash(t *testing.T) {
 
 	claims := []*dao.Proof{
-		{Index: 0, Address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", Amount: "1000000000000000000"},
-		{Index: 1, Address: "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955", Amount: "2000000000000000000"},
-		{Index: 2, Address: "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955", Amount: "3000000000000000000"},
-		{Index: 3, Address: "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955", Amount: "4000000000000000000"},
+		{Index: 0, Address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", TotalRewardAmount: "1000000000000000000"},
+		{Index: 1, Address: "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955", TotalRewardAmount: "2000000000000000000"},
+		{Index: 2, Address: "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955", TotalRewardAmount: "3000000000000000000"},
+		{Index: 3, Address: "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955", TotalRewardAmount: "4000000000000000000"},
 	}
 
 	mt, err := BuildMerkleTree(claims)
@@ -139,11 +109,15 @@ func BuildMerkleTree(datas []*dao.Proof) (*utils.MerkleTree, error) {
 	}
 	list := make(utils.NodeHashList, len(datas))
 	for i, data := range datas {
-		amountDeci, err := decimal.NewFromString(data.Amount)
+		totalRewardAmountDeci, err := decimal.NewFromString(data.TotalRewardAmount)
 		if err != nil {
 			return nil, err
 		}
-		list[i] = utils.GetNodeHash(big.NewInt(int64(data.Index)), common.HexToAddress(data.Address), amountDeci.BigInt())
+		totalExitDepositAmountDeci, err := decimal.NewFromString(data.TotalExitDepositAmount)
+		if err != nil {
+			return nil, err
+		}
+		list[i] = utils.GetNodeHash(big.NewInt(int64(data.Index)), common.HexToAddress(data.Address), totalRewardAmountDeci.BigInt(), totalExitDepositAmountDeci.BigInt())
 	}
 	mt := utils.NewMerkleTree(list)
 	return mt, nil

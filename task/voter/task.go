@@ -248,6 +248,15 @@ func (task *Task) voteHandler() {
 			}
 			logrus.Debug("setMerkleTree end -----------\n")
 
+			logrus.Debug("notifyValidatorExit start -----------")
+			err = task.notifyValidatorExit()
+			if err != nil {
+				logrus.Warnf("notifyValidatorExit err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("notifyValidatorExit end -----------\n")
 			retry = 0
 		}
 	}
@@ -342,6 +351,41 @@ func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targ
 	totalUserEthDeci = totalUserEthDeci.Mul(utils.GweiDeci)
 	totalNodeEthDeci = totalNodeEthDeci.Mul(utils.GweiDeci)
 	totalPlatformEthDeci = totalPlatformEthDeci.Mul(utils.GweiDeci)
+
+	return totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, nil
+}
+
+// return (user reward, node reward, platform fee, totalFee)
+func (task Task) getUserNodePlatformFromFeePool(latestDistributeHeight, targetEth1BlockHeight uint64) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, error) {
+	proposedBlockList, err := dao.GetProposedBlockListBetween(task.db, latestDistributeHeight, targetEth1BlockHeight, task.feePoolAddress.String())
+	if err != nil {
+		return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+	}
+
+	totalAmountDeci := decimal.Zero
+	totalUserEthDeci := decimal.Zero
+	totalNodeEthDeci := decimal.Zero
+	totalPlatformEthDeci := decimal.Zero
+	for _, w := range proposedBlockList {
+		validator, err := dao.GetValidatorByIndex(task.db, w.ValidatorIndex)
+		if err != nil {
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+		}
+		feeAmountDeci, err := decimal.NewFromString(w.FeeAmount)
+		if err != nil {
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+		}
+
+		totalAmountDeci = totalAmountDeci.Add(feeAmountDeci)
+
+		// cal rewards
+		userRewardDeci, nodeRewardDeci, platformFeeDeci := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, feeAmountDeci)
+		// cal reward + deposit
+		totalUserEthDeci = totalUserEthDeci.Add(userRewardDeci)
+		totalNodeEthDeci = totalNodeEthDeci.Add(nodeRewardDeci)
+		totalPlatformEthDeci = totalPlatformEthDeci.Add(platformFeeDeci)
+
+	}
 
 	return totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, nil
 }

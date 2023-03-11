@@ -134,6 +134,10 @@ func (task *Task) NodeVotedDistributeWithdrawals(storage *storage.Storage, sende
 	return storage.GetBool(task.connection.CallOpts(nil), utils.DistributeWithdrawalsProposalNodeKey(sender, _dealedHeight, _userAmount, _nodeAmount, _platformAmount, _maxClaimableWithdrawIndex))
 }
 
+func (task *Task) NodeVotedDistributeFeePool(storage *storage.Storage, sender common.Address, _dealedHeight, _userAmount, _nodeAmount, _platformAmount *big.Int) (bool, error) {
+	return storage.GetBool(task.connection.CallOpts(nil), utils.DistributeFeeProposalNodeKey(sender, _dealedHeight, _userAmount, _nodeAmount, _platformAmount))
+}
+
 func (task *Task) MerkleTreeDealedEpoch(storage *storage.Storage) (*big.Int, error) {
 	return storage.GetUint(task.connection.CallOpts(nil), utils.MerkleTreeDealedEpochStorageKey())
 }

@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// collector node balance
+// calc node epoch info on the basis of [node's validator balance list] at this epoch
 func (task *Task) collectNodeEpochBalances() error {
 	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {
@@ -24,22 +24,23 @@ func (task *Task) collectNodeEpochBalances() error {
 		finalEpoch = eth2ValidatorInfoSyncerMetaData.DealedEpoch
 	}
 
-	eth2ValidatorBalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
-	if err != nil {
-		return err
-	}
-	// ---2 ensure validators epoch balances  already synced
-	if finalEpoch > eth2ValidatorBalanceMetaData.DealedEpoch {
-		finalEpoch = eth2ValidatorBalanceMetaData.DealedEpoch
-	}
-
 	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
 	if err != nil {
 		return err
 	}
-	// ---3 ensure eth2 blocks info(slash/withdrawals) already synced
+
+	// ---2 ensure eth2 blocks info(slash/withdrawals) already synced
 	if finalEpoch > eth2BlockSyncerMetaData.DealedEpoch {
 		finalEpoch = eth2BlockSyncerMetaData.DealedEpoch
+	}
+
+	eth2ValidatorBalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
+	if err != nil {
+		return err
+	}
+	// ---3 ensure validators epoch balances  already synced
+	if finalEpoch > eth2ValidatorBalanceMetaData.DealedEpoch {
+		finalEpoch = eth2ValidatorBalanceMetaData.DealedEpoch
 	}
 
 	eth2NodeBalanceCollectorMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2NodeBalanceCollector)
@@ -53,7 +54,7 @@ func (task *Task) collectNodeEpochBalances() error {
 	}
 
 	for epoch := eth2NodeBalanceCollectorMetaData.DealedEpoch + 1; epoch <= finalEpoch; epoch++ {
-		// we fetch epoch info every 75 epoch
+		// Notice: we fetch epoch info every 75 epoch
 		if epoch%task.rewardEpochInterval != 0 {
 			continue
 		}
@@ -90,11 +91,12 @@ func (task *Task) collectNodeEpochBalances() error {
 				return err
 			}
 
-			// cal node info at this epoch
+			// calc node info at this epoch
 			nodeBalance, err := dao.GetNodeBalance(task.db, nodeAddress, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err
 			}
+
 			nodeBalance.NodeAddress = nodeAddress
 			nodeBalance.Epoch = epoch
 			nodeBalance.Timestamp = utils.StartTimestampOfEpoch(task.eth2Config, epoch)
@@ -104,8 +106,9 @@ func (task *Task) collectNodeEpochBalances() error {
 			TotalBalance := uint64(0)
 			TotalWithdrawal := uint64(0)
 			TotalEffectiveBalance := uint64(0)
-			TotalSelfReward := uint64(0)
+			TotalFee := uint64(0)
 			TotalReward := uint64(0)
+			TotalSelfReward := uint64(0)
 			for _, l := range list {
 				valInfo, err := dao.GetValidatorByIndex(task.db, l.ValidatorIndex)
 				if err != nil {
@@ -121,24 +124,27 @@ func (task *Task) collectNodeEpochBalances() error {
 				TotalBalance += l.Balance
 				TotalWithdrawal += l.TotalWithdrawal
 				TotalEffectiveBalance += l.EffectiveBalance
+				TotalFee += l.TotalFee
 
-				// todo add fee pool/super fee pool
-				valTotalReward := decimal.NewFromInt(int64(utils.GetTotalReward(l.Balance, l.TotalWithdrawal)))
+				validatorTotalReward := utils.GetValidatorTotalReward(l.Balance, l.TotalWithdrawal, l.TotalFee)
+				TotalReward += validatorTotalReward
 
-				_, nodeReward, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, valTotalReward)
+				// todo calc by two sections on mainnet
+				_, nodeRewardOfThisValidator, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(validatorTotalReward)))
 
-				TotalSelfReward += nodeReward.BigInt().Uint64()
-				TotalReward += valTotalReward.BigInt().Uint64()
+				TotalSelfReward += nodeRewardOfThisValidator.BigInt().Uint64()
 			}
 			nodeBalance.TotalNodeDepositAmount = TotalNodeDepositAmount
 			nodeBalance.TotalExitNodeDepositAmount = TotalExitNodeDepositAmount
 			nodeBalance.TotalBalance = TotalBalance
 			nodeBalance.TotalWithdrawal = TotalWithdrawal
+			nodeBalance.TotalFee = TotalFee
 			nodeBalance.TotalEffectiveBalance = TotalEffectiveBalance
-			nodeBalance.TotalSelfReward = TotalSelfReward
 			nodeBalance.TotalReward = TotalReward
 
-			// cal era reward
+			nodeBalance.TotalSelfReward = TotalSelfReward
+
+			// calc era reward
 			preEpochNodeBalance, err := dao.GetNodeBalanceBefore(task.db, nodeAddress, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err

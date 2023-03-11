@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -15,7 +14,7 @@ import (
 )
 
 func (task *Task) distributeWithdrawals() error {
-	latestDistributeHeight, targetEth1BlockHeight, shouldGoNext, err := task.checkSyncAndVoteState()
+	latestDistributeHeight, targetEth1BlockHeight, shouldGoNext, err := task.checkStateForDistriWithdraw()
 	if err != nil {
 		return errors.Wrap(err, "distributeWithdrawals checkSyncState failed")
 	}
@@ -154,7 +153,7 @@ func (task *Task) distributeWithdrawals() error {
 
 // check sync and vote state
 // return (latestDistributeHeight, targetEth1Blocknumber, shouldGoNext, err)
-func (task *Task) checkSyncAndVoteState() (uint64, uint64, bool, error) {
+func (task *Task) checkStateForDistriWithdraw() (uint64, uint64, bool, error) {
 	eth1LatestBlock, err := task.connection.Eth1LatestBlock()
 	if err != nil {
 		return 0, 0, false, err
@@ -164,7 +163,7 @@ func (task *Task) checkSyncAndVoteState() (uint64, uint64, bool, error) {
 	logrus.Debugf("eth1LatestBlock %d", eth1LatestBlock)
 	targetEth1BlockHeight := (eth1LatestBlock / distributeWithdrawalsDuBlocks) * distributeWithdrawalsDuBlocks
 
-	latestDistributeHeight, err := task.withdrawContract.LatestDistributeHeight(&bind.CallOpts{})
+	latestDistributeHeight, err := task.withdrawContract.LatestDistributeHeight(task.connection.CallOpts(nil))
 	if err != nil {
 		return 0, 0, false, err
 	}
@@ -197,6 +196,11 @@ func (task *Task) checkSyncAndVoteState() (uint64, uint64, bool, error) {
 		return 0, 0, false, err
 	}
 
+	// ensure all eth1 event synced
+	if eth1BlockSyncerMetaData.DealedBlockHeight < targetEth1BlockHeight {
+		logrus.Debug("eth1BlockSyncerMetaData.DealedBlockHeight < targetEth1BlockHeight")
+		return 0, 0, false, nil
+	}
 	// ensure eth2 info have synced
 	if eth2ValidatorInfoSyncerBlockHeight < targetEth1BlockHeight {
 		logrus.Debugf("eth2ValidatorInfoSyncerBlockHeight %d < targetEth1BlockHeight %d", eth2BlockSyncerBlockHeight, targetEth1BlockHeight)
@@ -205,11 +209,6 @@ func (task *Task) checkSyncAndVoteState() (uint64, uint64, bool, error) {
 	// ensure eth2 block have synced
 	if eth2BlockSyncerBlockHeight < targetEth1BlockHeight {
 		logrus.Debugf("eth2BlockSyncerBlockHeight %d < targetEth1BlockHeight %d", eth2BlockSyncerBlockHeight, targetEth1BlockHeight)
-		return 0, 0, false, nil
-	}
-	// ensure all eth1 event synced
-	if eth1BlockSyncerMetaData.DealedBlockHeight < targetEth1BlockHeight {
-		logrus.Debug("eth1BlockSyncerMetaData.DealedBlockHeight < targetEth1BlockHeight")
 		return 0, 0, false, nil
 	}
 

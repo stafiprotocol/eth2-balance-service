@@ -10,19 +10,25 @@ import (
 // node info at epoch x
 type NodeBalance struct {
 	db.BaseModel
-	NodeAddress string `gorm:"type:varchar(100) not null;default:'';column:node_address;index;uniqueIndex:uni_idx_node_epoch"` //hex with 0x prefix
-	Epoch       uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:epoch;uniqueIndex:uni_idx_node_epoch;index"`
+	NodeAddress string `gorm:"type:varchar(100) not null;default:'';column:node_address;uniqueIndex:uni_idx_node_epoch"` //hex with 0x prefix
+	Epoch       uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:epoch;uniqueIndex:uni_idx_node_epoch"`
 
-	TotalNodeDepositAmount     uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_node_deposit_amount"`      //Gwei total deposit amount on beacon chain
-	TotalExitNodeDepositAmount uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_exit_node_deposit_amount"` //Gwei deposit amount at beacon chain
-	TotalBalance               uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_balance"`                  //Gwei total balance at beacon chain
-	TotalWithdrawal            uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_withdrawal"`               //Gwei total withdrawal at beacon chain
-	TotalEffectiveBalance      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_effective_balance"`        //Gwei total effective balance at beacon chain
-	TotalEraReward             uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_era_reward"`               //Gwei total reward of this era
-	TotalReward                uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_reward"`                   //Gwei total reward up to this era
-	TotalSelfEraReward         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_self_era_reward"`          //Gwei total node reward of this era
-	TotalSelfReward            uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_self_reward"`              //Gwei total node reward up to this era
-	Timestamp                  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
+	TotalNodeDepositAmount     uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_node_deposit_amount"`      //Gwei total node deposit amount on beacon chain up to this epoch
+	TotalExitNodeDepositAmount uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_exit_node_deposit_amount"` //Gwei total exit node deposit amount at beacon chain up to this epoch
+	TotalBalance               uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_balance"`                  //Gwei total balance at beacon chain up to this epoch
+	TotalWithdrawal            uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_withdrawal"`               //Gwei total withdrawal at beacon chain up to this epoch
+	TotalFee                   uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_fee"`                      //Gwei total fee(transfer to fee pool) at beacon chain up to this epoch
+	TotalEffectiveBalance      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_effective_balance"`        //Gwei total effective balance at beacon chain up to this epoch
+
+	// (include user/node/platform reward)
+	TotalEraReward uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_era_reward"` //Gwei total reward(include user/node/platform) of this era
+	TotalReward    uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_reward"`     //Gwei total reward(include user/node/platform) up to this era
+
+	// (include node reward only)
+	TotalSelfEraReward uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_self_era_reward"` //Gwei total node reward of this era
+	TotalSelfReward    uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_self_reward"`     //Gwei total node reward up to this era
+
+	Timestamp uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
 }
 
 func (f NodeBalance) TableName() string {

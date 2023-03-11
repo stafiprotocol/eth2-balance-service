@@ -14,9 +14,10 @@ type ProposedBlock struct {
 	db.BaseModel
 	Slot uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:slot;uinqueIndex"`
 
+	BlockNumber    uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:block_number;index"`
 	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index"`
 	FeeRecipient   string `gorm:"type:varchar(42) not null;default:'';column:fee_recipient"` // 0x prefix
-	FeeAmount      string `gorm:"type:varchar(40) not null;default:'0';column:fee_amount"`
+	FeeAmount      string `gorm:"type:varchar(40) not null;default:'0';column:fee_amount"`   // fee amount decimals 18
 	Timestamp      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
 }
 
@@ -38,6 +39,7 @@ func GetProposedBlockListTimestampZero(db *db.WrapDb) (c []*ProposedBlock, err e
 	err = db.Order("id desc").Find(&c, "timestamp = 0").Error
 	return
 }
+
 func GetProposedBlockList(db *db.WrapDb, pageIndex, pageCount int) (c []*ProposedBlock, count int64, err error) {
 	if pageIndex <= 0 {
 		pageIndex = 1
@@ -55,6 +57,16 @@ func GetProposedBlockList(db *db.WrapDb, pageIndex, pageCount int) (c []*Propose
 	}
 
 	err = db.Order("slot desc").Limit(pageCount).Offset((pageIndex - 1) * pageCount).Find(&c).Error
+	return
+}
+
+func GetProposedBlockListBefore(db *db.WrapDb, validatorIndex, slot uint64, recipient string) (c []*ProposedBlock, err error) {
+	err = db.Find(&c, "validator_index = ? and slot <= ? and fee_recipient = ?", validatorIndex, slot, recipient).Error
+	return
+}
+
+func GetProposedBlockListBetween(db *db.WrapDb, start, end uint64, recipient string) (c []*ProposedBlock, err error) {
+	err = db.Find(&c, "block_number > ? and block_number <= ? and fee_recipient = ?", start, end, recipient).Error
 	return
 }
 

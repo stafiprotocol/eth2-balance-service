@@ -14,7 +14,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func (task *Task) calAndSaveMerkleTree() error {
+// calc merkle tree on the basis of [node balance/slash event]
+func (task *Task) calcMerkleTree() error {
 	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {
 		return err
@@ -71,17 +72,20 @@ func (task *Task) calAndSaveMerkleTree() error {
 		totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).
 			Mul(utils.GweiDeci)
 
-		totalRewardAndDepositAmountDeci := decimal.NewFromInt(int64(nodeBalance.TotalExitNodeDepositAmount)).
-			Add(decimal.NewFromInt(int64(nodeBalance.TotalReward))).
+		totalExitDepositAmountDeci := decimal.NewFromInt(int64(nodeBalance.TotalExitNodeDepositAmount)).
 			Mul(utils.GweiDeci)
 
-		totalClaimableAmount := totalRewardAndDepositAmountDeci.Sub(totalSlashAmountDeci)
-		if totalClaimableAmount.IsNegative() {
-			totalClaimableAmount = decimal.Zero
+		totalRewardAmountDeci := decimal.NewFromInt(int64(nodeBalance.TotalReward)).
+			Mul(utils.GweiDeci).
+			Sub(totalSlashAmountDeci)
+
+		if totalRewardAmountDeci.IsNegative() {
+			totalRewardAmountDeci = decimal.Zero
 		}
 
 		proof.Address = nodeBalance.NodeAddress
-		proof.Amount = totalClaimableAmount.StringFixed(0)
+		proof.TotalRewardAmount = totalRewardAmountDeci.StringFixed(0)
+		proof.TotalExitDepositAmount = totalExitDepositAmountDeci.StringFixed(0)
 		proof.Index = uint32(i)
 		proof.DealedEpoch = uint32(targetEpoch)
 
@@ -99,12 +103,16 @@ func (task *Task) calAndSaveMerkleTree() error {
 
 	// cal and save  proof
 	for _, proof := range proofList {
-		amountDeci, err := decimal.NewFromString(proof.Amount)
+		totalRewardAmountDeci, err := decimal.NewFromString(proof.TotalRewardAmount)
+		if err != nil {
+			return err
+		}
+		totalExitDepositAmountDeci, err := decimal.NewFromString(proof.TotalExitDepositAmount)
 		if err != nil {
 			return err
 		}
 
-		nodeHash := utils.GetNodeHash(big.NewInt(int64(proof.Index)), common.HexToAddress(proof.Address), amountDeci.BigInt())
+		nodeHash := utils.GetNodeHash(big.NewInt(int64(proof.Index)), common.HexToAddress(proof.Address), totalRewardAmountDeci.BigInt(), totalExitDepositAmountDeci.BigInt())
 		proofList, err := tree.GetProof(nodeHash)
 		if err != nil {
 			return err
@@ -144,11 +152,15 @@ func BuildMerkleTree(datas []*dao.Proof) (*utils.MerkleTree, error) {
 	}
 	list := make(utils.NodeHashList, len(datas))
 	for i, data := range datas {
-		amountDeci, err := decimal.NewFromString(data.Amount)
+		totalRewardAmountDeci, err := decimal.NewFromString(data.TotalRewardAmount)
 		if err != nil {
 			return nil, err
 		}
-		list[i] = utils.GetNodeHash(big.NewInt(int64(data.Index)), common.HexToAddress(data.Address), amountDeci.BigInt())
+		totalExitDepositAmountDeci, err := decimal.NewFromString(data.TotalExitDepositAmount)
+		if err != nil {
+			return nil, err
+		}
+		list[i] = utils.GetNodeHash(big.NewInt(int64(data.Index)), common.HexToAddress(data.Address), totalRewardAmountDeci.BigInt(), totalExitDepositAmountDeci.BigInt())
 	}
 	mt := utils.NewMerkleTree(list)
 	return mt, nil

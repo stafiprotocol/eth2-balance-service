@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
@@ -13,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// get staked validator info from beacon on target slot, and update balance/effective balance
+// calc validator epoch balance info(balance/effective balance/totalwithdrawal/totalfee) at target epoch(every 75 epoch) on the basis of [beaconchain/proposed blocks/withdrawals]
 func (task *Task) syncValidatorEpochBalances() error {
 	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {
@@ -76,8 +77,8 @@ func (task *Task) syncValidatorEpochBalances() error {
 
 		pubkeys := make([]types.ValidatorPubkey, 0)
 		pubkeyToNodeAddress := make(map[string]string)
-		nodeAddressMap := make(map[string]struct{})
 		pubkeyToIndex := make(map[string]uint64)
+		pubkeyToValidator := make(map[string]*dao.Validator)
 		for _, validator := range validatorList {
 			pubkey, err := types.HexToValidatorPubkey(validator.Pubkey[2:])
 			if err != nil {
@@ -85,11 +86,12 @@ func (task *Task) syncValidatorEpochBalances() error {
 			}
 			pubkeys = append(pubkeys, pubkey)
 			pubkeyToNodeAddress[validator.Pubkey] = validator.NodeAddress
-			nodeAddressMap[validator.NodeAddress] = struct{}{}
 			pubkeyToIndex[validator.Pubkey] = validator.ValidatorIndex
+			pubkeyToValidator[validator.Pubkey] = validator
 		}
-
 		willUsePubkeys := pubkeys
+
+		// fetch validators info at target epoch
 		var validatorStatusMap map[types.ValidatorPubkey]beacon.ValidatorStatus
 		switch task.version {
 		case utils.V1, utils.V2, utils.Dev:
@@ -124,12 +126,38 @@ func (task *Task) syncValidatorEpochBalances() error {
 			if !exist {
 				return fmt.Errorf("node address not exist in pubkeyToNodeAddress")
 			}
+			validatorInfo, exist := pubkeyToValidator[pubkeyStr]
+			if !exist {
+				return fmt.Errorf("validator info not exist in pubkeyToValidator")
+			}
 
+			// cal total withdrawal
 			totalWithdrawal, err := dao.GetValidatorTotalWithdrawalBeforeSlot(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch))
 			if err != nil {
 				return errors.Wrap(err, "GetValidatorTotalWithdrawalBeforeSlot failed")
 			}
 
+			// cal total fee to fee pool
+			feePoolAddress := task.lightNodeFeePoolAddress
+			if validatorInfo.NodeType == utils.NodeTypeSuper || validatorInfo.NodeType == utils.NodeTypeTrust {
+				feePoolAddress = task.superNodeFeePoolAddress
+			}
+
+			proposedBlockList, err := dao.GetProposedBlockListBefore(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch), feePoolAddress.String())
+			if err != nil {
+				return errors.Wrap(err, "GetProposedBlockListBefore failed")
+			}
+			// we use gwei here
+			totalFee := uint64(0)
+			for _, block := range proposedBlockList {
+				feeAmountDeci, err := decimal.NewFromString(block.FeeAmount)
+				if err != nil {
+					return errors.Wrap(err, "fee amount cast decimal failed")
+				}
+				totalFee += feeAmountDeci.Div(utils.GweiDeci).BigInt().Uint64()
+			}
+
+			// insert valdiator balance
 			validatorBalance, err := dao.GetValidatorBalance(task.db, validatorIndex, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err
@@ -138,6 +166,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 			validatorBalance.NodeAddress = nodeAddress
 			validatorBalance.Balance = status.Balance
 			validatorBalance.TotalWithdrawal = totalWithdrawal
+			validatorBalance.TotalFee = totalFee
 			validatorBalance.EffectiveBalance = status.EffectiveBalance
 			validatorBalance.Epoch = epoch
 			validatorBalance.ValidatorIndex = validatorIndex

@@ -507,15 +507,16 @@ no
 * status、message must be string format,data must be object
 
 
-| grade 1 | grade 2 | type        | must exist? | encode type | description                     |
-| :------ | :------ | :---------- | :---------- | :---------- | :------------------------------ |
-| status  | N/A     | string      | Yes         | null        | status code                     |
-| message | N/A     | string      | Yes         | null        | status info                     |
-| data    | N/A     | object      | Yes         | null        | data                            |
-|         | index   | number      | Yes         | null        | user index of this epoch        |
-|         | address | string      | Yes         | null        | node address                    |
-|         | amount  | string      | Yes         | null        | total amount decimals 18        |
-|         | proof   | string list | Yes         | null        | proof of claim, hex string list |
+| grade 1 | grade 2                | type        | must exist? | encode type | description                           |
+| :------ | :--------------------- | :---------- | :---------- | :---------- | :------------------------------------ |
+| status  | N/A                    | string      | Yes         | null        | status code                           |
+| message | N/A                    | string      | Yes         | null        | status info                           |
+| data    | N/A                    | object      | Yes         | null        | data                                  |
+|         | index                  | number      | Yes         | null        | user index of this epoch              |
+|         | address                | string      | Yes         | null        | node address                          |
+|         | totalRewardAmount      | string      | Yes         | null        | total reward amount decimals 18       |
+|         | totalExitDepositAmount | string      | Yes         | null        | total exit deposit amount decimals 18 |
+|         | proof                  | string list | Yes         | null        | proof of claim, hex string list       |
 
 
 ## 13. unstake pool data

@@ -295,8 +295,8 @@ func GetUserNodePlatformRewardV2(nodeDepositAmount uint64, rewardDeci decimal.De
 
 }
 
-func GetTotalReward(balance, withdrawal uint64) uint64 {
-	totalBalance := balance + withdrawal
+func GetValidatorTotalReward(balance, totalWithdrawal, totalFee uint64) uint64 {
+	totalBalance := balance + totalWithdrawal + totalFee
 	if totalBalance > StandardEffectiveBalance {
 		return totalBalance - StandardEffectiveBalance
 	}

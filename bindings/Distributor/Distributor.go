@@ -30,7 +30,7 @@ var (
 
 // DistributorMetaData contains all meta data concerning the Distributor contract.
 var DistributorMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"claimedAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"totalAmount\",\"type\":\"uint256\"}],\"name\":\"Claimed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"}],\"name\":\"ProposalExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"voter\",\"type\":\"address\"}],\"name\":\"VoteProposal\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_totalAmount\",\"type\":\"uint256\"},{\"internalType\":\"bytes32[]\",\"name\":\"_merkleProof\",\"type\":\"bytes32[]\"}],\"name\":\"claim\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"distributeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"distributeSlashAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"distributeSuperNodeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"distributeWithdrawals\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCurrentNodeDepositAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"receiveEtherWithdrawal\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedEpoch\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"setMerkleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"claimableReward\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"claimableDeposit\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"enumClaimType\",\"name\":\"claimType\",\"type\":\"uint8\"}],\"name\":\"Claimed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"}],\"name\":\"ProposalExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"voter\",\"type\":\"address\"}],\"name\":\"VoteProposal\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_totalRewardAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_totalExitDepositAmount\",\"type\":\"uint256\"},{\"internalType\":\"bytes32[]\",\"name\":\"_merkleProof\",\"type\":\"bytes32[]\"},{\"internalType\":\"enumClaimType\",\"name\":\"_claimType\",\"type\":\"uint8\"}],\"name\":\"claim\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_userAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_nodeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_platformAmount\",\"type\":\"uint256\"}],\"name\":\"distributeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"distributeSlashAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"distributeSuperNodeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"distributeWithdrawals\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCurrentNodeDepositAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDistributeFeeDealedHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMerkleDealedEpoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMerkleRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"getTotalClaimedDeposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"getTotalClaimedReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"receiveEtherWithdrawal\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedEpoch\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"setMerkleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}]",
 }
 
 // DistributorABI is the input ABI used to generate the binding from.
@@ -210,6 +210,161 @@ func (_Distributor *DistributorCallerSession) GetCurrentNodeDepositAmount() (*bi
 	return _Distributor.Contract.GetCurrentNodeDepositAmount(&_Distributor.CallOpts)
 }
 
+// GetDistributeFeeDealedHeight is a free data retrieval call binding the contract method 0xf1e26b0d.
+//
+// Solidity: function getDistributeFeeDealedHeight() view returns(uint256)
+func (_Distributor *DistributorCaller) GetDistributeFeeDealedHeight(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Distributor.contract.Call(opts, &out, "getDistributeFeeDealedHeight")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetDistributeFeeDealedHeight is a free data retrieval call binding the contract method 0xf1e26b0d.
+//
+// Solidity: function getDistributeFeeDealedHeight() view returns(uint256)
+func (_Distributor *DistributorSession) GetDistributeFeeDealedHeight() (*big.Int, error) {
+	return _Distributor.Contract.GetDistributeFeeDealedHeight(&_Distributor.CallOpts)
+}
+
+// GetDistributeFeeDealedHeight is a free data retrieval call binding the contract method 0xf1e26b0d.
+//
+// Solidity: function getDistributeFeeDealedHeight() view returns(uint256)
+func (_Distributor *DistributorCallerSession) GetDistributeFeeDealedHeight() (*big.Int, error) {
+	return _Distributor.Contract.GetDistributeFeeDealedHeight(&_Distributor.CallOpts)
+}
+
+// GetMerkleDealedEpoch is a free data retrieval call binding the contract method 0x7cd1fc9d.
+//
+// Solidity: function getMerkleDealedEpoch() view returns(uint256)
+func (_Distributor *DistributorCaller) GetMerkleDealedEpoch(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Distributor.contract.Call(opts, &out, "getMerkleDealedEpoch")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetMerkleDealedEpoch is a free data retrieval call binding the contract method 0x7cd1fc9d.
+//
+// Solidity: function getMerkleDealedEpoch() view returns(uint256)
+func (_Distributor *DistributorSession) GetMerkleDealedEpoch() (*big.Int, error) {
+	return _Distributor.Contract.GetMerkleDealedEpoch(&_Distributor.CallOpts)
+}
+
+// GetMerkleDealedEpoch is a free data retrieval call binding the contract method 0x7cd1fc9d.
+//
+// Solidity: function getMerkleDealedEpoch() view returns(uint256)
+func (_Distributor *DistributorCallerSession) GetMerkleDealedEpoch() (*big.Int, error) {
+	return _Distributor.Contract.GetMerkleDealedEpoch(&_Distributor.CallOpts)
+}
+
+// GetMerkleRoot is a free data retrieval call binding the contract method 0x49590657.
+//
+// Solidity: function getMerkleRoot() view returns(bytes32)
+func (_Distributor *DistributorCaller) GetMerkleRoot(opts *bind.CallOpts) ([32]byte, error) {
+	var out []interface{}
+	err := _Distributor.contract.Call(opts, &out, "getMerkleRoot")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// GetMerkleRoot is a free data retrieval call binding the contract method 0x49590657.
+//
+// Solidity: function getMerkleRoot() view returns(bytes32)
+func (_Distributor *DistributorSession) GetMerkleRoot() ([32]byte, error) {
+	return _Distributor.Contract.GetMerkleRoot(&_Distributor.CallOpts)
+}
+
+// GetMerkleRoot is a free data retrieval call binding the contract method 0x49590657.
+//
+// Solidity: function getMerkleRoot() view returns(bytes32)
+func (_Distributor *DistributorCallerSession) GetMerkleRoot() ([32]byte, error) {
+	return _Distributor.Contract.GetMerkleRoot(&_Distributor.CallOpts)
+}
+
+// GetTotalClaimedDeposit is a free data retrieval call binding the contract method 0x1a94fbdf.
+//
+// Solidity: function getTotalClaimedDeposit(address _account) view returns(uint256)
+func (_Distributor *DistributorCaller) GetTotalClaimedDeposit(opts *bind.CallOpts, _account common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _Distributor.contract.Call(opts, &out, "getTotalClaimedDeposit", _account)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetTotalClaimedDeposit is a free data retrieval call binding the contract method 0x1a94fbdf.
+//
+// Solidity: function getTotalClaimedDeposit(address _account) view returns(uint256)
+func (_Distributor *DistributorSession) GetTotalClaimedDeposit(_account common.Address) (*big.Int, error) {
+	return _Distributor.Contract.GetTotalClaimedDeposit(&_Distributor.CallOpts, _account)
+}
+
+// GetTotalClaimedDeposit is a free data retrieval call binding the contract method 0x1a94fbdf.
+//
+// Solidity: function getTotalClaimedDeposit(address _account) view returns(uint256)
+func (_Distributor *DistributorCallerSession) GetTotalClaimedDeposit(_account common.Address) (*big.Int, error) {
+	return _Distributor.Contract.GetTotalClaimedDeposit(&_Distributor.CallOpts, _account)
+}
+
+// GetTotalClaimedReward is a free data retrieval call binding the contract method 0x1f6c9fc0.
+//
+// Solidity: function getTotalClaimedReward(address _account) view returns(uint256)
+func (_Distributor *DistributorCaller) GetTotalClaimedReward(opts *bind.CallOpts, _account common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _Distributor.contract.Call(opts, &out, "getTotalClaimedReward", _account)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetTotalClaimedReward is a free data retrieval call binding the contract method 0x1f6c9fc0.
+//
+// Solidity: function getTotalClaimedReward(address _account) view returns(uint256)
+func (_Distributor *DistributorSession) GetTotalClaimedReward(_account common.Address) (*big.Int, error) {
+	return _Distributor.Contract.GetTotalClaimedReward(&_Distributor.CallOpts, _account)
+}
+
+// GetTotalClaimedReward is a free data retrieval call binding the contract method 0x1f6c9fc0.
+//
+// Solidity: function getTotalClaimedReward(address _account) view returns(uint256)
+func (_Distributor *DistributorCallerSession) GetTotalClaimedReward(_account common.Address) (*big.Int, error) {
+	return _Distributor.Contract.GetTotalClaimedReward(&_Distributor.CallOpts, _account)
+}
+
 // Version is a free data retrieval call binding the contract method 0x54fd4d50.
 //
 // Solidity: function version() view returns(uint8)
@@ -241,46 +396,46 @@ func (_Distributor *DistributorCallerSession) Version() (uint8, error) {
 	return _Distributor.Contract.Version(&_Distributor.CallOpts)
 }
 
-// Claim is a paid mutator transaction binding the contract method 0x2e7ba6ef.
+// Claim is a paid mutator transaction binding the contract method 0x92333d90.
 //
-// Solidity: function claim(uint256 _index, address _account, uint256 _totalAmount, bytes32[] _merkleProof) returns()
-func (_Distributor *DistributorTransactor) Claim(opts *bind.TransactOpts, _index *big.Int, _account common.Address, _totalAmount *big.Int, _merkleProof [][32]byte) (*types.Transaction, error) {
-	return _Distributor.contract.Transact(opts, "claim", _index, _account, _totalAmount, _merkleProof)
+// Solidity: function claim(uint256 _index, address _account, uint256 _totalRewardAmount, uint256 _totalExitDepositAmount, bytes32[] _merkleProof, uint8 _claimType) returns()
+func (_Distributor *DistributorTransactor) Claim(opts *bind.TransactOpts, _index *big.Int, _account common.Address, _totalRewardAmount *big.Int, _totalExitDepositAmount *big.Int, _merkleProof [][32]byte, _claimType uint8) (*types.Transaction, error) {
+	return _Distributor.contract.Transact(opts, "claim", _index, _account, _totalRewardAmount, _totalExitDepositAmount, _merkleProof, _claimType)
 }
 
-// Claim is a paid mutator transaction binding the contract method 0x2e7ba6ef.
+// Claim is a paid mutator transaction binding the contract method 0x92333d90.
 //
-// Solidity: function claim(uint256 _index, address _account, uint256 _totalAmount, bytes32[] _merkleProof) returns()
-func (_Distributor *DistributorSession) Claim(_index *big.Int, _account common.Address, _totalAmount *big.Int, _merkleProof [][32]byte) (*types.Transaction, error) {
-	return _Distributor.Contract.Claim(&_Distributor.TransactOpts, _index, _account, _totalAmount, _merkleProof)
+// Solidity: function claim(uint256 _index, address _account, uint256 _totalRewardAmount, uint256 _totalExitDepositAmount, bytes32[] _merkleProof, uint8 _claimType) returns()
+func (_Distributor *DistributorSession) Claim(_index *big.Int, _account common.Address, _totalRewardAmount *big.Int, _totalExitDepositAmount *big.Int, _merkleProof [][32]byte, _claimType uint8) (*types.Transaction, error) {
+	return _Distributor.Contract.Claim(&_Distributor.TransactOpts, _index, _account, _totalRewardAmount, _totalExitDepositAmount, _merkleProof, _claimType)
 }
 
-// Claim is a paid mutator transaction binding the contract method 0x2e7ba6ef.
+// Claim is a paid mutator transaction binding the contract method 0x92333d90.
 //
-// Solidity: function claim(uint256 _index, address _account, uint256 _totalAmount, bytes32[] _merkleProof) returns()
-func (_Distributor *DistributorTransactorSession) Claim(_index *big.Int, _account common.Address, _totalAmount *big.Int, _merkleProof [][32]byte) (*types.Transaction, error) {
-	return _Distributor.Contract.Claim(&_Distributor.TransactOpts, _index, _account, _totalAmount, _merkleProof)
+// Solidity: function claim(uint256 _index, address _account, uint256 _totalRewardAmount, uint256 _totalExitDepositAmount, bytes32[] _merkleProof, uint8 _claimType) returns()
+func (_Distributor *DistributorTransactorSession) Claim(_index *big.Int, _account common.Address, _totalRewardAmount *big.Int, _totalExitDepositAmount *big.Int, _merkleProof [][32]byte, _claimType uint8) (*types.Transaction, error) {
+	return _Distributor.Contract.Claim(&_Distributor.TransactOpts, _index, _account, _totalRewardAmount, _totalExitDepositAmount, _merkleProof, _claimType)
 }
 
-// DistributeFee is a paid mutator transaction binding the contract method 0x05cc49dd.
+// DistributeFee is a paid mutator transaction binding the contract method 0x897a980c.
 //
-// Solidity: function distributeFee(uint256 _amount) returns()
-func (_Distributor *DistributorTransactor) DistributeFee(opts *bind.TransactOpts, _amount *big.Int) (*types.Transaction, error) {
-	return _Distributor.contract.Transact(opts, "distributeFee", _amount)
+// Solidity: function distributeFee(uint256 _dealedHeight, uint256 _userAmount, uint256 _nodeAmount, uint256 _platformAmount) returns()
+func (_Distributor *DistributorTransactor) DistributeFee(opts *bind.TransactOpts, _dealedHeight *big.Int, _userAmount *big.Int, _nodeAmount *big.Int, _platformAmount *big.Int) (*types.Transaction, error) {
+	return _Distributor.contract.Transact(opts, "distributeFee", _dealedHeight, _userAmount, _nodeAmount, _platformAmount)
 }
 
-// DistributeFee is a paid mutator transaction binding the contract method 0x05cc49dd.
+// DistributeFee is a paid mutator transaction binding the contract method 0x897a980c.
 //
-// Solidity: function distributeFee(uint256 _amount) returns()
-func (_Distributor *DistributorSession) DistributeFee(_amount *big.Int) (*types.Transaction, error) {
-	return _Distributor.Contract.DistributeFee(&_Distributor.TransactOpts, _amount)
+// Solidity: function distributeFee(uint256 _dealedHeight, uint256 _userAmount, uint256 _nodeAmount, uint256 _platformAmount) returns()
+func (_Distributor *DistributorSession) DistributeFee(_dealedHeight *big.Int, _userAmount *big.Int, _nodeAmount *big.Int, _platformAmount *big.Int) (*types.Transaction, error) {
+	return _Distributor.Contract.DistributeFee(&_Distributor.TransactOpts, _dealedHeight, _userAmount, _nodeAmount, _platformAmount)
 }
 
-// DistributeFee is a paid mutator transaction binding the contract method 0x05cc49dd.
+// DistributeFee is a paid mutator transaction binding the contract method 0x897a980c.
 //
-// Solidity: function distributeFee(uint256 _amount) returns()
-func (_Distributor *DistributorTransactorSession) DistributeFee(_amount *big.Int) (*types.Transaction, error) {
-	return _Distributor.Contract.DistributeFee(&_Distributor.TransactOpts, _amount)
+// Solidity: function distributeFee(uint256 _dealedHeight, uint256 _userAmount, uint256 _nodeAmount, uint256 _platformAmount) returns()
+func (_Distributor *DistributorTransactorSession) DistributeFee(_dealedHeight *big.Int, _userAmount *big.Int, _nodeAmount *big.Int, _platformAmount *big.Int) (*types.Transaction, error) {
+	return _Distributor.Contract.DistributeFee(&_Distributor.TransactOpts, _dealedHeight, _userAmount, _nodeAmount, _platformAmount)
 }
 
 // DistributeSlashAmount is a paid mutator transaction binding the contract method 0x535c47a2.
@@ -478,16 +633,17 @@ func (it *DistributorClaimedIterator) Close() error {
 
 // DistributorClaimed represents a Claimed event raised by the Distributor contract.
 type DistributorClaimed struct {
-	Index         *big.Int
-	Account       common.Address
-	ClaimedAmount *big.Int
-	TotalAmount   *big.Int
-	Raw           types.Log // Blockchain specific contextual infos
+	Index            *big.Int
+	Account          common.Address
+	ClaimableReward  *big.Int
+	ClaimableDeposit *big.Int
+	ClaimType        uint8
+	Raw              types.Log // Blockchain specific contextual infos
 }
 
-// FilterClaimed is a free log retrieval operation binding the contract event 0xd9cb1e2714d65a111c0f20f060176ad657496bd47a3de04ec7c3d4ca232112ac.
+// FilterClaimed is a free log retrieval operation binding the contract event 0x805593669516ad95e9aa092bd501707436d9563eac1ef7c017cd6639eb29f8ee.
 //
-// Solidity: event Claimed(uint256 index, address account, uint256 claimedAmount, uint256 totalAmount)
+// Solidity: event Claimed(uint256 index, address account, uint256 claimableReward, uint256 claimableDeposit, uint8 claimType)
 func (_Distributor *DistributorFilterer) FilterClaimed(opts *bind.FilterOpts) (*DistributorClaimedIterator, error) {
 
 	logs, sub, err := _Distributor.contract.FilterLogs(opts, "Claimed")
@@ -497,9 +653,9 @@ func (_Distributor *DistributorFilterer) FilterClaimed(opts *bind.FilterOpts) (*
 	return &DistributorClaimedIterator{contract: _Distributor.contract, event: "Claimed", logs: logs, sub: sub}, nil
 }
 
-// WatchClaimed is a free log subscription operation binding the contract event 0xd9cb1e2714d65a111c0f20f060176ad657496bd47a3de04ec7c3d4ca232112ac.
+// WatchClaimed is a free log subscription operation binding the contract event 0x805593669516ad95e9aa092bd501707436d9563eac1ef7c017cd6639eb29f8ee.
 //
-// Solidity: event Claimed(uint256 index, address account, uint256 claimedAmount, uint256 totalAmount)
+// Solidity: event Claimed(uint256 index, address account, uint256 claimableReward, uint256 claimableDeposit, uint8 claimType)
 func (_Distributor *DistributorFilterer) WatchClaimed(opts *bind.WatchOpts, sink chan<- *DistributorClaimed) (event.Subscription, error) {
 
 	logs, sub, err := _Distributor.contract.WatchLogs(opts, "Claimed")
@@ -534,9 +690,9 @@ func (_Distributor *DistributorFilterer) WatchClaimed(opts *bind.WatchOpts, sink
 	}), nil
 }
 
-// ParseClaimed is a log parse operation binding the contract event 0xd9cb1e2714d65a111c0f20f060176ad657496bd47a3de04ec7c3d4ca232112ac.
+// ParseClaimed is a log parse operation binding the contract event 0x805593669516ad95e9aa092bd501707436d9563eac1ef7c017cd6639eb29f8ee.
 //
-// Solidity: event Claimed(uint256 index, address account, uint256 claimedAmount, uint256 totalAmount)
+// Solidity: event Claimed(uint256 index, address account, uint256 claimableReward, uint256 claimableDeposit, uint8 claimType)
 func (_Distributor *DistributorFilterer) ParseClaimed(log types.Log) (*DistributorClaimed, error) {
 	event := new(DistributorClaimed)
 	if err := _Distributor.contract.UnpackLog(event, "Claimed", log); err != nil {

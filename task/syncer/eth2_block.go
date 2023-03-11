@@ -391,6 +391,7 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 
 	proposedBlock.FeeAmount = decimal.NewFromBigInt(totalFee, 0).StringFixed(0)
 	proposedBlock.Timestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	proposedBlock.BlockNumber = beaconBlock.ExecutionBlockNumber
 
 	err = dao.UpOrInProposedBlock(task.db, proposedBlock)
 	if err != nil {

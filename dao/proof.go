@@ -10,9 +10,11 @@ type Proof struct {
 
 	DealedEpoch uint32 `gorm:"type:int(11) unsigned not null;default:0;column:dealed_epoch;uniqueIndex:uni_address_epoch"` //
 	Address     string `gorm:"type:varchar(80) not null;default:'0x';column:address;uniqueIndex:uni_address_epoch"`        //
-	Index       uint32 `gorm:"type:int(11) unsigned not null;default:0;column:index;"`                                     //gen by gen-proof cli
-	Amount      string `gorm:"type:varchar(40) not null;default:'0';column:amount"`                                        //decimal format
-	Proof       string `gorm:"type:varchar(2048) not null;default:'';column:proof"`                                        // gen by gen-proof cli
+
+	Index                  uint32 `gorm:"type:int(11) unsigned not null;default:0;column:index;"`                 //gen by gen-proof cli
+	TotalRewardAmount      string `gorm:"type:varchar(40) not null;default:'0';column:total_reward_amount"`       //decimal format
+	TotalExitDepositAmount string `gorm:"type:varchar(40) not null;default:'0';column:total_exit_deposit_amount"` //decimal format
+	Proof                  string `gorm:"type:varchar(2048) not null;default:'';column:proof"`                    // gen by gen-proof cli
 }
 
 func (f Proof) TableName() string {

@@ -19,10 +19,11 @@ type ReqProof struct {
 }
 
 type RspProof struct {
-	Index   uint64   `json:"index"`
-	Address string   `json:"address"`
-	Amount  string   `json:"amount"`
-	Proof   []string `json:"proof"`
+	Index                  uint64   `json:"index"`
+	Address                string   `json:"address"`
+	TotalRewardAmount      string   `json:"totalRewardAmount"`
+	TotalExitDepositAmount string   `json:"totalExitDepositAmount"`
+	Proof                  []string `json:"proof"`
 }
 
 // @Summary get proof of claim
@@ -63,10 +64,11 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	}
 
 	retP := RspProof{
-		Index:   uint64(proof.Index),
-		Address: proof.Address,
-		Amount:  proof.Amount,
-		Proof:   strings.Split(proof.Proof, ":"),
+		Index:                  uint64(proof.Index),
+		Address:                proof.Address,
+		TotalRewardAmount:      proof.TotalRewardAmount,
+		TotalExitDepositAmount: proof.TotalExitDepositAmount,
+		Proof:                  strings.Split(proof.Proof, ":"),
 	}
 
 	utils.Ok(c, "success", retP)

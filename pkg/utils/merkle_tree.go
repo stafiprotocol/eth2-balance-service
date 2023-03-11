@@ -175,7 +175,7 @@ func ConbinedHash(b0, b1 NodeHash) NodeHash {
 	return h.Sum(nil)
 }
 
-func GetNodeHash(index *big.Int, account common.Address, amount *big.Int) NodeHash {
-	hash := crypto.Keccak256Hash(common.LeftPadBytes(index.Bytes(), 32), account.Bytes(), common.LeftPadBytes(amount.Bytes(), 32))
+func GetNodeHash(index *big.Int, account common.Address, rewardAmount, depositAmount *big.Int) NodeHash {
+	hash := crypto.Keccak256Hash(common.LeftPadBytes(index.Bytes(), 32), account.Bytes(), common.LeftPadBytes(rewardAmount.Bytes(), 32), common.LeftPadBytes(rewardAmount.Bytes(), 32))
 	return hash[:]
 }
