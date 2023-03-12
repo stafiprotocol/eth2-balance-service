@@ -27,18 +27,17 @@ func (task *Task) setMerkleTree() error {
 	if err != nil {
 		return err
 	}
+
 	// ensure not set
 	if dealedEpochOnchain.Uint64() >= uint64(rootHash.DealedEpoch) {
 		return nil
 	}
 
-	// --- start set merkle root
 	logrus.WithFields(logrus.Fields{
 		"epoch":    rootHash.DealedEpoch,
 		"roothash": rootHash.RootHash,
 	}).Info("will set merkle root")
 
-	// -----3 send vote tx
 	err = task.connection.LockAndUpdateTxOpts()
 	if err != nil {
 		return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
@@ -88,6 +87,7 @@ func (task *Task) setMerkleTree() error {
 		"tx": tx.Hash(),
 	}).Info("SetMerkleRoot tx send ok")
 
+	// ensure distribute all fee before merkle root height
 	err = task.sendTxDistributeSuperNodeFeePool()
 	if err != nil {
 		return err

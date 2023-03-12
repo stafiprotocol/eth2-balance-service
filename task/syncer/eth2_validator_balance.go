@@ -114,7 +114,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 		for pubkey, status := range validatorStatusMap {
 			pubkeyStr := hexutil.Encode(pubkey.Bytes())
 			if !status.Exists {
-				return fmt.Errorf("should exist status on beacon chain, pubkey: %s, epoch: %d", pubkeyStr, epoch)
+				return fmt.Errorf("status not exist on beacon chain, pubkey: %s, epoch: %d", pubkeyStr, epoch)
 			}
 			validatorIndex := status.Index
 			nodeAddress, exist := pubkeyToNodeAddress[pubkeyStr]
@@ -126,13 +126,13 @@ func (task *Task) syncValidatorEpochBalances() error {
 				return fmt.Errorf("validator info not exist in pubkeyToValidator")
 			}
 
-			// cal total withdrawal
+			// calc total withdrawal
 			totalWithdrawal, err := dao.GetValidatorTotalWithdrawalBeforeSlot(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch))
 			if err != nil {
 				return errors.Wrap(err, "GetValidatorTotalWithdrawalBeforeSlot failed")
 			}
 
-			// cal total fee to fee pool
+			// calc total fee to fee pool/super fee pool
 			feePoolAddress := task.lightNodeFeePoolAddress
 			if validatorInfo.NodeType == utils.NodeTypeSuper || validatorInfo.NodeType == utils.NodeTypeTrust {
 				feePoolAddress = task.superNodeFeePoolAddress

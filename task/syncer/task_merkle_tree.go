@@ -25,14 +25,6 @@ func (task *Task) calcMerkleTree() error {
 	calMerkleTreeDu := task.rewardEpochInterval // 8 hours for test
 
 	targetEpoch := (beaconHead.FinalizedEpoch / calMerkleTreeDu) * calMerkleTreeDu
-	eth2NodeBalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2NodeBalanceCollector)
-	if err != nil {
-		return err
-	}
-	// ensure node balances already caled
-	if eth2NodeBalanceSyncerMetaData.DealedEpoch < targetEpoch {
-		return nil
-	}
 
 	rootHash, err := dao.GetRootHash(task.db, targetEpoch)
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -40,6 +32,15 @@ func (task *Task) calcMerkleTree() error {
 	}
 	// just return if already cal
 	if err == nil {
+		return nil
+	}
+
+	eth2NodeBalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2NodeBalanceCollector)
+	if err != nil {
+		return err
+	}
+	// ensure node balances already caled
+	if eth2NodeBalanceSyncerMetaData.DealedEpoch < targetEpoch {
 		return nil
 	}
 
@@ -65,7 +66,6 @@ func (task *Task) calcMerkleTree() error {
 		if err != nil {
 			return err
 		}
-
 		valIndexList := make([]uint64, len(valList))
 		for i, val := range valList {
 			valIndexList[i] = val.ValidatorIndex
@@ -77,24 +77,25 @@ func (task *Task) calcMerkleTree() error {
 		totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).
 			Mul(utils.GweiDeci)
 
+		// total claimable deposit
 		totalExitDepositAmountDeci := decimal.NewFromInt(int64(nodeBalance.TotalExitNodeDepositAmount)).
 			Mul(utils.GweiDeci)
 
+		// total claimable node reward
 		totalClaimableNodeRewardAmountDeci := decimal.NewFromInt(int64(nodeBalance.TotalSelfClaimableReward)).
 			Mul(utils.GweiDeci)
-
 		finalTotalClaimableNodeRewardAmountDeci := totalClaimableNodeRewardAmountDeci.
 			Sub(totalSlashAmountDeci)
-
 		if finalTotalClaimableNodeRewardAmountDeci.IsNegative() {
 			finalTotalClaimableNodeRewardAmountDeci = decimal.Zero
 		}
 
-		proof.Address = nodeBalance.NodeAddress
-		proof.TotalRewardAmount = finalTotalClaimableNodeRewardAmountDeci.StringFixed(0)
-		proof.TotalExitDepositAmount = totalExitDepositAmountDeci.StringFixed(0)
-		proof.Index = uint32(i)
 		proof.DealedEpoch = uint32(targetEpoch)
+		proof.Address = nodeBalance.NodeAddress
+		proof.Index = uint32(i)
+
+		proof.TotalExitDepositAmount = totalExitDepositAmountDeci.StringFixed(0)
+		proof.TotalRewardAmount = finalTotalClaimableNodeRewardAmountDeci.StringFixed(0)
 
 		proofList[i] = proof
 	}
@@ -108,7 +109,7 @@ func (task *Task) calcMerkleTree() error {
 		return err
 	}
 
-	// cal and save  proof
+	// calc and save  proof
 	for _, proof := range proofList {
 		totalRewardAmountDeci, err := decimal.NewFromString(proof.TotalRewardAmount)
 		if err != nil {
@@ -148,7 +149,7 @@ func (task *Task) calcMerkleTree() error {
 	logrus.WithFields(logrus.Fields{
 		"epoch":    targetEpoch,
 		"roothash": treeHash.String(),
-	}).Info("cal merkleTree")
+	}).Info("calc merkleTree success")
 
 	return nil
 }

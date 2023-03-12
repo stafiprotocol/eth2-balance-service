@@ -36,13 +36,13 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return nil
 	}
 
-	eth1SyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
+	eth1BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
 	if err != nil {
 		return err
 	}
 
 	// ensure all eth1 event synced before targetEth1BlockHeight
-	if eth1SyncerMetaData.DealedBlockHeight < targetEth1BlockHeight {
+	if eth1BlockSyncerMetaData.DealedBlockHeight < targetEth1BlockHeight {
 		return nil
 	}
 

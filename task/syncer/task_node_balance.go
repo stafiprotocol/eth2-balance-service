@@ -1,6 +1,8 @@
 package task_syncer
 
 import (
+	"fmt"
+
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
@@ -15,42 +17,24 @@ func (task *Task) collectNodeEpochBalances() error {
 		return err
 	}
 	finalEpoch := beaconHead.FinalizedEpoch
-	eth2ValidatorInfoSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
-	if err != nil {
-		return err
-	}
-	// ---1 ensure validators latest info already synced
-	if finalEpoch > eth2ValidatorInfoSyncerMetaData.DealedEpoch {
-		finalEpoch = eth2ValidatorInfoSyncerMetaData.DealedEpoch
-	}
-
-	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
-	if err != nil {
-		return err
-	}
-
-	// ---2 ensure eth2 blocks info(slash/withdrawals) already synced
-	if finalEpoch > eth2BlockSyncerMetaData.DealedEpoch {
-		finalEpoch = eth2BlockSyncerMetaData.DealedEpoch
-	}
-
-	eth2ValidatorBalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
-	if err != nil {
-		return err
-	}
-	// ---3 ensure validators epoch balances  already synced
-	if finalEpoch > eth2ValidatorBalanceMetaData.DealedEpoch {
-		finalEpoch = eth2ValidatorBalanceMetaData.DealedEpoch
-	}
 
 	eth2NodeBalanceCollectorMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2NodeBalanceCollector)
 	if err != nil {
 		return err
 	}
 
-	// return if no need collect
+	// return if already calc
 	if finalEpoch <= eth2NodeBalanceCollectorMetaData.DealedEpoch {
 		return nil
+	}
+
+	eth2ValidatorBalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
+	if err != nil {
+		return err
+	}
+	// ---1 ensure validators epoch balances  already synced
+	if finalEpoch > eth2ValidatorBalanceMetaData.DealedEpoch {
+		finalEpoch = eth2ValidatorBalanceMetaData.DealedEpoch
 	}
 
 	for epoch := eth2NodeBalanceCollectorMetaData.DealedEpoch + 1; epoch <= finalEpoch; epoch++ {
@@ -90,6 +74,9 @@ func (task *Task) collectNodeEpochBalances() error {
 			if err != nil {
 				return err
 			}
+			if len(list) == 0 {
+				return fmt.Errorf("validator balance list empty, nodeaddress: %s, epoch: %d", nodeAddress, epoch)
+			}
 
 			// calc node info at this epoch
 			nodeBalance, err := dao.GetNodeBalance(task.db, nodeAddress, epoch)
@@ -117,8 +104,10 @@ func (task *Task) collectNodeEpochBalances() error {
 				}
 
 				if l.Balance > 0 {
+					// partial withdrawl
 					TotalNodeDepositAmount += valInfo.NodeDepositAmount
 				} else {
+					// full withdraw
 					TotalExitNodeDepositAmount += valInfo.NodeDepositAmount
 				}
 
@@ -147,8 +136,8 @@ func (task *Task) collectNodeEpochBalances() error {
 			nodeBalance.TotalExitNodeDepositAmount = TotalExitNodeDepositAmount
 			nodeBalance.TotalBalance = TotalBalance
 			nodeBalance.TotalWithdrawal = TotalWithdrawal
-			nodeBalance.TotalFee = TotalFee
 			nodeBalance.TotalEffectiveBalance = TotalEffectiveBalance
+			nodeBalance.TotalFee = TotalFee
 			nodeBalance.TotalReward = TotalReward
 
 			nodeBalance.TotalSelfReward = TotalSelfReward
@@ -159,6 +148,7 @@ func (task *Task) collectNodeEpochBalances() error {
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err
 			}
+			// if pre epoch node balance exist
 			if err == nil {
 				totalSelfEraReward := uint64(0)
 				if nodeBalance.TotalSelfReward > preEpochNodeBalance.TotalSelfReward {

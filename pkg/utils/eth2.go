@@ -17,11 +17,11 @@ const (
 	ValidatorStatusDeposited = uint8(1)
 
 	// lightnode + super node related
-	ValidatorStatusWithdrawMatch = uint8(2)
-	ValidatorStatusStaked        = uint8(3)
+	ValidatorStatusWithdrawMatch   = uint8(2)
+	ValidatorStatusStaked          = uint8(3)
+	ValidatorStatusWithdrawUnmatch = uint8(4)
 
 	// lightnode related
-	ValidatorStatusWithdrawUnmatch     = uint8(4)
 	ValidatorStatusOffBoard            = uint8(5)
 	ValidatorStatusOffBoardCanWithdraw = uint8(6)
 	ValidatorStatusOffBoardWithdrawed  = uint8(7)
