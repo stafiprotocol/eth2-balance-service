@@ -163,6 +163,20 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
+	// delte exitElection not in validators
+	exitElectionList, err := dao.GetAllNotExitElectionList(task.db)
+	if err != nil {
+		return err
+	}
+	for _, val := range exitElectionList {
+		_, err := dao.GetValidatorByIndex(task.db, val.ValidatorIndex)
+		if err == gorm.ErrRecordNotFound {
+			err := dao.DeleteExitElectionByValIndex(task.db, val.ValidatorIndex)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	utils.SafeGoWithRestart(task.syncEth1BlockHandler)
 	utils.SafeGoWithRestart(task.syncEth2ValidatorLatestInfoHandler)
@@ -471,6 +485,16 @@ func (task *Task) syncEth2ValidatorLatestInfoHandler() {
 				continue
 			}
 			logrus.Debug("syncValidatorLatestInfo end -----------")
+
+			logrus.Debug("exitElectionCheck start -----------")
+			err = task.exitElectionCheck()
+			if err != nil {
+				logrus.Warnf("exitElectionCheck err: %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("exitElectionCheck end -----------")
 
 			retry = 0
 		}

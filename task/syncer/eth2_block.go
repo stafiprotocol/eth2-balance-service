@@ -577,7 +577,7 @@ func (task *Task) syncSlashEventEndSlotInfo() error {
 
 		// ensure endEpoch <= withdrawableEpoch
 		endEpoch := beaconHead.FinalizedEpoch
-		if validatorNow.WithdrawableEpoch != uint64(math.MaxUint64) && validatorNow.WithdrawableEpoch < beaconHead.FinalizedEpoch {
+		if validatorNow.WithdrawableEpoch != math.MaxUint64 && validatorNow.WithdrawableEpoch < beaconHead.FinalizedEpoch {
 			endEpoch = validatorNow.WithdrawableEpoch
 		}
 		endSlot := utils.StartSlotOfEpoch(task.eth2Config, endEpoch)

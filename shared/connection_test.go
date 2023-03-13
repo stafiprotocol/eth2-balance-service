@@ -158,6 +158,8 @@ func TestBalance(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(epochStatus.Balance)
+	t.Log(epochStatus.Status)
+	t.Logf("%+v", epochStatus)
 
 	config, err := c.Eth2Client().GetEth2Config()
 	if err != nil {

@@ -24,6 +24,8 @@ type Validator struct {
 	NodeDepositAmount  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:node_deposit_amount"`  // Gwei
 	ActiveEpoch        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:active_epoch"`
 	EligibleEpoch      uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:eligible_epoch"`
+	ExitEpoch          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:exit_epoch"`
+	WithdrawableEpoch  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:withdrawable_epoch"`
 
 	PoolAddress string `gorm:"type:varchar(80) not null;default:'';column:pool_address"` // hex with 0x prefix, used in common nodes
 
@@ -79,6 +81,11 @@ func GetValidatorDepositedListBeforeEqual(db *db.WrapDb, height uint64) (c []*Va
 
 func GetValidatorListActiveEpochBefore(db *db.WrapDb, epoch uint64) (c []*Validator, err error) {
 	err = db.Find(&c, "active_epoch <= ? and active_epoch <> 0", epoch).Error
+	return
+}
+
+func GetValidatorListWithdrawableEpochAfter(db *db.WrapDb, epoch uint64) (c []*Validator, err error) {
+	err = db.Find(&c, "withdrawable_epoch > ?", epoch).Error
 	return
 }
 

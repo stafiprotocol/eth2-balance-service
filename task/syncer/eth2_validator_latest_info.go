@@ -2,6 +2,7 @@ package task_syncer
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
@@ -103,6 +104,18 @@ func (task *Task) syncValidatorLatestInfo() error {
 				validator.ActiveEpoch = status.ActivationEpoch
 				validator.EligibleEpoch = status.ActivationEligibilityEpoch
 				validator.ValidatorIndex = status.Index
+
+				exitEpoch := status.ExitEpoch
+				if exitEpoch == math.MaxUint64 {
+					exitEpoch = 0
+				}
+				withdrawableEpoch := status.WithdrawableEpoch
+				if withdrawableEpoch == math.MaxUint64 {
+					withdrawableEpoch = 0
+				}
+
+				validator.ExitEpoch = exitEpoch
+				validator.WithdrawableEpoch = withdrawableEpoch
 			}
 
 			updateBalance := func() {

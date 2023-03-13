@@ -105,6 +105,7 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 			}
 			election.NotifyTimestamp = block.Header().Time
 			election.ValidatorIndex = validator.Uint64()
+			election.WithdrawCycle = iterElection.Event.WithdrawCycle.Uint64()
 
 			err = dao.UpOrInExitElection(task.db, election)
 			if err != nil {

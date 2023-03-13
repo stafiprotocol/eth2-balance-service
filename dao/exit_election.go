@@ -13,9 +13,11 @@ type ExitElection struct {
 	db.BaseModel
 	ValidatorIndex    uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index;uniqueIndex"`
 	NotifyBlockNumber uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:notify_block_number"`
-	ExitBlockNumber   uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:exit_block_number"`
 	NotifyTimestamp   uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:notify_timestamp"`
-	ExitTimestamp     uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:exit_timestamp"`
+	WithdrawCycle     uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:withdraw_cycle"`
+
+	ExitEpoch     uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:exit_epoch"`
+	ExitTimestamp uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:exit_timestamp"`
 }
 
 func (f ExitElection) TableName() string {
@@ -49,6 +51,16 @@ func GetExitElectionList(db *db.WrapDb, pageIndex, pageCount int) (c []*ExitElec
 	}
 
 	err = db.Order("notify_timestamp desc").Limit(pageCount).Offset((pageIndex - 1) * pageCount).Find(&c).Error
+	return
+}
+
+func GetAllNotExitElectionList(db *db.WrapDb) (c []*ExitElection, err error) {
+	err = db.Order("notify_timestamp asc").Find(&c, "exit_epoch > 0").Error
+	return
+}
+
+func DeleteExitElectionByValIndex(db *db.WrapDb, valIndex uint64) (err error) {
+	err = db.Delete(&ExitElection{}, "validator_index = ?", valIndex).Error
 	return
 }
 

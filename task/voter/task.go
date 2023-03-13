@@ -249,16 +249,16 @@ func (task *Task) voteHandler() {
 			}
 			logrus.Debug("setMerkleTree end -----------\n")
 
-			// logrus.Debug("notifyValidatorExit start -----------")
-			// err = task.notifyValidatorExit()
-			// if err != nil {
-			// 	logrus.Warnf("notifyValidatorExit err %s", err)
-			// 	time.Sleep(utils.RetryInterval)
-			// 	retry++
-			// 	continue
-			// }
-			// logrus.Debug("notifyValidatorExit end -----------\n")
-			// retry = 0
+			logrus.Debug("notifyValidatorExit start -----------")
+			err = task.notifyValidatorExit()
+			if err != nil {
+				logrus.Warnf("notifyValidatorExit err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("notifyValidatorExit end -----------\n")
+			retry = 0
 		}
 	}
 }
