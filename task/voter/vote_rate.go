@@ -19,7 +19,7 @@ var maxRateChangeDeci = decimal.NewFromInt(1e14) //0.0001
 
 // update rate every rewardEpochInterval(default: 75 epoch)
 func (task *Task) voteRate() error {
-	targetEpoch, targetEth1BlockHeight, shouldGoNext, err := task.checkSyncState()
+	targetEpoch, targetEth1BlockHeight, shouldGoNext, err := task.checkSyncStateForRate()
 	if err != nil {
 		return errors.Wrap(err, "voteRate checkSyncState failed")
 	}
@@ -150,61 +150,12 @@ func (task *Task) voteRate() error {
 	}).Info("exchangeInfo")
 
 	// send vote tx
-	err = task.connection.LockAndUpdateTxOpts()
-	if err != nil {
-		return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
-	}
-	defer task.connection.UnlockTxOpts()
-
-	tx, err := task.networkBalancesContract.SubmitBalances(
-		task.connection.TxOpts(),
-		balancesEpoch,
-		totalUserEthDeci.BigInt(),
-		totalStakingEthDeci.BigInt(),
-		rethTotalSupply)
-	if err != nil {
-		return err
-	}
-
-	logrus.Info("send submitBalances tx hash: ", tx.Hash().String())
-	// todo extract and check tx status
-	retry := 0
-	for {
-		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return fmt.Errorf("networkBalancesContract.SubmitBalances tx reach retry limit")
-		}
-		tx, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
-		if err == nil && !pending {
-			break
-		} else {
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":  err.Error(),
-					"hash": tx.Hash(),
-				}).Warn("tx status")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"hash":   tx.Hash(),
-					"status": "pending",
-				}).Warn("tx status")
-			}
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-
-	}
-	logrus.WithFields(logrus.Fields{
-		"tx": tx.Hash(),
-	}).Info("submitBalances tx send ok")
-
-	return nil
+	return task.sendVoteRateTx(balancesEpoch, totalUserEthDeci.BigInt(), totalStakingEthDeci.BigInt(), rethTotalSupply)
 }
 
 // check sync state
 // return (targetEpoch, targetEth1Blocknumber, shouldGoNext, err)
-func (task *Task) checkSyncState() (uint64, uint64, bool, error) {
+func (task *Task) checkSyncStateForRate() (uint64, uint64, bool, error) {
 	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {
 		return 0, 0, false, err
@@ -274,4 +225,58 @@ func (task *Task) checkSyncState() (uint64, uint64, bool, error) {
 	}
 
 	return targetEpoch, targetEpochStartBlockHeight, true, nil
+}
+
+func (task *Task) sendVoteRateTx(balancesEpoch, totalUserEth, totalStakingEth, rethTotalSupply *big.Int) error {
+	err := task.connection.LockAndUpdateTxOpts()
+	if err != nil {
+		return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
+	}
+	defer task.connection.UnlockTxOpts()
+
+	tx, err := task.networkBalancesContract.SubmitBalances(
+		task.connection.TxOpts(),
+		balancesEpoch,
+		totalUserEth,
+		totalStakingEth,
+		rethTotalSupply)
+	if err != nil {
+		return err
+	}
+
+	logrus.Info("send submitBalances tx hash: ", tx.Hash().String())
+
+	// todo extract and check tx status
+	retry := 0
+	for {
+		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
+			return fmt.Errorf("networkBalancesContract.SubmitBalances tx reach retry limit")
+		}
+		tx, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
+		if err == nil && !pending {
+			break
+		} else {
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"err":  err.Error(),
+					"hash": tx.Hash(),
+				}).Warn("tx status")
+			} else {
+				logrus.WithFields(logrus.Fields{
+					"hash":   tx.Hash(),
+					"status": "pending",
+				}).Warn("tx status")
+			}
+			time.Sleep(utils.RetryInterval)
+			retry++
+			continue
+		}
+
+	}
+	logrus.WithFields(logrus.Fields{
+		"tx": tx.Hash(),
+	}).Info("submitBalances tx send ok")
+
+	return nil
 }
