@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/shopspring/decimal"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
@@ -82,11 +83,14 @@ func TestBuildMerkleTree(t *testing.T) {
 
 func TestProofNodeHash(t *testing.T) {
 
+	// {"data":{"index":0,"address":"0x9c259119F309D2aA8dcBa838D9A4EC77d8d0E8B0","totalRewardAmount":"0","totalExitDepositAmount":"0","proof":["3069e87c18614176aa4d8b46694ffa99aad523436687f7b745583532a89432dd","6d0ea2794d8c7b586448a373b118366b0cec1d1c1da1a9d7ecf496a0ffbeb2ab"]},"message":"success","status":"80000"}
+	// {"data":{"index":1,"address":"0xfe15cf269aA7cf067210d73AC228E37F89df3534","totalRewardAmount":"15091037000000000","totalExitDepositAmount":"0","proof":["11c02bc62dc17961f489d78b53902d19eca4a8a99a7aa05120272deed73f68cf","6d0ea2794d8c7b586448a373b118366b0cec1d1c1da1a9d7ecf496a0ffbeb2ab"]},"message":"success","status":"80000"}
+	// {"data":{"index":2,"address":"0x40Ef30c23027D346dab48604a0B80eD8a97C14F5","totalRewardAmount":"14972902000000000","totalExitDepositAmount":"0","proof":["df29f6bd5e905476f38d021ad7ddcb8c81ab927857920d98259cabd9ae69ab09"]},"message":"success","status":"80000"}
+
 	claims := []*dao.Proof{
-		{Index: 0, Address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", TotalRewardAmount: "1000000000000000000"},
-		{Index: 1, Address: "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955", TotalRewardAmount: "2000000000000000000"},
-		{Index: 2, Address: "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955", TotalRewardAmount: "3000000000000000000"},
-		{Index: 3, Address: "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955", TotalRewardAmount: "4000000000000000000"},
+		{Index: 0, Address: "0x9c259119F309D2aA8dcBa838D9A4EC77d8d0E8B0", TotalRewardAmount: "0", TotalExitDepositAmount: "0"},
+		{Index: 1, Address: "0xfe15cf269aA7cf067210d73AC228E37F89df3534", TotalRewardAmount: "15091037000000000", TotalExitDepositAmount: "0"},
+		{Index: 2, Address: "0x40Ef30c23027D346dab48604a0B80eD8a97C14F5", TotalRewardAmount: "14972902000000000", TotalExitDepositAmount: "0"},
 	}
 
 	mt, err := BuildMerkleTree(claims)
@@ -98,9 +102,35 @@ func TestProofNodeHash(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if rootHash.String() != "b04c9d382e83099b628bb1f8a0f1e7a4b13837394a12d212bd0eea2300ee9203" {
-		t.Fatal("root hash not match")
+	// 68c7635556bd013acfdc849be4585bbbe4fd9d45f9fdfbc9769e85c04edc6cd7
+	claim := claims[2]
+	t.Log(rootHash.String())
+	totalRewardAmountDeci, err := decimal.NewFromString(claim.TotalRewardAmount)
+	if err != nil {
+		t.Fatal(err)
 	}
+	totalExitDepositAmountDeci, err := decimal.NewFromString(claim.TotalExitDepositAmount)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 0x000000000000000000000000000000000000000000000000000000000000000240ef30c23027d346dab48604a0b80ed8a97c14f5000000000000000000000000000000000000000000000000003531c668f77c000000000000000000000000000000000000000000000000000000000000000000
+
+	leaf := utils.GetNodeHash(big.NewInt(int64(claim.Index)), common.HexToAddress(claim.Address), totalRewardAmountDeci.BigInt(), totalExitDepositAmountDeci.BigInt())
+	t.Log("leaf", leaf.String())
+	proof, err := mt.GetProof(leaf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, p := range proof {
+
+		t.Log("proof: ", hex.EncodeToString(p))
+	}
+	resut := utils.VerifyProof(leaf, proof, rootHash)
+	t.Log(resut)
+
+	t.Log(hex.EncodeToString(hexutil.MustDecode("0x0011")))
+	t.Log(hex.EncodeToString(hexutil.MustDecode("0x001100")))
 }
 
 func BuildMerkleTree(datas []*dao.Proof) (*utils.MerkleTree, error) {

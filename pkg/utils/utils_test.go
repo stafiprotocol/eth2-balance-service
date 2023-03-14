@@ -195,7 +195,23 @@ func TestDecodeInputData(t *testing.T) {
 		"0x236b5c8327b3328de76aa903fb8a2d7db41627f5ddf3e5c4eda2a74858b1fe4b",
 		"0x7347fc4aeda8b5064234979f1271df6c33e832c535b2442bd6210704dbf9ac7d",
 		"0x509d551269a0c9e85d38a7ec3add46aa21921f28fdf124de2a92db31684ef0ef",
+		"0xa654a80cf78983a75e8f168df4d3686aaad960c30415d6574cb8cfbc25e6b348",
+		"0x4683eb073ba24faf781ed85eefad74955c2d9dcc578d04b8194b4523aacff404",
+		"0xf61d4b0d65336bf9c746a28e05a20fff55d545363b5d9459f54bda59a8def92b",
+		"0x88705401927ff936229b153cd3516c8cad9e16173ed51b06f16876658babfc89",
+		"0x7a43d8ac64d1435239400be138f96f5b476477941dfe40d52de3b9767f8722ea",
+		"0x8554b6785c99f207eb4691da08327f158ed398e925f5e340b5178da238ae3002",
+		"0xe32ecdbba7b37499aa9fa9a59989a0be20d0b96cc785eb81a273248a1269348c",
 	}
+
+	totalUserAmount := big.NewInt(0)
+	totalNodeAmount := big.NewInt(0)
+	totalPlatformAmount := big.NewInt(0)
+
+	totalUserAmount1 := big.NewInt(0)
+	totalNodeAmount1 := big.NewInt(0)
+	totalPlatformAmount1 := big.NewInt(0)
+
 	for _, hash := range hashs {
 
 		tx, _, err := client.TransactionByHash(context.Background(), common.HexToHash(hash))
@@ -218,9 +234,19 @@ func TestDecodeInputData(t *testing.T) {
 		json.Unmarshal(bts, &p)
 		total := new(big.Int).Add(new(big.Int).Add(p.UserAmount, p.NodeAmount), p.PlatformAmount)
 		t.Log(p, total)
+		totalUserAmount1 = new(big.Int).Add(totalUserAmount1, p.UserAmount)
+		totalNodeAmount1 = new(big.Int).Add(totalNodeAmount1, p.NodeAmount)
+		totalPlatformAmount1 = new(big.Int).Add(totalPlatformAmount1, p.PlatformAmount)
+
 		user, node, platform := utils.GetUserNodePlatformRewardV2(4000000000, decimal.NewFromBigInt(total, 0))
 		t.Log(user, node, platform)
+
+		totalUserAmount = new(big.Int).Add(totalUserAmount, user.BigInt())
+		totalNodeAmount = new(big.Int).Add(totalNodeAmount, node.BigInt())
+		totalPlatformAmount = new(big.Int).Add(totalPlatformAmount, platform.BigInt())
 	}
+	t.Log(totalUserAmount, totalNodeAmount, totalPlatformAmount, new(big.Int).Add(totalNodeAmount, totalPlatformAmount))
+	t.Log(totalUserAmount1, totalNodeAmount1, totalPlatformAmount1, new(big.Int).Add(totalNodeAmount1, totalPlatformAmount1))
 	// {255680 4215416512500000 1328222037500000 291770450000000 3} 5835409000000000
 	// utils_test.go:222: 4595384587500000 948253962500000 291770450000000
 	// utils_test.go:220: {257920 3525303037500000 1477145212500000 263286750000000 3} 5265735000000000
