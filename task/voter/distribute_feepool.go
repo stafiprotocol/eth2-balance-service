@@ -57,50 +57,8 @@ func (task *Task) distributeFeePool() error {
 		"totalPlatformEthDeci":  totalPlatformEthDeci.String(),
 	}).Info("Will DistributeFee")
 
-	err = task.connection.LockAndUpdateTxOpts()
-	if err != nil {
-		return err
-	}
-	defer task.connection.UnlockTxOpts()
-
-	tx, err := task.distributorContract.DistributeFee(task.connection.TxOpts(),
-		big.NewInt(int64(targetEth1BlockHeight)), totalUserEthDeci.BigInt(), totalNodeEthDeci.BigInt(), totalPlatformEthDeci.BigInt())
-	if err != nil {
-		return err
-	}
-	logrus.Info("send DistributeFee tx hash: ", tx.Hash().String())
-
-	retry := 0
-	for {
-		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return fmt.Errorf("distributorContract.DistributeFee tx reach retry limit")
-		}
-		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
-		if err == nil && !pending {
-			break
-		} else {
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":  err.Error(),
-					"hash": tx.Hash(),
-				}).Warn("tx status")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"hash":   tx.Hash(),
-					"status": "pending",
-				}).Warn("tx status")
-			}
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-	}
-	logrus.WithFields(logrus.Fields{
-		"tx": tx.Hash(),
-	}).Info("DistributeFee tx send ok")
-
-	return nil
+	return task.sendDistributeFeeTx(big.NewInt(int64(targetEth1BlockHeight)),
+		totalUserEthDeci.BigInt(), totalNodeEthDeci.BigInt(), totalPlatformEthDeci.BigInt())
 }
 
 // check sync and vote state
@@ -183,4 +141,85 @@ func (task *Task) checkStateForDistriFeePool() (uint64, uint64, bool, bool, erro
 	}
 
 	return latestDistributeHeight.Uint64(), targetEth1BlockHeight, true, skipMinLimit, nil
+}
+
+func (task *Task) sendDistributeFeeTx(targetEth1BlockHeight, totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci *big.Int) error {
+	err := task.connection.LockAndUpdateTxOpts()
+	if err != nil {
+		return err
+	}
+	defer task.connection.UnlockTxOpts()
+
+	tx, err := task.distributorContract.DistributeFee(task.connection.TxOpts(),
+		targetEth1BlockHeight, totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci)
+	if err != nil {
+		return err
+	}
+	logrus.Info("send DistributeFee tx hash: ", tx.Hash().String())
+
+	retry := 0
+	for {
+		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
+			return fmt.Errorf("distributorContract.DistributeFee tx reach retry limit")
+		}
+		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
+		if err == nil && !pending {
+			break
+		} else {
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"err":  err.Error(),
+					"hash": tx.Hash(),
+				}).Warn("tx status")
+			} else {
+				logrus.WithFields(logrus.Fields{
+					"hash":   tx.Hash(),
+					"status": "pending",
+				}).Warn("tx status")
+			}
+			time.Sleep(utils.RetryInterval)
+			retry++
+			continue
+		}
+	}
+	logrus.WithFields(logrus.Fields{
+		"tx": tx.Hash(),
+	}).Info("DistributeFee tx send ok")
+	return nil
+}
+
+// return (user reward, node reward, platform fee, totalFee) decimals 18
+func (task Task) getUserNodePlatformFromFeePool(latestDistributeHeight, targetEth1BlockHeight uint64) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, error) {
+	proposedBlockList, err := dao.GetProposedBlockListBetween(task.db, latestDistributeHeight, targetEth1BlockHeight, task.feePoolAddress.String())
+	if err != nil {
+		return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+	}
+
+	totalAmountDeci := decimal.Zero
+	totalUserEthDeci := decimal.Zero
+	totalNodeEthDeci := decimal.Zero
+	totalPlatformEthDeci := decimal.Zero
+	for _, w := range proposedBlockList {
+		validator, err := dao.GetValidatorByIndex(task.db, w.ValidatorIndex)
+		if err != nil {
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+		}
+		feeAmountDeci, err := decimal.NewFromString(w.FeeAmount)
+		if err != nil {
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+		}
+
+		totalAmountDeci = totalAmountDeci.Add(feeAmountDeci)
+
+		// cal rewards
+		userRewardDeci, nodeRewardDeci, platformFeeDeci := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, feeAmountDeci)
+		// cal reward + deposit
+		totalUserEthDeci = totalUserEthDeci.Add(userRewardDeci)
+		totalNodeEthDeci = totalNodeEthDeci.Add(nodeRewardDeci)
+		totalPlatformEthDeci = totalPlatformEthDeci.Add(platformFeeDeci)
+
+	}
+
+	return totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, nil
 }

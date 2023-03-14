@@ -30,7 +30,7 @@ var (
 
 // DistributorMetaData contains all meta data concerning the Distributor contract.
 var DistributorMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"claimableReward\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"claimableDeposit\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"enumClaimType\",\"name\":\"claimType\",\"type\":\"uint8\"}],\"name\":\"Claimed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"}],\"name\":\"ProposalExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"voter\",\"type\":\"address\"}],\"name\":\"VoteProposal\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_totalRewardAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_totalExitDepositAmount\",\"type\":\"uint256\"},{\"internalType\":\"bytes32[]\",\"name\":\"_merkleProof\",\"type\":\"bytes32[]\"},{\"internalType\":\"enumClaimType\",\"name\":\"_claimType\",\"type\":\"uint8\"}],\"name\":\"claim\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_userAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_nodeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_platformAmount\",\"type\":\"uint256\"}],\"name\":\"distributeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"distributeSlashAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"distributeSuperNodeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"distributeWithdrawals\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCurrentNodeDepositAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDistributeFeeDealedHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMerkleDealedEpoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMerkleRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"getTotalClaimedDeposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"getTotalClaimedReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"receiveEtherWithdrawal\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedEpoch\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"setMerkleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"claimableReward\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"claimableDeposit\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"enumClaimType\",\"name\":\"claimType\",\"type\":\"uint8\"}],\"name\":\"Claimed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedHeight\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"userAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"nodeAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"platformAmount\",\"type\":\"uint256\"}],\"name\":\"DistributeFee\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedHeight\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"slashAmount\",\"type\":\"uint256\"}],\"name\":\"DistributeSlash\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedHeight\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"userAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"nodeAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"platformAmount\",\"type\":\"uint256\"}],\"name\":\"DistributeSuperNodeFee\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"}],\"name\":\"ProposalExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedEpoch\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"SetMerkleRoot\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"voter\",\"type\":\"address\"}],\"name\":\"VoteProposal\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_totalRewardAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_totalExitDepositAmount\",\"type\":\"uint256\"},{\"internalType\":\"bytes32[]\",\"name\":\"_merkleProof\",\"type\":\"bytes32[]\"},{\"internalType\":\"enumClaimType\",\"name\":\"_claimType\",\"type\":\"uint8\"}],\"name\":\"claim\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_userAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_nodeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_platformAmount\",\"type\":\"uint256\"}],\"name\":\"distributeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"distributeSlashAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_userAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_nodeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_platformAmount\",\"type\":\"uint256\"}],\"name\":\"distributeSuperNodeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"distributeWithdrawals\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCurrentNodeDepositAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDistributeFeeDealedHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDistributeSlashDealedHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDistributeSuperNodeFeeDealedHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMerkleDealedEpoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMerkleRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"getTotalClaimedDeposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"getTotalClaimedReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"receiveEtherWithdrawal\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedEpoch\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"setMerkleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}]",
 }
 
 // DistributorABI is the input ABI used to generate the binding from.
@@ -239,6 +239,68 @@ func (_Distributor *DistributorSession) GetDistributeFeeDealedHeight() (*big.Int
 // Solidity: function getDistributeFeeDealedHeight() view returns(uint256)
 func (_Distributor *DistributorCallerSession) GetDistributeFeeDealedHeight() (*big.Int, error) {
 	return _Distributor.Contract.GetDistributeFeeDealedHeight(&_Distributor.CallOpts)
+}
+
+// GetDistributeSlashDealedHeight is a free data retrieval call binding the contract method 0xb56fab8b.
+//
+// Solidity: function getDistributeSlashDealedHeight() view returns(uint256)
+func (_Distributor *DistributorCaller) GetDistributeSlashDealedHeight(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Distributor.contract.Call(opts, &out, "getDistributeSlashDealedHeight")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetDistributeSlashDealedHeight is a free data retrieval call binding the contract method 0xb56fab8b.
+//
+// Solidity: function getDistributeSlashDealedHeight() view returns(uint256)
+func (_Distributor *DistributorSession) GetDistributeSlashDealedHeight() (*big.Int, error) {
+	return _Distributor.Contract.GetDistributeSlashDealedHeight(&_Distributor.CallOpts)
+}
+
+// GetDistributeSlashDealedHeight is a free data retrieval call binding the contract method 0xb56fab8b.
+//
+// Solidity: function getDistributeSlashDealedHeight() view returns(uint256)
+func (_Distributor *DistributorCallerSession) GetDistributeSlashDealedHeight() (*big.Int, error) {
+	return _Distributor.Contract.GetDistributeSlashDealedHeight(&_Distributor.CallOpts)
+}
+
+// GetDistributeSuperNodeFeeDealedHeight is a free data retrieval call binding the contract method 0xad4a473a.
+//
+// Solidity: function getDistributeSuperNodeFeeDealedHeight() view returns(uint256)
+func (_Distributor *DistributorCaller) GetDistributeSuperNodeFeeDealedHeight(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Distributor.contract.Call(opts, &out, "getDistributeSuperNodeFeeDealedHeight")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetDistributeSuperNodeFeeDealedHeight is a free data retrieval call binding the contract method 0xad4a473a.
+//
+// Solidity: function getDistributeSuperNodeFeeDealedHeight() view returns(uint256)
+func (_Distributor *DistributorSession) GetDistributeSuperNodeFeeDealedHeight() (*big.Int, error) {
+	return _Distributor.Contract.GetDistributeSuperNodeFeeDealedHeight(&_Distributor.CallOpts)
+}
+
+// GetDistributeSuperNodeFeeDealedHeight is a free data retrieval call binding the contract method 0xad4a473a.
+//
+// Solidity: function getDistributeSuperNodeFeeDealedHeight() view returns(uint256)
+func (_Distributor *DistributorCallerSession) GetDistributeSuperNodeFeeDealedHeight() (*big.Int, error) {
+	return _Distributor.Contract.GetDistributeSuperNodeFeeDealedHeight(&_Distributor.CallOpts)
 }
 
 // GetMerkleDealedEpoch is a free data retrieval call binding the contract method 0x7cd1fc9d.
@@ -459,25 +521,25 @@ func (_Distributor *DistributorTransactorSession) DistributeSlashAmount(_dealedH
 	return _Distributor.Contract.DistributeSlashAmount(&_Distributor.TransactOpts, _dealedHeight, _amount)
 }
 
-// DistributeSuperNodeFee is a paid mutator transaction binding the contract method 0x4fdcc7cd.
+// DistributeSuperNodeFee is a paid mutator transaction binding the contract method 0x39eddf16.
 //
-// Solidity: function distributeSuperNodeFee(uint256 _amount) returns()
-func (_Distributor *DistributorTransactor) DistributeSuperNodeFee(opts *bind.TransactOpts, _amount *big.Int) (*types.Transaction, error) {
-	return _Distributor.contract.Transact(opts, "distributeSuperNodeFee", _amount)
+// Solidity: function distributeSuperNodeFee(uint256 _dealedHeight, uint256 _userAmount, uint256 _nodeAmount, uint256 _platformAmount) returns()
+func (_Distributor *DistributorTransactor) DistributeSuperNodeFee(opts *bind.TransactOpts, _dealedHeight *big.Int, _userAmount *big.Int, _nodeAmount *big.Int, _platformAmount *big.Int) (*types.Transaction, error) {
+	return _Distributor.contract.Transact(opts, "distributeSuperNodeFee", _dealedHeight, _userAmount, _nodeAmount, _platformAmount)
 }
 
-// DistributeSuperNodeFee is a paid mutator transaction binding the contract method 0x4fdcc7cd.
+// DistributeSuperNodeFee is a paid mutator transaction binding the contract method 0x39eddf16.
 //
-// Solidity: function distributeSuperNodeFee(uint256 _amount) returns()
-func (_Distributor *DistributorSession) DistributeSuperNodeFee(_amount *big.Int) (*types.Transaction, error) {
-	return _Distributor.Contract.DistributeSuperNodeFee(&_Distributor.TransactOpts, _amount)
+// Solidity: function distributeSuperNodeFee(uint256 _dealedHeight, uint256 _userAmount, uint256 _nodeAmount, uint256 _platformAmount) returns()
+func (_Distributor *DistributorSession) DistributeSuperNodeFee(_dealedHeight *big.Int, _userAmount *big.Int, _nodeAmount *big.Int, _platformAmount *big.Int) (*types.Transaction, error) {
+	return _Distributor.Contract.DistributeSuperNodeFee(&_Distributor.TransactOpts, _dealedHeight, _userAmount, _nodeAmount, _platformAmount)
 }
 
-// DistributeSuperNodeFee is a paid mutator transaction binding the contract method 0x4fdcc7cd.
+// DistributeSuperNodeFee is a paid mutator transaction binding the contract method 0x39eddf16.
 //
-// Solidity: function distributeSuperNodeFee(uint256 _amount) returns()
-func (_Distributor *DistributorTransactorSession) DistributeSuperNodeFee(_amount *big.Int) (*types.Transaction, error) {
-	return _Distributor.Contract.DistributeSuperNodeFee(&_Distributor.TransactOpts, _amount)
+// Solidity: function distributeSuperNodeFee(uint256 _dealedHeight, uint256 _userAmount, uint256 _nodeAmount, uint256 _platformAmount) returns()
+func (_Distributor *DistributorTransactorSession) DistributeSuperNodeFee(_dealedHeight *big.Int, _userAmount *big.Int, _nodeAmount *big.Int, _platformAmount *big.Int) (*types.Transaction, error) {
+	return _Distributor.Contract.DistributeSuperNodeFee(&_Distributor.TransactOpts, _dealedHeight, _userAmount, _nodeAmount, _platformAmount)
 }
 
 // DistributeWithdrawals is a paid mutator transaction binding the contract method 0x67e2c718.
@@ -702,6 +764,415 @@ func (_Distributor *DistributorFilterer) ParseClaimed(log types.Log) (*Distribut
 	return event, nil
 }
 
+// DistributorDistributeFeeIterator is returned from FilterDistributeFee and is used to iterate over the raw logs and unpacked data for DistributeFee events raised by the Distributor contract.
+type DistributorDistributeFeeIterator struct {
+	Event *DistributorDistributeFee // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DistributorDistributeFeeIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DistributorDistributeFee)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DistributorDistributeFee)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DistributorDistributeFeeIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DistributorDistributeFeeIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DistributorDistributeFee represents a DistributeFee event raised by the Distributor contract.
+type DistributorDistributeFee struct {
+	DealedHeight   *big.Int
+	UserAmount     *big.Int
+	NodeAmount     *big.Int
+	PlatformAmount *big.Int
+	Raw            types.Log // Blockchain specific contextual infos
+}
+
+// FilterDistributeFee is a free log retrieval operation binding the contract event 0x21c58bec2fee2b8fa31ce6802a99242adf6226b7ca63d69966c2036047374382.
+//
+// Solidity: event DistributeFee(uint256 dealedHeight, uint256 userAmount, uint256 nodeAmount, uint256 platformAmount)
+func (_Distributor *DistributorFilterer) FilterDistributeFee(opts *bind.FilterOpts) (*DistributorDistributeFeeIterator, error) {
+
+	logs, sub, err := _Distributor.contract.FilterLogs(opts, "DistributeFee")
+	if err != nil {
+		return nil, err
+	}
+	return &DistributorDistributeFeeIterator{contract: _Distributor.contract, event: "DistributeFee", logs: logs, sub: sub}, nil
+}
+
+// WatchDistributeFee is a free log subscription operation binding the contract event 0x21c58bec2fee2b8fa31ce6802a99242adf6226b7ca63d69966c2036047374382.
+//
+// Solidity: event DistributeFee(uint256 dealedHeight, uint256 userAmount, uint256 nodeAmount, uint256 platformAmount)
+func (_Distributor *DistributorFilterer) WatchDistributeFee(opts *bind.WatchOpts, sink chan<- *DistributorDistributeFee) (event.Subscription, error) {
+
+	logs, sub, err := _Distributor.contract.WatchLogs(opts, "DistributeFee")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DistributorDistributeFee)
+				if err := _Distributor.contract.UnpackLog(event, "DistributeFee", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDistributeFee is a log parse operation binding the contract event 0x21c58bec2fee2b8fa31ce6802a99242adf6226b7ca63d69966c2036047374382.
+//
+// Solidity: event DistributeFee(uint256 dealedHeight, uint256 userAmount, uint256 nodeAmount, uint256 platformAmount)
+func (_Distributor *DistributorFilterer) ParseDistributeFee(log types.Log) (*DistributorDistributeFee, error) {
+	event := new(DistributorDistributeFee)
+	if err := _Distributor.contract.UnpackLog(event, "DistributeFee", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// DistributorDistributeSlashIterator is returned from FilterDistributeSlash and is used to iterate over the raw logs and unpacked data for DistributeSlash events raised by the Distributor contract.
+type DistributorDistributeSlashIterator struct {
+	Event *DistributorDistributeSlash // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DistributorDistributeSlashIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DistributorDistributeSlash)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DistributorDistributeSlash)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DistributorDistributeSlashIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DistributorDistributeSlashIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DistributorDistributeSlash represents a DistributeSlash event raised by the Distributor contract.
+type DistributorDistributeSlash struct {
+	DealedHeight *big.Int
+	SlashAmount  *big.Int
+	Raw          types.Log // Blockchain specific contextual infos
+}
+
+// FilterDistributeSlash is a free log retrieval operation binding the contract event 0x92cfd04ead0f32488c7f490c6afce1b145630dfcc9c3ed06b2ab0d0696a4bcef.
+//
+// Solidity: event DistributeSlash(uint256 dealedHeight, uint256 slashAmount)
+func (_Distributor *DistributorFilterer) FilterDistributeSlash(opts *bind.FilterOpts) (*DistributorDistributeSlashIterator, error) {
+
+	logs, sub, err := _Distributor.contract.FilterLogs(opts, "DistributeSlash")
+	if err != nil {
+		return nil, err
+	}
+	return &DistributorDistributeSlashIterator{contract: _Distributor.contract, event: "DistributeSlash", logs: logs, sub: sub}, nil
+}
+
+// WatchDistributeSlash is a free log subscription operation binding the contract event 0x92cfd04ead0f32488c7f490c6afce1b145630dfcc9c3ed06b2ab0d0696a4bcef.
+//
+// Solidity: event DistributeSlash(uint256 dealedHeight, uint256 slashAmount)
+func (_Distributor *DistributorFilterer) WatchDistributeSlash(opts *bind.WatchOpts, sink chan<- *DistributorDistributeSlash) (event.Subscription, error) {
+
+	logs, sub, err := _Distributor.contract.WatchLogs(opts, "DistributeSlash")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DistributorDistributeSlash)
+				if err := _Distributor.contract.UnpackLog(event, "DistributeSlash", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDistributeSlash is a log parse operation binding the contract event 0x92cfd04ead0f32488c7f490c6afce1b145630dfcc9c3ed06b2ab0d0696a4bcef.
+//
+// Solidity: event DistributeSlash(uint256 dealedHeight, uint256 slashAmount)
+func (_Distributor *DistributorFilterer) ParseDistributeSlash(log types.Log) (*DistributorDistributeSlash, error) {
+	event := new(DistributorDistributeSlash)
+	if err := _Distributor.contract.UnpackLog(event, "DistributeSlash", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// DistributorDistributeSuperNodeFeeIterator is returned from FilterDistributeSuperNodeFee and is used to iterate over the raw logs and unpacked data for DistributeSuperNodeFee events raised by the Distributor contract.
+type DistributorDistributeSuperNodeFeeIterator struct {
+	Event *DistributorDistributeSuperNodeFee // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DistributorDistributeSuperNodeFeeIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DistributorDistributeSuperNodeFee)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DistributorDistributeSuperNodeFee)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DistributorDistributeSuperNodeFeeIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DistributorDistributeSuperNodeFeeIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DistributorDistributeSuperNodeFee represents a DistributeSuperNodeFee event raised by the Distributor contract.
+type DistributorDistributeSuperNodeFee struct {
+	DealedHeight   *big.Int
+	UserAmount     *big.Int
+	NodeAmount     *big.Int
+	PlatformAmount *big.Int
+	Raw            types.Log // Blockchain specific contextual infos
+}
+
+// FilterDistributeSuperNodeFee is a free log retrieval operation binding the contract event 0x4b6a75e8741caebe2695484108d8f5df71d33d430e453b66f68aa802f172edf7.
+//
+// Solidity: event DistributeSuperNodeFee(uint256 dealedHeight, uint256 userAmount, uint256 nodeAmount, uint256 platformAmount)
+func (_Distributor *DistributorFilterer) FilterDistributeSuperNodeFee(opts *bind.FilterOpts) (*DistributorDistributeSuperNodeFeeIterator, error) {
+
+	logs, sub, err := _Distributor.contract.FilterLogs(opts, "DistributeSuperNodeFee")
+	if err != nil {
+		return nil, err
+	}
+	return &DistributorDistributeSuperNodeFeeIterator{contract: _Distributor.contract, event: "DistributeSuperNodeFee", logs: logs, sub: sub}, nil
+}
+
+// WatchDistributeSuperNodeFee is a free log subscription operation binding the contract event 0x4b6a75e8741caebe2695484108d8f5df71d33d430e453b66f68aa802f172edf7.
+//
+// Solidity: event DistributeSuperNodeFee(uint256 dealedHeight, uint256 userAmount, uint256 nodeAmount, uint256 platformAmount)
+func (_Distributor *DistributorFilterer) WatchDistributeSuperNodeFee(opts *bind.WatchOpts, sink chan<- *DistributorDistributeSuperNodeFee) (event.Subscription, error) {
+
+	logs, sub, err := _Distributor.contract.WatchLogs(opts, "DistributeSuperNodeFee")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DistributorDistributeSuperNodeFee)
+				if err := _Distributor.contract.UnpackLog(event, "DistributeSuperNodeFee", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDistributeSuperNodeFee is a log parse operation binding the contract event 0x4b6a75e8741caebe2695484108d8f5df71d33d430e453b66f68aa802f172edf7.
+//
+// Solidity: event DistributeSuperNodeFee(uint256 dealedHeight, uint256 userAmount, uint256 nodeAmount, uint256 platformAmount)
+func (_Distributor *DistributorFilterer) ParseDistributeSuperNodeFee(log types.Log) (*DistributorDistributeSuperNodeFee, error) {
+	event := new(DistributorDistributeSuperNodeFee)
+	if err := _Distributor.contract.UnpackLog(event, "DistributeSuperNodeFee", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 // DistributorProposalExecutedIterator is returned from FilterProposalExecuted and is used to iterate over the raw logs and unpacked data for ProposalExecuted events raised by the Distributor contract.
 type DistributorProposalExecutedIterator struct {
 	Event *DistributorProposalExecuted // Event containing the contract specifics and raw log
@@ -840,6 +1311,141 @@ func (_Distributor *DistributorFilterer) WatchProposalExecuted(opts *bind.WatchO
 func (_Distributor *DistributorFilterer) ParseProposalExecuted(log types.Log) (*DistributorProposalExecuted, error) {
 	event := new(DistributorProposalExecuted)
 	if err := _Distributor.contract.UnpackLog(event, "ProposalExecuted", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// DistributorSetMerkleRootIterator is returned from FilterSetMerkleRoot and is used to iterate over the raw logs and unpacked data for SetMerkleRoot events raised by the Distributor contract.
+type DistributorSetMerkleRootIterator struct {
+	Event *DistributorSetMerkleRoot // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DistributorSetMerkleRootIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DistributorSetMerkleRoot)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DistributorSetMerkleRoot)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DistributorSetMerkleRootIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DistributorSetMerkleRootIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DistributorSetMerkleRoot represents a SetMerkleRoot event raised by the Distributor contract.
+type DistributorSetMerkleRoot struct {
+	DealedEpoch *big.Int
+	MerkleRoot  [32]byte
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterSetMerkleRoot is a free log retrieval operation binding the contract event 0x06300242dd77c603f351a5b575426a902d850335fbeb7c1aa2aaa83e64df395b.
+//
+// Solidity: event SetMerkleRoot(uint256 dealedEpoch, bytes32 merkleRoot)
+func (_Distributor *DistributorFilterer) FilterSetMerkleRoot(opts *bind.FilterOpts) (*DistributorSetMerkleRootIterator, error) {
+
+	logs, sub, err := _Distributor.contract.FilterLogs(opts, "SetMerkleRoot")
+	if err != nil {
+		return nil, err
+	}
+	return &DistributorSetMerkleRootIterator{contract: _Distributor.contract, event: "SetMerkleRoot", logs: logs, sub: sub}, nil
+}
+
+// WatchSetMerkleRoot is a free log subscription operation binding the contract event 0x06300242dd77c603f351a5b575426a902d850335fbeb7c1aa2aaa83e64df395b.
+//
+// Solidity: event SetMerkleRoot(uint256 dealedEpoch, bytes32 merkleRoot)
+func (_Distributor *DistributorFilterer) WatchSetMerkleRoot(opts *bind.WatchOpts, sink chan<- *DistributorSetMerkleRoot) (event.Subscription, error) {
+
+	logs, sub, err := _Distributor.contract.WatchLogs(opts, "SetMerkleRoot")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DistributorSetMerkleRoot)
+				if err := _Distributor.contract.UnpackLog(event, "SetMerkleRoot", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseSetMerkleRoot is a log parse operation binding the contract event 0x06300242dd77c603f351a5b575426a902d850335fbeb7c1aa2aaa83e64df395b.
+//
+// Solidity: event SetMerkleRoot(uint256 dealedEpoch, bytes32 merkleRoot)
+func (_Distributor *DistributorFilterer) ParseSetMerkleRoot(log types.Log) (*DistributorSetMerkleRoot, error) {
+	event := new(DistributorSetMerkleRoot)
+	if err := _Distributor.contract.UnpackLog(event, "SetMerkleRoot", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

@@ -29,18 +29,19 @@ func TestStatus(t *testing.T) {
 	// pubkey, err := types.HexToValidatorPubkey("b427ea30366336e4632d327428fac24ac3016534b18e0e39f5c2c4fffaa35656f982fba8e636599ae54b6f148a90a8e9")
 	// pubkey, err := types.HexToValidatorPubkey("ae9d34a72d6d16c17e3703a12eeaa45063128046055516f0611a337caaea7cf823e1ae8c9298154c325fc10fcb279d42")
 	// pubkey, err := types.HexToValidatorPubkey("b3ea762c11ef4548d7c2a1a707f69cf68a1f1b7fc63c7dcb414d6a7ab722e2155d7e3ac3b601abdb98e158ca6035e9c4")
-	pubkey, err := types.HexToValidatorPubkey("8a60cdebaf3f27ebafd36e9729d898b44d3177a92a3fb4acbff37059f6dc8f5c87f4372e9227ba3e0525a7cf07297890")
+	// pubkey, err := types.HexToValidatorPubkey("8a60cdebaf3f27ebafd36e9729d898b44d3177a92a3fb4acbff37059f6dc8f5c87f4372e9227ba3e0525a7cf07297890")
+	pubkey, err := types.HexToValidatorPubkey("ad90505f19a31915940316ba5178984ae7e9164628eae689b3f99f2e50079ff421fd09edf46b8080322b4b0b7a5d2b26")
 	if err != nil {
 		t.Fatal(err)
 	}
-	epoch1 := uint64(4828)
+	epoch1 := uint64(8993)
 	// epoch2 := uint64(168121)
 	// epoch3 := uint64(167678)
 	startStatus1, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
 		Epoch: &epoch1,
 	})
 
-	t.Logf("%+v %v, %v", startStatus1.Balance, startStatus1.Slashed, startStatus1.Status)
+	t.Logf("%+v %v, %v,%d", startStatus1.Balance, startStatus1.Slashed, startStatus1.Status, startStatus1.ExitEpoch)
 	// startStatus2, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
 	// 	Epoch: &epoch2,
 	// })

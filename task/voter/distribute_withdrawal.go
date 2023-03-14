@@ -112,14 +112,19 @@ func (task *Task) distributeWithdrawals() error {
 	}).Info("Will DistributeWithdrawals")
 
 	// -----3 send vote tx
-	err = task.connection.LockAndUpdateTxOpts()
+	return task.sendDistributeWithdrawalsTx(big.NewInt(int64(targetEth1BlockHeight)),
+		totalUserEthDeci.BigInt(), totalNodeEthDeci.BigInt(), totalPlatformEthDeci.BigInt(), big.NewInt(int64(newMaxClaimableWithdrawIndex)))
+}
+
+func (task *Task) sendDistributeWithdrawalsTx(targetEth1BlockHeight, totalUserEth, totalNodeEth, totalPlatformEth, newMaxClaimableWithdrawIndex *big.Int) error {
+	err := task.connection.LockAndUpdateTxOpts()
 	if err != nil {
 		return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 	}
 	defer task.connection.UnlockTxOpts()
 
-	tx, err := task.withdrawContract.DistributeWithdrawals(task.connection.TxOpts(), big.NewInt(int64(targetEth1BlockHeight)),
-		totalUserEthDeci.BigInt(), totalNodeEthDeci.BigInt(), totalPlatformEthDeci.BigInt(), big.NewInt(int64(newMaxClaimableWithdrawIndex)))
+	tx, err := task.withdrawContract.DistributeWithdrawals(task.connection.TxOpts(), targetEth1BlockHeight,
+		totalUserEth, totalNodeEth, totalPlatformEth, newMaxClaimableWithdrawIndex)
 	if err != nil {
 		return err
 	}
@@ -240,4 +245,69 @@ func (task *Task) checkStateForDistriWithdraw() (uint64, uint64, bool, bool, err
 	}
 
 	return latestDistributeHeight.Uint64(), targetEth1BlockHeight, true, skipMinLimit, nil
+}
+
+// return (user reward, node reward, platform fee, totalWithdrawAmount)
+func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targetEth1BlockHeight uint64) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, error) {
+	withdrawals, err := dao.GetValidatorWithdrawalsBetween(task.db, latestDistributeHeight, targetEth1BlockHeight)
+	if err != nil {
+		return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, errors.Wrap(err, "GetValidatorWithdrawalsBetween failed")
+	}
+	totalAmount := uint64(0)
+	for _, w := range withdrawals {
+		totalAmount += w.Amount
+	}
+	totalAmountDeci := decimal.NewFromInt(int64(totalAmount)).Mul(utils.GweiDeci)
+
+	totalUserEthDeci := decimal.Zero
+	totalNodeEthDeci := decimal.Zero
+	totalPlatformEthDeci := decimal.Zero
+	for _, w := range withdrawals {
+		validator, err := dao.GetValidatorByIndex(task.db, w.ValidatorIndex)
+		if err != nil {
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+		}
+
+		totalReward := int64(w.Amount)
+		userDeposit := int64(0)
+		nodeDeposit := int64(0)
+
+		switch {
+
+		case w.Amount >= utils.StandardEffectiveBalance/2 && w.Amount < utils.StandardEffectiveBalance: // slash
+			totalReward = 0
+
+			userDeposit = int64(utils.StandardEffectiveBalance - validator.NodeDepositAmount)
+			if userDeposit > int64(w.Amount) {
+				userDeposit = int64(w.Amount)
+				nodeDeposit = 0
+			} else {
+				nodeDeposit = int64(w.Amount) - userDeposit
+			}
+
+		case w.Amount >= utils.StandardEffectiveBalance: // full withdrawal
+			totalReward = totalReward - int64(utils.StandardEffectiveBalance)
+
+			userDeposit = int64(utils.StandardEffectiveBalance - validator.NodeDepositAmount)
+			nodeDeposit = int64(validator.NodeDepositAmount)
+
+		case w.Amount < utils.StandardEffectiveBalance/2: // partial withdrawal
+		default:
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, fmt.Errorf("unknown withdrawal's amount")
+		}
+
+		// cal rewards
+		userRewardDeci, nodeRewardDeci, platformFeeDeci := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, decimal.NewFromInt(totalReward))
+		// cal reward + deposit
+		totalUserEthDeci = totalUserEthDeci.Add(userRewardDeci).Add(decimal.NewFromInt(userDeposit))
+		totalNodeEthDeci = totalNodeEthDeci.Add(nodeRewardDeci).Add(decimal.NewFromInt(nodeDeposit))
+		totalPlatformEthDeci = totalPlatformEthDeci.Add(platformFeeDeci)
+
+	}
+
+	totalUserEthDeci = totalUserEthDeci.Mul(utils.GweiDeci)
+	totalNodeEthDeci = totalNodeEthDeci.Mul(utils.GweiDeci)
+	totalPlatformEthDeci = totalPlatformEthDeci.Mul(utils.GweiDeci)
+
+	return totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, nil
 }

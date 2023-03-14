@@ -37,6 +37,16 @@ func (task *Task) setMerkleTree() error {
 		"epoch":    rootHash.DealedEpoch,
 		"roothash": rootHash.RootHash,
 	}).Info("will set merkle root")
+	return task.sendSetMerkleRootTx(rootHash)
+}
+
+func (task *Task) sendSetMerkleRootTx(rootHash *dao.RootHash) error {
+	treeHash, err := hex.DecodeString(rootHash.RootHash)
+	if err != nil {
+		return errors.Wrap(err, "rootHash decode failed")
+	}
+	var merkleTreeRootHash [32]byte
+	copy(merkleTreeRootHash[:], treeHash)
 
 	err = task.connection.LockAndUpdateTxOpts()
 	if err != nil {
@@ -44,13 +54,7 @@ func (task *Task) setMerkleTree() error {
 	}
 	defer task.connection.UnlockTxOpts()
 
-	treeHash, err := hex.DecodeString(rootHash.RootHash)
-	if err != nil {
-		return errors.Wrap(err, "rootHash decode failed")
-	}
-	var merkleTreeHash [32]byte
-	copy(merkleTreeHash[:], treeHash)
-	tx, err := task.distributorContract.SetMerkleRoot(task.connection.TxOpts(), big.NewInt(int64(rootHash.DealedEpoch)), merkleTreeHash)
+	tx, err := task.distributorContract.SetMerkleRoot(task.connection.TxOpts(), big.NewInt(int64(rootHash.DealedEpoch)), merkleTreeRootHash)
 	if err != nil {
 		return err
 	}
@@ -86,12 +90,5 @@ func (task *Task) setMerkleTree() error {
 	logrus.WithFields(logrus.Fields{
 		"tx": tx.Hash(),
 	}).Info("SetMerkleRoot tx send ok")
-
-	// ensure distribute all fee before merkle root height
-	err = task.sendTxDistributeSuperNodeFeePool()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }

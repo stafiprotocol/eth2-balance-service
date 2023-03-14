@@ -218,6 +218,12 @@ func DistributeFeeProposalNodeKey(sender common.Address, _dealedHeight, _userAmo
 	return StafiDistributorProposalNokeKey(sender, proposalId)
 }
 
+func DistributeSuperNodeFeeProposalNodeKey(sender common.Address, _dealedHeight, _userAmount, _nodeAmount, _platformAmount *big.Int) [32]byte {
+	proposalId := crypto.Keccak256Hash([]byte("distributeSuperNodeFee"), common.LeftPadBytes(_dealedHeight.Bytes(), 32), common.LeftPadBytes(_userAmount.Bytes(), 32),
+		common.LeftPadBytes(_nodeAmount.Bytes(), 32), common.LeftPadBytes(_platformAmount.Bytes(), 32))
+	return StafiDistributorProposalNokeKey(sender, proposalId)
+}
+
 func AppendToFile(filePath, content string) error {
 	// make sure the dir is existed, eg:
 	// ./foo/bar/baz/hello.log must make sure ./foo/bar/baz is existed
