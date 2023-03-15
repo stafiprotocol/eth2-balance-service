@@ -24,6 +24,7 @@ func (task *Task) distributeFeePool() error {
 		return nil
 	}
 
+	// todo deal init state latestDistributeHeight == 0 on mainnet
 	// ----1 cal eth(from withdrawals) of user/node/platform
 	totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, err := task.getUserNodePlatformFromFeePool(latestDistributeHeight, targetEth1BlockHeight)
 	if err != nil {

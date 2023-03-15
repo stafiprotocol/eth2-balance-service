@@ -39,6 +39,10 @@ func (task *Task) getUserEthInfoFromValidatorBalance(validator *dao.Validator, t
 		if err != nil {
 			return 0, 0, err
 		}
+		// withdrawdone case
+		if validator.Balance == 0 {
+			userDepositBalance = 0
+		}
 
 		userDepositPlusReward := task.getUserDepositPlusReward(validatorBalance.Balance, validator.NodeDepositAmount)
 		return userDepositBalance, userDepositPlusReward, nil
@@ -55,17 +59,18 @@ func (task Task) getUserDepositPlusReward(validatorBalance, nodeDepositAmount ui
 	userDepositAmount := utils.StandardEffectiveBalance - nodeDepositAmount
 
 	switch {
-	case validatorBalance == utils.StandardEffectiveBalance:
-		return userDepositAmount
-	case validatorBalance < utils.StandardEffectiveBalance:
+	case validatorBalance == 0: //withdrawdone case
+		return 0
+	case validatorBalance > 0 && validatorBalance < utils.StandardEffectiveBalance:
 		loss := utils.StandardEffectiveBalance - validatorBalance
 		if loss < nodeDepositAmount {
 			return userDepositAmount
 		} else {
 			return validatorBalance
 		}
+	case validatorBalance == utils.StandardEffectiveBalance:
+		return userDepositAmount
 	case validatorBalance > utils.StandardEffectiveBalance:
-
 		// total staking reward
 		reward := validatorBalance - utils.StandardEffectiveBalance
 		userReward, _, _ := utils.GetUserNodePlatformRewardV2(nodeDepositAmount, decimal.NewFromInt(int64(reward)))
