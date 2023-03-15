@@ -127,6 +127,14 @@ func (task *Task) collectNodeEpochBalances() error {
 
 				// -----total claimable reward
 				valTotalClaimableReward := l.TotalWithdrawal + l.TotalFee
+				// withdrawdone case should reduce 32
+				if l.Balance == 0 {
+					if valTotalClaimableReward > utils.StandardEffectiveBalance {
+						valTotalClaimableReward -= utils.StandardEffectiveBalance
+					} else {
+						valTotalClaimableReward = 0
+					}
+				}
 
 				// todo calc by two sections on mainnet
 				_, nodeClaimableRewardOfThisValidator, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(valTotalClaimableReward)))

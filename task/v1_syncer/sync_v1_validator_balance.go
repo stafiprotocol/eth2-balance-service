@@ -140,8 +140,6 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 				nodeBalance.TotalBalance += l.Balance
 				nodeBalance.TotalEffectiveBalance += l.EffectiveBalance
 
-				nodeBalance.TotalSelfEraReward += utils.GetNodeReward(l.Balance, l.EffectiveBalance, valInfo.NodeDepositAmount)
-
 				reward := uint64(0)
 				if l.Balance > l.EffectiveBalance {
 					reward = l.Balance - l.EffectiveBalance

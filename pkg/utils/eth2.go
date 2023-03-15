@@ -120,23 +120,23 @@ func StartSlotOfEpoch(config beacon.Eth2Config, epoch uint64) uint64 {
 	return config.SlotsPerEpoch * epoch
 }
 
-func GetNodeReward(balance, effectiveBalance, nodeDepositAmount uint64) uint64 {
-	if balance == 0 || effectiveBalance == 0 {
-		return 0
-	}
-	reward := uint64(0)
-	if balance > effectiveBalance {
-		reward = balance - effectiveBalance
-	}
+// func GetNodeReward(balance, effectiveBalance, nodeDepositAmount uint64) uint64 {
+// 	if balance == 0 || effectiveBalance == 0 {
+// 		return 0
+// 	}
+// 	reward := uint64(0)
+// 	if balance > effectiveBalance {
+// 		reward = balance - effectiveBalance
+// 	}
 
-	rewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromFloat(0.9))
-	nodeRewardDeci := decimal.NewFromInt(int64(nodeDepositAmount)).Mul(rewardDeci).Div(decimal.NewFromInt(int64(effectiveBalance)))
-	stakerRawReard := rewardDeci.Sub(nodeRewardDeci)
+// 	rewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromFloat(0.9))
+// 	nodeRewardDeci := decimal.NewFromInt(int64(nodeDepositAmount)).Mul(rewardDeci).Div(decimal.NewFromInt(int64(effectiveBalance)))
+// 	stakerRawReard := rewardDeci.Sub(nodeRewardDeci)
 
-	nodeRewardDeci = nodeRewardDeci.Add(stakerRawReard.Mul(decimal.NewFromFloat(0.1)))
+// 	nodeRewardDeci = nodeRewardDeci.Add(stakerRawReard.Mul(decimal.NewFromFloat(0.1)))
 
-	return nodeRewardDeci.BigInt().Uint64()
-}
+// 	return nodeRewardDeci.BigInt().Uint64()
+// }
 
 func GetNodeManagedEth(nodeDeposit, balance uint64, status uint8) uint64 {
 	switch status {

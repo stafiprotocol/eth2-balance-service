@@ -11,7 +11,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
-	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -139,14 +138,14 @@ func (task *Task) notifyValidatorExit() error {
 	}
 
 	sort.SliceStable(soloValidtors, func(i, j int) bool {
-		aprI, _ := getValidatorApr(task.db, soloValidtors[i].ValidatorIndex, targetEpoch)
-		aprJ, _ := getValidatorApr(task.db, soloValidtors[j].ValidatorIndex, targetEpoch)
+		aprI, _ := dao.GetValidatorApr(task.db, soloValidtors[i].ValidatorIndex, targetEpoch)
+		aprJ, _ := dao.GetValidatorApr(task.db, soloValidtors[j].ValidatorIndex, targetEpoch)
 		return aprI < aprJ
 	})
 
 	sort.SliceStable(superValidtors, func(i, j int) bool {
-		aprI, _ := getValidatorApr(task.db, superValidtors[i].ValidatorIndex, targetEpoch)
-		aprJ, _ := getValidatorApr(task.db, superValidtors[j].ValidatorIndex, targetEpoch)
+		aprI, _ := dao.GetValidatorApr(task.db, superValidtors[i].ValidatorIndex, targetEpoch)
+		aprJ, _ := dao.GetValidatorApr(task.db, superValidtors[j].ValidatorIndex, targetEpoch)
 		return aprI < aprJ
 	})
 
@@ -182,39 +181,6 @@ func (task *Task) notifyValidatorExit() error {
 
 	// ---- send NotifyValidatorExit tx
 	return task.sendNotifyExitTx(uint64(preCycle), uint64(startCycle), selectVal)
-}
-
-// return 0 if no data used to cal rate
-func getValidatorApr(db *db.WrapDb, validatorIndex, epoch uint64) (float64, error) {
-
-	validatorBalanceList, err := dao.GetLatestValidatorBalanceListBeforeEpoch(db, validatorIndex, epoch)
-	if err != nil {
-		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
-		return 0, err
-	}
-
-	if len(validatorBalanceList) >= 2 {
-		first := validatorBalanceList[0]
-		end := validatorBalanceList[len(validatorBalanceList)-1]
-
-		duBalance := uint64(0)
-		firstBalance := first.Balance + first.TotalWithdrawal + first.TotalFee
-		endBalance := end.Balance + end.TotalWithdrawal + end.TotalFee
-		if firstBalance > endBalance {
-			duBalance = utils.GetNodeReward(firstBalance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositAmount) - utils.GetNodeReward(endBalance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositAmount)
-		}
-
-		du := int64(first.Timestamp - end.Timestamp)
-
-		if du > 0 {
-			apr, _ := decimal.NewFromInt(int64(duBalance)).
-				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
-				Div(decimal.NewFromInt(du)).
-				Div(decimal.NewFromInt(int64(utils.StandardLightNodeDepositAmount))).Float64()
-			return apr, nil
-		}
-	}
-	return 0, nil
 }
 
 func (task *Task) sendReserveTx(preCycle uint64) error {

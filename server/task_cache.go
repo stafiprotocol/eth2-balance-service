@@ -5,10 +5,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
-	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -67,7 +65,7 @@ func (task *Server) calValidatorAverageApr() error {
 		for i := range activeValidator {
 			if i%du == 0 {
 				selectedValidatorIndex := activeValidator[i].ValidatorIndex
-				apr, err := getValidatorApr(task.db, selectedValidatorIndex)
+				apr, err := dao.GetValidatorAprForAverageApr(task.db, selectedValidatorIndex)
 
 				logrus.WithFields(logrus.Fields{
 					"du":             du,
@@ -93,35 +91,4 @@ func (task *Server) calValidatorAverageApr() error {
 		}
 	}
 	return nil
-}
-
-// return 0 if no data used to cal rate
-func getValidatorApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
-
-	validatorBalanceList, err := dao.GetLatestValidatorBalanceList(db, validatorIndex)
-	if err != nil {
-		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
-		return 0, err
-	}
-
-	if len(validatorBalanceList) >= 2 {
-		first := validatorBalanceList[0]
-		end := validatorBalanceList[len(validatorBalanceList)-1]
-
-		duBalance := uint64(0)
-		if first.Balance > end.Balance {
-			duBalance = utils.GetNodeReward(first.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositAmount) - utils.GetNodeReward(end.Balance, utils.StandardEffectiveBalance, utils.StandardLightNodeDepositAmount)
-		}
-
-		du := int64(first.Timestamp - end.Timestamp)
-
-		if du > 0 {
-			apr, _ := decimal.NewFromInt(int64(duBalance)).
-				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
-				Div(decimal.NewFromInt(du)).
-				Div(decimal.NewFromInt(int64(utils.StandardLightNodeDepositAmount))).Float64()
-			return apr, nil
-		}
-	}
-	return 0, nil
 }

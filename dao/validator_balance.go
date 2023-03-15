@@ -4,7 +4,10 @@
 package dao
 
 import (
+	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
 // balance info  of actived validators, update by eth2BalanceSyncer
@@ -71,4 +74,101 @@ func GetLatestValidatorBalanceList(db *db.WrapDb, validatorIndex uint64) (c []*V
 func GetLatestValidatorBalanceListBeforeEpoch(db *db.WrapDb, validatorIndex, epoch uint64) (c []*ValidatorBalance, err error) {
 	err = db.Order("epoch desc").Limit(22).Offset(0).Find(&c, "validator_index = ? and epoch <= ?", validatorIndex, epoch).Error
 	return
+}
+
+// return 0 if no data used to cal rate
+func GetValidatorAprForAverageApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
+
+	validatorBalanceList, err := GetLatestValidatorBalanceList(db, validatorIndex)
+	if err != nil {
+		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+		return 0, err
+	}
+
+	if len(validatorBalanceList) >= 2 {
+		first := validatorBalanceList[0]
+		end := validatorBalanceList[len(validatorBalanceList)-1]
+
+		duBalance := uint64(0)
+
+		firstTotal := first.Balance + first.TotalWithdrawal + first.TotalFee
+		firstReward := uint64(0)
+		if firstTotal > utils.StandardEffectiveBalance {
+			firstReward = firstTotal - utils.StandardEffectiveBalance
+		}
+		endTotal := end.Balance + end.TotalWithdrawal + end.TotalFee
+		endReward := uint64(0)
+		if endTotal > utils.StandardEffectiveBalance {
+			endReward = endTotal - utils.StandardEffectiveBalance
+		}
+
+		_, firstNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(firstReward, decimal.NewFromInt(int64(utils.StandardLightNodeDepositAmount)))
+		_, endNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(endReward, decimal.NewFromInt(int64(utils.StandardLightNodeDepositAmount)))
+
+		duBalanceDeci := firstNodeRewardDeci.Sub(endNodeRewardDeci)
+		if duBalanceDeci.IsPositive() {
+			duBalance = duBalanceDeci.BigInt().Uint64()
+		}
+
+		du := int64(first.Timestamp - end.Timestamp)
+
+		if du > 0 {
+			apr, _ := decimal.NewFromInt(int64(duBalance)).
+				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
+				Div(decimal.NewFromInt(du)).
+				Div(decimal.NewFromInt(int64(utils.StandardLightNodeDepositAmount))).Float64()
+			return apr, nil
+		}
+	}
+	return 0, nil
+}
+
+// return 0 if no data used to cal rate
+func GetValidatorApr(db *db.WrapDb, validatorIndex, nodeDepositAmount uint64) (float64, error) {
+	validatorBalanceList, err := GetLatestValidatorBalanceList(db, validatorIndex)
+	if err != nil {
+		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+		return 0, err
+	}
+
+	if nodeDepositAmount == 0 {
+		nodeDepositAmount = utils.StandardSuperNodeFakeDepositBalance
+	}
+
+	if len(validatorBalanceList) >= 2 {
+		first := validatorBalanceList[0]
+		end := validatorBalanceList[len(validatorBalanceList)-1]
+
+		duBalance := uint64(0)
+
+		firstTotal := first.Balance + first.TotalWithdrawal + first.TotalFee
+		firstReward := uint64(0)
+		if firstTotal > utils.StandardEffectiveBalance {
+			firstReward = firstTotal - utils.StandardEffectiveBalance
+		}
+		endTotal := end.Balance + end.TotalWithdrawal + end.TotalFee
+		endReward := uint64(0)
+		if endTotal > utils.StandardEffectiveBalance {
+			endReward = endTotal - utils.StandardEffectiveBalance
+		}
+
+		_, firstNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(firstReward, decimal.NewFromInt(int64(nodeDepositAmount)))
+		_, endNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(endReward, decimal.NewFromInt(int64(nodeDepositAmount)))
+
+		duBalanceDeci := firstNodeRewardDeci.Sub(endNodeRewardDeci)
+		if duBalanceDeci.IsPositive() {
+			duBalance = duBalanceDeci.BigInt().Uint64()
+		}
+
+		du := int64(first.Timestamp - end.Timestamp)
+
+		if du > 0 {
+			apr, _ := decimal.NewFromInt(int64(duBalance)).
+				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
+				Div(decimal.NewFromInt(du)).
+				Div(decimal.NewFromInt(int64(nodeDepositAmount))).Float64()
+			return apr, nil
+		}
+	}
+	return 0, nil
 }
