@@ -69,8 +69,8 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("contracts address err")
 	}
-	if cfg.RewardEpochInterval == 0 {
-		return nil, fmt.Errorf("reward epoch interval is zero")
+	if cfg.RewardEpochInterval != 75 {
+		return nil, fmt.Errorf("illegal RewardEpochInterval: %d", cfg.RewardEpochInterval)
 	}
 
 	gasLimitDeci, err := decimal.NewFromString(cfg.GasLimit)
@@ -96,7 +96,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 	}
 
 	s := &Task{
-		taskTicker:             10,
+		taskTicker:             15,
 		stop:                   make(chan struct{}),
 		db:                     dao,
 		keyPair:                keyPair,

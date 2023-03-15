@@ -6,8 +6,10 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
-const fetchEventBlockLimit = uint64(4900)
-const fetchEth1WaitBlockNumbers = uint64(5)
+const (
+	fetchEventBlockLimit      = uint64(4900)
+	fetchEth1WaitBlockNumbers = uint64(5)
+)
 
 func (task *Task) syncEth1Block() error {
 	latestBlockNumber, err := task.connection.Eth1LatestBlock()

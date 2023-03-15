@@ -43,7 +43,7 @@ type Task struct {
 	eth1Endpoint           string
 	eth2Endpoint           string
 	storageContractAddress common.Address
-	rewardEpochInterval    uint64
+	rewardEpochInterval    uint64 //75
 	version                string
 	// for eth2 block syncer
 	slashStartEpoch uint64
@@ -71,9 +71,6 @@ type Task struct {
 func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("contracts address fmt err")
-	}
-	if cfg.RewardEpochInterval == 0 {
-		return nil, fmt.Errorf("reward epoch interval is zero")
 	}
 	if cfg.RewardEpochInterval != 75 {
 		return nil, fmt.Errorf("illegal RewardEpochInterval: %d", cfg.RewardEpochInterval)

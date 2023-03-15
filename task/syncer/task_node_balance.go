@@ -18,6 +18,15 @@ func (task *Task) collectNodeEpochBalances() error {
 	}
 	finalEpoch := beaconHead.FinalizedEpoch
 
+	eth2ValidatorBalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
+	if err != nil {
+		return err
+	}
+	// ---1 ensure validators epoch balances  already synced
+	if finalEpoch > eth2ValidatorBalanceMetaData.DealedEpoch {
+		finalEpoch = eth2ValidatorBalanceMetaData.DealedEpoch
+	}
+
 	eth2NodeBalanceCollectorMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2NodeBalanceCollector)
 	if err != nil {
 		return err
@@ -26,15 +35,6 @@ func (task *Task) collectNodeEpochBalances() error {
 	// return if already calc
 	if finalEpoch <= eth2NodeBalanceCollectorMetaData.DealedEpoch {
 		return nil
-	}
-
-	eth2ValidatorBalanceMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
-	if err != nil {
-		return err
-	}
-	// ---1 ensure validators epoch balances  already synced
-	if finalEpoch > eth2ValidatorBalanceMetaData.DealedEpoch {
-		finalEpoch = eth2ValidatorBalanceMetaData.DealedEpoch
 	}
 
 	for epoch := eth2NodeBalanceCollectorMetaData.DealedEpoch + 1; epoch <= finalEpoch; epoch++ {
@@ -144,7 +144,8 @@ func (task *Task) collectNodeEpochBalances() error {
 			nodeBalance.TotalSelfClaimableReward = TotalSelfClaimableReward
 
 			// calc era reward
-			preEpochNodeBalance, err := dao.GetNodeBalanceBefore(task.db, nodeAddress, epoch)
+			preEpoch := epoch - task.rewardEpochInterval
+			preEpochNodeBalance, err := dao.GetNodeBalance(task.db, nodeAddress, preEpoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err
 			}

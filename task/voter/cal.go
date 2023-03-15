@@ -40,8 +40,8 @@ func (task *Task) getUserEthInfoFromValidatorBalance(validator *dao.Validator, t
 			return 0, 0, err
 		}
 
-		userDepositAndReward := task.getUserDepositAndReward(validatorBalance.Balance, validator.NodeDepositAmount)
-		return userDepositBalance, userDepositAndReward, nil
+		userDepositPlusReward := task.getUserDepositPlusReward(validatorBalance.Balance, validator.NodeDepositAmount)
+		return userDepositBalance, userDepositPlusReward, nil
 
 	case utils.ValidatorStatusDistributed, utils.ValidatorStatusDistributedSlash:
 		return 0, 0, nil
@@ -51,7 +51,7 @@ func (task *Task) getUserEthInfoFromValidatorBalance(validator *dao.Validator, t
 	}
 }
 
-func (task Task) getUserDepositAndReward(validatorBalance, nodeDepositAmount uint64) uint64 {
+func (task Task) getUserDepositPlusReward(validatorBalance, nodeDepositAmount uint64) uint64 {
 	userDepositAmount := utils.StandardEffectiveBalance - nodeDepositAmount
 
 	switch {

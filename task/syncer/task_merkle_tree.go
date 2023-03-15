@@ -109,7 +109,7 @@ func (task *Task) calcMerkleTree() error {
 		return err
 	}
 
-	// calc and save  proof
+	// calc and save proof
 	for _, proof := range proofList {
 		totalRewardAmountDeci, err := decimal.NewFromString(proof.TotalRewardAmount)
 		if err != nil {
@@ -123,7 +123,10 @@ func (task *Task) calcMerkleTree() error {
 		nodeHash := utils.GetNodeHash(big.NewInt(int64(proof.Index)), common.HexToAddress(proof.Address), totalRewardAmountDeci.BigInt(), totalExitDepositAmountDeci.BigInt())
 		proofList, err := tree.GetProof(nodeHash)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "tree.GetProof failed")
+		}
+		if len(proofList) == 0 {
+			return errors.Wrap(err, "tree.GetProof result empty")
 		}
 
 		proofStrList := make([]string, len(proofList))
