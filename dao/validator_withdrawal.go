@@ -10,7 +10,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
-// withdrawals of validators in our pool
+// beacon withdrawals from validators of our pool, update by v2 block syncer
 type ValidatorWithdrawal struct {
 	db.BaseModel
 	WithdrawIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:withdraw_index;uinqueIndex"`

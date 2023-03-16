@@ -160,7 +160,7 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
-	// delte exitElection not in validators
+	// delete exitElection not in validators
 	exitElectionList, err := dao.GetAllNotExitElectionList(task.db)
 	if err != nil {
 		return err
@@ -173,6 +173,15 @@ func (task *Task) Start() error {
 				return err
 			}
 		}
+	}
+	// fetch distributor events
+	eth1LatestBlock, err := task.connection.Eth1LatestBlock()
+	if err != nil {
+		return err
+	}
+	err = task.fetchDistributorContractEvents(1, eth1LatestBlock)
+	if err != nil {
+		return err
 	}
 
 	utils.SafeGoWithRestart(task.syncEth1BlockHandler)

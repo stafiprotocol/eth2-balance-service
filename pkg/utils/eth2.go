@@ -89,6 +89,19 @@ const (
 	StandardLightNodeDepositAmount      = uint64(12e9) //gwei
 )
 
+//	enum ClaimType {
+//	    None,
+//	    CLAIMREWARD,
+//	    CLAIMDEPOSIT,
+//	    CLAIMTOTAL
+//	}
+const (
+	NodeClaimTypeNone         = uint8(0)
+	NodeClaimTypeClaimReward  = uint8(1)
+	NodeClaimTypeClaimDeposit = uint8(2)
+	NodeClaimTypeClaimTotal   = uint8(3)
+)
+
 var (
 	// dev use
 	OldRethSupply, _ = new(big.Int).SetString("25642334000000000000", 10)

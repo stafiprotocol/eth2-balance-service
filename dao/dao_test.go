@@ -12,12 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// host = "127.0.0.1" # mysql host ip
-// name = "eth2_dev"  # the database this server used
-// port = "3306"
-// pwd = "123456"     # mysql password
-// user = "root"      # mysql username
-
 var testDb *db.WrapDb
 
 func init() {

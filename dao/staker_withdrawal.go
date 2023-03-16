@@ -7,7 +7,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
-// withdrawals of stakers
+// withdrawals of stakers, update by eth1 syncer
 type StakerWithdrawal struct {
 	db.BaseModel
 	WithdrawIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:withdraw_index;uinqueIndex"`

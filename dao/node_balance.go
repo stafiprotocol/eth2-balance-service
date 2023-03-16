@@ -7,7 +7,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
-// node info at epoch x
+// node info at epoch x, update by node balance collector
 type NodeBalance struct {
 	db.BaseModel
 	NodeAddress string `gorm:"type:varchar(100) not null;default:'';column:node_address;uniqueIndex:uni_idx_node_epoch"` //hex with 0x prefix

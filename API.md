@@ -592,3 +592,49 @@ no
 |         |              | choosenTime | number | Yes         | null        | choosen timestamp              |
 |         |              | ethReward   | string | Yes         | null        | eth reward  amount decimals 18 |
 |         |              | status      | number | Yes         | null        | validator status               |
+
+## 15. withdraw info
+
+### (1) description
+
+*  get node withdraw info
+
+### (2) path
+
+* /reth/v1/withdrawInfo
+
+### (3) request method
+
+* post
+
+### (4) request payload 
+
+* data format: application/json
+* data detail:
+
+| field       | type   | notice                   |
+| :---------- | :----- | :----------------------- |
+| nodeAddress | string | user address, hex string |
+| pageIndex   | number | page index               |
+| pageCount   | number | page count               |
+
+
+### (5) response
+* include status、data、message fields
+* status、message must be string format, data must be object
+
+
+| grade 1 | grade 2    | grade 3              | type   | must exist? | encode type | description                                   |
+| :------ | :--------- | :------------------- | :----- | :---------- | :---------- | :-------------------------------------------- |
+| status  | N/A        | N/A                  | string | Yes         | null        | status code                                   |
+| message | N/A        | N/A                  | string | Yes         | null        | status info                                   |
+| data    | N/A        | N/A                  | object | Yes         | null        | data                                          |
+|         | rewardList | N/A                  | list   | Yes         | null        | list                                          |
+|         |            | claimedRewardAmount  | string | Yes         | null        | decimal format string, claimed reward amount  |
+|         |            | claimedDepositAmount | string | Yes         | null        | decimal format string, claimed deposit amount |
+|         |            | claimedTotalAmount   | string | Yes         | null        | decimal format string, claimed total amount   |
+|         |            | operateTimestamp     | number | Yes         | null        | operate timestamp                             |
+|         |            | timeLeft             | number | Yes         | null        | timeLeft                                      |
+|         |            | receivedAddress      | string | Yes         | null        | decimal format string, received address       |
+|         |            | status               | number | Yes         | null        | 0 withdrawed 1 exiting 2 exited 3 claimed     |
+|         | totalCount | N/A                  | number | Yes         | null        | total era reward count of this user           |

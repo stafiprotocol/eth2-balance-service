@@ -7,7 +7,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
-// mint events from stakers(reth contract)
+// mint events from stakers(reth contract), update by eth1 syncer
 type StakerMint struct {
 	db.BaseModel
 	TxHash   string `gorm:"type:varchar(80) not null;default:'';column:tx_hash;uniqueIndex:uni_idx_hash_log"`       //hex string

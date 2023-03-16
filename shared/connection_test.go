@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	// "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"github.com/stafiprotocol/eth2-balance-service/shared"
 	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
@@ -116,7 +118,22 @@ func TestBlockDetail(t *testing.T) {
 }
 
 func TestBalance(t *testing.T) {
+	cc, err := ethclient.Dial("https://evm.confluxrpc.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	blockNumber, err := cc.BlockNumber(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(blockNumber)
+	tx, err := cc.TransactionReceipt(context.Background(), common.HexToHash("0x5f32eba11a34c7856df21b031f932a88fc935ef95bb3cdfe04e5d5e3f3ffce8b"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(tx.Logs)
 
+	return
 	c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)

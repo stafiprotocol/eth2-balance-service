@@ -140,6 +140,17 @@ func TestStorage(t *testing.T) {
 	}
 	t.Log("latestDistributeHeight: ", latestDistributeHeight)
 
+	maxClaimableWithdrawIndex, err := withdrawPoolContract.MaxClaimableWithdrawIndex(&bind.CallOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("maxClaimableWithdrawIndex: ", maxClaimableWithdrawIndex)
+
+	NextWithdrawIndex, err := withdrawPoolContract.NextWithdrawIndex(&bind.CallOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("NextWithdrawIndex: ", NextWithdrawIndex)
 	//---------user deposit pool
 	userDepositPoolAddress, err := s.GetAddress(&bind.CallOpts{
 		Context: context.Background(),
