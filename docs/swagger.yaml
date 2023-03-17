@@ -157,6 +157,8 @@ definitions:
         type: integer
       totalAmount:
         type: string
+      txHash:
+        type: string
     type: object
   node_handlers.RspExitElectionList:
     properties:

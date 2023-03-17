@@ -927,6 +927,9 @@ const docTemplate = `{
                 },
                 "totalAmount": {
                     "type": "string"
+                },
+                "txHash": {
+                    "type": "string"
                 }
             }
         },

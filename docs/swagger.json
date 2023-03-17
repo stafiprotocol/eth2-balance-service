@@ -920,6 +920,9 @@
                 },
                 "totalAmount": {
                     "type": "string"
+                },
+                "txHash": {
+                    "type": "string"
                 }
             }
         },
