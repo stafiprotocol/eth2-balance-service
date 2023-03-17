@@ -625,21 +625,22 @@ no
 * status、message must be string format, data must be object
 
 
-| grade 1 | grade 2      | grade 3          | type   | must exist? | encode type | description                               |
-| :------ | :----------- | :--------------- | :----- | :---------- | :---------- | :---------------------------------------- |
-| status  | N/A          | N/A              | string | Yes         | null        | status code                               |
-| message | N/A          | N/A              | string | Yes         | null        | status info                               |
-| data    | N/A          | N/A              | object | Yes         | null        | data                                      |
-|         | withdrawList | N/A              | list   | Yes         | null        | list                                      |
-|         |              | rewardAmount     | string | Yes         | null        | decimal format string,  reward amount     |
-|         |              | depositAmount    | string | Yes         | null        | decimal format string,  deposit amount    |
-|         |              | totalAmount      | string | Yes         | null        | decimal format string,  total amount      |
-|         |              | operateTimestamp | number | Yes         | null        | operate timestamp                         |
-|         |              | timeLeft         | number | Yes         | null        | timeLeft                                  |
-|         |              | receivedAddress  | string | Yes         | null        | decimal format string, received address   |
-|         |              | explorerUrl      | string | Yes         | null        | explorer url                              |
-|         |              | status           | number | Yes         | null        | 1 exiting 2 exited 3 claimed 4 withdrawed |
-|         | totalCount   | N/A              | number | Yes         | null        | total count                               |
+| grade 1 | grade 2      | grade 3          | type   | must exist? | encode type | description                                     |
+| :------ | :----------- | :--------------- | :----- | :---------- | :---------- | :---------------------------------------------- |
+| status  | N/A          | N/A              | string | Yes         | null        | status code                                     |
+| message | N/A          | N/A              | string | Yes         | null        | status info                                     |
+| data    | N/A          | N/A              | object | Yes         | null        | data                                            |
+|         | withdrawList | N/A              | list   | Yes         | null        | list                                            |
+|         |              | rewardAmount     | string | Yes         | null        | decimal format string,  reward amount           |
+|         |              | depositAmount    | string | Yes         | null        | decimal format string,  deposit amount          |
+|         |              | totalAmount      | string | Yes         | null        | decimal format string,  total amount            |
+|         |              | operateTimestamp | number | Yes         | null        | operate timestamp                               |
+|         |              | timeLeft         | number | Yes         | null        | timeLeft                                        |
+|         |              | receivedAddress  | string | Yes         | null        | decimal format string, received address         |
+|         |              | explorerUrl      | string | Yes         | null        | explorer url                                    |
+|         |              | txHash           | string | Yes         | null        | txhash(apply when status is claimed/withdrawed) |
+|         |              | status           | number | Yes         | null        | 1 exiting 2 exited 3 claimed 4 withdrawed       |
+|         | totalCount   | N/A              | number | Yes         | null        | total count                                     |
 ## 16. notify msg list
 
 ### (1) description

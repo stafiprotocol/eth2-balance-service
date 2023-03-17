@@ -41,6 +41,7 @@ type ResWithdraw struct {
 	TimeLeft         uint64 `json:"timeLeft"`
 	ReceivedAddress  string `json:"receivedAddress"`
 	ExplorerUrl      string `json:"explorerUrl"`
+	TxHash           string `json:"txHash"`
 	Status           uint8  `json:"status"`
 }
 
@@ -126,6 +127,7 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 				TimeLeft:         86400,
 				ReceivedAddress:  req.NodeAddress,
 				ExplorerUrl:      url,
+				TxHash:           "",
 				Status:           status,
 			})
 		}
@@ -184,6 +186,7 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 			TimeLeft:         0,
 			ReceivedAddress:  nodeClaim.Address,
 			ExplorerUrl:      url,
+			TxHash:           nodeClaim.TxHash,
 			Status:           status,
 		})
 	}
