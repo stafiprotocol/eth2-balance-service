@@ -441,6 +441,9 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 			shouldSlash = true
 		}
 	case utils.NodeTypeTrust, utils.NodeTypeSuper:
+		if !bytes.EqualFold(beaconBlock.FeeRecipient[:], task.superNodeFeePoolAddress[:]) {
+			shouldSlash = true
+		}
 	default:
 		return fmt.Errorf("unknown validator nodeType: %d", validator.NodeType)
 	}

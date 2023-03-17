@@ -114,6 +114,8 @@ definitions:
     type: object
   node_handlers.ResNotifyMsg:
     properties:
+      msgId:
+        type: string
       msgType:
         type: integer
     type: object
@@ -246,6 +248,8 @@ definitions:
         type: string
       index:
         type: integer
+      overallAmount:
+        type: string
       proof:
         items:
           type: string

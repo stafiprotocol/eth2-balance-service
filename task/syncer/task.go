@@ -19,6 +19,7 @@ import (
 	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
 	withdraw "github.com/stafiprotocol/eth2-balance-service/bindings/Withdraw"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
@@ -377,7 +378,18 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 		}
 	}
 
-	// init pool info
+	// init fee pool info
+	poolInfo, err := dao_chaos.GetPoolInfo(task.db)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return err
+	}
+	poolInfo.FeePool = task.lightNodeFeePoolAddress.String()
+	poolInfo.SuperNodeFeePool = task.superNodeFeePoolAddress.String()
+	err = dao_chaos.UpOrInPoolInfo(task.db, poolInfo)
+	if err != nil {
+		return err
+	}
+
 	err = task.syncContractsInfo()
 	if err != nil {
 		return err

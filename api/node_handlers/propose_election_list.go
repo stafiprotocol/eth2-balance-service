@@ -92,7 +92,7 @@ func (h *Handler) HandlePostProposeElectionList(c *gin.Context) {
 			indexList[i] = l.ValidatorIndex
 		}
 
-		proposeElections, totalCount, err = dao_node.GetProposedBlockListIn(h.db, req.PageIndex, req.PageCount, indexList)
+		proposeElections, totalCount, err = dao_node.GetProposedBlockListInWithPage(h.db, req.PageIndex, req.PageCount, indexList)
 		if err != nil {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
 			logrus.Errorf("dao.GetProposedBlockListIn err %v", err)

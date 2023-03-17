@@ -862,6 +862,9 @@ const docTemplate = `{
         "node_handlers.ResNotifyMsg": {
             "type": "object",
             "properties": {
+                "msgId": {
+                    "type": "string"
+                },
                 "msgType": {
                     "type": "integer"
                 }
@@ -1059,6 +1062,9 @@ const docTemplate = `{
                 },
                 "index": {
                     "type": "integer"
+                },
+                "overallAmount": {
+                    "type": "string"
                 },
                 "proof": {
                     "type": "array",

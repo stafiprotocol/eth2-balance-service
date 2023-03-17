@@ -5,9 +5,14 @@ package node_handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"sort"
+	"strings"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
@@ -29,7 +34,8 @@ type RspNotifyMsgList struct {
 
 // 1 choosed to exit 2 run client 3 set fee recipient 4 slashed
 type ResNotifyMsg struct {
-	MsgType uint8 `json:"msgType"`
+	MsgType uint8  `json:"msgType"`
+	MsgId   string `json:"msgId"`
 }
 
 // @Summary notify msg list
@@ -68,7 +74,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 	for _, val := range valList {
 		valIndexList = append(valIndexList, val.ValidatorIndex)
 	}
-
+	// exit election
 	notExitElectionList, err := dao_node.GetNotExitElectionListIn(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -76,11 +82,18 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		return
 	}
 	if len(notExitElectionList) > 0 {
+		sort.SliceStable(notExitElectionList, func(i, j int) bool {
+			return notExitElectionList[i].NotifyBlockNumber > notExitElectionList[j].NotifyBlockNumber
+		})
+
+		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("valIndex:%d+notifyNumber:%d", notExitElectionList[0].ValidatorIndex, notExitElectionList[0].NotifyBlockNumber)))
+
 		rsp.List = append(rsp.List, ResNotifyMsg{
 			MsgType: notifyMsgChooseToExit,
+			MsgId:   msgId.String(),
 		})
 	}
-
+	// slash
 	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -88,9 +101,36 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		return
 	}
 	if len(slashList) > 0 {
+		sort.SliceStable(slashList, func(i, j int) bool {
+			return slashList[i].StartSlot > slashList[j].StartSlot
+		})
+
+		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("startSlot:%d+slashType:%d", slashList[0].StartSlot, slashList[0].SlashType)))
 		rsp.List = append(rsp.List, ResNotifyMsg{
 			MsgType: notifyMsgSlashed,
+			MsgId:   msgId.String(),
 		})
+	}
+
+	// fee recipient
+	latestProposedBlock, err := dao_node.GetLatestProposedBlock(h.db, valIndexList)
+	if err == nil {
+		poolInfo, err := dao_chaos.GetPoolInfo(h.db)
+		if err != nil {
+			utils.Err(c, utils.CodeInternalErr, err.Error())
+			logrus.Errorf("GetPoolInfo err %v", err)
+			return
+		}
+		if !strings.EqualFold(latestProposedBlock.FeeRecipient, poolInfo.FeePool) &&
+			!strings.EqualFold(latestProposedBlock.FeeRecipient, poolInfo.SuperNodeFeePool) {
+
+			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("valIndex:%d+blockNumber:%d", latestProposedBlock.ValidatorIndex, latestProposedBlock.BlockNumber)))
+			rsp.List = append(rsp.List, ResNotifyMsg{
+				MsgType: notifyMsgSetFeeRecipient,
+				MsgId:   msgId.String(),
+			})
+		}
+
 	}
 
 	utils.Ok(c, "success", rsp)

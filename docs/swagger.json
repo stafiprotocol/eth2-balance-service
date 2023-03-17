@@ -855,6 +855,9 @@
         "node_handlers.ResNotifyMsg": {
             "type": "object",
             "properties": {
+                "msgId": {
+                    "type": "string"
+                },
                 "msgType": {
                     "type": "integer"
                 }
@@ -1052,6 +1055,9 @@
                 },
                 "index": {
                     "type": "integer"
+                },
+                "overallAmount": {
+                    "type": "string"
                 },
                 "proof": {
                     "type": "array",

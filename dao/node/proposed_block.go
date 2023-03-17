@@ -83,7 +83,7 @@ func GetProposedBlockTotalCount(db *db.WrapDb) (count int64, err error) {
 	return
 }
 
-func GetProposedBlockListIn(db *db.WrapDb, pageIndex, pageCount int, valIndexList []uint64) (c []*ProposedBlock, count int64, err error) {
+func GetProposedBlockListInWithPage(db *db.WrapDb, pageIndex, pageCount int, valIndexList []uint64) (c []*ProposedBlock, count int64, err error) {
 	if len(valIndexList) == 0 {
 		return nil, 0, nil
 	}
@@ -112,5 +112,23 @@ func GetProposedBlockListIn(db *db.WrapDb, pageIndex, pageCount int, valIndexLis
 	}
 
 	err = db.Order("slot desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, sqlWhere).Error
+	return
+}
+
+func GetLatestProposedBlock(db *db.WrapDb, valIndexList []uint64) (c *ProposedBlock, err error) {
+	if len(valIndexList) == 0 {
+		return nil, fmt.Errorf("valIndexList empty")
+	}
+	InStatus := "( "
+	for _, index := range valIndexList {
+		InStatus += fmt.Sprintf("%d", index)
+		InStatus += ","
+	}
+	InStatus = InStatus[:len(InStatus)-1]
+	InStatus += " )"
+	sqlWhere := fmt.Sprintf("validator_index in %s", InStatus)
+
+	c = &ProposedBlock{}
+	err = db.Order("block_number desc").Take(c, sqlWhere).Error
 	return
 }

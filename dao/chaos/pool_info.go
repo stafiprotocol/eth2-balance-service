@@ -26,6 +26,9 @@ type PoolInfo struct {
 	TotalMissingAmountForWithdraw   string `gorm:"type:varchar(40) not null;default:'0';column:total_missing_amount_for_withdraw"`   // withdraw pool totalMissingAmountForWithdraw
 	TotalWithdrawAmountCurrentCycle string `gorm:"type:varchar(40) not null;default:'0';column:total_withdraw_amount_current_cycle"` // withdraw pool totalWithdrawAmountCurrentCycle
 	WithdrawLimitPerCycle           string `gorm:"type:varchar(40) not null;default:'0';column:withdraw_limit_per_cycle"`            // withdraw pool withdrawLimitPerCycle
+
+	FeePool          string `gorm:"type:varchar(100) not null;default:'';column:fee_pool"`            //hex with 0x prefix
+	SuperNodeFeePool string `gorm:"type:varchar(100) not null;default:'';column:super_node_fee_pool"` //hex with 0x prefix
 }
 
 func (f PoolInfo) TableName() string {
