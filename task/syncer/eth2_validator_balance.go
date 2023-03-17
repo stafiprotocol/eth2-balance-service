@@ -133,23 +133,9 @@ func (task *Task) syncValidatorEpochBalances() error {
 			}
 
 			// calc total fee to fee pool/super fee pool
-			feePoolAddress := task.lightNodeFeePoolAddress
-			if validatorInfo.NodeType == utils.NodeTypeSuper || validatorInfo.NodeType == utils.NodeTypeTrust {
-				feePoolAddress = task.superNodeFeePoolAddress
-			}
-
-			proposedBlockList, err := dao.GetProposedBlockListBefore(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch), feePoolAddress.String())
+			totalFee, err := task.calTotalFeeOfValidator(validatorIndex, validatorInfo.NodeType, epoch)
 			if err != nil {
-				return errors.Wrap(err, "GetProposedBlockListBefore failed")
-			}
-			// we use gwei here
-			totalFee := uint64(0)
-			for _, block := range proposedBlockList {
-				feeAmountDeci, err := decimal.NewFromString(block.FeeAmount)
-				if err != nil {
-					return errors.Wrap(err, "fee amount cast decimal failed")
-				}
-				totalFee += feeAmountDeci.Div(utils.GweiDeci).BigInt().Uint64()
+				return errors.Wrap(err, "calTotalFeeOfValidator failed")
 			}
 
 			// insert valdiator balance
@@ -181,4 +167,26 @@ func (task *Task) syncValidatorEpochBalances() error {
 
 	}
 	return nil
+}
+
+func (task *Task) calTotalFeeOfValidator(validatorIndex uint64, nodeType uint8, epoch uint64) (uint64, error) {
+	feePoolAddress := task.lightNodeFeePoolAddress
+	if nodeType == utils.NodeTypeSuper || nodeType == utils.NodeTypeTrust {
+		feePoolAddress = task.superNodeFeePoolAddress
+	}
+
+	proposedBlockList, err := dao.GetProposedBlockListBefore(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch), feePoolAddress.String())
+	if err != nil {
+		return 0, errors.Wrap(err, "GetProposedBlockListBefore failed")
+	}
+	// we use gwei here
+	totalFee := uint64(0)
+	for _, block := range proposedBlockList {
+		feeAmountDeci, err := decimal.NewFromString(block.FeeAmount)
+		if err != nil {
+			return 0, errors.Wrap(err, "fee amount cast decimal failed")
+		}
+		totalFee += feeAmountDeci.Div(utils.GweiDeci).BigInt().Uint64()
+	}
+	return totalFee, nil
 }

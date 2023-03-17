@@ -90,15 +90,17 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 		unstakeableEth = canWithdrawTodayDeci
 	}
 
-	waitingStakers := uint64(0)
-	if poolInfo.NextWithdrawIndex > poolInfo.MaxClaimableWithdrawIndex {
-		waitingStakers = poolInfo.NextWithdrawIndex - poolInfo.MaxClaimableWithdrawIndex
+	stakers, err := dao.GetStakerWithdrawalListNotClaimed(h.db)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("GetStakerWithdrawalListNotClaimed err %v", err)
+		return
 	}
 
 	rsp.PoolEth = poolEthDeci.StringFixed(0)
 	rsp.TodayUnstakedEth = totalWithdrawAmountCurrentCycleDeci.StringFixed(0)
 	rsp.UnstakeableEth = unstakeableEth.StringFixed(0)
-	rsp.WaitingStakers = waitingStakers
+	rsp.WaitingStakers = uint64(len(stakers))
 	rsp.EjectedValidators = uint64(electionCount)
 
 	// rsp

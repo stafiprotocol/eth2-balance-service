@@ -143,6 +143,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/notifyMsgList": {
+            "post": {
+                "description": "notify node msg list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "notify msg list",
+                "parameters": [
+                    {
+                        "description": "notify msg",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqNotifyMsgList"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspNotifyMsgList"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/poolData": {
             "get": {
                 "description": "pool data",
@@ -594,6 +640,52 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/withdrawInfo": {
+            "post": {
+                "description": "withdraw info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "withdraw info",
+                "parameters": [
+                    {
+                        "description": "withdraw info",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/info_handlers.ReqWithdrawInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/info_handlers.RspWithdrawInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -670,6 +762,15 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "info_handlers.ReqNotifyMsgList": {
+            "type": "object",
+            "properties": {
+                "nodeAddress": {
+                    "description": "hex string",
+                    "type": "string"
                 }
             }
         },
@@ -764,12 +865,35 @@ const docTemplate = `{
                 }
             }
         },
+        "info_handlers.ReqWithdrawInfo": {
+            "type": "object",
+            "properties": {
+                "nodeAddress": {
+                    "description": "hex string",
+                    "type": "string"
+                },
+                "pageCount": {
+                    "type": "integer"
+                },
+                "pageIndex": {
+                    "type": "integer"
+                }
+            }
+        },
         "info_handlers.ReqWithdrawRemainingTime": {
             "type": "object",
             "properties": {
                 "stakerAddress": {
                     "description": "hex string",
                     "type": "string"
+                }
+            }
+        },
+        "info_handlers.ResNotifyMsg": {
+            "type": "object",
+            "properties": {
+                "msgType": {
+                    "type": "integer"
                 }
             }
         },
@@ -803,6 +927,35 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "totalStakedEth": {
+                    "type": "string"
+                }
+            }
+        },
+        "info_handlers.ResWithdraw": {
+            "type": "object",
+            "properties": {
+                "depositAmount": {
+                    "type": "string"
+                },
+                "explorerUrl": {
+                    "type": "string"
+                },
+                "operateTimestamp": {
+                    "type": "integer"
+                },
+                "receivedAddress": {
+                    "type": "string"
+                },
+                "rewardAmount": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "timeLeft": {
+                    "type": "integer"
+                },
+                "totalAmount": {
                     "type": "string"
                 }
             }
@@ -873,6 +1026,17 @@ const docTemplate = `{
                 }
             }
         },
+        "info_handlers.RspNotifyMsgList": {
+            "type": "object",
+            "properties": {
+                "msgList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/info_handlers.ResNotifyMsg"
+                    }
+                }
+            }
+        },
         "info_handlers.RspPoolData": {
             "type": "object",
             "properties": {
@@ -928,6 +1092,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "remainingSeconds": {
+                    "type": "integer"
                 },
                 "totalExitDepositAmount": {
                     "type": "string"
@@ -1103,6 +1270,20 @@ const docTemplate = `{
             "properties": {
                 "exist": {
                     "type": "boolean"
+                }
+            }
+        },
+        "info_handlers.RspWithdrawInfo": {
+            "type": "object",
+            "properties": {
+                "totalCount": {
+                    "type": "integer"
+                },
+                "withdrawList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/info_handlers.ResWithdraw"
+                    }
                 }
             }
         },

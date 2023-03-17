@@ -37,3 +37,8 @@ func GetStakerWithdrawalsBetween(db *db.WrapDb, startBlock, endBlock uint64) (c 
 	err = db.Find(&c, "block_number > ? and block_number <= ?", startBlock, endBlock).Error
 	return
 }
+
+func GetStakerWithdrawalListNotClaimed(db *db.WrapDb) (c []*StakerWithdrawal, err error) {
+	err = db.Find(&c, "claimed_block_number = 0").Error
+	return
+}

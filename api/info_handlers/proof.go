@@ -5,6 +5,7 @@ package info_handlers
 
 import (
 	"encoding/json"
+	"math"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,7 @@ type RspProof struct {
 	TotalRewardAmount      string   `json:"totalRewardAmount"`
 	TotalExitDepositAmount string   `json:"totalExitDepositAmount"`
 	Proof                  []string `json:"proof"`
+	RemainingSeconds       uint64   `json:"remainingSeconds"`
 }
 
 // @Summary get proof of claim
@@ -63,12 +65,44 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		return
 	}
 
+	valInfoMeta, err := dao.GetMetaData(h.db, utils.MetaTypeEth2ValidatorInfoSyncer)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("GetMetaData failed,err: %v", err)
+		return
+	}
+
+	valList, err := dao.GetValidatorListByNode(h.db, req.NodeAddress, 0)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("GetValidatorListByNode err %v", err)
+		return
+	}
+
+	minExitEpoch := uint64(math.MaxUint64)
+	for _, val := range valList {
+		if val.ExitEpoch != 0 {
+			if val.Status != utils.ValidatorStatusWithdrawDone && val.Status != utils.ValidatorStatusWithdrawDoneSlash {
+				if minExitEpoch > val.ExitEpoch {
+					minExitEpoch = val.ExitEpoch
+				}
+			}
+		}
+	}
+
+	needWait := uint64(0)
+	if minExitEpoch != uint64(math.MaxUint64) && valInfoMeta.DealedEpoch < minExitEpoch {
+		needWait = minExitEpoch - valInfoMeta.DealedEpoch
+	}
+	waitSeconds := needWait * 32 * 12
+
 	retP := RspProof{
 		Index:                  uint64(proof.Index),
 		Address:                proof.Address,
 		TotalRewardAmount:      proof.TotalRewardAmount,
 		TotalExitDepositAmount: proof.TotalExitDepositAmount,
 		Proof:                  strings.Split(proof.Proof, ":"),
+		RemainingSeconds:       waitSeconds,
 	}
 
 	utils.Ok(c, "success", retP)

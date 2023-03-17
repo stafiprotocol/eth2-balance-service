@@ -517,6 +517,7 @@ no
 |         | totalRewardAmount      | string      | Yes         | null        | total reward amount decimals 18       |
 |         | totalExitDepositAmount | string      | Yes         | null        | total exit deposit amount decimals 18 |
 |         | proof                  | string list | Yes         | null        | proof of claim, hex string list       |
+|         | remainingSeconds       | number      | Yes         | null        | withdraw remaining time(seconds)      |
 
 
 ## 13. unstake pool data
@@ -624,17 +625,53 @@ no
 * status、message must be string format, data must be object
 
 
-| grade 1 | grade 2    | grade 3              | type   | must exist? | encode type | description                                   |
-| :------ | :--------- | :------------------- | :----- | :---------- | :---------- | :-------------------------------------------- |
-| status  | N/A        | N/A                  | string | Yes         | null        | status code                                   |
-| message | N/A        | N/A                  | string | Yes         | null        | status info                                   |
-| data    | N/A        | N/A                  | object | Yes         | null        | data                                          |
-|         | rewardList | N/A                  | list   | Yes         | null        | list                                          |
-|         |            | claimedRewardAmount  | string | Yes         | null        | decimal format string, claimed reward amount  |
-|         |            | claimedDepositAmount | string | Yes         | null        | decimal format string, claimed deposit amount |
-|         |            | claimedTotalAmount   | string | Yes         | null        | decimal format string, claimed total amount   |
-|         |            | operateTimestamp     | number | Yes         | null        | operate timestamp                             |
-|         |            | timeLeft             | number | Yes         | null        | timeLeft                                      |
-|         |            | receivedAddress      | string | Yes         | null        | decimal format string, received address       |
-|         |            | status               | number | Yes         | null        | 0 withdrawed 1 exiting 2 exited 3 claimed     |
-|         | totalCount | N/A                  | number | Yes         | null        | total era reward count of this user           |
+| grade 1 | grade 2      | grade 3          | type   | must exist? | encode type | description                               |
+| :------ | :----------- | :--------------- | :----- | :---------- | :---------- | :---------------------------------------- |
+| status  | N/A          | N/A              | string | Yes         | null        | status code                               |
+| message | N/A          | N/A              | string | Yes         | null        | status info                               |
+| data    | N/A          | N/A              | object | Yes         | null        | data                                      |
+|         | withdrawList | N/A              | list   | Yes         | null        | list                                      |
+|         |              | rewardAmount     | string | Yes         | null        | decimal format string,  reward amount     |
+|         |              | depositAmount    | string | Yes         | null        | decimal format string,  deposit amount    |
+|         |              | totalAmount      | string | Yes         | null        | decimal format string,  total amount      |
+|         |              | operateTimestamp | number | Yes         | null        | operate timestamp                         |
+|         |              | timeLeft         | number | Yes         | null        | timeLeft                                  |
+|         |              | receivedAddress  | string | Yes         | null        | decimal format string, received address   |
+|         |              | explorerUrl      | string | Yes         | null        | explorer url                              |
+|         |              | status           | number | Yes         | null        | 1 exiting 2 exited 3 claimed 4 withdrawed |
+|         | totalCount   | N/A              | number | Yes         | null        | total count                               |
+## 16. notify msg list
+
+### (1) description
+
+*  notify node msg list
+
+### (2) path
+
+* /reth/v1/notifyMsgList
+
+### (3) request method
+
+* post
+
+### (4) request payload 
+
+* data format: application/json
+* data detail:
+
+| field       | type   | notice                   |
+| :---------- | :----- | :----------------------- |
+| nodeAddress | string | user address, hex string |
+
+### (5) response
+* include status、data、message fields
+* status、message must be string format, data must be object
+
+
+| grade 1 | grade 2 | grade 3 | type   | must exist? | encode type | description                                                  |
+| :------ | :------ | :------ | :----- | :---------- | :---------- | :----------------------------------------------------------- |
+| status  | N/A     | N/A     | string | Yes         | null        | status code                                                  |
+| message | N/A     | N/A     | string | Yes         | null        | status info                                                  |
+| data    | N/A     | N/A     | object | Yes         | null        | data                                                         |
+|         | msgList | N/A     | list   | Yes         | null        | list                                                         |
+|         |         | msgType | number | Yes         | null        | 1 choosed to exit 2 run client 3 set fee recipient 4 slashed |

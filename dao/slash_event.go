@@ -114,3 +114,21 @@ func GetTotalSlashAmountWithIndexList(db *db.WrapDb, valIndexList []uint64, targ
 	}
 	return uint64(value.Int64), nil
 }
+
+func GetSlashEventListWithIndex(db *db.WrapDb, valIndexList []uint64) (c []*SlashEvent, err error) {
+	if len(valIndexList) == 0 {
+		return nil, nil
+	}
+
+	InStatus := "( "
+	for _, index := range valIndexList {
+		InStatus += fmt.Sprintf("%d", index)
+		InStatus += ","
+	}
+	InStatus = InStatus[:len(InStatus)-1]
+	InStatus += " )"
+	sqlWhere := fmt.Sprintf("validator_index in %s", InStatus)
+
+	err = db.Find(&c, sqlWhere).Error
+	return
+}

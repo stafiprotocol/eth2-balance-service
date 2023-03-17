@@ -199,6 +199,20 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 			}
 		}
 	}
+	// save voluntary exit msg of validators in our pool
+	for _, v := range beaconBlock.VoluntaryExits {
+		_, err := dao.GetValidatorByIndex(task.db, v.ValidatorIndex)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return errors.Wrap(err, "dao.GetValidatorByIndex")
+		}
+
+		if v.ValidatorIndex != 0 && err == nil {
+			err := task.saveVoluntaryExitMsg(v, beaconBlock.Slot, beaconBlock.ExecutionBlockNumber)
+			if err != nil {
+				return errors.Wrap(err, "saveValidatorWithdrawal failed")
+			}
+		}
+	}
 
 	//slash type 4, save sync committee slash
 	for i := uint64(0); i < beaconBlock.SyncAggregate.SyncCommitteeBits.Len(); i++ {
@@ -362,6 +376,23 @@ func (task *Task) saveValidatorWithdrawal(w beacon.Withdrawal, slot, blockNumber
 	}
 	return nil
 }
+
+func (task *Task) saveVoluntaryExitMsg(w beacon.VoluntaryExit, slot, blockNumber uint64) error {
+	exitMsg, err := dao.GetExitMsg(task.db, w.ValidatorIndex)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return errors.Wrap(err, "dao.GetExitMsg")
+	}
+	exitMsg.BroadcastTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	exitMsg.Epoch = w.Epoch
+	exitMsg.ValidatorIndex = w.ValidatorIndex
+
+	err = dao.UpOrInExitMsg(task.db, exitMsg)
+	if err != nil {
+		return errors.Wrap(err, "dao.UpOrInExitMsg")
+	}
+	return nil
+}
+
 func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, beaconBlock *beacon.BeaconBlock, validator *dao.Validator) error {
 	proposedBlock, err := dao.GetProposedBlock(task.db, slot)
 	if err != nil && err != gorm.ErrRecordNotFound {

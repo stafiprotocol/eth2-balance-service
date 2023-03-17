@@ -4,6 +4,8 @@
 package info_handlers
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -75,7 +77,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
 
 	// cal eth info from validator balance
-	stakerValidatorDepositAmount := uint64(0)
+	stakerPlusValidatorDepositAmount := uint64(0)
 	allEth := uint64(0)
 	matchedValidatorsNum := uint64(0)
 
@@ -89,11 +91,11 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 			switch l.NodeType {
 			case utils.NodeTypeSuper:
 				// will fetch 1 eth from pool when super node deposit, so we need add this
-				stakerValidatorDepositAmount += utils.StandardSuperNodeFakeDepositBalance
+				stakerPlusValidatorDepositAmount += utils.StandardSuperNodeFakeDepositBalance
 				allEth += utils.StandardSuperNodeFakeDepositBalance
 
 			case utils.NodeTypeLight:
-				stakerValidatorDepositAmount += l.NodeDepositAmount
+				stakerPlusValidatorDepositAmount += l.NodeDepositAmount
 				allEth += l.NodeDepositAmount
 
 			default:
@@ -103,7 +105,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		case utils.ValidatorStatusOffBoardWithdrawed:
 
 		case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
-			stakerValidatorDepositAmount += utils.StandardEffectiveBalance
+			stakerPlusValidatorDepositAmount += utils.StandardEffectiveBalance
 			allEth += utils.StandardEffectiveBalance
 
 			matchedValidatorsNum += 1
@@ -111,25 +113,26 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		case utils.ValidatorStatusActive, utils.ValidatorStatusExited, utils.ValidatorStatusWithdrawable, utils.ValidatorStatusWithdrawDone,
 			utils.ValidatorStatusActiveSlash, utils.ValidatorStatusExitedSlash, utils.ValidatorStatusWithdrawableSlash, utils.ValidatorStatusWithdrawDoneSlash:
 
-			stakerValidatorDepositAmount += utils.StandardEffectiveBalance
+			stakerPlusValidatorDepositAmount += utils.StandardEffectiveBalance
 			allEth += l.Balance
 
 			matchedValidatorsNum += 1
 
 		case utils.ValidatorStatusDistributed, utils.ValidatorStatusDistributedSlash:
-			matchedValidatorsNum += 1
 
 		default:
+			utils.Err(c, utils.CodeInternalErr, fmt.Sprintf("validator status: %d not supported", l.Status))
+			return
 		}
 	}
 
 	rsp.DepositedEth = poolEthBalanceDeci.
-		Add(decimal.NewFromInt(int64(stakerValidatorDepositAmount)).Mul(utils.GweiDeci)).
+		Add(decimal.NewFromInt(int64(stakerPlusValidatorDepositAmount)).Mul(utils.GweiDeci)).
 		String()
 	// cal minitedReth
 	rsp.MintedREth = poolInfo.REthSupply
 	// cal stakedEth
-	rsp.StakedEth = decimal.NewFromInt(int64(stakerValidatorDepositAmount)).
+	rsp.StakedEth = decimal.NewFromInt(int64(stakerPlusValidatorDepositAmount)).
 		Mul(utils.GweiDeci).
 		String()
 	// pool eth

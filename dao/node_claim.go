@@ -7,16 +7,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
-// event Claimed(
-//
-//	uint256 index,
-//	address account,
-//	uint256 claimableReward,
-//	uint256 claimableDeposit,
-//	ClaimType claimType
-//
-// );
-
+// node claimed event from distributor contract
 type NodeClaim struct {
 	db.BaseModel
 	TxHash   string `gorm:"type:varchar(80) not null;default:'';column:tx_hash;uniqueIndex:uni_idx_hash_log"`       //hex string
@@ -43,4 +34,12 @@ func GetNodeClaim(db *db.WrapDb, txHash string, logIndex uint32) (c *NodeClaim, 
 	c = &NodeClaim{}
 	err = db.Take(c, "tx_hash = ? and log_index = ?", txHash, logIndex).Error
 	return
+}
+
+func GetNodeClaimListByNode(db *db.WrapDb, nodeAddress string) (c []*NodeClaim, err error) {
+	err = db.Order("id desc").Find(&c, "address = ?", nodeAddress).Error
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
 }

@@ -68,6 +68,7 @@ type BeaconBlock struct {
 	ProposerSlashings []ProposerSlashing
 	AttesterSlashing  []AttesterSlashing
 	Withdrawals       []Withdrawal
+	VoluntaryExits    []VoluntaryExit
 	SyncAggregate     SyncAggregate
 
 	// execute layer
@@ -81,6 +82,11 @@ type Withdrawal struct {
 	ValidatorIndex uint64
 	Address        common.Address
 	Amount         uint64
+}
+
+type VoluntaryExit struct {
+	ValidatorIndex uint64
+	Epoch          uint64
 }
 
 type SyncAggregate struct {

@@ -25,6 +25,8 @@ func InitRouters(db *db.WrapDb) http.Handler {
 	infoHandler := info_handlers.NewHandler(db)
 	router.POST("/reth/v1/nodeInfo", infoHandler.HandlePostNodeInfo)
 	router.POST("/reth/v1/rewardInfo", infoHandler.HandlePostRewardInfo)
+	router.POST("/reth/v1/withdrawInfo", infoHandler.HandlePostWithdrawInfo)
+	router.POST("/reth/v1/notifyMsgList", infoHandler.HandlePostNotifyMsgList)
 	router.POST("/reth/v1/pubkeyDetail", infoHandler.HandlePostPubkeyDetail)
 	router.POST("/reth/v1/pubkeyStatusList", infoHandler.HandlePostPubkeyStatusList)
 	router.POST("/reth/v1/exitElectionList", infoHandler.HandlePostExitElectionList)

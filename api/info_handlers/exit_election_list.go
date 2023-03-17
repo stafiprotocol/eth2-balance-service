@@ -93,7 +93,7 @@ func (h *Handler) HandlePostExitElectionList(c *gin.Context) {
 			indexList[i] = l.ValidatorIndex
 		}
 
-		exitElections, totalCount, err = dao.GetExitElectionListIn(h.db, req.PageIndex, req.PageCount, indexList)
+		exitElections, totalCount, err = dao.GetExitElectionListWithPageIn(h.db, req.PageIndex, req.PageCount, indexList)
 		if err != nil {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
 			logrus.Errorf("dao.GetValidatorExitElectionList err %v", err)

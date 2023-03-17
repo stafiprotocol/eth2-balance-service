@@ -72,7 +72,7 @@ func GetExitElectionTotalCount(db *db.WrapDb) (count int64, err error) {
 	return
 }
 
-func GetExitElectionListIn(db *db.WrapDb, pageIndex, pageCount int, valIndexList []uint64) (c []*ExitElection, count int64, err error) {
+func GetExitElectionListWithPageIn(db *db.WrapDb, pageIndex, pageCount int, valIndexList []uint64) (c []*ExitElection, count int64, err error) {
 	if len(valIndexList) == 0 {
 		return nil, 0, nil
 	}
@@ -101,5 +101,23 @@ func GetExitElectionListIn(db *db.WrapDb, pageIndex, pageCount int, valIndexList
 	}
 
 	err = db.Order("notify_timestamp desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, sqlWhere).Error
+	return
+}
+
+func GetNotExitElectionListIn(db *db.WrapDb, valIndexList []uint64) (c []*ExitElection, err error) {
+	if len(valIndexList) == 0 {
+		return nil, nil
+	}
+
+	InStatus := "( "
+	for _, index := range valIndexList {
+		InStatus += fmt.Sprintf("%d", index)
+		InStatus += ","
+	}
+	InStatus = InStatus[:len(InStatus)-1]
+	InStatus += " )"
+	sqlWhere := fmt.Sprintf("exit_epoch > 0 and validator_index in %s", InStatus)
+
+	err = db.Find(&c, sqlWhere).Error
 	return
 }

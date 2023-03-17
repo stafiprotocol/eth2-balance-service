@@ -31,6 +31,7 @@ type Validator struct {
 
 	Balance          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance"`           // realtime balance
 	TotalWithdrawal  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_withdrawal"`  // total withdrawal amount until now
+	TotalFee         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_fee"`         // total priority fee amount until now
 	EffectiveBalance uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:effective_balance"` //realtime effectiveBalance
 
 	NodeType       uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:node_type"`       // 1 common node 2 trust node(used in v1) 3 light node 4 super node‰
@@ -89,9 +90,14 @@ func GetValidatorListWithdrawableEpochAfter(db *db.WrapDb, epoch uint64) (c []*V
 	return
 }
 
-func GetValidatorListNeedUpdate(db *db.WrapDb) (c []*Validator, err error) {
+func GetValidatorListNeedFetchInfoFromBeacon(db *db.WrapDb) (c []*Validator, err error) {
 	err = db.Find(&c, "status in (?, ?, ?, ?, ?, ?, ?, ?) ", utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting, utils.ValidatorStatusActive, utils.ValidatorStatusExited, utils.ValidatorStatusWithdrawable,
 		utils.ValidatorStatusActiveSlash, utils.ValidatorStatusExitedSlash, utils.ValidatorStatusWithdrawableSlash).Error
+	return
+}
+
+func GetValidatorListNeedCheckDistributed(db *db.WrapDb) (c []*Validator, err error) {
+	err = db.Find(&c, "status in (?, ?) ", utils.ValidatorStatusWithdrawDone, utils.ValidatorStatusWithdrawDoneSlash).Error
 	return
 }
 
@@ -100,6 +106,7 @@ func GetValidatorListActive(db *db.WrapDb) (c []*Validator, err error) {
 	return
 }
 
+// return all if status == 0
 func GetValidatorListByNode(db *db.WrapDb, nodeAddress string, status uint8) (c []*Validator, err error) {
 	if status == 0 {
 		err = db.Find(&c, "node_address = ?", nodeAddress).Error

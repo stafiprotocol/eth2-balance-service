@@ -47,7 +47,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return nil
 	}
 
-	validatorList, err := dao.GetValidatorListNeedUpdate(task.db)
+	validatorList, err := dao.GetValidatorListNeedFetchInfoFromBeacon(task.db)
 	if err != nil {
 		return err
 	}
@@ -170,12 +170,61 @@ func (task *Task) syncValidatorLatestInfo() error {
 			}
 			validator.TotalWithdrawal = totalWithdrawal
 
+			// cal total fee
+			totalFee, err := task.calTotalFeeOfValidator(validator.ValidatorIndex, validator.NodeType, finalEpoch)
+			if err != nil {
+				return err
+			}
+			validator.TotalFee = totalFee
+
 			err = dao.UpOrInValidator(task.db, validator)
 			if err != nil {
 				return err
 			}
 		}
 	}
+
+	//--- check distributed status
+	needCheckDistributedValidatorList, err := dao.GetValidatorListNeedCheckDistributed(task.db)
+	if err != nil {
+		return err
+	}
+
+	poolInfo, err := dao.GetPoolInfo(task.db)
+	if err != nil {
+		return err
+	}
+	// distributed: withdrawdone && latest Distribute withdraw Height >  latest ValidatorWithdrawal.BlockNumber
+	for _, val := range needCheckDistributedValidatorList {
+		latestWithdrawal, err := dao.GetValidatorLatestWithdrawal(task.db, val.ValidatorIndex)
+		if err != nil {
+			logrus.Warnf("GetValidatorLatestWithdrawal failed, val: %d", val.ValidatorIndex)
+			continue
+		}
+		if latestWithdrawal.Slot < utils.StartSlotOfEpoch(task.eth2Config, val.WithdrawableEpoch) {
+			continue
+		}
+		if latestWithdrawal.Amount < utils.StandardEffectiveBalance/2 {
+			continue
+		}
+
+		if poolInfo.LatestDistributeHeight >= latestWithdrawal.BlockNumber {
+			switch val.Status {
+			case utils.ValidatorStatusWithdrawDone:
+				val.Status = utils.ValidatorStatusDistributed
+			case utils.ValidatorStatusWithdrawDoneSlash:
+				val.Status = utils.ValidatorStatusDistributedSlash
+			default:
+				return fmt.Errorf("validator status: %d not match", val.Status)
+			}
+
+			err = dao.UpOrInValidator(task.db, val)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	eth2ValidatorInfoMetaData.DealedEpoch = finalEpoch
 	return dao.UpOrInMetaData(task.db, eth2ValidatorInfoMetaData)
 }

@@ -50,6 +50,12 @@ definitions:
           type: integer
         type: array
     type: object
+  info_handlers.ReqNotifyMsgList:
+    properties:
+      nodeAddress:
+        description: hex string
+        type: string
+    type: object
   info_handlers.ReqProof:
     properties:
       nodeAddress:
@@ -110,11 +116,26 @@ definitions:
         description: hex string
         type: string
     type: object
+  info_handlers.ReqWithdrawInfo:
+    properties:
+      nodeAddress:
+        description: hex string
+        type: string
+      pageCount:
+        type: integer
+      pageIndex:
+        type: integer
+    type: object
   info_handlers.ReqWithdrawRemainingTime:
     properties:
       stakerAddress:
         description: hex string
         type: string
+    type: object
+  info_handlers.ResNotifyMsg:
+    properties:
+      msgType:
+        type: integer
     type: object
   info_handlers.ResPubkey:
     properties:
@@ -136,6 +157,25 @@ definitions:
       totalEraRewardEth:
         type: string
       totalStakedEth:
+        type: string
+    type: object
+  info_handlers.ResWithdraw:
+    properties:
+      depositAmount:
+        type: string
+      explorerUrl:
+        type: string
+      operateTimestamp:
+        type: integer
+      receivedAddress:
+        type: string
+      rewardAmount:
+        type: string
+      status:
+        type: integer
+      timeLeft:
+        type: integer
+      totalAmount:
         type: string
     type: object
   info_handlers.RspExitElectionList:
@@ -181,6 +221,13 @@ definitions:
       totalManagedEth:
         type: string
     type: object
+  info_handlers.RspNotifyMsgList:
+    properties:
+      msgList:
+        items:
+          $ref: '#/definitions/info_handlers.ResNotifyMsg'
+        type: array
+    type: object
   info_handlers.RspPoolData:
     properties:
       allEth:
@@ -221,6 +268,8 @@ definitions:
         items:
           type: string
         type: array
+      remainingSeconds:
+        type: integer
       totalExitDepositAmount:
         type: string
       totalRewardAmount:
@@ -337,6 +386,15 @@ definitions:
       exist:
         type: boolean
     type: object
+  info_handlers.RspWithdrawInfo:
+    properties:
+      totalCount:
+        type: integer
+      withdrawList:
+        items:
+          $ref: '#/definitions/info_handlers.ResWithdraw'
+        type: array
+    type: object
   info_handlers.RspWithdrawRemainingTime:
     properties:
       remainingSeconds:
@@ -445,6 +503,33 @@ paths:
                   $ref: '#/definitions/info_handlers.RspNodeInfo'
               type: object
       summary: node info
+      tags:
+      - v1
+  /v1/notifyMsgList:
+    post:
+      consumes:
+      - application/json
+      description: notify node msg list
+      parameters:
+      - description: notify msg
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqNotifyMsgList'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspNotifyMsgList'
+              type: object
+      summary: notify msg list
       tags:
       - v1
   /v1/poolData:
@@ -710,6 +795,33 @@ paths:
                   $ref: '#/definitions/info_handlers.RspUnstakePoolData'
               type: object
       summary: unstake pool data
+      tags:
+      - v1
+  /v1/withdrawInfo:
+    post:
+      consumes:
+      - application/json
+      description: withdraw info
+      parameters:
+      - description: withdraw info
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/info_handlers.ReqWithdrawInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/info_handlers.RspWithdrawInfo'
+              type: object
+      summary: withdraw info
       tags:
       - v1
 swagger: "2.0"
