@@ -518,6 +518,7 @@ no
 |         | totalExitDepositAmount | string      | Yes         | null        | total exit deposit amount decimals 18 |
 |         | proof                  | string list | Yes         | null        | proof of claim, hex string list       |
 |         | remainingSeconds       | number      | Yes         | null        | withdraw remaining time(seconds)      |
+|         | overallAmount          | string      | Yes         | null        | overall amount                        |
 
 
 ## 13. unstake pool data

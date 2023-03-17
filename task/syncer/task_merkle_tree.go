@@ -71,7 +71,7 @@ func (task *Task) calcMerkleTree() error {
 		for i, val := range valList {
 			valIndexList[i] = val.ValidatorIndex
 		}
-		totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(task.db, valIndexList, targetEpoch)
+		totalSlashAmount, err := dao_node.GetTotalSlashAmountBeforeWithIndexList(task.db, valIndexList, targetEpoch)
 		if err != nil {
 			return errors.Wrap(err, "GetTotalSlashAmountWithIndexList failed")
 		}
