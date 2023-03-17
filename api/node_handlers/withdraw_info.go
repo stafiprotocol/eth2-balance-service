@@ -164,6 +164,8 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 			totalAmountDeci = claimableDepositAmountDeci
 			status = withdrawStatusWithdrawed
 		case utils.NodeClaimTypeClaimTotal:
+			rewardAmountDeci = claimableRewardAmountDeci
+			depositAmountDeci = claimableDepositAmountDeci
 			totalAmountDeci = claimableRewardAmountDeci.Add(claimableDepositAmountDeci)
 			status = withdrawStatusWithdrawed
 		default:
