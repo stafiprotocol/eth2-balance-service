@@ -11,6 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -46,14 +48,14 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	}
 	reqBytes, _ := json.Marshal(req)
 	logrus.Debugf("HandlePostProof req parm:\n %s", string(reqBytes))
-	poolInfo, err := dao.GetPoolInfo(h.db)
+	poolInfo, err := dao_chaos.GetPoolInfo(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao_claim.GetProof failed,err: %v", err)
 		return
 	}
 
-	proof, err := dao.GetProof(h.db, poolInfo.LatestMerkleTreeEpoch, req.NodeAddress)
+	proof, err := dao_node.GetProof(h.db, poolInfo.LatestMerkleTreeEpoch, req.NodeAddress)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.Err(c, utils.CodeAddressNotExist, err.Error())
@@ -72,7 +74,7 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		return
 	}
 
-	valList, err := dao.GetValidatorListByNode(h.db, req.NodeAddress, 0)
+	valList, err := dao_node.GetValidatorListByNode(h.db, req.NodeAddress, 0)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetValidatorListByNode err %v", err)

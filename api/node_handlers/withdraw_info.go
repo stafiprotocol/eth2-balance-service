@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -78,7 +78,7 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 		req.PageCount = 50
 	}
 
-	validatorList, err := dao.GetValidatorListByNode(h.db, req.NodeAddress, 0)
+	validatorList, err := dao_node.GetValidatorListByNode(h.db, req.NodeAddress, 0)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetValidatorListByNode err %v", err)
@@ -108,7 +108,7 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 			depositAmountDeci := decimal.NewFromInt(int64(validator.NodeDepositAmount)).Mul(utils.GweiDeci)
 			totalAmountDeci := rewardAmountDeci.Add(depositAmountDeci)
 
-			exitMsg, err := dao.GetExitMsg(h.db, validator.ValidatorIndex)
+			exitMsg, err := dao_node.GetExitMsg(h.db, validator.ValidatorIndex)
 			if err != nil {
 				if err != nil {
 					utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -133,7 +133,7 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 		}
 	}
 
-	nodeClaimList, err := dao.GetNodeClaimListByNode(h.db, req.NodeAddress)
+	nodeClaimList, err := dao_node.GetNodeClaimListByNode(h.db, req.NodeAddress)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetNodeClaimListByNode err %v", err)

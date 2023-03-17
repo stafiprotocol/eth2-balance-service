@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -48,7 +48,7 @@ func (h *Handler) HandlePostPubkeyStatusList(c *gin.Context) {
 	}
 
 	for i, pubkey := range req.PubkeyList {
-		validator, err := dao.GetValidator(h.db, pubkey)
+		validator, err := dao_node.GetValidator(h.db, pubkey)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				utils.Err(c, utils.CodeValidatorNotExist, err.Error())

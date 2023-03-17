@@ -19,6 +19,7 @@ import (
 	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
 	withdraw "github.com/stafiprotocol/eth2-balance-service/bindings/Withdraw"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
@@ -125,18 +126,18 @@ func (task *Task) Start() error {
 
 	// --- clean db -----
 	// fetch proposed timestamp/ block number
-	list, err := dao.GetProposedBlockListTimestampZero(task.db)
+	list, err := dao_node.GetProposedBlockListTimestampZero(task.db)
 	if err != nil {
 		return err
 	}
 	for _, l := range list {
 		l.Timestamp = utils.TimestampOfSlot(task.eth2Config, l.Slot)
-		err := dao.UpOrInProposedBlock(task.db, l)
+		err := dao_node.UpOrInProposedBlock(task.db, l)
 		if err != nil {
 			return err
 		}
 	}
-	listBlockZero, err := dao.GetProposedBlockListBlockNumberZero(task.db)
+	listBlockZero, err := dao_node.GetProposedBlockListBlockNumberZero(task.db)
 	if err != nil {
 		return err
 	}
@@ -150,25 +151,25 @@ func (task *Task) Start() error {
 			return fmt.Errorf("beacon block %d not exist", l.Slot)
 		}
 		l.BlockNumber = beaconBlock.ExecutionBlockNumber
-		err = dao.UpOrInProposedBlock(task.db, l)
+		err = dao_node.UpOrInProposedBlock(task.db, l)
 		if err != nil {
 			return err
 		}
 	}
 	// delete val index zero form val withdrawals
-	err = dao.DeleteValidatorWithdrawalsValIndexZero(task.db)
+	err = dao_node.DeleteValidatorWithdrawalsValIndexZero(task.db)
 	if err != nil {
 		return err
 	}
 	// delete exitElection not in validators
-	exitElectionList, err := dao.GetAllNotExitElectionList(task.db)
+	exitElectionList, err := dao_node.GetAllNotExitElectionList(task.db)
 	if err != nil {
 		return err
 	}
 	for _, val := range exitElectionList {
-		_, err := dao.GetValidatorByIndex(task.db, val.ValidatorIndex)
+		_, err := dao_node.GetValidatorByIndex(task.db, val.ValidatorIndex)
 		if err == gorm.ErrRecordNotFound {
-			err := dao.DeleteExitElectionByValIndex(task.db, val.ValidatorIndex)
+			err := dao_node.DeleteExitElectionByValIndex(task.db, val.ValidatorIndex)
 			if err != nil {
 				return err
 			}

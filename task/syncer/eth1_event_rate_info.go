@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/shopspring/decimal"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"gorm.io/gorm"
 )
 
@@ -22,7 +22,7 @@ func (task *Task) fetchRateUpdateEvents(start, end uint64) error {
 	for iterRateUpdated.Next() {
 		timestamp := iterRateUpdated.Event.Time
 
-		rateInfo, err := dao.GetRateInfo(task.db, timestamp.Uint64())
+		rateInfo, err := dao_staker.GetRateInfo(task.db, timestamp.Uint64())
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
@@ -37,7 +37,7 @@ func (task *Task) fetchRateUpdateEvents(start, end uint64) error {
 		rateInfo.Timestamp = timestamp.Uint64()
 		rateInfo.REthRate = rateDeci.StringFixed(0)
 
-		err = dao.UpOrInRateInfo(task.db, rateInfo)
+		err = dao_staker.UpOrInRateInfo(task.db, rateInfo)
 		if err != nil {
 			return err
 		}

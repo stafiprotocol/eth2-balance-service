@@ -11,6 +11,8 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -87,7 +89,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	}
 	infoFinalEpoch := eth2InfoMetaData.DealedEpoch
 
-	validator, err := dao.GetValidator(h.db, req.Pubkey)
+	validator, err := dao_node.GetValidator(h.db, req.Pubkey)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.Err(c, utils.CodeValidatorNotExist, err.Error())
@@ -98,7 +100,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		logrus.Errorf("dao.GetValidator err %v", err)
 		return
 	}
-	poolInfo, err := dao.GetPoolInfo(h.db)
+	poolInfo, err := dao_chaos.GetPoolInfo(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetPoolInfo err %v", err)
@@ -172,7 +174,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		rsp.ActiveDays = (infoFinalEpoch - validator.ActiveEpoch) * 32 * 12 / (60 * 60 * 24)
 
 		epochBefore24H := infoFinalEpoch - 225
-		validatorBalance, err := dao.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epochBefore24H)
+		validatorBalance, err := dao_node.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epochBefore24H)
 		if err != nil {
 			if err != gorm.ErrRecordNotFound {
 				utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -187,7 +189,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	}
 
 	// cal validator apr
-	apr, err := dao.GetValidatorApr(h.db, validator.ValidatorIndex, validator.NodeDepositAmount)
+	apr, err := dao_node.GetValidatorApr(h.db, validator.ValidatorIndex, validator.NodeDepositAmount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("getValidatorApr err: %s", err)
@@ -202,7 +204,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 			req.ChartDuSeconds = 1e15 // largenumber ensure return all
 		}
 		chartDuEpoch := req.ChartDuSeconds / (12 * 32)
-		firstValidatorBalance, err := dao.GetFirstValidatorBalance(h.db, validator.ValidatorIndex)
+		firstValidatorBalance, err := dao_node.GetFirstValidatorBalance(h.db, validator.ValidatorIndex)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
 			logrus.Errorf("dao.GetFirstValidatorBalance err %s", err)
@@ -234,10 +236,10 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		}
 
 		validatorBalancesExists := make(map[uint64]bool)
-		validatorBalances := make([]*dao.ValidatorBalance, 0)
+		validatorBalances := make([]*dao_node.ValidatorBalance, 0)
 
 		for _, epoch := range epoches {
-			validatorBalance, err := dao.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epoch)
+			validatorBalance, err := dao_node.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				utils.Err(c, utils.CodeInternalErr, err.Error())
 				logrus.Errorf("dao.GetValidatorBalanceBefore err %s", err)
@@ -266,14 +268,14 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	}
 
 	// slash events, onlay return 1 2 3 5 slash type event
-	slashList, total, err := dao.GetSlashEventList(h.db, validator.ValidatorIndex, req.PageIndex, req.PageCount)
+	slashList, total, err := dao_node.GetSlashEventList(h.db, validator.ValidatorIndex, req.PageIndex, req.PageCount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetSlashEventList err %s", err)
 		return
 	}
 
-	totalSlashAmount, err := dao.GetTotalSlashAmount(h.db, validator.ValidatorIndex)
+	totalSlashAmount, err := dao_node.GetTotalSlashAmount(h.db, validator.ValidatorIndex)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetTotalSlashAmount err %s", err)

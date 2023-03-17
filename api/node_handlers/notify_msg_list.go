@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -54,7 +54,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		List: []ResNotifyMsg{},
 	}
 
-	valList, err := dao.GetValidatorListByNode(h.db, req.NodeAddress, 0)
+	valList, err := dao_node.GetValidatorListByNode(h.db, req.NodeAddress, 0)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetValidatorListByNode err %v", err)
@@ -69,7 +69,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		valIndexList = append(valIndexList, val.ValidatorIndex)
 	}
 
-	notExitElectionList, err := dao.GetNotExitElectionListIn(h.db, valIndexList)
+	notExitElectionList, err := dao_node.GetNotExitElectionListIn(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetValidatorListByNode err %v", err)
@@ -81,7 +81,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		})
 	}
 
-	slashList, err := dao.GetSlashEventListWithIndex(h.db, valIndexList)
+	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetSlashEventListWithIndex err %v", err)

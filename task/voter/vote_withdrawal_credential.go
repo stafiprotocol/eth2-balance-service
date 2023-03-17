@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	light_node "github.com/stafiprotocol/eth2-balance-service/bindings/LightNode"
 	super_node "github.com/stafiprotocol/eth2-balance-service/bindings/SuperNode"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 )
@@ -19,7 +19,7 @@ import (
 const batchVoteLimit = 30
 
 func (task *Task) voteWithdrawalCredential() error {
-	validatorListNeedVote, err := dao.GetValidatorListNeedVote(task.db)
+	validatorListNeedVote, err := dao_node.GetValidatorListNeedVote(task.db)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (task *Task) voteWithdrawalCredential() error {
 			time.Sleep(time.Minute)
 		}
 
-		list, err := dao.GetDepositListByPubkey(task.db, validator.Pubkey)
+		list, err := dao_node.GetDepositListByPubkey(task.db, validator.Pubkey)
 		if err != nil {
 			return err
 		}

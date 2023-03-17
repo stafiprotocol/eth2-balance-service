@@ -7,7 +7,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
+	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"gorm.io/gorm"
 )
 
@@ -23,7 +24,7 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 	}
 	for iterUnstake.Next() {
 		withdrawIndex := iterUnstake.Event.WithdrawIndex.Uint64()
-		withdraw, err := dao.GetStakerWithdrawal(task.db, withdrawIndex)
+		withdraw, err := dao_staker.GetStakerWithdrawal(task.db, withdrawIndex)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
@@ -45,7 +46,7 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 			withdraw.ClaimedBlockNumber = iterUnstake.Event.Raw.BlockNumber
 		}
 
-		err = dao.UpOrInStakerWithdrawal(task.db, withdraw)
+		err = dao_staker.UpOrInStakerWithdrawal(task.db, withdraw)
 		if err != nil {
 			return err
 		}
@@ -63,13 +64,13 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 
 	for iterWithdraw.Next() {
 		for _, withdrawIndex := range iterWithdraw.Event.WithdrawIndexList {
-			withdraw, err := dao.GetStakerWithdrawal(task.db, withdrawIndex.Uint64())
+			withdraw, err := dao_staker.GetStakerWithdrawal(task.db, withdrawIndex.Uint64())
 			if err != nil {
 				return errors.Wrap(err, "fetchWithdrawContractEvents GetUserWithdrawal failed")
 			}
 
 			withdraw.ClaimedBlockNumber = iterWithdraw.Event.Raw.BlockNumber
-			err = dao.UpOrInStakerWithdrawal(task.db, withdraw)
+			err = dao_staker.UpOrInStakerWithdrawal(task.db, withdraw)
 			if err != nil {
 				return err
 			}
@@ -89,7 +90,7 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 
 	for iterElection.Next() {
 		for _, validator := range iterElection.Event.EjectedValidators {
-			election, err := dao.GetExitElection(task.db, validator.Uint64())
+			election, err := dao_node.GetExitElection(task.db, validator.Uint64())
 			if err != nil {
 				if err != gorm.ErrRecordNotFound {
 					return errors.Wrap(err, "fetchWithdrawContractEvents GetValidatorExitElection failed")
@@ -107,7 +108,7 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 			election.ValidatorIndex = validator.Uint64()
 			election.WithdrawCycle = iterElection.Event.WithdrawCycle.Uint64()
 
-			err = dao.UpOrInExitElection(task.db, election)
+			err = dao_node.UpOrInExitElection(task.db, election)
 			if err != nil {
 				return err
 			}

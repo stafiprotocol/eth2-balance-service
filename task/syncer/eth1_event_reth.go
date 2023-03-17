@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/shopspring/decimal"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"gorm.io/gorm"
 )
 
@@ -22,7 +22,7 @@ func (task *Task) fetchREthContractEvents(start, end uint64) error {
 	for iterMinted.Next() {
 		txHashStr := iterMinted.Event.Raw.TxHash.String()
 		logIndex := uint32(iterMinted.Event.Raw.Index)
-		stakerMint, err := dao.GetStakerMint(task.db, txHashStr, logIndex)
+		stakerMint, err := dao_staker.GetStakerMint(task.db, txHashStr, logIndex)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
@@ -38,7 +38,7 @@ func (task *Task) fetchREthContractEvents(start, end uint64) error {
 		stakerMint.Timestamp = iterMinted.Event.Time.Uint64()
 		stakerMint.BlockNumber = iterMinted.Event.Raw.BlockNumber
 
-		err = dao.UpOrInStakerMint(task.db, stakerMint)
+		err = dao_staker.UpOrInStakerMint(task.db, stakerMint)
 		if err != nil {
 			return err
 		}

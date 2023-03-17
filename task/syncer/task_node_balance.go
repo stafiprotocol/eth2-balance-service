@@ -6,6 +6,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -43,7 +44,7 @@ func (task *Task) collectNodeEpochBalances() error {
 			continue
 		}
 
-		validatorList, err := dao.GetValidatorListActiveEpochBefore(task.db, epoch)
+		validatorList, err := dao_node.GetValidatorListActiveEpochBefore(task.db, epoch)
 		if err != nil {
 			return err
 		}
@@ -70,7 +71,7 @@ func (task *Task) collectNodeEpochBalances() error {
 
 		// collect node address info
 		for nodeAddress := range nodeAddressMap {
-			list, err := dao.GetValidatorBalanceList(task.db, nodeAddress, epoch)
+			list, err := dao_node.GetValidatorBalanceList(task.db, nodeAddress, epoch)
 			if err != nil {
 				return err
 			}
@@ -79,7 +80,7 @@ func (task *Task) collectNodeEpochBalances() error {
 			}
 
 			// calc node info at this epoch
-			nodeBalance, err := dao.GetNodeBalance(task.db, nodeAddress, epoch)
+			nodeBalance, err := dao_node.GetNodeBalance(task.db, nodeAddress, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err
 			}
@@ -98,7 +99,7 @@ func (task *Task) collectNodeEpochBalances() error {
 			TotalSelfReward := uint64(0)
 			TotalSelfClaimableReward := uint64(0)
 			for _, l := range list {
-				valInfo, err := dao.GetValidatorByIndex(task.db, l.ValidatorIndex)
+				valInfo, err := dao_node.GetValidatorByIndex(task.db, l.ValidatorIndex)
 				if err != nil {
 					return err
 				}
@@ -153,7 +154,7 @@ func (task *Task) collectNodeEpochBalances() error {
 
 			// calc era reward
 			preEpoch := epoch - task.rewardEpochInterval
-			preEpochNodeBalance, err := dao.GetNodeBalance(task.db, nodeAddress, preEpoch)
+			preEpochNodeBalance, err := dao_node.GetNodeBalance(task.db, nodeAddress, preEpoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err
 			}
@@ -173,7 +174,7 @@ func (task *Task) collectNodeEpochBalances() error {
 				nodeBalance.TotalEraReward = totalEraReward
 			}
 
-			err = dao.UpOrInNodeBalance(task.db, nodeBalance)
+			err = dao_node.UpOrInNodeBalance(task.db, nodeBalance)
 			if err != nil {
 				return err
 			}

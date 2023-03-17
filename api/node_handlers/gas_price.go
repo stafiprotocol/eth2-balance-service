@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -25,7 +25,7 @@ type RspGasPrice struct {
 // @Router /v1/gasPrice [get]
 func (h *Handler) HandleGetGasPrice(c *gin.Context) {
 	rsp := RspGasPrice{}
-	poolInfo, err := dao.GetPoolInfo(h.db)
+	poolInfo, err := dao_chaos.GetPoolInfo(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetPoolInfo err %v", err)

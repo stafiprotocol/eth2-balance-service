@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -53,7 +53,7 @@ func (h *Handler) HandlePostUploadUnstakingPlan(c *gin.Context) {
 		return
 	}
 
-	plan, err := dao.GetStakerUnstakingPlan(h.db, req.StakerAddress)
+	plan, err := dao_staker.GetStakerUnstakingPlan(h.db, req.StakerAddress)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -69,7 +69,7 @@ func (h *Handler) HandlePostUploadUnstakingPlan(c *gin.Context) {
 	plan.Amount = req.Amount
 	plan.Timestamp = uint64(time.Now().Unix())
 
-	err = dao.UpOrInStakerUnstakingPlan(h.db, plan)
+	err = dao_staker.UpOrInStakerUnstakingPlan(h.db, plan)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("UpOrInStakerUnstakingPlan failed %s", err)

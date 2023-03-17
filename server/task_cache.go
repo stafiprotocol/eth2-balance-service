@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -50,7 +50,7 @@ func (task *Server) fetchREthTotalApy() error {
 }
 
 func (task *Server) calValidatorAverageApr() error {
-	activeValidator, err := dao.GetValidatorListActive(task.db)
+	activeValidator, err := dao_node.GetValidatorListActive(task.db)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (task *Server) calValidatorAverageApr() error {
 		for i := range activeValidator {
 			if i%du == 0 {
 				selectedValidatorIndex := activeValidator[i].ValidatorIndex
-				apr, err := dao.GetValidatorAprForAverageApr(task.db, selectedValidatorIndex)
+				apr, err := dao_node.GetValidatorAprForAverageApr(task.db, selectedValidatorIndex)
 
 				logrus.WithFields(logrus.Fields{
 					"du":             du,

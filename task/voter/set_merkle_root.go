@@ -9,13 +9,13 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
 
 func (task *Task) setMerkleTree() error {
-	rootHash, err := dao.GetLatestRootHash(task.db)
+	rootHash, err := dao_node.GetLatestRootHash(task.db)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return err
 	}
@@ -40,7 +40,7 @@ func (task *Task) setMerkleTree() error {
 	return task.sendSetMerkleRootTx(rootHash)
 }
 
-func (task *Task) sendSetMerkleRootTx(rootHash *dao.RootHash) error {
+func (task *Task) sendSetMerkleRootTx(rootHash *dao_node.RootHash) error {
 	treeHash, err := hex.DecodeString(rootHash.RootHash)
 	if err != nil {
 		return errors.Wrap(err, "rootHash decode failed")

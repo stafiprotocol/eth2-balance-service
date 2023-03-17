@@ -10,6 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -49,7 +50,7 @@ func (task *Task) voteRate() error {
 	}
 
 	// ----2 get all validator deposited before or equal targetHeight
-	validatorDepositedList, err := dao.GetValidatorDepositedListBeforeEqual(task.db, targetEth1BlockHeight)
+	validatorDepositedList, err := dao_node.GetValidatorDepositedListBeforeEqual(task.db, targetEth1BlockHeight)
 	if err != nil {
 		return err
 	}

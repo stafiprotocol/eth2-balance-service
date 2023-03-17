@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/shopspring/decimal"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"gorm.io/gorm"
 )
 
@@ -25,7 +25,7 @@ func (task *Task) fetchDistributorContractEvents(start, end uint64) error {
 		txHashStr := iterClaimed.Event.Raw.TxHash.String()
 		logIndex := uint32(iterClaimed.Event.Raw.Index)
 
-		nodeClaim, err := dao.GetNodeClaim(task.db, txHashStr, logIndex)
+		nodeClaim, err := dao_node.GetNodeClaim(task.db, txHashStr, logIndex)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
@@ -47,7 +47,7 @@ func (task *Task) fetchDistributorContractEvents(start, end uint64) error {
 		}
 		nodeClaim.Timestamp = block.Header().Time
 
-		err = dao.UpOrInNodeClaim(task.db, nodeClaim)
+		err = dao_node.UpOrInNodeClaim(task.db, nodeClaim)
 		if err != nil {
 			return err
 		}

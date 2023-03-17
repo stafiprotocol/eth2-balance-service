@@ -10,6 +10,8 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -68,7 +70,7 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 	}
 
 	lastEraReward := uint64(0)
-	firstPage, _, err := dao.GetNodeBalanceListByNodeWithPage(h.db, req.NodeAddress, 1, 5)
+	firstPage, _, err := dao_node.GetNodeBalanceListByNodeWithPage(h.db, req.NodeAddress, 1, 5)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetNodeBalanceListByNodeWithPage err %v", err)
@@ -78,13 +80,13 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 		lastEraReward = firstPage[0].TotalEraReward
 	}
 
-	list, totalCount, err := dao.GetNodeBalanceListByNodeWithPage(h.db, req.NodeAddress, req.PageIndex, req.PageCount)
+	list, totalCount, err := dao_node.GetNodeBalanceListByNodeWithPage(h.db, req.NodeAddress, req.PageIndex, req.PageCount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetNodeBalanceListByNodeWithPage err %v", err)
 		return
 	}
-	poolInfo, err := dao.GetPoolInfo(h.db)
+	poolInfo, err := dao_chaos.GetPoolInfo(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetPoolInfo err %v", err)
@@ -104,7 +106,7 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 		"LastEraRewardEth": rsp.LastEraRewardEth,
 	}).Debug("rsp info")
 
-	allValidator, err := dao.GetValidatorListByNode(h.db, req.NodeAddress, 0)
+	allValidator, err := dao_node.GetValidatorListByNode(h.db, req.NodeAddress, 0)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetValidatorListByNode err %v", err)
@@ -145,7 +147,7 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 		req.ChartDuSeconds = 1e15 // large number ensure during all time
 	}
 	chartDuEpoch := req.ChartDuSeconds / (12 * 32)
-	firstNodeBalance, err := dao.GetFirstNodeBalance(h.db, req.NodeAddress)
+	firstNodeBalance, err := dao_node.GetFirstNodeBalance(h.db, req.NodeAddress)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetFirstNodeBalance err %s", err)
@@ -164,9 +166,9 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 		}
 
 		nodeBalancesExists := make(map[uint64]bool)
-		nodeBalances := make([]*dao.NodeBalance, 0)
+		nodeBalances := make([]*dao_node.NodeBalance, 0)
 		for _, epoch := range epoches {
-			nodeBalance, err := dao.GetNodeBalanceBefore(h.db, req.NodeAddress, epoch)
+			nodeBalance, err := dao_node.GetNodeBalanceBefore(h.db, req.NodeAddress, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				utils.Err(c, utils.CodeInternalErr, err.Error())
 				logrus.Errorf("dao.dao.GetValidatorBalanceBefore err %s", err)

@@ -21,6 +21,9 @@ import (
 	super_node_fee_pool "github.com/stafiprotocol/eth2-balance-service/bindings/SuperNodeFeePool"
 	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
+	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
@@ -198,7 +201,7 @@ func statisticCmd() *cobra.Command {
 				txHashStr := distributeIter.Event.Raw.TxHash.String()
 				logIndex := uint32(distributeIter.Event.Raw.Index)
 
-				distributeFee, err := dao.GetDistributeFee(db, txHashStr, logIndex)
+				distributeFee, err := dao_chaos.GetDistributeFee(db, txHashStr, logIndex)
 				if err != nil && err != gorm.ErrRecordNotFound {
 					return err
 				}
@@ -213,7 +216,7 @@ func statisticCmd() *cobra.Command {
 				distributeFee.BlockNumber = distributeIter.Event.Raw.BlockNumber
 				distributeFee.FeePoolType = utils.FeePool
 
-				err = dao.UpOrInDistributeFee(db, distributeFee)
+				err = dao_chaos.UpOrInDistributeFee(db, distributeFee)
 				if err != nil {
 					return err
 				}
@@ -230,7 +233,7 @@ func statisticCmd() *cobra.Command {
 				txHashStr := superNodeDistributeIter.Event.Raw.TxHash.String()
 				logIndex := uint32(superNodeDistributeIter.Event.Raw.Index)
 
-				distributeFee, err := dao.GetDistributeFee(db, txHashStr, logIndex)
+				distributeFee, err := dao_chaos.GetDistributeFee(db, txHashStr, logIndex)
 				if err != nil && err != gorm.ErrRecordNotFound {
 					return err
 				}
@@ -245,7 +248,7 @@ func statisticCmd() *cobra.Command {
 				distributeFee.BlockNumber = superNodeDistributeIter.Event.Raw.BlockNumber
 				distributeFee.FeePoolType = utils.SuperNodeFeePool
 
-				err = dao.UpOrInDistributeFee(db, distributeFee)
+				err = dao_chaos.UpOrInDistributeFee(db, distributeFee)
 				if err != nil {
 					return err
 				}
@@ -260,12 +263,12 @@ func statisticCmd() *cobra.Command {
 
 			logrus.Info("start statistic...")
 
-			allVal, err := dao.GetAllValidatorList(db)
+			allVal, err := dao_node.GetAllValidatorList(db)
 			if err != nil {
 				return err
 			}
 
-			valIndex := make(map[uint64]*dao.Validator)
+			valIndex := make(map[uint64]*dao_node.Validator)
 			for _, val := range allVal {
 				valIndex[val.ValidatorIndex] = val
 			}
@@ -277,7 +280,7 @@ func statisticCmd() *cobra.Command {
 				willDealEpoch := eth2BalanceSyncerMetaData.DealedEpoch - i*cfg.RewardEpochInterval
 
 				// get validator balance list
-				valBalanceList, err := dao.GetValidatorBalanceListByEpoch(db, willDealEpoch)
+				valBalanceList, err := dao_node.GetValidatorBalanceListByEpoch(db, willDealEpoch)
 				if err != nil {
 					return err
 				}
@@ -293,11 +296,11 @@ func statisticCmd() *cobra.Command {
 				targetEth1BlockHeight := targetBeaconBlock.ExecutionBlockNumber
 
 				//get deposited validator before target height
-				valDepositedList, err := dao.GetValidatorDepositedListBeforeEqual(db, targetEth1BlockHeight)
+				valDepositedList, err := dao_node.GetValidatorDepositedListBeforeEqual(db, targetEth1BlockHeight)
 				if err != nil {
 					return err
 				}
-				depositedIndex := make(map[uint64]*dao.Validator)
+				depositedIndex := make(map[uint64]*dao_node.Validator)
 				for _, val := range valDepositedList {
 					depositedIndex[val.ValidatorIndex] = val
 				}
@@ -363,7 +366,7 @@ func statisticCmd() *cobra.Command {
 				}
 
 				//cal reward from fee pool
-				distributeFeeList, err := dao.GetDistributeFeeListBefore(db, targetEth1BlockHeight)
+				distributeFeeList, err := dao_chaos.GetDistributeFeeListBefore(db, targetEth1BlockHeight)
 				if err != nil {
 					return err
 				}
@@ -404,7 +407,7 @@ func statisticCmd() *cobra.Command {
 				}
 
 				// get total staker deposit eth
-				totalStakerDepositEth, err := dao.GetTotalStakerDepositEthBefore(db, targetEth1BlockHeight)
+				totalStakerDepositEth, err := dao_staker.GetTotalStakerDepositEthBefore(db, targetEth1BlockHeight)
 				if err != nil {
 					return err
 				}

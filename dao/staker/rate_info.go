@@ -1,7 +1,7 @@
 // Copyright 2022 stafiprotocol
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package dao
+package dao_staker
 
 import (
 	"github.com/shopspring/decimal"

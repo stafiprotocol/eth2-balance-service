@@ -1,7 +1,7 @@
 // Copyright 2022 stafiprotocol
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package dao
+package dao_chaos
 
 import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"

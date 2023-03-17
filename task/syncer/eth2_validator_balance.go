@@ -8,6 +8,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
 	"github.com/stafiprotocol/eth2-balance-service/shared/types"
@@ -55,7 +56,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 			continue
 		}
 
-		validatorList, err := dao.GetValidatorListActiveEpochBefore(task.db, epoch)
+		validatorList, err := dao_node.GetValidatorListActiveEpochBefore(task.db, epoch)
 		if err != nil {
 			return err
 		}
@@ -77,7 +78,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 
 		pubkeys := make([]types.ValidatorPubkey, 0)
 		pubkeyToNodeAddress := make(map[string]string)
-		pubkeyToValidator := make(map[string]*dao.Validator)
+		pubkeyToValidator := make(map[string]*dao_node.Validator)
 		for _, validator := range validatorList {
 			pubkey, err := types.HexToValidatorPubkey(validator.Pubkey[2:])
 			if err != nil {
@@ -127,7 +128,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 			}
 
 			// calc total withdrawal
-			totalWithdrawal, err := dao.GetValidatorTotalWithdrawalBeforeSlot(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch))
+			totalWithdrawal, err := dao_node.GetValidatorTotalWithdrawalBeforeSlot(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch))
 			if err != nil {
 				return errors.Wrap(err, "GetValidatorTotalWithdrawalBeforeSlot failed")
 			}
@@ -139,7 +140,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 			}
 
 			// insert valdiator balance
-			validatorBalance, err := dao.GetValidatorBalance(task.db, validatorIndex, epoch)
+			validatorBalance, err := dao_node.GetValidatorBalance(task.db, validatorIndex, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err
 			}
@@ -153,7 +154,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 			validatorBalance.ValidatorIndex = validatorIndex
 			validatorBalance.Timestamp = utils.StartTimestampOfEpoch(task.eth2Config, epoch)
 
-			err = dao.UpOrInValidatorBalance(task.db, validatorBalance)
+			err = dao_node.UpOrInValidatorBalance(task.db, validatorBalance)
 			if err != nil {
 				return err
 			}
@@ -175,7 +176,7 @@ func (task *Task) calTotalFeeOfValidator(validatorIndex uint64, nodeType uint8, 
 		feePoolAddress = task.superNodeFeePoolAddress
 	}
 
-	proposedBlockList, err := dao.GetProposedBlockListBefore(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch), feePoolAddress.String())
+	proposedBlockList, err := dao_node.GetProposedBlockListBefore(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch), feePoolAddress.String())
 	if err != nil {
 		return 0, errors.Wrap(err, "GetProposedBlockListBefore failed")
 	}

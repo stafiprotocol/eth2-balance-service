@@ -1,7 +1,7 @@
 // Copyright 2022 stafiprotocol
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package dao
+package dao_node
 
 import (
 	"github.com/shopspring/decimal"
@@ -81,7 +81,7 @@ func GetValidatorAprForAverageApr(db *db.WrapDb, validatorIndex uint64) (float64
 
 	validatorBalanceList, err := GetLatestValidatorBalanceList(db, validatorIndex)
 	if err != nil {
-		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+		logrus.Errorf("dao_node.GetLatestValidatorBalanceList err: %s", err)
 		return 0, err
 	}
 
@@ -127,7 +127,7 @@ func GetValidatorAprForAverageApr(db *db.WrapDb, validatorIndex uint64) (float64
 func GetValidatorApr(db *db.WrapDb, validatorIndex, nodeDepositAmount uint64) (float64, error) {
 	validatorBalanceList, err := GetLatestValidatorBalanceList(db, validatorIndex)
 	if err != nil {
-		logrus.Errorf("dao.GetLatestValidatorBalanceList err: %s", err)
+		logrus.Errorf("dao_node.GetLatestValidatorBalanceList err: %s", err)
 		return 0, err
 	}
 

@@ -10,6 +10,8 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -75,7 +77,7 @@ func (task *Task) checkStateForDistriSuperNodeFeePool() (uint64, uint64, bool, b
 	targetEth1BlockHeight := (eth1LatestBlock / distributeFeeDuBlocks) * distributeFeeDuBlocks
 
 	// ensure target eth1blockHeight >= LatestMerkleTreeEpoch, so the distributor balance is enough for claim
-	poolInfo, err := dao.GetPoolInfo(task.db)
+	poolInfo, err := dao_chaos.GetPoolInfo(task.db)
 	if err != nil {
 		return 0, 0, false, skipMinLimit, err
 	}
@@ -191,7 +193,7 @@ func (task *Task) sendDistributeSuperNodeFeeTx(targetEth1BlockHeight, totalUserE
 
 // return (user reward, node reward, platform fee, totalFee) decimals 18
 func (task Task) getUserNodePlatformFromSuperNodeFeePool(latestDistributeHeight, targetEth1BlockHeight uint64) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, error) {
-	proposedBlockList, err := dao.GetProposedBlockListBetween(task.db, latestDistributeHeight, targetEth1BlockHeight, task.superNodeFeePoolAddress.String())
+	proposedBlockList, err := dao_node.GetProposedBlockListBetween(task.db, latestDistributeHeight, targetEth1BlockHeight, task.superNodeFeePoolAddress.String())
 	if err != nil {
 		return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
 	}
@@ -201,7 +203,7 @@ func (task Task) getUserNodePlatformFromSuperNodeFeePool(latestDistributeHeight,
 	totalNodeEthDeci := decimal.Zero
 	totalPlatformEthDeci := decimal.Zero
 	for _, w := range proposedBlockList {
-		validator, err := dao.GetValidatorByIndex(task.db, w.ValidatorIndex)
+		validator, err := dao_node.GetValidatorByIndex(task.db, w.ValidatorIndex)
 		if err != nil {
 			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
 		}

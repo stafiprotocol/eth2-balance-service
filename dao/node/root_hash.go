@@ -1,4 +1,4 @@
-package dao
+package dao_node
 
 import "github.com/stafiprotocol/eth2-balance-service/pkg/db"
 

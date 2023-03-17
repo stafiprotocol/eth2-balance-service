@@ -12,8 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 	staking_pool "github.com/stafiprotocol/eth2-balance-service/bindings/StakingPool"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
-
 	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
 	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 	"gorm.io/gorm"
@@ -86,7 +86,7 @@ func (task *Task) syncV1Validators() error {
 
 		pubkeyStr := hexutil.Encode(pubkeyBts)
 
-		validator, err := dao.GetValidator(task.db, pubkeyStr)
+		validator, err := dao_node.GetValidator(task.db, pubkeyStr)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
@@ -119,7 +119,7 @@ func (task *Task) syncV1Validators() error {
 		validator.Status = utils.ValidatorStatusStaked
 		// validator.ValidatorIndex = status.Index
 
-		err = dao.UpOrInValidator(task.db, validator)
+		err = dao_node.UpOrInValidator(task.db, validator)
 		if err != nil {
 			return err
 		}
@@ -141,7 +141,7 @@ func (task *Task) syncV1Validators() error {
 		}).Debug("get validator")
 	}
 
-	list, err := dao.GetAllValidatorList(task.db)
+	list, err := dao_node.GetAllValidatorList(task.db)
 	if err != nil {
 		return err
 	}

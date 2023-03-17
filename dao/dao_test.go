@@ -1,13 +1,10 @@
 package dao_test
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
-	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
-	// "github.com/stafiprotocol/eth2-balance-service/shared/beacon/client"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 )
@@ -31,28 +28,6 @@ func init() {
 }
 
 func TestNotFound(t *testing.T) {
-	// c, err := client.NewStandardHttpClient("https://beacon.zhejiang.ethpandaops.io")
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// block, exists, err := c.GetBeaconBlock("263205")
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// if !exists {
-	// 	t.Fatal(fmt.Errorf("not exist"))
-	// }
-	// save withdrawals of nodes in our pool
-	// for _, w := range block.Withdrawals {
-	// 	_, err := dao.GetValidatorByIndex(testDb, w.ValidatorIndex)
-	// 	if err != nil && err != gorm.ErrRecordNotFound {
-	// 		t.Fatal(err)
-	// 	}
-
-	// 	if err == nil {
-	// 		saveValidatorWithdrawal(w)
-	// 	}
-	// }
 
 	g := new(errgroup.Group)
 	g.SetLimit(32)
@@ -61,7 +36,7 @@ func TestNotFound(t *testing.T) {
 
 		g.Go(func() error {
 
-			validator, err := dao.GetValidatorByIndex(testDb, 0)
+			validator, err := dao_node.GetValidatorByIndex(testDb, 0)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				t.Fatal(err)
 			}
@@ -78,8 +53,4 @@ func TestNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-}
-
-func saveValidatorWithdrawal(w beacon.Withdrawal) {
-	fmt.Println("save", w.ValidatorIndex)
 }

@@ -6,13 +6,13 @@ import (
 
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
 
 func (task *Task) syncContractsInfo() error {
-	poolInfo, err := dao.GetPoolInfo(task.db)
+	poolInfo, err := dao_chaos.GetPoolInfo(task.db)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return err
 	}
@@ -104,7 +104,7 @@ func (task *Task) syncContractsInfo() error {
 		"rethsupply":  poolInfo.REthSupply,
 	}).Debug("poolInfo")
 
-	return dao.UpOrInPoolInfo(task.db, poolInfo)
+	return dao_chaos.UpOrInPoolInfo(task.db, poolInfo)
 }
 
 func (task *Task) getEthPrice() (string, error) {

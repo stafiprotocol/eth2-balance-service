@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -25,7 +25,7 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 		txHashStr := iterDeposited.Event.Raw.TxHash.String()
 		pubkeyStr := hexutil.Encode(iterDeposited.Event.Pubkey)
 
-		validator, err := dao.GetValidator(task.db, pubkeyStr)
+		validator, err := dao_node.GetValidator(task.db, pubkeyStr)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
@@ -43,7 +43,7 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 		validator.DepositBlockHeight = iterDeposited.Event.Raw.BlockNumber
 		validator.DepositSignature = hexutil.Encode(iterDeposited.Event.ValidatorSignature)
 
-		err = dao.UpOrInValidator(task.db, validator)
+		err = dao_node.UpOrInValidator(task.db, validator)
 		if err != nil {
 			return err
 		}
@@ -63,7 +63,7 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 		txHashStr := iterStaked.Event.Raw.TxHash.String()
 		pubkeyStr := hexutil.Encode(iterStaked.Event.Pubkey)
 
-		validator, err := dao.GetValidator(task.db, pubkeyStr)
+		validator, err := dao_node.GetValidator(task.db, pubkeyStr)
 		if err != nil {
 			return err
 		}
@@ -76,7 +76,7 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 		validator.StakeTxHash = txHashStr
 		validator.StakeBlockHeight = iterStaked.Event.Raw.BlockNumber
 
-		err = dao.UpOrInValidator(task.db, validator)
+		err = dao_node.UpOrInValidator(task.db, validator)
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 	for iterSetPubkeyStatus.Next() {
 		pubkeyStr := hexutil.Encode(iterSetPubkeyStatus.Event.Pubkey)
 
-		validator, err := dao.GetValidator(task.db, pubkeyStr)
+		validator, err := dao_node.GetValidator(task.db, pubkeyStr)
 		if err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 
 		validator.Status = uint8(iterSetPubkeyStatus.Event.Status.Int64())
 
-		err = dao.UpOrInValidator(task.db, validator)
+		err = dao_node.UpOrInValidator(task.db, validator)
 		if err != nil {
 			return err
 		}

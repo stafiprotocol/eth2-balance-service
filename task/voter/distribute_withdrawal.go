@@ -10,6 +10,9 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
+	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -70,7 +73,7 @@ func (task *Task) distributeWithdrawals() error {
 		if nextWithdrawIndex.Uint64() >= 1 {
 			latestUsersWaitAmountDeci := decimal.Zero
 			for i := nextWithdrawIndex.Uint64() - 1; i > maxClaimableWithdrawIndex.Uint64(); i-- {
-				withdrawal, err := dao.GetStakerWithdrawal(task.db, i)
+				withdrawal, err := dao_staker.GetStakerWithdrawal(task.db, i)
 				if err != nil {
 					return err
 				}
@@ -178,7 +181,7 @@ func (task *Task) checkStateForDistriWithdraw() (uint64, uint64, bool, bool, err
 	targetEth1BlockHeight := (eth1LatestBlock / distributeWithdrawalsDuBlocks) * distributeWithdrawalsDuBlocks
 
 	// ensure target eth1blockHeight >= LatestMerkleTreeEpoch, so the distributor balance is enough for claim
-	poolInfo, err := dao.GetPoolInfo(task.db)
+	poolInfo, err := dao_chaos.GetPoolInfo(task.db)
 	if err != nil {
 		return 0, 0, false, skipMinLimit, err
 	}
@@ -249,7 +252,7 @@ func (task *Task) checkStateForDistriWithdraw() (uint64, uint64, bool, bool, err
 
 // return (user reward, node reward, platform fee, totalWithdrawAmount)
 func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targetEth1BlockHeight uint64) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, error) {
-	withdrawals, err := dao.GetValidatorWithdrawalsBetween(task.db, latestDistributeHeight, targetEth1BlockHeight)
+	withdrawals, err := dao_node.GetValidatorWithdrawalsBetween(task.db, latestDistributeHeight, targetEth1BlockHeight)
 	if err != nil {
 		return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, errors.Wrap(err, "GetValidatorWithdrawalsBetween failed")
 	}
@@ -263,7 +266,7 @@ func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targ
 	totalNodeEthDeci := decimal.Zero
 	totalPlatformEthDeci := decimal.Zero
 	for _, w := range withdrawals {
-		validator, err := dao.GetValidatorByIndex(task.db, w.ValidatorIndex)
+		validator, err := dao_node.GetValidatorByIndex(task.db, w.ValidatorIndex)
 		if err != nil {
 			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
 		}

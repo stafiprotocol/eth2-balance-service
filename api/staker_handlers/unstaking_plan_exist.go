@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -47,7 +47,7 @@ func (h *Handler) HandlePostUnstakingPlanExist(c *gin.Context) {
 		return
 	}
 
-	_, err = dao.GetStakerUnstakingPlan(h.db, req.StakerAddress)
+	_, err = dao_staker.GetStakerUnstakingPlan(h.db, req.StakerAddress)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			utils.Err(c, utils.CodeInternalErr, err.Error())

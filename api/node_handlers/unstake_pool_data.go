@@ -7,7 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
+	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -35,14 +37,14 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 		EjectedValidators: 0,
 	}
 
-	poolInfo, err := dao.GetPoolInfo(h.db)
+	poolInfo, err := dao_chaos.GetPoolInfo(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetPoolInfo err %v", err)
 		return
 	}
 
-	electionCount, err := dao.GetExitElectionTotalCount(h.db)
+	electionCount, err := dao_node.GetExitElectionTotalCount(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetExitElectionTotalCount err %v", err)
@@ -90,7 +92,7 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 		unstakeableEth = canWithdrawTodayDeci
 	}
 
-	stakers, err := dao.GetStakerWithdrawalListNotClaimed(h.db)
+	stakers, err := dao_staker.GetStakerWithdrawalListNotClaimed(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetStakerWithdrawalListNotClaimed err %v", err)

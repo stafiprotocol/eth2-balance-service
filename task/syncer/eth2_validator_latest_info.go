@@ -9,6 +9,8 @@ import (
 	ethpb "github.com/prysmaticlabs/prysm/v3/proto/eth/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
 	"github.com/stafiprotocol/eth2-balance-service/shared/types"
@@ -47,7 +49,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return nil
 	}
 
-	validatorList, err := dao.GetValidatorListNeedFetchInfoFromBeacon(task.db)
+	validatorList, err := dao_node.GetValidatorListNeedFetchInfoFromBeacon(task.db)
 	if err != nil {
 		return err
 	}
@@ -94,7 +96,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		pubkeyStr := hexutil.Encode(pubkey.Bytes())
 		if status.Exists {
 			// must exist here
-			validator, err := dao.GetValidator(task.db, pubkeyStr)
+			validator, err := dao_node.GetValidator(task.db, pubkeyStr)
 			if err != nil {
 				return err
 			}
@@ -164,7 +166,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 			}
 
 			// cal total withdrawal
-			totalWithdrawal, err := dao.GetValidatorTotalWithdrawal(task.db, validator.ValidatorIndex)
+			totalWithdrawal, err := dao_node.GetValidatorTotalWithdrawal(task.db, validator.ValidatorIndex)
 			if err != nil {
 				return err
 			}
@@ -177,7 +179,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 			}
 			validator.TotalFee = totalFee
 
-			err = dao.UpOrInValidator(task.db, validator)
+			err = dao_node.UpOrInValidator(task.db, validator)
 			if err != nil {
 				return err
 			}
@@ -185,18 +187,18 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}
 
 	//--- check distributed status
-	needCheckDistributedValidatorList, err := dao.GetValidatorListNeedCheckDistributed(task.db)
+	needCheckDistributedValidatorList, err := dao_node.GetValidatorListNeedCheckDistributed(task.db)
 	if err != nil {
 		return err
 	}
 
-	poolInfo, err := dao.GetPoolInfo(task.db)
+	poolInfo, err := dao_chaos.GetPoolInfo(task.db)
 	if err != nil {
 		return err
 	}
 	// distributed: withdrawdone && latest Distribute withdraw Height >  latest ValidatorWithdrawal.BlockNumber
 	for _, val := range needCheckDistributedValidatorList {
-		latestWithdrawal, err := dao.GetValidatorLatestWithdrawal(task.db, val.ValidatorIndex)
+		latestWithdrawal, err := dao_node.GetValidatorLatestWithdrawal(task.db, val.ValidatorIndex)
 		if err != nil {
 			logrus.Warnf("GetValidatorLatestWithdrawal failed, val: %d", val.ValidatorIndex)
 			continue
@@ -218,7 +220,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 				return fmt.Errorf("validator status: %d not match", val.Status)
 			}
 
-			err = dao.UpOrInValidator(task.db, val)
+			err = dao_node.UpOrInValidator(task.db, val)
 			if err != nil {
 				return err
 			}

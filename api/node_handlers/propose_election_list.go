@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -56,11 +56,11 @@ func (h *Handler) HandlePostProposeElectionList(c *gin.Context) {
 	}
 
 	// election list
-	var proposeElections []*dao.ProposedBlock
+	var proposeElections []*dao_node.ProposedBlock
 	var totalCount int64
-	validatorMap := make(map[uint64]*dao.Validator)
+	validatorMap := make(map[uint64]*dao_node.Validator)
 	if len(req.NodeAddress) == 0 {
-		list, err := dao.GetAllValidatorList(h.db)
+		list, err := dao_node.GetAllValidatorList(h.db)
 		if err != nil {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
 			logrus.Errorf("dao.GetAllValidatorList err %v", err)
@@ -71,7 +71,7 @@ func (h *Handler) HandlePostProposeElectionList(c *gin.Context) {
 			validatorMap[l.ValidatorIndex] = l
 		}
 
-		proposeElections, totalCount, err = dao.GetProposedBlockList(h.db, req.PageIndex, req.PageCount)
+		proposeElections, totalCount, err = dao_node.GetProposedBlockList(h.db, req.PageIndex, req.PageCount)
 		if err != nil {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
 			logrus.Errorf("dao.GetProposedBlockList err %v", err)
@@ -79,7 +79,7 @@ func (h *Handler) HandlePostProposeElectionList(c *gin.Context) {
 		}
 
 	} else {
-		validators, err := dao.GetValidatorListByNode(h.db, req.NodeAddress, 0)
+		validators, err := dao_node.GetValidatorListByNode(h.db, req.NodeAddress, 0)
 		if err != nil {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
 			logrus.Errorf("dao.GetValidatorListByNode err %v", err)
@@ -92,7 +92,7 @@ func (h *Handler) HandlePostProposeElectionList(c *gin.Context) {
 			indexList[i] = l.ValidatorIndex
 		}
 
-		proposeElections, totalCount, err = dao.GetProposedBlockListIn(h.db, req.PageIndex, req.PageCount, indexList)
+		proposeElections, totalCount, err = dao_node.GetProposedBlockListIn(h.db, req.PageIndex, req.PageCount, indexList)
 		if err != nil {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
 			logrus.Errorf("dao.GetProposedBlockListIn err %v", err)

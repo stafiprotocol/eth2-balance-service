@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -103,7 +103,7 @@ func (task *Task) notifyValidatorExit() error {
 	}
 
 	// calc exited but not withdrawal amount
-	pendingExitValidatorList, err := dao.GetValidatorListWithdrawableEpochAfter(task.db, targetEpoch)
+	pendingExitValidatorList, err := dao_node.GetValidatorListWithdrawableEpochAfter(task.db, targetEpoch)
 	if err != nil {
 		return err
 	}
@@ -119,13 +119,13 @@ func (task *Task) notifyValidatorExit() error {
 	// got final total missing amount
 	finalTotalMissingAmountDeci := newTotalMissingAmountDeci.Sub(totalPendingExitedUserAmountDeci)
 
-	activeValidatorList, err := dao.GetValidatorListActive(task.db)
+	activeValidatorList, err := dao_node.GetValidatorListActive(task.db)
 	if err != nil {
 		return err
 	}
 
-	soloValidtors := make([]*dao.Validator, 0)
-	superValidtors := make([]*dao.Validator, 0)
+	soloValidtors := make([]*dao_node.Validator, 0)
+	superValidtors := make([]*dao_node.Validator, 0)
 	for _, val := range activeValidatorList {
 		if val.ActiveEpoch+300 > targetEpoch {
 			continue
@@ -138,14 +138,14 @@ func (task *Task) notifyValidatorExit() error {
 	}
 
 	sort.SliceStable(soloValidtors, func(i, j int) bool {
-		aprI, _ := dao.GetValidatorApr(task.db, soloValidtors[i].ValidatorIndex, targetEpoch)
-		aprJ, _ := dao.GetValidatorApr(task.db, soloValidtors[j].ValidatorIndex, targetEpoch)
+		aprI, _ := dao_node.GetValidatorApr(task.db, soloValidtors[i].ValidatorIndex, targetEpoch)
+		aprJ, _ := dao_node.GetValidatorApr(task.db, soloValidtors[j].ValidatorIndex, targetEpoch)
 		return aprI < aprJ
 	})
 
 	sort.SliceStable(superValidtors, func(i, j int) bool {
-		aprI, _ := dao.GetValidatorApr(task.db, superValidtors[i].ValidatorIndex, targetEpoch)
-		aprJ, _ := dao.GetValidatorApr(task.db, superValidtors[j].ValidatorIndex, targetEpoch)
+		aprI, _ := dao_node.GetValidatorApr(task.db, superValidtors[i].ValidatorIndex, targetEpoch)
+		aprJ, _ := dao_node.GetValidatorApr(task.db, superValidtors[j].ValidatorIndex, targetEpoch)
 		return aprI < aprJ
 	})
 
@@ -165,7 +165,7 @@ func (task *Task) notifyValidatorExit() error {
 	// todo check select length and totalMissingAmount
 
 	// cal start cycle
-	notExitElectionList, err := dao.GetAllNotExitElectionList(task.db)
+	notExitElectionList, err := dao_node.GetAllNotExitElectionList(task.db)
 	if err != nil {
 		return err
 	}

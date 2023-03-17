@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
 	"github.com/stafiprotocol/eth2-balance-service/shared/types"
@@ -34,7 +35,7 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 			continue
 		}
 
-		validatorList, err := dao.GetValidatorListActiveEpochBefore(task.db, epoch)
+		validatorList, err := dao_node.GetValidatorListActiveEpochBefore(task.db, epoch)
 		if err != nil {
 			return err
 		}
@@ -93,7 +94,7 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 				if !exist {
 					return fmt.Errorf("validator index not exit in pubkeyToIndex")
 				}
-				validatorBalance, err := dao.GetValidatorBalance(task.db, validatorIndex, epoch)
+				validatorBalance, err := dao_node.GetValidatorBalance(task.db, validatorIndex, epoch)
 				if err != nil && err != gorm.ErrRecordNotFound {
 					return err
 				}
@@ -105,7 +106,7 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 				validatorBalance.ValidatorIndex = validatorIndex
 				validatorBalance.Timestamp = utils.StartTimestampOfEpoch(task.eth2Config, epoch)
 
-				err = dao.UpOrInValidatorBalance(task.db, validatorBalance)
+				err = dao_node.UpOrInValidatorBalance(task.db, validatorBalance)
 				if err != nil {
 					return err
 				}
@@ -116,12 +117,12 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 		// collect node address
 		for node := range nodeAddressMap {
 
-			list, err := dao.GetValidatorBalanceList(task.db, node, epoch)
+			list, err := dao_node.GetValidatorBalanceList(task.db, node, epoch)
 			if err != nil {
 				return err
 			}
 
-			nodeBalance, err := dao.GetNodeBalance(task.db, node, epoch)
+			nodeBalance, err := dao_node.GetNodeBalance(task.db, node, epoch)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				return err
 			}
@@ -130,7 +131,7 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 			nodeBalance.Timestamp = utils.StartTimestampOfEpoch(task.eth2Config, epoch)
 
 			for _, l := range list {
-				valInfo, err := dao.GetValidatorByIndex(task.db, l.ValidatorIndex)
+				valInfo, err := dao_node.GetValidatorByIndex(task.db, l.ValidatorIndex)
 				if err != nil {
 					return err
 				}
@@ -147,7 +148,7 @@ func (task *Task) syncV1ValidatorEpochBalances() error {
 				nodeBalance.TotalEraReward += reward
 			}
 
-			err = dao.UpOrInNodeBalance(task.db, nodeBalance)
+			err = dao_node.UpOrInNodeBalance(task.db, nodeBalance)
 			if err != nil {
 				return err
 			}

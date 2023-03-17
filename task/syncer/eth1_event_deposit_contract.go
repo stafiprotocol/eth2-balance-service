@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"gorm.io/gorm"
 )
 
@@ -22,7 +22,7 @@ func (task *Task) fetchDepositContractEvents(start, end uint64) error {
 	for iterDeposited.Next() {
 		txHashStr := iterDeposited.Event.Raw.TxHash.String()
 		logIndex := uint32(iterDeposited.Event.Raw.Index)
-		deposit, err := dao.GetDeposit(task.db, txHashStr, logIndex)
+		deposit, err := dao_node.GetDeposit(task.db, txHashStr, logIndex)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
@@ -36,7 +36,7 @@ func (task *Task) fetchDepositContractEvents(start, end uint64) error {
 		deposit.TxHash = txHashStr
 		deposit.WithdrawalCredentials = withdrawCredentialsStr
 
-		err = dao.UpOrInDeposit(task.db, deposit)
+		err = dao_node.UpOrInDeposit(task.db, deposit)
 		if err != nil {
 			return err
 		}

@@ -9,7 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -72,7 +73,7 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		List:             []ResPubkey{},
 	}
 
-	totalList, err := dao.GetValidatorListByNode(h.db, req.NodeAddress, 0)
+	totalList, err := dao_node.GetValidatorListByNode(h.db, req.NodeAddress, 0)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetValidatorListByNode err %v", err)
@@ -105,25 +106,25 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		}).Debug("GetNodeReward")
 	}
 
-	_, pendingCount, err := dao.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{20}, req.PageIndex, req.PageCount)
+	_, pendingCount, err := dao_node.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{20}, req.PageIndex, req.PageCount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
 		return
 	}
-	_, activeCount, err := dao.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{9}, req.PageIndex, req.PageCount)
+	_, activeCount, err := dao_node.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{9}, req.PageIndex, req.PageCount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
 		return
 	}
-	_, exitedCount, err := dao.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{10}, req.PageIndex, req.PageCount)
+	_, exitedCount, err := dao_node.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{10}, req.PageIndex, req.PageCount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
 		return
 	}
-	_, slashCount, err := dao.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{30}, req.PageIndex, req.PageCount)
+	_, slashCount, err := dao_node.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{30}, req.PageIndex, req.PageCount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
@@ -134,14 +135,14 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	rsp.ExitedCount = exitedCount
 	rsp.SlashCount = slashCount
 
-	list, totalCount, err := dao.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, willUseStatusList, req.PageIndex, req.PageCount)
+	list, totalCount, err := dao_node.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, willUseStatusList, req.PageIndex, req.PageCount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
 		return
 	}
 
-	poolInfo, err := dao.GetPoolInfo(h.db)
+	poolInfo, err := dao_chaos.GetPoolInfo(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetPoolInfo err %v", err)

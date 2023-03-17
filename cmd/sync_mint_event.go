@@ -19,6 +19,7 @@ import (
 	reth "github.com/stafiprotocol/eth2-balance-service/bindings/Reth"
 	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
@@ -136,7 +137,7 @@ func syncMintEventCmd() *cobra.Command {
 			for iterMinted.Next() {
 				txHashStr := iterMinted.Event.Raw.TxHash.String()
 				logIndex := uint32(iterMinted.Event.Raw.Index)
-				stakerMint, err := dao.GetStakerMint(db, txHashStr, logIndex)
+				stakerMint, err := dao_staker.GetStakerMint(db, txHashStr, logIndex)
 				if err != nil && err != gorm.ErrRecordNotFound {
 					return err
 				}
@@ -152,7 +153,7 @@ func syncMintEventCmd() *cobra.Command {
 				stakerMint.Timestamp = iterMinted.Event.Time.Uint64()
 				stakerMint.BlockNumber = iterMinted.Event.Raw.BlockNumber
 
-				err = dao.UpOrInStakerMint(db, stakerMint)
+				err = dao_staker.UpOrInStakerMint(db, stakerMint)
 				if err != nil {
 					return err
 				}

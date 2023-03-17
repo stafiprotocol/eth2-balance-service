@@ -10,6 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -26,7 +27,7 @@ func (task *Task) calcMerkleTree() error {
 
 	targetEpoch := (beaconHead.FinalizedEpoch / calMerkleTreeDu) * calMerkleTreeDu
 
-	rootHash, err := dao.GetRootHash(task.db, targetEpoch)
+	rootHash, err := dao_node.GetRootHash(task.db, targetEpoch)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return err
 	}
@@ -45,7 +46,7 @@ func (task *Task) calcMerkleTree() error {
 	}
 
 	// -- start calc
-	nodeBalanceList, err := dao.GetNodeBalanceListByEpoch(task.db, targetEpoch)
+	nodeBalanceList, err := dao_node.GetNodeBalanceListByEpoch(task.db, targetEpoch)
 	if err != nil {
 		return err
 	}
@@ -55,14 +56,14 @@ func (task *Task) calcMerkleTree() error {
 		return nil
 	}
 
-	proofList := make([]*dao.Proof, len(nodeBalanceList))
+	proofList := make([]*dao_node.Proof, len(nodeBalanceList))
 	for i, nodeBalance := range nodeBalanceList {
-		proof, err := dao.GetProof(task.db, targetEpoch, nodeBalance.NodeAddress)
+		proof, err := dao_node.GetProof(task.db, targetEpoch, nodeBalance.NodeAddress)
 		if err != nil && err != gorm.ErrRecordNotFound {
-			return errors.Wrap(err, "dao.GetProof failed")
+			return errors.Wrap(err, "dao_node.GetProof failed")
 		}
 		// fetch total slash amount
-		valList, err := dao.GetValidatorListByNode(task.db, nodeBalance.NodeAddress, 0)
+		valList, err := dao_node.GetValidatorListByNode(task.db, nodeBalance.NodeAddress, 0)
 		if err != nil {
 			return err
 		}
@@ -70,7 +71,7 @@ func (task *Task) calcMerkleTree() error {
 		for i, val := range valList {
 			valIndexList[i] = val.ValidatorIndex
 		}
-		totalSlashAmount, err := dao.GetTotalSlashAmountWithIndexList(task.db, valIndexList, targetEpoch)
+		totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(task.db, valIndexList, targetEpoch)
 		if err != nil {
 			return errors.Wrap(err, "GetTotalSlashAmountWithIndexList failed")
 		}
@@ -136,7 +137,7 @@ func (task *Task) calcMerkleTree() error {
 		// set proof
 		proof.Proof = strings.Join(proofStrList, ":")
 
-		err = dao.UpOrInProof(task.db, proof)
+		err = dao_node.UpOrInProof(task.db, proof)
 		if err != nil {
 			return err
 		}
@@ -144,7 +145,7 @@ func (task *Task) calcMerkleTree() error {
 
 	rootHash.DealedEpoch = uint32(targetEpoch)
 	rootHash.RootHash = treeHash.String()
-	err = dao.UpOrInRootHash(task.db, rootHash)
+	err = dao_node.UpOrInRootHash(task.db, rootHash)
 	if err != nil {
 		return err
 	}
@@ -157,7 +158,7 @@ func (task *Task) calcMerkleTree() error {
 	return nil
 }
 
-func BuildMerkleTree(datas []*dao.Proof) (*utils.MerkleTree, error) {
+func BuildMerkleTree(datas []*dao_node.Proof) (*utils.MerkleTree, error) {
 	if len(datas) == 0 {
 		return nil, fmt.Errorf("proof list empty")
 	}

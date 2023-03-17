@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	"github.com/shopspring/decimal"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
 // return stakingEth and stakingEth + reward (Gwei)
-func (task *Task) getUserEthInfoFromValidatorBalance(validator *dao.Validator, targetEpoch uint64) (userStakingEth uint64, userAllEth uint64, err error) {
+func (task *Task) getUserEthInfoFromValidatorBalance(validator *dao_node.Validator, targetEpoch uint64) (userStakingEth uint64, userAllEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusOffBoardCanWithdraw, utils.ValidatorStatusOffBoardWithdrawed:
 		switch validator.NodeType {
@@ -35,7 +35,7 @@ func (task *Task) getUserEthInfoFromValidatorBalance(validator *dao.Validator, t
 			return userDepositBalance, userDepositBalance, nil
 		}
 
-		validatorBalance, err := dao.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
+		validatorBalance, err := dao_node.GetValidatorBalance(task.db, validator.ValidatorIndex, targetEpoch)
 		if err != nil {
 			return 0, 0, err
 		}
