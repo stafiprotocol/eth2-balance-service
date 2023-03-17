@@ -32,7 +32,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqExitElectionList"
+                            "$ref": "#/definitions/node_handlers.ReqExitElectionList"
                         }
                     }
                 ],
@@ -48,7 +48,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspExitElectionList"
+                                            "$ref": "#/definitions/node_handlers.RspExitElectionList"
                                         }
                                     }
                                 }
@@ -80,7 +80,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspGasPrice"
+                                            "$ref": "#/definitions/node_handlers.RspGasPrice"
                                         }
                                     }
                                 }
@@ -110,7 +110,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqNodeInfo"
+                            "$ref": "#/definitions/node_handlers.ReqNodeInfo"
                         }
                     }
                 ],
@@ -126,7 +126,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspNodeInfo"
+                                            "$ref": "#/definitions/node_handlers.RspNodeInfo"
                                         }
                                     }
                                 }
@@ -156,7 +156,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqNotifyMsgList"
+                            "$ref": "#/definitions/node_handlers.ReqNotifyMsgList"
                         }
                     }
                 ],
@@ -172,7 +172,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspNotifyMsgList"
+                                            "$ref": "#/definitions/node_handlers.RspNotifyMsgList"
                                         }
                                     }
                                 }
@@ -204,7 +204,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspPoolData"
+                                            "$ref": "#/definitions/node_handlers.RspPoolData"
                                         }
                                     }
                                 }
@@ -234,7 +234,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqProof"
+                            "$ref": "#/definitions/node_handlers.ReqProof"
                         }
                     }
                 ],
@@ -250,7 +250,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspProof"
+                                            "$ref": "#/definitions/node_handlers.RspProof"
                                         }
                                     }
                                 }
@@ -280,7 +280,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqProposeElectionList"
+                            "$ref": "#/definitions/node_handlers.ReqProposeElectionList"
                         }
                     }
                 ],
@@ -296,7 +296,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspProposeElectionList"
+                                            "$ref": "#/definitions/node_handlers.RspProposeElectionList"
                                         }
                                     }
                                 }
@@ -326,7 +326,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqPubkeyDetail"
+                            "$ref": "#/definitions/node_handlers.ReqPubkeyDetail"
                         }
                     }
                 ],
@@ -342,7 +342,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspPubkeyDetail"
+                                            "$ref": "#/definitions/node_handlers.RspPubkeyDetail"
                                         }
                                     }
                                 }
@@ -372,7 +372,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqPubkeyStatusList"
+                            "$ref": "#/definitions/node_handlers.ReqPubkeyStatusList"
                         }
                     }
                 ],
@@ -388,7 +388,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspPubkeyStatusList"
+                                            "$ref": "#/definitions/node_handlers.RspPubkeyStatusList"
                                         }
                                     }
                                 }
@@ -418,7 +418,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqRewardInfo"
+                            "$ref": "#/definitions/node_handlers.ReqRewardInfo"
                         }
                     }
                 ],
@@ -434,7 +434,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspRewardInfo"
+                                            "$ref": "#/definitions/node_handlers.RspRewardInfo"
                                         }
                                     }
                                 }
@@ -466,7 +466,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspUnstakingLeftSeconds"
+                                            "$ref": "#/definitions/staker_handlers.RspUnstakingLeftSeconds"
                                         }
                                     }
                                 }
@@ -496,7 +496,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqUnstakingPlanExist"
+                            "$ref": "#/definitions/staker_handlers.ReqUnstakingPlanExist"
                         }
                     }
                 ],
@@ -512,7 +512,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspUnstakingPlanExist"
+                                            "$ref": "#/definitions/staker_handlers.RspUnstakingPlanExist"
                                         }
                                     }
                                 }
@@ -542,7 +542,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqUploadUnstakingPlan"
+                            "$ref": "#/definitions/staker_handlers.ReqUploadUnstakingPlan"
                         }
                     }
                 ],
@@ -576,7 +576,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqWithdrawRemainingTime"
+                            "$ref": "#/definitions/staker_handlers.ReqWithdrawRemainingTime"
                         }
                     }
                 ],
@@ -592,7 +592,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspWithdrawRemainingTime"
+                                            "$ref": "#/definitions/staker_handlers.RspWithdrawRemainingTime"
                                         }
                                     }
                                 }
@@ -624,7 +624,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspUnstakePoolData"
+                                            "$ref": "#/definitions/node_handlers.RspUnstakePoolData"
                                         }
                                     }
                                 }
@@ -654,7 +654,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqWithdrawInfo"
+                            "$ref": "#/definitions/node_handlers.ReqWithdrawInfo"
                         }
                     }
                 ],
@@ -670,7 +670,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspWithdrawInfo"
+                                            "$ref": "#/definitions/node_handlers.RspWithdrawInfo"
                                         }
                                     }
                                 }
@@ -682,7 +682,7 @@
         }
     },
     "definitions": {
-        "info_handlers.ExitElection": {
+        "node_handlers.ExitElection": {
             "type": "object",
             "properties": {
                 "choosenTime": {
@@ -702,7 +702,7 @@
                 }
             }
         },
-        "info_handlers.ProposeElection": {
+        "node_handlers.ProposeElection": {
             "type": "object",
             "properties": {
                 "choosenTime": {
@@ -719,7 +719,7 @@
                 }
             }
         },
-        "info_handlers.ReqExitElectionList": {
+        "node_handlers.ReqExitElectionList": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -733,7 +733,7 @@
                 }
             }
         },
-        "info_handlers.ReqNodeInfo": {
+        "node_handlers.ReqNodeInfo": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -758,7 +758,7 @@
                 }
             }
         },
-        "info_handlers.ReqNotifyMsgList": {
+        "node_handlers.ReqNotifyMsgList": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -767,7 +767,7 @@
                 }
             }
         },
-        "info_handlers.ReqProof": {
+        "node_handlers.ReqProof": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -775,7 +775,7 @@
                 }
             }
         },
-        "info_handlers.ReqProposeElectionList": {
+        "node_handlers.ReqProposeElectionList": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -789,7 +789,7 @@
                 }
             }
         },
-        "info_handlers.ReqPubkeyDetail": {
+        "node_handlers.ReqPubkeyDetail": {
             "type": "object",
             "properties": {
                 "chartDuSeconds": {
@@ -807,7 +807,7 @@
                 }
             }
         },
-        "info_handlers.ReqPubkeyStatusList": {
+        "node_handlers.ReqPubkeyStatusList": {
             "type": "object",
             "properties": {
                 "pubkeyList": {
@@ -819,7 +819,7 @@
                 }
             }
         },
-        "info_handlers.ReqRewardInfo": {
+        "node_handlers.ReqRewardInfo": {
             "type": "object",
             "properties": {
                 "chartDuSeconds": {
@@ -837,28 +837,7 @@
                 }
             }
         },
-        "info_handlers.ReqUnstakingPlanExist": {
-            "type": "object",
-            "properties": {
-                "stakerAddress": {
-                    "description": "hex string",
-                    "type": "string"
-                }
-            }
-        },
-        "info_handlers.ReqUploadUnstakingPlan": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "string"
-                },
-                "stakerAddress": {
-                    "description": "hex string",
-                    "type": "string"
-                }
-            }
-        },
-        "info_handlers.ReqWithdrawInfo": {
+        "node_handlers.ReqWithdrawInfo": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -873,16 +852,7 @@
                 }
             }
         },
-        "info_handlers.ReqWithdrawRemainingTime": {
-            "type": "object",
-            "properties": {
-                "stakerAddress": {
-                    "description": "hex string",
-                    "type": "string"
-                }
-            }
-        },
-        "info_handlers.ResNotifyMsg": {
+        "node_handlers.ResNotifyMsg": {
             "type": "object",
             "properties": {
                 "msgType": {
@@ -890,7 +860,7 @@
                 }
             }
         },
-        "info_handlers.ResPubkey": {
+        "node_handlers.ResPubkey": {
             "type": "object",
             "properties": {
                 "pubkey": {
@@ -901,7 +871,7 @@
                 }
             }
         },
-        "info_handlers.ResReward": {
+        "node_handlers.ResReward": {
             "type": "object",
             "properties": {
                 "commission": {
@@ -924,7 +894,7 @@
                 }
             }
         },
-        "info_handlers.ResWithdraw": {
+        "node_handlers.ResWithdraw": {
             "type": "object",
             "properties": {
                 "depositAmount": {
@@ -953,13 +923,13 @@
                 }
             }
         },
-        "info_handlers.RspExitElectionList": {
+        "node_handlers.RspExitElectionList": {
             "type": "object",
             "properties": {
                 "electionList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ExitElection"
+                        "$ref": "#/definitions/node_handlers.ExitElection"
                     }
                 },
                 "electionTotalCount": {
@@ -967,7 +937,7 @@
                 }
             }
         },
-        "info_handlers.RspGasPrice": {
+        "node_handlers.RspGasPrice": {
             "type": "object",
             "properties": {
                 "baseFee": {
@@ -981,7 +951,7 @@
                 }
             }
         },
-        "info_handlers.RspNodeInfo": {
+        "node_handlers.RspNodeInfo": {
             "type": "object",
             "properties": {
                 "activeCount": {
@@ -999,7 +969,7 @@
                 "pubkeyList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ResPubkey"
+                        "$ref": "#/definitions/node_handlers.ResPubkey"
                     }
                 },
                 "selfDepositedEth": {
@@ -1019,18 +989,18 @@
                 }
             }
         },
-        "info_handlers.RspNotifyMsgList": {
+        "node_handlers.RspNotifyMsgList": {
             "type": "object",
             "properties": {
                 "msgList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ResNotifyMsg"
+                        "$ref": "#/definitions/node_handlers.ResNotifyMsg"
                     }
                 }
             }
         },
-        "info_handlers.RspPoolData": {
+        "node_handlers.RspPoolData": {
             "type": "object",
             "properties": {
                 "allEth": {
@@ -1071,7 +1041,7 @@
                 }
             }
         },
-        "info_handlers.RspProof": {
+        "node_handlers.RspProof": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1097,13 +1067,13 @@
                 }
             }
         },
-        "info_handlers.RspProposeElectionList": {
+        "node_handlers.RspProposeElectionList": {
             "type": "object",
             "properties": {
                 "electionList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ProposeElection"
+                        "$ref": "#/definitions/node_handlers.ProposeElection"
                     }
                 },
                 "electionTotalCount": {
@@ -1111,7 +1081,7 @@
                 }
             }
         },
-        "info_handlers.RspPubkeyDetail": {
+        "node_handlers.RspPubkeyDetail": {
             "type": "object",
             "properties": {
                 "activeDays": {
@@ -1162,7 +1132,7 @@
                 "slashEventList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.SlashEvent"
+                        "$ref": "#/definitions/node_handlers.SlashEvent"
                     }
                 },
                 "status": {
@@ -1176,7 +1146,7 @@
                 }
             }
         },
-        "info_handlers.RspPubkeyStatusList": {
+        "node_handlers.RspPubkeyStatusList": {
             "type": "object",
             "properties": {
                 "nodeDepositAmountList": {
@@ -1194,7 +1164,7 @@
                 }
             }
         },
-        "info_handlers.RspRewardInfo": {
+        "node_handlers.RspRewardInfo": {
             "type": "object",
             "properties": {
                 "chartXData": {
@@ -1218,7 +1188,7 @@
                 "rewardList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ResReward"
+                        "$ref": "#/definitions/node_handlers.ResReward"
                     }
                 },
                 "totalCount": {
@@ -1229,7 +1199,7 @@
                 }
             }
         },
-        "info_handlers.RspUnstakePoolData": {
+        "node_handlers.RspUnstakePoolData": {
             "type": "object",
             "properties": {
                 "ejectedValidators": {
@@ -1249,24 +1219,7 @@
                 }
             }
         },
-        "info_handlers.RspUnstakingLeftSeconds": {
-            "type": "object",
-            "properties": {
-                "leftSeconds": {
-                    "description": "staked waiting actived",
-                    "type": "integer"
-                }
-            }
-        },
-        "info_handlers.RspUnstakingPlanExist": {
-            "type": "object",
-            "properties": {
-                "exist": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "info_handlers.RspWithdrawInfo": {
+        "node_handlers.RspWithdrawInfo": {
             "type": "object",
             "properties": {
                 "totalCount": {
@@ -1275,21 +1228,12 @@
                 "withdrawList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ResWithdraw"
+                        "$ref": "#/definitions/node_handlers.ResWithdraw"
                     }
                 }
             }
         },
-        "info_handlers.RspWithdrawRemainingTime": {
-            "type": "object",
-            "properties": {
-                "remainingSeconds": {
-                    "description": "staked waiting actived",
-                    "type": "integer"
-                }
-            }
-        },
-        "info_handlers.SlashEvent": {
+        "node_handlers.SlashEvent": {
             "type": "object",
             "properties": {
                 "endBlock": {
@@ -1308,6 +1252,62 @@
                     "type": "integer"
                 },
                 "startTimestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "staker_handlers.ReqUnstakingPlanExist": {
+            "type": "object",
+            "properties": {
+                "stakerAddress": {
+                    "description": "hex string",
+                    "type": "string"
+                }
+            }
+        },
+        "staker_handlers.ReqUploadUnstakingPlan": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "stakerAddress": {
+                    "description": "hex string",
+                    "type": "string"
+                }
+            }
+        },
+        "staker_handlers.ReqWithdrawRemainingTime": {
+            "type": "object",
+            "properties": {
+                "stakerAddress": {
+                    "description": "hex string",
+                    "type": "string"
+                }
+            }
+        },
+        "staker_handlers.RspUnstakingLeftSeconds": {
+            "type": "object",
+            "properties": {
+                "leftSeconds": {
+                    "description": "staked waiting actived",
+                    "type": "integer"
+                }
+            }
+        },
+        "staker_handlers.RspUnstakingPlanExist": {
+            "type": "object",
+            "properties": {
+                "exist": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "staker_handlers.RspWithdrawRemainingTime": {
+            "type": "object",
+            "properties": {
+                "remainingSeconds": {
+                    "description": "staked waiting actived",
                     "type": "integer"
                 }
             }

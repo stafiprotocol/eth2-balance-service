@@ -1,7 +1,7 @@
 // Copyright 2021 stafiprotocol
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package info_handlers
+package node_handlers
 
 import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"

@@ -39,7 +39,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqExitElectionList"
+                            "$ref": "#/definitions/node_handlers.ReqExitElectionList"
                         }
                     }
                 ],
@@ -55,7 +55,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspExitElectionList"
+                                            "$ref": "#/definitions/node_handlers.RspExitElectionList"
                                         }
                                     }
                                 }
@@ -87,7 +87,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspGasPrice"
+                                            "$ref": "#/definitions/node_handlers.RspGasPrice"
                                         }
                                     }
                                 }
@@ -117,7 +117,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqNodeInfo"
+                            "$ref": "#/definitions/node_handlers.ReqNodeInfo"
                         }
                     }
                 ],
@@ -133,7 +133,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspNodeInfo"
+                                            "$ref": "#/definitions/node_handlers.RspNodeInfo"
                                         }
                                     }
                                 }
@@ -163,7 +163,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqNotifyMsgList"
+                            "$ref": "#/definitions/node_handlers.ReqNotifyMsgList"
                         }
                     }
                 ],
@@ -179,7 +179,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspNotifyMsgList"
+                                            "$ref": "#/definitions/node_handlers.RspNotifyMsgList"
                                         }
                                     }
                                 }
@@ -211,7 +211,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspPoolData"
+                                            "$ref": "#/definitions/node_handlers.RspPoolData"
                                         }
                                     }
                                 }
@@ -241,7 +241,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqProof"
+                            "$ref": "#/definitions/node_handlers.ReqProof"
                         }
                     }
                 ],
@@ -257,7 +257,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspProof"
+                                            "$ref": "#/definitions/node_handlers.RspProof"
                                         }
                                     }
                                 }
@@ -287,7 +287,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqProposeElectionList"
+                            "$ref": "#/definitions/node_handlers.ReqProposeElectionList"
                         }
                     }
                 ],
@@ -303,7 +303,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspProposeElectionList"
+                                            "$ref": "#/definitions/node_handlers.RspProposeElectionList"
                                         }
                                     }
                                 }
@@ -333,7 +333,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqPubkeyDetail"
+                            "$ref": "#/definitions/node_handlers.ReqPubkeyDetail"
                         }
                     }
                 ],
@@ -349,7 +349,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspPubkeyDetail"
+                                            "$ref": "#/definitions/node_handlers.RspPubkeyDetail"
                                         }
                                     }
                                 }
@@ -379,7 +379,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqPubkeyStatusList"
+                            "$ref": "#/definitions/node_handlers.ReqPubkeyStatusList"
                         }
                     }
                 ],
@@ -395,7 +395,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspPubkeyStatusList"
+                                            "$ref": "#/definitions/node_handlers.RspPubkeyStatusList"
                                         }
                                     }
                                 }
@@ -425,7 +425,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqRewardInfo"
+                            "$ref": "#/definitions/node_handlers.ReqRewardInfo"
                         }
                     }
                 ],
@@ -441,7 +441,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspRewardInfo"
+                                            "$ref": "#/definitions/node_handlers.RspRewardInfo"
                                         }
                                     }
                                 }
@@ -473,7 +473,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspUnstakingLeftSeconds"
+                                            "$ref": "#/definitions/staker_handlers.RspUnstakingLeftSeconds"
                                         }
                                     }
                                 }
@@ -503,7 +503,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqUnstakingPlanExist"
+                            "$ref": "#/definitions/staker_handlers.ReqUnstakingPlanExist"
                         }
                     }
                 ],
@@ -519,7 +519,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspUnstakingPlanExist"
+                                            "$ref": "#/definitions/staker_handlers.RspUnstakingPlanExist"
                                         }
                                     }
                                 }
@@ -549,7 +549,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqUploadUnstakingPlan"
+                            "$ref": "#/definitions/staker_handlers.ReqUploadUnstakingPlan"
                         }
                     }
                 ],
@@ -583,7 +583,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqWithdrawRemainingTime"
+                            "$ref": "#/definitions/staker_handlers.ReqWithdrawRemainingTime"
                         }
                     }
                 ],
@@ -599,7 +599,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspWithdrawRemainingTime"
+                                            "$ref": "#/definitions/staker_handlers.RspWithdrawRemainingTime"
                                         }
                                     }
                                 }
@@ -631,7 +631,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspUnstakePoolData"
+                                            "$ref": "#/definitions/node_handlers.RspUnstakePoolData"
                                         }
                                     }
                                 }
@@ -661,7 +661,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/info_handlers.ReqWithdrawInfo"
+                            "$ref": "#/definitions/node_handlers.ReqWithdrawInfo"
                         }
                     }
                 ],
@@ -677,7 +677,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/info_handlers.RspWithdrawInfo"
+                                            "$ref": "#/definitions/node_handlers.RspWithdrawInfo"
                                         }
                                     }
                                 }
@@ -689,7 +689,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "info_handlers.ExitElection": {
+        "node_handlers.ExitElection": {
             "type": "object",
             "properties": {
                 "choosenTime": {
@@ -709,7 +709,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ProposeElection": {
+        "node_handlers.ProposeElection": {
             "type": "object",
             "properties": {
                 "choosenTime": {
@@ -726,7 +726,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ReqExitElectionList": {
+        "node_handlers.ReqExitElectionList": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -740,7 +740,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ReqNodeInfo": {
+        "node_handlers.ReqNodeInfo": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -765,7 +765,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ReqNotifyMsgList": {
+        "node_handlers.ReqNotifyMsgList": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -774,7 +774,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ReqProof": {
+        "node_handlers.ReqProof": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -782,7 +782,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ReqProposeElectionList": {
+        "node_handlers.ReqProposeElectionList": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -796,7 +796,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ReqPubkeyDetail": {
+        "node_handlers.ReqPubkeyDetail": {
             "type": "object",
             "properties": {
                 "chartDuSeconds": {
@@ -814,7 +814,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ReqPubkeyStatusList": {
+        "node_handlers.ReqPubkeyStatusList": {
             "type": "object",
             "properties": {
                 "pubkeyList": {
@@ -826,7 +826,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ReqRewardInfo": {
+        "node_handlers.ReqRewardInfo": {
             "type": "object",
             "properties": {
                 "chartDuSeconds": {
@@ -844,28 +844,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ReqUnstakingPlanExist": {
-            "type": "object",
-            "properties": {
-                "stakerAddress": {
-                    "description": "hex string",
-                    "type": "string"
-                }
-            }
-        },
-        "info_handlers.ReqUploadUnstakingPlan": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "string"
-                },
-                "stakerAddress": {
-                    "description": "hex string",
-                    "type": "string"
-                }
-            }
-        },
-        "info_handlers.ReqWithdrawInfo": {
+        "node_handlers.ReqWithdrawInfo": {
             "type": "object",
             "properties": {
                 "nodeAddress": {
@@ -880,16 +859,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ReqWithdrawRemainingTime": {
-            "type": "object",
-            "properties": {
-                "stakerAddress": {
-                    "description": "hex string",
-                    "type": "string"
-                }
-            }
-        },
-        "info_handlers.ResNotifyMsg": {
+        "node_handlers.ResNotifyMsg": {
             "type": "object",
             "properties": {
                 "msgType": {
@@ -897,7 +867,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ResPubkey": {
+        "node_handlers.ResPubkey": {
             "type": "object",
             "properties": {
                 "pubkey": {
@@ -908,7 +878,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ResReward": {
+        "node_handlers.ResReward": {
             "type": "object",
             "properties": {
                 "commission": {
@@ -931,7 +901,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.ResWithdraw": {
+        "node_handlers.ResWithdraw": {
             "type": "object",
             "properties": {
                 "depositAmount": {
@@ -960,13 +930,13 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspExitElectionList": {
+        "node_handlers.RspExitElectionList": {
             "type": "object",
             "properties": {
                 "electionList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ExitElection"
+                        "$ref": "#/definitions/node_handlers.ExitElection"
                     }
                 },
                 "electionTotalCount": {
@@ -974,7 +944,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspGasPrice": {
+        "node_handlers.RspGasPrice": {
             "type": "object",
             "properties": {
                 "baseFee": {
@@ -988,7 +958,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspNodeInfo": {
+        "node_handlers.RspNodeInfo": {
             "type": "object",
             "properties": {
                 "activeCount": {
@@ -1006,7 +976,7 @@ const docTemplate = `{
                 "pubkeyList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ResPubkey"
+                        "$ref": "#/definitions/node_handlers.ResPubkey"
                     }
                 },
                 "selfDepositedEth": {
@@ -1026,18 +996,18 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspNotifyMsgList": {
+        "node_handlers.RspNotifyMsgList": {
             "type": "object",
             "properties": {
                 "msgList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ResNotifyMsg"
+                        "$ref": "#/definitions/node_handlers.ResNotifyMsg"
                     }
                 }
             }
         },
-        "info_handlers.RspPoolData": {
+        "node_handlers.RspPoolData": {
             "type": "object",
             "properties": {
                 "allEth": {
@@ -1078,7 +1048,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspProof": {
+        "node_handlers.RspProof": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1104,13 +1074,13 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspProposeElectionList": {
+        "node_handlers.RspProposeElectionList": {
             "type": "object",
             "properties": {
                 "electionList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ProposeElection"
+                        "$ref": "#/definitions/node_handlers.ProposeElection"
                     }
                 },
                 "electionTotalCount": {
@@ -1118,7 +1088,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspPubkeyDetail": {
+        "node_handlers.RspPubkeyDetail": {
             "type": "object",
             "properties": {
                 "activeDays": {
@@ -1169,7 +1139,7 @@ const docTemplate = `{
                 "slashEventList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.SlashEvent"
+                        "$ref": "#/definitions/node_handlers.SlashEvent"
                     }
                 },
                 "status": {
@@ -1183,7 +1153,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspPubkeyStatusList": {
+        "node_handlers.RspPubkeyStatusList": {
             "type": "object",
             "properties": {
                 "nodeDepositAmountList": {
@@ -1201,7 +1171,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspRewardInfo": {
+        "node_handlers.RspRewardInfo": {
             "type": "object",
             "properties": {
                 "chartXData": {
@@ -1225,7 +1195,7 @@ const docTemplate = `{
                 "rewardList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ResReward"
+                        "$ref": "#/definitions/node_handlers.ResReward"
                     }
                 },
                 "totalCount": {
@@ -1236,7 +1206,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspUnstakePoolData": {
+        "node_handlers.RspUnstakePoolData": {
             "type": "object",
             "properties": {
                 "ejectedValidators": {
@@ -1256,24 +1226,7 @@ const docTemplate = `{
                 }
             }
         },
-        "info_handlers.RspUnstakingLeftSeconds": {
-            "type": "object",
-            "properties": {
-                "leftSeconds": {
-                    "description": "staked waiting actived",
-                    "type": "integer"
-                }
-            }
-        },
-        "info_handlers.RspUnstakingPlanExist": {
-            "type": "object",
-            "properties": {
-                "exist": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "info_handlers.RspWithdrawInfo": {
+        "node_handlers.RspWithdrawInfo": {
             "type": "object",
             "properties": {
                 "totalCount": {
@@ -1282,21 +1235,12 @@ const docTemplate = `{
                 "withdrawList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/info_handlers.ResWithdraw"
+                        "$ref": "#/definitions/node_handlers.ResWithdraw"
                     }
                 }
             }
         },
-        "info_handlers.RspWithdrawRemainingTime": {
-            "type": "object",
-            "properties": {
-                "remainingSeconds": {
-                    "description": "staked waiting actived",
-                    "type": "integer"
-                }
-            }
-        },
-        "info_handlers.SlashEvent": {
+        "node_handlers.SlashEvent": {
             "type": "object",
             "properties": {
                 "endBlock": {
@@ -1315,6 +1259,62 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "startTimestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "staker_handlers.ReqUnstakingPlanExist": {
+            "type": "object",
+            "properties": {
+                "stakerAddress": {
+                    "description": "hex string",
+                    "type": "string"
+                }
+            }
+        },
+        "staker_handlers.ReqUploadUnstakingPlan": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "stakerAddress": {
+                    "description": "hex string",
+                    "type": "string"
+                }
+            }
+        },
+        "staker_handlers.ReqWithdrawRemainingTime": {
+            "type": "object",
+            "properties": {
+                "stakerAddress": {
+                    "description": "hex string",
+                    "type": "string"
+                }
+            }
+        },
+        "staker_handlers.RspUnstakingLeftSeconds": {
+            "type": "object",
+            "properties": {
+                "leftSeconds": {
+                    "description": "staked waiting actived",
+                    "type": "integer"
+                }
+            }
+        },
+        "staker_handlers.RspUnstakingPlanExist": {
+            "type": "object",
+            "properties": {
+                "exist": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "staker_handlers.RspWithdrawRemainingTime": {
+            "type": "object",
+            "properties": {
+                "remainingSeconds": {
+                    "description": "staked waiting actived",
                     "type": "integer"
                 }
             }

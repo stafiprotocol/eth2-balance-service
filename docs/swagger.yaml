@@ -1,6 +1,6 @@
 basePath: /reth
 definitions:
-  info_handlers.ExitElection:
+  node_handlers.ExitElection:
     properties:
       choosenTime:
         type: integer
@@ -13,7 +13,7 @@ definitions:
       status:
         type: integer
     type: object
-  info_handlers.ProposeElection:
+  node_handlers.ProposeElection:
     properties:
       choosenTime:
         type: integer
@@ -24,7 +24,7 @@ definitions:
       status:
         type: integer
     type: object
-  info_handlers.ReqExitElectionList:
+  node_handlers.ReqExitElectionList:
     properties:
       nodeAddress:
         type: string
@@ -33,7 +33,7 @@ definitions:
       pageIndex:
         type: integer
     type: object
-  info_handlers.ReqNodeInfo:
+  node_handlers.ReqNodeInfo:
     properties:
       nodeAddress:
         type: string
@@ -50,18 +50,18 @@ definitions:
           type: integer
         type: array
     type: object
-  info_handlers.ReqNotifyMsgList:
+  node_handlers.ReqNotifyMsgList:
     properties:
       nodeAddress:
         description: hex string
         type: string
     type: object
-  info_handlers.ReqProof:
+  node_handlers.ReqProof:
     properties:
       nodeAddress:
         type: string
     type: object
-  info_handlers.ReqProposeElectionList:
+  node_handlers.ReqProposeElectionList:
     properties:
       nodeAddress:
         type: string
@@ -70,7 +70,7 @@ definitions:
       pageIndex:
         type: integer
     type: object
-  info_handlers.ReqPubkeyDetail:
+  node_handlers.ReqPubkeyDetail:
     properties:
       chartDuSeconds:
         type: integer
@@ -82,7 +82,7 @@ definitions:
         description: hex string
         type: string
     type: object
-  info_handlers.ReqPubkeyStatusList:
+  node_handlers.ReqPubkeyStatusList:
     properties:
       pubkeyList:
         description: hex string list
@@ -90,7 +90,7 @@ definitions:
           type: string
         type: array
     type: object
-  info_handlers.ReqRewardInfo:
+  node_handlers.ReqRewardInfo:
     properties:
       chartDuSeconds:
         type: integer
@@ -102,21 +102,7 @@ definitions:
       pageIndex:
         type: integer
     type: object
-  info_handlers.ReqUnstakingPlanExist:
-    properties:
-      stakerAddress:
-        description: hex string
-        type: string
-    type: object
-  info_handlers.ReqUploadUnstakingPlan:
-    properties:
-      amount:
-        type: string
-      stakerAddress:
-        description: hex string
-        type: string
-    type: object
-  info_handlers.ReqWithdrawInfo:
+  node_handlers.ReqWithdrawInfo:
     properties:
       nodeAddress:
         description: hex string
@@ -126,25 +112,19 @@ definitions:
       pageIndex:
         type: integer
     type: object
-  info_handlers.ReqWithdrawRemainingTime:
-    properties:
-      stakerAddress:
-        description: hex string
-        type: string
-    type: object
-  info_handlers.ResNotifyMsg:
+  node_handlers.ResNotifyMsg:
     properties:
       msgType:
         type: integer
     type: object
-  info_handlers.ResPubkey:
+  node_handlers.ResPubkey:
     properties:
       pubkey:
         type: string
       status:
         type: integer
     type: object
-  info_handlers.ResReward:
+  node_handlers.ResReward:
     properties:
       commission:
         type: integer
@@ -159,7 +139,7 @@ definitions:
       totalStakedEth:
         type: string
     type: object
-  info_handlers.ResWithdraw:
+  node_handlers.ResWithdraw:
     properties:
       depositAmount:
         type: string
@@ -178,16 +158,16 @@ definitions:
       totalAmount:
         type: string
     type: object
-  info_handlers.RspExitElectionList:
+  node_handlers.RspExitElectionList:
     properties:
       electionList:
         items:
-          $ref: '#/definitions/info_handlers.ExitElection'
+          $ref: '#/definitions/node_handlers.ExitElection'
         type: array
       electionTotalCount:
         type: integer
     type: object
-  info_handlers.RspGasPrice:
+  node_handlers.RspGasPrice:
     properties:
       baseFee:
         type: integer
@@ -196,7 +176,7 @@ definitions:
       priorityFee:
         type: integer
     type: object
-  info_handlers.RspNodeInfo:
+  node_handlers.RspNodeInfo:
     properties:
       activeCount:
         type: integer
@@ -208,7 +188,7 @@ definitions:
         type: integer
       pubkeyList:
         items:
-          $ref: '#/definitions/info_handlers.ResPubkey'
+          $ref: '#/definitions/node_handlers.ResPubkey'
         type: array
       selfDepositedEth:
         type: string
@@ -221,14 +201,14 @@ definitions:
       totalManagedEth:
         type: string
     type: object
-  info_handlers.RspNotifyMsgList:
+  node_handlers.RspNotifyMsgList:
     properties:
       msgList:
         items:
-          $ref: '#/definitions/info_handlers.ResNotifyMsg'
+          $ref: '#/definitions/node_handlers.ResNotifyMsg'
         type: array
     type: object
-  info_handlers.RspPoolData:
+  node_handlers.RspPoolData:
     properties:
       allEth:
         description: staker principal + validator principal + reward
@@ -258,7 +238,7 @@ definitions:
       validatorApr:
         type: number
     type: object
-  info_handlers.RspProof:
+  node_handlers.RspProof:
     properties:
       address:
         type: string
@@ -275,16 +255,16 @@ definitions:
       totalRewardAmount:
         type: string
     type: object
-  info_handlers.RspProposeElectionList:
+  node_handlers.RspProposeElectionList:
     properties:
       electionList:
         items:
-          $ref: '#/definitions/info_handlers.ProposeElection'
+          $ref: '#/definitions/node_handlers.ProposeElection'
         type: array
       electionTotalCount:
         type: integer
     type: object
-  info_handlers.RspPubkeyDetail:
+  node_handlers.RspPubkeyDetail:
     properties:
       activeDays:
         type: integer
@@ -318,7 +298,7 @@ definitions:
         type: string
       slashEventList:
         items:
-          $ref: '#/definitions/info_handlers.SlashEvent'
+          $ref: '#/definitions/node_handlers.SlashEvent'
         type: array
       status:
         type: integer
@@ -327,7 +307,7 @@ definitions:
       totalSlashAmount:
         type: string
     type: object
-  info_handlers.RspPubkeyStatusList:
+  node_handlers.RspPubkeyStatusList:
     properties:
       nodeDepositAmountList:
         description: decimals 18
@@ -339,7 +319,7 @@ definitions:
           type: integer
         type: array
     type: object
-  info_handlers.RspRewardInfo:
+  node_handlers.RspRewardInfo:
     properties:
       chartXData:
         items:
@@ -355,14 +335,14 @@ definitions:
         type: string
       rewardList:
         items:
-          $ref: '#/definitions/info_handlers.ResReward'
+          $ref: '#/definitions/node_handlers.ResReward'
         type: array
       totalCount:
         type: integer
       totalStakedEth:
         type: string
     type: object
-  info_handlers.RspUnstakePoolData:
+  node_handlers.RspUnstakePoolData:
     properties:
       ejectedValidators:
         type: integer
@@ -375,33 +355,16 @@ definitions:
       waitingStakers:
         type: integer
     type: object
-  info_handlers.RspUnstakingLeftSeconds:
-    properties:
-      leftSeconds:
-        description: staked waiting actived
-        type: integer
-    type: object
-  info_handlers.RspUnstakingPlanExist:
-    properties:
-      exist:
-        type: boolean
-    type: object
-  info_handlers.RspWithdrawInfo:
+  node_handlers.RspWithdrawInfo:
     properties:
       totalCount:
         type: integer
       withdrawList:
         items:
-          $ref: '#/definitions/info_handlers.ResWithdraw'
+          $ref: '#/definitions/node_handlers.ResWithdraw'
         type: array
     type: object
-  info_handlers.RspWithdrawRemainingTime:
-    properties:
-      remainingSeconds:
-        description: staked waiting actived
-        type: integer
-    type: object
-  info_handlers.SlashEvent:
+  node_handlers.SlashEvent:
     properties:
       endBlock:
         type: integer
@@ -414,6 +377,43 @@ definitions:
       startBlock:
         type: integer
       startTimestamp:
+        type: integer
+    type: object
+  staker_handlers.ReqUnstakingPlanExist:
+    properties:
+      stakerAddress:
+        description: hex string
+        type: string
+    type: object
+  staker_handlers.ReqUploadUnstakingPlan:
+    properties:
+      amount:
+        type: string
+      stakerAddress:
+        description: hex string
+        type: string
+    type: object
+  staker_handlers.ReqWithdrawRemainingTime:
+    properties:
+      stakerAddress:
+        description: hex string
+        type: string
+    type: object
+  staker_handlers.RspUnstakingLeftSeconds:
+    properties:
+      leftSeconds:
+        description: staked waiting actived
+        type: integer
+    type: object
+  staker_handlers.RspUnstakingPlanExist:
+    properties:
+      exist:
+        type: boolean
+    type: object
+  staker_handlers.RspWithdrawRemainingTime:
+    properties:
+      remainingSeconds:
+        description: staked waiting actived
         type: integer
     type: object
   utils.Rsp:
@@ -444,7 +444,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqExitElectionList'
+          $ref: '#/definitions/node_handlers.ReqExitElectionList'
       produces:
       - application/json
       responses:
@@ -455,7 +455,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspExitElectionList'
+                  $ref: '#/definitions/node_handlers.RspExitElectionList'
               type: object
       summary: exit election list
       tags:
@@ -473,7 +473,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspGasPrice'
+                  $ref: '#/definitions/node_handlers.RspGasPrice'
               type: object
       summary: gas price
       tags:
@@ -489,7 +489,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqNodeInfo'
+          $ref: '#/definitions/node_handlers.ReqNodeInfo'
       produces:
       - application/json
       responses:
@@ -500,7 +500,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspNodeInfo'
+                  $ref: '#/definitions/node_handlers.RspNodeInfo'
               type: object
       summary: node info
       tags:
@@ -516,7 +516,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqNotifyMsgList'
+          $ref: '#/definitions/node_handlers.ReqNotifyMsgList'
       produces:
       - application/json
       responses:
@@ -527,7 +527,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspNotifyMsgList'
+                  $ref: '#/definitions/node_handlers.RspNotifyMsgList'
               type: object
       summary: notify msg list
       tags:
@@ -545,7 +545,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspPoolData'
+                  $ref: '#/definitions/node_handlers.RspPoolData'
               type: object
       summary: pool data
       tags:
@@ -561,7 +561,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqProof'
+          $ref: '#/definitions/node_handlers.ReqProof'
       produces:
       - application/json
       responses:
@@ -572,7 +572,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspProof'
+                  $ref: '#/definitions/node_handlers.RspProof'
               type: object
       summary: get proof of claim
       tags:
@@ -588,7 +588,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqProposeElectionList'
+          $ref: '#/definitions/node_handlers.ReqProposeElectionList'
       produces:
       - application/json
       responses:
@@ -599,7 +599,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspProposeElectionList'
+                  $ref: '#/definitions/node_handlers.RspProposeElectionList'
               type: object
       summary: propose election list
       tags:
@@ -615,7 +615,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqPubkeyDetail'
+          $ref: '#/definitions/node_handlers.ReqPubkeyDetail'
       produces:
       - application/json
       responses:
@@ -626,7 +626,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspPubkeyDetail'
+                  $ref: '#/definitions/node_handlers.RspPubkeyDetail'
               type: object
       summary: pubkey detail
       tags:
@@ -642,7 +642,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqPubkeyStatusList'
+          $ref: '#/definitions/node_handlers.ReqPubkeyStatusList'
       produces:
       - application/json
       responses:
@@ -653,7 +653,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspPubkeyStatusList'
+                  $ref: '#/definitions/node_handlers.RspPubkeyStatusList'
               type: object
       summary: pubkey status list
       tags:
@@ -669,7 +669,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqRewardInfo'
+          $ref: '#/definitions/node_handlers.ReqRewardInfo'
       produces:
       - application/json
       responses:
@@ -680,7 +680,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspRewardInfo'
+                  $ref: '#/definitions/node_handlers.RspRewardInfo'
               type: object
       summary: reward info
       tags:
@@ -698,7 +698,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspUnstakingLeftSeconds'
+                  $ref: '#/definitions/staker_handlers.RspUnstakingLeftSeconds'
               type: object
       summary: staker unstaking left seconds
       tags:
@@ -714,7 +714,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqUnstakingPlanExist'
+          $ref: '#/definitions/staker_handlers.ReqUnstakingPlanExist'
       produces:
       - application/json
       responses:
@@ -725,7 +725,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspUnstakingPlanExist'
+                  $ref: '#/definitions/staker_handlers.RspUnstakingPlanExist'
               type: object
       summary: unstaking plan exit
       tags:
@@ -741,7 +741,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqUploadUnstakingPlan'
+          $ref: '#/definitions/staker_handlers.ReqUploadUnstakingPlan'
       produces:
       - application/json
       responses:
@@ -763,7 +763,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqWithdrawRemainingTime'
+          $ref: '#/definitions/staker_handlers.ReqWithdrawRemainingTime'
       produces:
       - application/json
       responses:
@@ -774,7 +774,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspWithdrawRemainingTime'
+                  $ref: '#/definitions/staker_handlers.RspWithdrawRemainingTime'
               type: object
       summary: staker withdraw remaining time
       tags:
@@ -792,7 +792,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspUnstakePoolData'
+                  $ref: '#/definitions/node_handlers.RspUnstakePoolData'
               type: object
       summary: unstake pool data
       tags:
@@ -808,7 +808,7 @@ paths:
         name: param
         required: true
         schema:
-          $ref: '#/definitions/info_handlers.ReqWithdrawInfo'
+          $ref: '#/definitions/node_handlers.ReqWithdrawInfo'
       produces:
       - application/json
       responses:
@@ -819,7 +819,7 @@ paths:
             - $ref: '#/definitions/utils.Rsp'
             - properties:
                 data:
-                  $ref: '#/definitions/info_handlers.RspWithdrawInfo'
+                  $ref: '#/definitions/node_handlers.RspWithdrawInfo'
               type: object
       summary: withdraw info
       tags:

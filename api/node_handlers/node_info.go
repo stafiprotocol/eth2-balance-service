@@ -1,7 +1,7 @@
 // Copyright 2022 stafiprotocol
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package info_handlers
+package node_handlers
 
 import (
 	"encoding/json"
@@ -83,7 +83,10 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	selfRewardEth := uint64(0)
 	totalManagedEth := uint64(0)
 	for _, l := range totalList {
-		if l.Balance > 0 {
+		switch l.Status {
+		case utils.ValidatorStatusWithdrawDone, utils.ValidatorStatusWithdrawDoneSlash,
+			utils.ValidatorStatusDistributed, utils.ValidatorStatusDistributedSlash:
+		default:
 			selfDepositedEth += l.NodeDepositAmount
 		}
 
