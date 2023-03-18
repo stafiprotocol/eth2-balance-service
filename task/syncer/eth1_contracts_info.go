@@ -22,7 +22,7 @@ func (task *Task) syncContractsInfo() error {
 	if err != nil {
 		return err
 	}
-	poolInfo.PoolEthBalance = poolBalance.String()
+	poolInfo.DepositPoolBalance = poolBalance.String()
 
 	// --- reth
 	rethSupply, err := task.rethContract.TotalSupply(task.connection.CallOpts(nil))
@@ -35,7 +35,7 @@ func (task *Task) syncContractsInfo() error {
 	poolInfo.REthSupply = rethSupply.String()
 
 	// --- withdraw pool
-	latestDistributeHeight, err := task.withdrawContract.LatestDistributeHeight(task.connection.CallOpts(nil))
+	latestDistributeWithdrawalHeight, err := task.withdrawContract.LatestDistributeHeight(task.connection.CallOpts(nil))
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (task *Task) syncContractsInfo() error {
 	if err != nil {
 		return err
 	}
-	poolInfo.LatestDistributeHeight = latestDistributeHeight.Uint64()
+	poolInfo.LatestDistributeWithdrawalHeight = latestDistributeWithdrawalHeight.Uint64()
 	poolInfo.NextWithdrawIndex = nextWithdrawIndex.Uint64()
 	poolInfo.MaxClaimableWithdrawIndex = maxClaimableWithdrawIndex.Uint64()
 	poolInfo.TotalMissingAmountForWithdraw = totalMissingAmountForWithdraw.String()
@@ -100,8 +100,8 @@ func (task *Task) syncContractsInfo() error {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"poolBalance": poolInfo.PoolEthBalance,
-		"rethsupply":  poolInfo.REthSupply,
+		"depositPoolBalance": poolInfo.DepositPoolBalance,
+		"rethsupply":         poolInfo.REthSupply,
 	}).Debug("poolInfo")
 
 	return dao_chaos.UpOrInPoolInfo(task.db, poolInfo)

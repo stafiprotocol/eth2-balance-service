@@ -34,10 +34,6 @@ func (task *Task) voteWithdrawalCredential() error {
 	superValidatorMatchs := make([]bool, 0)
 
 	for _, validator := range validatorListNeedVote {
-		// simulate waiting in dev
-		if task.version == utils.Dev {
-			time.Sleep(time.Minute)
-		}
 
 		list, err := dao_node.GetDepositListByPubkey(task.db, validator.Pubkey)
 		if err != nil {

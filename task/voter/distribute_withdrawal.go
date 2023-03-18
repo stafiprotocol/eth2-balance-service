@@ -277,7 +277,8 @@ func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targ
 
 		switch {
 
-		case w.Amount >= utils.StandardEffectiveBalance/2 && w.Amount < utils.StandardEffectiveBalance: // slash
+		case w.Amount < utils.MaxPartialWithdrawalAmount: // partial withdrawal
+		case w.Amount >= utils.MaxPartialWithdrawalAmount && w.Amount < utils.StandardEffectiveBalance: // slash
 			totalReward = 0
 
 			userDeposit = int64(utils.StandardEffectiveBalance - validator.NodeDepositAmount)
@@ -294,7 +295,6 @@ func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targ
 			userDeposit = int64(utils.StandardEffectiveBalance - validator.NodeDepositAmount)
 			nodeDeposit = int64(validator.NodeDepositAmount)
 
-		case w.Amount < utils.StandardEffectiveBalance/2: // partial withdrawal
 		default:
 			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, fmt.Errorf("unknown withdrawal's amount")
 		}

@@ -15,6 +15,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
+// status for frontend
 const (
 	withdrawStatusExiting    = uint8(1)
 	withdrawStatusExited     = uint8(2)

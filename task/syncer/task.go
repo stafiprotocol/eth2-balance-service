@@ -378,7 +378,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 		}
 	}
 
-	// init fee pool info
+	// fetch fee pool info
 	poolInfo, err := dao_chaos.GetPoolInfo(task.db)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return err

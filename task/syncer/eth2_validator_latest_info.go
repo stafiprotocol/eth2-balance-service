@@ -206,11 +206,13 @@ func (task *Task) syncValidatorLatestInfo() error {
 		if latestWithdrawal.Slot < utils.StartSlotOfEpoch(task.eth2Config, val.WithdrawableEpoch) {
 			continue
 		}
-		if latestWithdrawal.Amount < utils.StandardEffectiveBalance/2 {
+
+		// latest withdraw is partial withdrawal should skip
+		if latestWithdrawal.Amount < utils.MaxPartialWithdrawalAmount {
 			continue
 		}
 
-		if poolInfo.LatestDistributeHeight >= latestWithdrawal.BlockNumber {
+		if poolInfo.LatestDistributeWithdrawalHeight >= latestWithdrawal.BlockNumber {
 			switch val.Status {
 			case utils.ValidatorStatusWithdrawDone:
 				val.Status = utils.ValidatorStatusDistributed

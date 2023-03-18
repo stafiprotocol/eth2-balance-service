@@ -55,7 +55,7 @@ func GetExitElectionList(db *db.WrapDb, pageIndex, pageCount int) (c []*ExitElec
 }
 
 func GetAllNotExitElectionList(db *db.WrapDb) (c []*ExitElection, err error) {
-	err = db.Order("notify_timestamp asc").Find(&c, "exit_epoch > 0").Error
+	err = db.Order("notify_timestamp asc").Find(&c, "exit_epoch = 0").Error
 	return
 }
 

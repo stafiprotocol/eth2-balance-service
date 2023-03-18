@@ -1,10 +1,11 @@
 package utils_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"math/big"
-	"strings"
+	"os"
 	"testing"
 
 	"github.com/ethereum/go-ethereum"
@@ -76,100 +77,6 @@ func TestGetApy(t *testing.T) {
 	}
 	t.Log(apys)
 }
-func TestStorage(t *testing.T) {
-	client, err := ethclient.Dial("https://rpc.zhejiang.ethpandaops.io")
-	if err != nil {
-		t.Fatal(err)
-	}
-	s, err := storage.NewStorage(common.HexToAddress("0x126d3C08Fb282d5417793B7677E3F7DA8347A384"), client)
-	if err != nil {
-		t.Fatal(err)
-	}
-	stafiEtherAddress, err := s.GetAddress(&bind.CallOpts{
-		Context: context.Background(),
-	}, utils.ContractStorageKey("stafiEther"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("stafiEtherAddress: ", stafiEtherAddress)
-	stafiEtherContract, err := stafi_ether.NewStafiEther(stafiEtherAddress, client)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	stafiDistributorAddress, err := s.GetAddress(&bind.CallOpts{
-		Context: context.Background(),
-	}, utils.ContractStorageKey("stafiDistributor"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("stafiDistributorAddress: ", stafiDistributorAddress)
-	distributorBalance, err := stafiEtherContract.BalanceOf(&bind.CallOpts{}, stafiDistributorAddress)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("stafiDistributor balance: ", distributorBalance)
-
-	// ------ withdrawal pool
-	withdrawPoolAddress, err := s.GetAddress(&bind.CallOpts{
-		Context: context.Background(),
-	}, utils.ContractStorageKey("stafiWithdraw"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("withdrawPoolAddress: ", withdrawPoolAddress)
-
-	withdrawPoolBalance, err := client.BalanceAt(context.Background(), withdrawPoolAddress, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("withdrawPoolBalance: ", withdrawPoolBalance)
-
-	withdrawPoolContract, err := withdraw.NewWithdraw(withdrawPoolAddress, client)
-	if err != nil {
-		t.Fatal(err)
-	}
-	totalMissingAmountForWithdraw, err := withdrawPoolContract.TotalMissingAmountForWithdraw(&bind.CallOpts{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("totalMissingAmountForWithdraw: ", totalMissingAmountForWithdraw)
-	latestDistributeHeight, err := withdrawPoolContract.LatestDistributeHeight(&bind.CallOpts{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("latestDistributeHeight: ", latestDistributeHeight)
-
-	maxClaimableWithdrawIndex, err := withdrawPoolContract.MaxClaimableWithdrawIndex(&bind.CallOpts{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("maxClaimableWithdrawIndex: ", maxClaimableWithdrawIndex)
-
-	NextWithdrawIndex, err := withdrawPoolContract.NextWithdrawIndex(&bind.CallOpts{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("NextWithdrawIndex: ", NextWithdrawIndex)
-	//---------user deposit pool
-	userDepositPoolAddress, err := s.GetAddress(&bind.CallOpts{
-		Context: context.Background(),
-	}, utils.ContractStorageKey("stafiUserDeposit"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("userDepositPoolAddress: ", userDepositPoolAddress)
-	userDepositContract, err := user_deposit.NewUserDeposit(userDepositPoolAddress, client)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	userDepositPoolBalance, err := userDepositContract.GetBalance(&bind.CallOpts{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log("userDepositPoolBalance: ", userDepositPoolBalance)
-}
 
 func TestDecodeInputData(t *testing.T) {
 	client, err := ethclient.Dial("https://rpc.zhejiang.ethpandaops.io")
@@ -183,7 +90,12 @@ func TestDecodeInputData(t *testing.T) {
 		PlatformAmount            *big.Int `json:"_platformAmount"`
 		MaxClaimableWithdrawIndex *big.Int `json:"_maxClaimableWithdrawIndex"`
 	}
-	withdrawal, err := abi.JSON(strings.NewReader(withdrawalAbi))
+
+	abiBts, err := os.ReadFile("../../bindings/Withdraw/withdraw_abi.json")
+	if err != nil {
+		t.Log(err)
+	}
+	withdrawal, err := abi.JSON(bytes.NewReader(abiBts))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -269,549 +181,98 @@ func TestGetUserNodePlatformRewardV2(t *testing.T) {
 	t.Log(user, node, platform)
 }
 
-var withdrawalAbi = `[
-    {
-      "inputs": [],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "time",
-          "type": "uint256"
-        }
-      ],
-      "name": "EtherDeposited",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "withdrawCycle",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "ejectedStartWithdrawCycle",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256[]",
-          "name": "ejectedValidators",
-          "type": "uint256[]"
-        }
-      ],
-      "name": "NotifyValidatorExit",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "proposalId",
-          "type": "bytes32"
-        }
-      ],
-      "name": "ProposalExecuted",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "rethAmount",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "ethAmount",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "withdrawIndex",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "bool",
-          "name": "instantly",
-          "type": "bool"
-        }
-      ],
-      "name": "Unstake",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "proposalId",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "voter",
-          "type": "address"
-        }
-      ],
-      "name": "VoteProposal",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256[]",
-          "name": "withdrawIndexList",
-          "type": "uint256[]"
-        }
-      ],
-      "name": "Withdraw",
-      "type": "event"
-    },
-    {
-      "inputs": [],
-      "name": "currentWithdrawCycle",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "depositEth",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_dealedHeight",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_userAmount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_nodeAmount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_platformAmount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_maxClaimableWithdrawIndex",
-          "type": "uint256"
-        }
-      ],
-      "name": "distributeWithdrawals",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "ejectedStartCycle",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "ejectedValidatorsAtCycle",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "cycle",
-          "type": "uint256"
-        }
-      ],
-      "name": "getEjectedValidatorsAtCycle",
-      "outputs": [
-        {
-          "internalType": "uint256[]",
-          "name": "",
-          "type": "uint256[]"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "user",
-          "type": "address"
-        }
-      ],
-      "name": "getUnclaimedWithdrawalsOfUser",
-      "outputs": [
-        {
-          "internalType": "uint256[]",
-          "name": "",
-          "type": "uint256[]"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_stafiStorageAddress",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_withdrawLimitPerCycle",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_userWithdrawLimitPerCycle",
-          "type": "uint256"
-        }
-      ],
-      "name": "initialize",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "latestDistributeHeight",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "maxClaimableWithdrawIndex",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "nextWithdrawIndex",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_withdrawCycle",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_ejectedStartCycle",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256[]",
-          "name": "_validatorIndexList",
-          "type": "uint256[]"
-        }
-      ],
-      "name": "notifyValidatorExit",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_withdrawCycle",
-          "type": "uint256"
-        }
-      ],
-      "name": "reserveEthForWithdraw",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_userWithdrawLimitPerCycle",
-          "type": "uint256"
-        }
-      ],
-      "name": "setUserWithdrawLimitPerCycle",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_withdrawLimitPerCycle",
-          "type": "uint256"
-        }
-      ],
-      "name": "setWithdrawLimitPerCycle",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "totalMissingAmountForWithdraw",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "totalWithdrawAmountAtCycle",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_rEthAmount",
-          "type": "uint256"
-        }
-      ],
-      "name": "unstake",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "userWithdrawAmountAtCycle",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "userWithdrawLimitPerCycle",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "version",
-      "outputs": [
-        {
-          "internalType": "uint8",
-          "name": "",
-          "type": "uint8"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256[]",
-          "name": "_withdrawIndexList",
-          "type": "uint256[]"
-        }
-      ],
-      "name": "withdraw",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "withdrawLimitPerCycle",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "withdrawalAtIndex",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "_address",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "stateMutability": "payable",
-      "type": "receive"
-    }
-  ]`
+func TestStorage(t *testing.T) {
+	client, err := ethclient.Dial("https://rpc.zhejiang.ethpandaops.io")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := storage.NewStorage(common.HexToAddress("0x126d3C08Fb282d5417793B7677E3F7DA8347A384"), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stafiEtherAddress, err := s.GetAddress(&bind.CallOpts{
+		Context: context.Background(),
+	}, utils.ContractStorageKey("stafiEther"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("stafiEtherAddress: ", stafiEtherAddress)
+	stafiEtherContract, err := stafi_ether.NewStafiEther(stafiEtherAddress, client)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stafiDistributorAddress, err := s.GetAddress(&bind.CallOpts{
+		Context: context.Background(),
+	}, utils.ContractStorageKey("stafiDistributor"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("stafiDistributorAddress: ", stafiDistributorAddress)
+	distributorBalance, err := stafiEtherContract.BalanceOf(&bind.CallOpts{}, stafiDistributorAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("stafiDistributor balance: ", decimal.NewFromBigInt(distributorBalance, -18))
+
+	// ------ withdrawal pool
+	withdrawPoolAddress, err := s.GetAddress(&bind.CallOpts{
+		Context: context.Background(),
+	}, utils.ContractStorageKey("stafiWithdraw"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("withdrawPoolAddress: ", withdrawPoolAddress)
+
+	withdrawPoolBalance, err := client.BalanceAt(context.Background(), withdrawPoolAddress, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("withdrawPoolBalance: ", decimal.NewFromBigInt(withdrawPoolBalance, -18))
+
+	withdrawPoolContract, err := withdraw.NewWithdraw(withdrawPoolAddress, client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	totalMissingAmountForWithdraw, err := withdrawPoolContract.TotalMissingAmountForWithdraw(&bind.CallOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("totalMissingAmountForWithdraw: ", decimal.NewFromBigInt(totalMissingAmountForWithdraw, -18))
+	latestDistributeHeight, err := withdrawPoolContract.LatestDistributeHeight(&bind.CallOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("latestDistributeHeight: ", latestDistributeHeight)
+
+	maxClaimableWithdrawIndex, err := withdrawPoolContract.MaxClaimableWithdrawIndex(&bind.CallOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("maxClaimableWithdrawIndex: ", maxClaimableWithdrawIndex)
+
+	NextWithdrawIndex, err := withdrawPoolContract.NextWithdrawIndex(&bind.CallOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("NextWithdrawIndex: ", NextWithdrawIndex)
+	//---------user deposit pool
+	userDepositPoolAddress, err := s.GetAddress(&bind.CallOpts{
+		Context: context.Background(),
+	}, utils.ContractStorageKey("stafiUserDeposit"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("userDepositPoolAddress: ", userDepositPoolAddress)
+	userDepositContract, err := user_deposit.NewUserDeposit(userDepositPoolAddress, client)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userDepositPoolBalance, err := userDepositContract.GetBalance(&bind.CallOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("userDepositPoolBalance: ", decimal.NewFromBigInt(userDepositPoolBalance, -18))
+}

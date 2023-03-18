@@ -169,7 +169,7 @@ func (task *Task) notifyValidatorExit() error {
 	if err != nil {
 		return err
 	}
-	startCycle := preCycle
+	startCycle := preCycle - 1
 	if len(notExitElectionList) > 0 {
 		startCycle = int64(notExitElectionList[0].WithdrawCycle)
 	}

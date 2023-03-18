@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/shopspring/decimal"
-	"github.com/stafiprotocol/eth2-balance-service/dao"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -87,7 +87,7 @@ func TestProofNodeHash(t *testing.T) {
 	// {"data":{"index":1,"address":"0xfe15cf269aA7cf067210d73AC228E37F89df3534","totalRewardAmount":"15091037000000000","totalExitDepositAmount":"0","proof":["11c02bc62dc17961f489d78b53902d19eca4a8a99a7aa05120272deed73f68cf","6d0ea2794d8c7b586448a373b118366b0cec1d1c1da1a9d7ecf496a0ffbeb2ab"]},"message":"success","status":"80000"}
 	// {"data":{"index":2,"address":"0x40Ef30c23027D346dab48604a0B80eD8a97C14F5","totalRewardAmount":"14972902000000000","totalExitDepositAmount":"0","proof":["df29f6bd5e905476f38d021ad7ddcb8c81ab927857920d98259cabd9ae69ab09"]},"message":"success","status":"80000"}
 
-	claims := []*dao.Proof{
+	claims := []*dao_node.Proof{
 		{Index: 0, Address: "0x9c259119F309D2aA8dcBa838D9A4EC77d8d0E8B0", TotalRewardAmount: "0", TotalExitDepositAmount: "0"},
 		{Index: 1, Address: "0xfe15cf269aA7cf067210d73AC228E37F89df3534", TotalRewardAmount: "15091037000000000", TotalExitDepositAmount: "0"},
 		{Index: 2, Address: "0x40Ef30c23027D346dab48604a0B80eD8a97C14F5", TotalRewardAmount: "14972902000000000", TotalExitDepositAmount: "0"},
@@ -133,7 +133,7 @@ func TestProofNodeHash(t *testing.T) {
 	t.Log(hex.EncodeToString(hexutil.MustDecode("0x001100")))
 }
 
-func BuildMerkleTree(datas []*dao.Proof) (*utils.MerkleTree, error) {
+func BuildMerkleTree(datas []*dao_node.Proof) (*utils.MerkleTree, error) {
 	if len(datas) == 0 {
 		return nil, fmt.Errorf("proof list empty")
 	}

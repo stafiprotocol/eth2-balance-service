@@ -61,7 +61,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	}
 
 	// cal deposit eth
-	poolEthBalanceDeci, err := decimal.NewFromString(poolInfo.PoolEthBalance)
+	depositPoolBalanceDeci, err := decimal.NewFromString(poolInfo.DepositPoolBalance)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("decimal.NewFromString(poolInfo.PoolEthBalance) err %v", err)
@@ -127,7 +127,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		}
 	}
 
-	rsp.DepositedEth = poolEthBalanceDeci.
+	rsp.DepositedEth = depositPoolBalanceDeci.
 		Add(decimal.NewFromInt(int64(stakerPlusValidatorDepositAmount)).Mul(utils.GweiDeci)).
 		String()
 	// cal minitedReth
@@ -137,15 +137,15 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		Mul(utils.GweiDeci).
 		String()
 	// pool eth
-	rsp.PoolEth = poolEthBalanceDeci.
+	rsp.PoolEth = depositPoolBalanceDeci.
 		Add(decimal.NewFromInt(int64(allEth)).Mul(utils.GweiDeci)).
 		String()
 	// all eth
-	rsp.AllEth = poolEthBalanceDeci.
+	rsp.AllEth = depositPoolBalanceDeci.
 		Add(decimal.NewFromInt(int64(allEth)).Mul(utils.GweiDeci)).
 		String()
 
-	rsp.UnmatchedEth = poolInfo.PoolEthBalance
+	rsp.UnmatchedEth = poolInfo.DepositPoolBalance
 	rsp.MatchedValidators = matchedValidatorsNum
 	rsp.EthPrice = ethPrice
 

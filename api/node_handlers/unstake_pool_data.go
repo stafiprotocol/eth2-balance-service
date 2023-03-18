@@ -51,7 +51,7 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 		return
 	}
 
-	depositPoolEthBalanceDeci, err := decimal.NewFromString(poolInfo.PoolEthBalance)
+	depositPoolBalanceDeci, err := decimal.NewFromString(poolInfo.DepositPoolBalance)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("PoolEthBalance cast decimals err %v", err)
@@ -63,7 +63,7 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 		logrus.Errorf("TotalMissingAmountForWithdraw cast decimals err %v", err)
 		return
 	}
-	poolEthDeci := depositPoolEthBalanceDeci.Sub(totalMissingAmountForWithdrawDeci)
+	poolEthDeci := depositPoolBalanceDeci.Sub(totalMissingAmountForWithdrawDeci)
 	if poolEthDeci.IsNegative() {
 		poolEthDeci = decimal.Zero
 	}

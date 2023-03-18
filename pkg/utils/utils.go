@@ -8,14 +8,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"math/big"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
@@ -177,51 +175,6 @@ func SymbolValid(symbol string) bool {
 
 func PriceSymbolValid(symbol string) bool {
 	return priceSymbolMap[symbol]
-}
-
-func ContractStorageKey(name string) [32]byte {
-	// keccak256(abi.encodePacked("contract.address", _contractName))
-	return crypto.Keccak256Hash([]byte("contract.address"), []byte(name))
-}
-
-func MerkleTreeDealedEpochStorageKey() [32]byte {
-	return crypto.Keccak256Hash([]byte("stafiDistributor.merkleRoot.dealedEpoch"))
-}
-
-func NodeSubmissionKey(sender common.Address, _block *big.Int, _totalEth *big.Int, _stakingEth *big.Int, _rethSupply *big.Int) [32]byte {
-	// keccak256(abi.encodePacked("network.balances.submitted.node", sender, _block, _totalEth, _stakingEth, _rethSupply))
-	return crypto.Keccak256Hash([]byte("network.balances.submitted.node"), sender.Bytes(), common.LeftPadBytes(_block.Bytes(), 32),
-		common.LeftPadBytes(_totalEth.Bytes(), 32), common.LeftPadBytes(_stakingEth.Bytes(), 32), common.LeftPadBytes(_rethSupply.Bytes(), 32))
-}
-
-func StafiWithdrawProposalNodeKey(sender common.Address, proposalId [32]byte) [32]byte {
-	return crypto.Keccak256Hash([]byte("stafiWithdraw.proposal.node.key"), proposalId[:], sender.Bytes())
-}
-
-func DistributeWithdrawalsProposalNodeKey(sender common.Address, _dealedHeight, _userAmount, _nodeAmount, _platformAmount, _maxClaimableWithdrawIndex *big.Int) [32]byte {
-	proposalId := crypto.Keccak256Hash(common.LeftPadBytes(_dealedHeight.Bytes(), 32), common.LeftPadBytes(_userAmount.Bytes(), 32),
-		common.LeftPadBytes(_nodeAmount.Bytes(), 32), common.LeftPadBytes(_platformAmount.Bytes(), 32), common.LeftPadBytes(_maxClaimableWithdrawIndex.Bytes(), 32))
-	return StafiWithdrawProposalNodeKey(sender, proposalId)
-}
-
-func StafiDistributorProposalNokeKey(sender common.Address, proposalId [32]byte) [32]byte {
-	return crypto.Keccak256Hash([]byte("stafiDistributor.proposal.node.key"), proposalId[:], sender.Bytes())
-}
-
-func ReserveEthForWithdrawProposalId(cycle *big.Int) [32]byte {
-	return crypto.Keccak256Hash([]byte("reserveEthForWithdraw"), common.LeftPadBytes(cycle.Bytes(), 32))
-}
-
-func DistributeFeeProposalNodeKey(sender common.Address, _dealedHeight, _userAmount, _nodeAmount, _platformAmount *big.Int) [32]byte {
-	proposalId := crypto.Keccak256Hash(common.LeftPadBytes(_dealedHeight.Bytes(), 32), common.LeftPadBytes(_userAmount.Bytes(), 32),
-		common.LeftPadBytes(_nodeAmount.Bytes(), 32), common.LeftPadBytes(_platformAmount.Bytes(), 32))
-	return StafiDistributorProposalNokeKey(sender, proposalId)
-}
-
-func DistributeSuperNodeFeeProposalNodeKey(sender common.Address, _dealedHeight, _userAmount, _nodeAmount, _platformAmount *big.Int) [32]byte {
-	proposalId := crypto.Keccak256Hash([]byte("distributeSuperNodeFee"), common.LeftPadBytes(_dealedHeight.Bytes(), 32), common.LeftPadBytes(_userAmount.Bytes(), 32),
-		common.LeftPadBytes(_nodeAmount.Bytes(), 32), common.LeftPadBytes(_platformAmount.Bytes(), 32))
-	return StafiDistributorProposalNokeKey(sender, proposalId)
 }
 
 func AppendToFile(filePath, content string) error {
