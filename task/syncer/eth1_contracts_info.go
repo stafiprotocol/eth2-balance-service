@@ -104,6 +104,11 @@ func (task *Task) syncContractsInfo() error {
 		"rethsupply":         poolInfo.REthSupply,
 	}).Debug("poolInfo")
 
+	beaconHead, err := task.connection.Eth2Client().GetBeaconHead()
+	if err == nil {
+		poolInfo.CurrentWithdrawableTimestamp = utils.StartTimestampOfEpoch(task.eth2Config, beaconHead.Epoch+utils.MinValidatorWithdrawabilityDelay) + utils.MaxDistributeInterval
+	}
+
 	return dao_chaos.UpOrInPoolInfo(task.db, poolInfo)
 }
 

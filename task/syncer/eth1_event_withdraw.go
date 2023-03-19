@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"gorm.io/gorm"
@@ -33,7 +34,7 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 		}
 		withdraw.WithdrawIndex = withdrawIndex
 		withdraw.Address = iterUnstake.Event.From.String()
-		withdraw.Amount = iterUnstake.Event.EthAmount.Uint64()
+		withdraw.EthAmount = decimal.NewFromBigInt(iterUnstake.Event.EthAmount, 0).StringFixed(0)
 		withdraw.BlockNumber = iterUnstake.Event.Raw.BlockNumber
 
 		block, err := task.connection.Eth1Client().BlockByNumber(context.Background(), big.NewInt(int64(withdraw.BlockNumber)))

@@ -25,11 +25,20 @@ func (task *Task) notifyValidatorExit() error {
 		return err
 	}
 
+	ejectedValidator, err := task.withdrawContract.GetEjectedValidatorsAtCycle(task.connection.CallOpts(nil), big.NewInt(preCycle))
+	if err != nil {
+		return err
+	}
+	// return if already dealed
+	if len(ejectedValidator) != 0 {
+		logrus.Debugf("ejectedValidator %d at precycle %d", len(ejectedValidator), preCycle)
+		return nil
+	}
+
 	totalMissingAmount, err := task.withdrawContract.TotalMissingAmountForWithdraw(task.connection.CallOpts(big.NewInt(int64(targetBlockNumber))))
 	if err != nil {
 		return err
 	}
-
 	// no need notify exit
 	if totalMissingAmount.Cmp(big.NewInt(0)) == 0 {
 		return nil
@@ -92,16 +101,6 @@ func (task *Task) notifyValidatorExit() error {
 		return nil
 	}
 
-	ejectedValidator, err := task.withdrawContract.GetEjectedValidatorsAtCycle(task.connection.CallOpts(nil), big.NewInt(preCycle))
-	if err != nil {
-		return err
-	}
-	// return if already dealed
-	if len(ejectedValidator) != 0 {
-		logrus.Debugf("ejectedValidator %d at precycle %d", len(ejectedValidator), preCycle)
-		return nil
-	}
-
 	// calc exited but not withdrawal amount
 	pendingExitValidatorList, err := dao_node.GetValidatorListWithdrawableEpochAfter(task.db, targetEpoch)
 	if err != nil {
@@ -119,50 +118,10 @@ func (task *Task) notifyValidatorExit() error {
 	// got final total missing amount
 	finalTotalMissingAmountDeci := newTotalMissingAmountDeci.Sub(totalPendingExitedUserAmountDeci)
 
-	activeValidatorList, err := dao_node.GetValidatorListActive(task.db)
+	selectVal, err := task.selectValidatorsForExit(finalTotalMissingAmountDeci, targetEpoch)
 	if err != nil {
 		return err
 	}
-
-	soloValidtors := make([]*dao_node.Validator, 0)
-	superValidtors := make([]*dao_node.Validator, 0)
-	for _, val := range activeValidatorList {
-		if val.ActiveEpoch+300 > targetEpoch {
-			continue
-		}
-		if val.NodeType == utils.NodeTypeCommon || val.NodeType == utils.NodeTypeLight {
-			soloValidtors = append(soloValidtors, val)
-		} else {
-			superValidtors = append(superValidtors, val)
-		}
-	}
-
-	sort.SliceStable(soloValidtors, func(i, j int) bool {
-		aprI, _ := dao_node.GetValidatorApr(task.db, soloValidtors[i].ValidatorIndex, targetEpoch)
-		aprJ, _ := dao_node.GetValidatorApr(task.db, soloValidtors[j].ValidatorIndex, targetEpoch)
-		return aprI < aprJ
-	})
-
-	sort.SliceStable(superValidtors, func(i, j int) bool {
-		aprI, _ := dao_node.GetValidatorApr(task.db, superValidtors[i].ValidatorIndex, targetEpoch)
-		aprJ, _ := dao_node.GetValidatorApr(task.db, superValidtors[j].ValidatorIndex, targetEpoch)
-		return aprI < aprJ
-	})
-
-	valQuene := append(soloValidtors, superValidtors...)
-
-	selectVal := make([]*big.Int, 0)
-	totalExitAmountDeci := decimal.Zero
-	for _, val := range valQuene {
-
-		userAmount := decimal.NewFromInt(int64(utils.StandardEffectiveBalance) - int64(val.NodeDepositAmount)).Mul(utils.GweiDeci)
-		totalExitAmountDeci = totalExitAmountDeci.Add(userAmount)
-		selectVal = append(selectVal, big.NewInt(int64(val.ValidatorIndex)))
-		if totalExitAmountDeci.GreaterThanOrEqual(finalTotalMissingAmountDeci) {
-			break
-		}
-	}
-	// todo check select length and totalMissingAmount
 
 	// cal start cycle
 	notExitElectionList, err := dao_node.GetAllNotExitElectionList(task.db)
@@ -273,4 +232,52 @@ func (task *Task) sendNotifyExitTx(preCycle, startCycle uint64, selectVal []*big
 		"tx": tx.Hash(),
 	}).Info("NotifyValidatorExit tx send ok")
 	return nil
+}
+
+func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, targetEpoch uint64) ([]*big.Int, error) {
+
+	notExitValidatorList, err := dao_node.GetValidatorListNotExit(task.db)
+	if err != nil {
+		return nil, err
+	}
+
+	soloValidtors := make([]*dao_node.Validator, 0)
+	superValidtors := make([]*dao_node.Validator, 0)
+	for _, val := range notExitValidatorList {
+		// must actived over one week
+		if val.ActiveEpoch+7*225 > targetEpoch {
+			continue
+		}
+		if val.NodeType == utils.NodeTypeCommon || val.NodeType == utils.NodeTypeLight {
+			soloValidtors = append(soloValidtors, val)
+		} else {
+			superValidtors = append(superValidtors, val)
+		}
+	}
+
+	sort.SliceStable(soloValidtors, func(i, j int) bool {
+		aprI, _ := dao_node.GetValidatorAprForAverageApr(task.db, soloValidtors[i].ValidatorIndex)
+		aprJ, _ := dao_node.GetValidatorAprForAverageApr(task.db, soloValidtors[j].ValidatorIndex)
+		return aprI < aprJ
+	})
+
+	sort.SliceStable(superValidtors, func(i, j int) bool {
+		aprI, _ := dao_node.GetValidatorAprForAverageApr(task.db, superValidtors[i].ValidatorIndex)
+		aprJ, _ := dao_node.GetValidatorAprForAverageApr(task.db, superValidtors[j].ValidatorIndex)
+		return aprI < aprJ
+	})
+
+	valQuene := append(soloValidtors, superValidtors...)
+
+	selectVal := make([]*big.Int, 0)
+	totalExitAmountDeci := decimal.Zero
+	for _, val := range valQuene {
+		userAmountDeci := decimal.NewFromInt(int64(utils.StandardEffectiveBalance) - int64(val.NodeDepositAmount)).Mul(utils.GweiDeci)
+		totalExitAmountDeci = totalExitAmountDeci.Add(userAmountDeci)
+		selectVal = append(selectVal, big.NewInt(int64(val.ValidatorIndex)))
+		if totalExitAmountDeci.GreaterThanOrEqual(totalMissingAmount) {
+			break
+		}
+	}
+	return selectVal, nil
 }

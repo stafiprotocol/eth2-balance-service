@@ -81,7 +81,12 @@ func (task *Task) distributeWithdrawals() error {
 				if withdrawal.ClaimedBlockNumber == withdrawal.BlockNumber {
 					continue
 				}
-				latestUsersWaitAmountDeci = latestUsersWaitAmountDeci.Add(decimal.NewFromInt(int64(withdrawal.Amount)))
+
+				ethAmountDeci, err := decimal.NewFromString(withdrawal.EthAmount)
+				if err != nil {
+					return err
+				}
+				latestUsersWaitAmountDeci = latestUsersWaitAmountDeci.Add(ethAmountDeci)
 				if latestUsersWaitAmountDeci.GreaterThan(willMissingAmountDeci) {
 					if i >= 1 {
 						newMaxClaimableWithdrawIndex = i - 1

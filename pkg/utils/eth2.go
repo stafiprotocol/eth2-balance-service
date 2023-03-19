@@ -118,6 +118,12 @@ var (
 	Percent90Deci = decimal.NewFromFloat(0.9)
 )
 
+const (
+	StakerWithdrawalClaimableTimestamp = uint64(1)
+	MinValidatorWithdrawabilityDelay   = uint64(256 + 5)
+	MaxDistributeInterval              = uint64(8 * 60 * 60)
+)
+
 // Get an eth2 epoch number by time
 func EpochAtTimestamp(config beacon.Eth2Config, time uint64) uint64 {
 	return config.GenesisEpoch + (time-config.GenesisTime)/config.SecondsPerEpoch

@@ -114,6 +114,9 @@ func TestBlockDetail(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("%+v", beaconBlock.Withdrawals)
+	config, err := c.Eth2Client().GetEth2Config()
+	timestamp := utils.StartTimestampOfEpoch(config, 10383)
+	t.Log(timestamp)
 
 }
 

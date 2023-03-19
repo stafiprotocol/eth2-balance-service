@@ -12,11 +12,13 @@ type StakerWithdrawal struct {
 	db.BaseModel
 	WithdrawIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:withdraw_index;uinqueIndex"`
 
-	Address            string `gorm:"type:varchar(100) not null;default:'';column:address"`      //hex with 0x prefix
-	Amount             uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:amount"` //Gwei
-	BlockNumber        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:block_number;index"`
-	ClaimedBlockNumber uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:claimed_block_number"`
-	Timestamp          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
+	Address                    string `gorm:"type:varchar(100) not null;default:'';column:address"`      //hex with 0x prefix
+	Amount                     uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:amount"` //
+	EthAmount                  string `gorm:"type:varchar(40) not null;default:'0';column:eth_amount"`
+	BlockNumber                uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:block_number;index"`
+	ClaimedBlockNumber         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:claimed_block_number"`
+	Timestamp                  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
+	ExpectedClaimableTimestamp uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:expected_claimable_timestamp"` /// 0: undealed 1: claimable x: expected claimable timestamp
 }
 
 func (f StakerWithdrawal) TableName() string {
@@ -38,7 +40,22 @@ func GetStakerWithdrawalsBetween(db *db.WrapDb, startBlock, endBlock uint64) (c 
 	return
 }
 
+func GetStakerWithdrawalListNotClaimedByStaker(db *db.WrapDb, stakerAddress string) (c []*StakerWithdrawal, err error) {
+	err = db.Find(&c, "claimed_block_number = 0 and address = ?", stakerAddress).Error
+	return
+}
+
 func GetStakerWithdrawalListNotClaimed(db *db.WrapDb) (c []*StakerWithdrawal, err error) {
 	err = db.Find(&c, "claimed_block_number = 0").Error
+	return
+}
+
+func GetStakerWithdrawalListClaimed(db *db.WrapDb) (c []*StakerWithdrawal, err error) {
+	err = db.Find(&c, "claimed_block_number <> 0").Error
+	return
+}
+
+func GetStakerWithdrawalListEthAmountZero(db *db.WrapDb) (c []*StakerWithdrawal, err error) {
+	err = db.Find(&c, "eth_amount = '0'").Error
 	return
 }

@@ -121,7 +121,7 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	if minExitEpoch != uint64(math.MaxUint64) && valInfoMeta.DealedEpoch < minExitEpoch {
 		needWait = minExitEpoch - valInfoMeta.DealedEpoch
 	}
-	waitSeconds := needWait * 32 * 12
+	waitSeconds := needWait*32*12 + utils.MaxDistributeInterval
 
 	retP := RspProof{
 		Index:                  uint64(proof.Index),

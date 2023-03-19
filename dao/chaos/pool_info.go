@@ -28,6 +28,9 @@ type PoolInfo struct {
 	TotalWithdrawAmountCurrentCycle  string `gorm:"type:varchar(40) not null;default:'0';column:total_withdraw_amount_current_cycle"`       // withdraw pool totalWithdrawAmountCurrentCycle
 	WithdrawLimitPerCycle            string `gorm:"type:varchar(40) not null;default:'0';column:withdraw_limit_per_cycle"`                  // withdraw pool withdrawLimitPerCycle
 
+	// from beacon
+	CurrentWithdrawableTimestamp uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:current_withdrawable_timestamp"`
+
 	// fetch once when start
 	FeePool          string `gorm:"type:varchar(100) not null;default:'';column:fee_pool"`            //hex with 0x prefix
 	SuperNodeFeePool string `gorm:"type:varchar(100) not null;default:'';column:super_node_fee_pool"` //hex with 0x prefix

@@ -101,8 +101,13 @@ func GetValidatorListNeedCheckDistributed(db *db.WrapDb) (c []*Validator, err er
 	return
 }
 
-func GetValidatorListActive(db *db.WrapDb) (c []*Validator, err error) {
+func GetValidatorListStatusActive(db *db.WrapDb) (c []*Validator, err error) {
 	err = db.Find(&c, "status = ?", utils.ValidatorStatusActive).Error
+	return
+}
+
+func GetValidatorListNotExit(db *db.WrapDb) (c []*Validator, err error) {
+	err = db.Find(&c, "exit_epoch <> 0").Error
 	return
 }
 
@@ -189,5 +194,11 @@ func GetValidatorListByNodeWithPageWithStatusList(db *db.WrapDb, nodeAddress str
 	}
 	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, sqlWhere, nodeAddress).Error
 
+	return
+}
+
+func GetExitingExitedWithdrawableValidatorList(db *db.WrapDb) (c []*Validator, err error) {
+	err = db.Find(&c, "exit_epoch <> 0 and status not in (?,?,?,?)",
+		utils.ValidatorStatusWithdrawDone, utils.ValidatorStatusWithdrawDoneSlash, utils.ValidatorStatusDistributed, utils.ValidatorStatusDistributedSlash).Error
 	return
 }

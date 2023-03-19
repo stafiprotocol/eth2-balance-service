@@ -1,6 +1,7 @@
 package task_syncer
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
@@ -10,6 +11,9 @@ func (task *Task) exitElectionCheck() error {
 	if err != nil {
 		return err
 	}
+	logrus.WithFields(logrus.Fields{
+		"notExitElectionList length": len(notExitElectionList),
+	}).Debug("exitElectionCheck info")
 
 	for _, val := range notExitElectionList {
 		valInfo, err := dao_node.GetValidatorByIndex(task.db, val.ValidatorIndex)
