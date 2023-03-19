@@ -678,3 +678,40 @@ no
 |         | msgList | N/A     | list   | Yes         | null        | list                                                         |
 |         |         | msgType | number | Yes         | null        | 1 choosed to exit 2 run client 3 set fee recipient 4 slashed |
 |         |         | msgId   | string | Yes         | null        | unique msg id                                                |
+
+## 17. ejector uptime
+
+### (1) description
+
+*  ejector uptim e
+
+### (2) path
+
+* /reth/v1/ejectorUptime
+
+### (3) request method
+
+* post
+
+### (4) request payload 
+
+* data format: application/json
+* data detail:
+
+| field              | type        | notice                                                                       |
+| :----------------- | :---------- | :--------------------------------------------------------------------------- |
+| validatorIndexList | number list | validator index list. Will return all active validators uptime list if empty |
+
+### (5) response
+* include status、data、message fields
+* status、message must be string format, data must be object
+
+
+| grade 1 | grade 2    | grade 3        | type   | must exist? | encode type | description     |
+| :------ | :--------- | :------------- | :----- | :---------- | :---------- | :-------------- |
+| status  | N/A        | N/A            | string | Yes         | null        | status code     |
+| message | N/A        | N/A            | string | Yes         | null        | status info     |
+| data    | N/A        | N/A            | object | Yes         | null        | data            |
+|         | uptimeList | N/A            | list   | Yes         | null        | list            |
+|         |            | validatorIndex | number | Yes         | null        | validator index |
+|         |            | uptime         | float  | Yes         | null        | uptime(xxx%)    |

@@ -19,6 +19,52 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/v1/ejectorUptime": {
+            "post": {
+                "description": "ejector uptime",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "ejector uptime",
+                "parameters": [
+                    {
+                        "description": "ejector uptime",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/node_handlers.ReqEjectorUptime"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Rsp"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/node_handlers.RspEjectorUptime"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/exitElectionList": {
             "post": {
                 "description": "exit election list",
@@ -641,6 +687,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/uploadEjectorUptime": {
+            "post": {
+                "description": "upload ejector uptime",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "summary": "upload ejector uptime",
+                "parameters": [
+                    {
+                        "description": "ejector uptime",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/node_handlers.ReqEjectorUptime"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Rsp"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/withdrawInfo": {
             "post": {
                 "description": "withdraw info",
@@ -723,6 +803,18 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "integer"
+                }
+            }
+        },
+        "node_handlers.ReqEjectorUptime": {
+            "type": "object",
+            "properties": {
+                "validatorIndexList": {
+                    "description": "hex string list",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -933,6 +1025,17 @@ const docTemplate = `{
                 },
                 "txHash": {
                     "type": "string"
+                }
+            }
+        },
+        "node_handlers.RspEjectorUptime": {
+            "type": "object",
+            "properties": {
+                "uptimeList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/node_handlers.UpTime"
+                    }
                 }
             }
         },
@@ -1268,6 +1371,17 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "startTimestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "node_handlers.UpTime": {
+            "type": "object",
+            "properties": {
+                "uptime": {
+                    "type": "number"
+                },
+                "validatorIndex": {
                     "type": "integer"
                 }
             }

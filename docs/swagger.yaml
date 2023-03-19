@@ -24,6 +24,14 @@ definitions:
       status:
         type: integer
     type: object
+  node_handlers.ReqEjectorUptime:
+    properties:
+      validatorIndexList:
+        description: hex string list
+        items:
+          type: integer
+        type: array
+    type: object
   node_handlers.ReqExitElectionList:
     properties:
       nodeAddress:
@@ -161,6 +169,13 @@ definitions:
         type: string
       txHash:
         type: string
+    type: object
+  node_handlers.RspEjectorUptime:
+    properties:
+      uptimeList:
+        items:
+          $ref: '#/definitions/node_handlers.UpTime'
+        type: array
     type: object
   node_handlers.RspExitElectionList:
     properties:
@@ -385,6 +400,13 @@ definitions:
       startTimestamp:
         type: integer
     type: object
+  node_handlers.UpTime:
+    properties:
+      uptime:
+        type: number
+      validatorIndex:
+        type: integer
+    type: object
   staker_handlers.ReqUnstakingPlanExist:
     properties:
       stakerAddress:
@@ -439,6 +461,33 @@ info:
   title: reth API
   version: "1.0"
 paths:
+  /v1/ejectorUptime:
+    post:
+      consumes:
+      - application/json
+      description: ejector uptime
+      parameters:
+      - description: ejector uptime
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/node_handlers.ReqEjectorUptime'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Rsp'
+            - properties:
+                data:
+                  $ref: '#/definitions/node_handlers.RspEjectorUptime'
+              type: object
+      summary: ejector uptime
+      tags:
+      - v1
   /v1/exitElectionList:
     post:
       consumes:
@@ -801,6 +850,28 @@ paths:
                   $ref: '#/definitions/node_handlers.RspUnstakePoolData'
               type: object
       summary: unstake pool data
+      tags:
+      - v1
+  /v1/uploadEjectorUptime:
+    post:
+      consumes:
+      - application/json
+      description: upload ejector uptime
+      parameters:
+      - description: ejector uptime
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/node_handlers.ReqEjectorUptime'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Rsp'
+      summary: upload ejector uptime
       tags:
       - v1
   /v1/withdrawInfo:

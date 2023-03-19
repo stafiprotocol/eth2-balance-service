@@ -33,6 +33,8 @@ func InitRouters(db *db.WrapDb) http.Handler {
 	router.POST("/reth/v1/exitElectionList", nodeHandler.HandlePostExitElectionList)
 	router.POST("/reth/v1/proposeElectionList", nodeHandler.HandlePostProposeElectionList)
 	router.POST("/reth/v1/proof", nodeHandler.HandlePostProof)
+	router.POST("/reth/v1/uploadEjectorUptime", nodeHandler.HandlePostUploadEjectorUptime)
+	router.POST("/reth/v1/ejectorUptime", nodeHandler.HandlePostEjectorUptime)
 
 	router.GET("/reth/v1/poolData", nodeHandler.HandleGetPoolData)
 	router.GET("/reth/v1/unstakePoolData", nodeHandler.HandleGetUnstakePoolData)
