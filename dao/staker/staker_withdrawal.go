@@ -35,6 +35,12 @@ func GetStakerWithdrawal(db *db.WrapDb, withdrawalIndex uint64) (c *StakerWithdr
 	return
 }
 
+func GetLatestStakerWithdrawal(db *db.WrapDb) (c *StakerWithdrawal, err error) {
+	c = &StakerWithdrawal{}
+	err = db.Order("block_number desc").Take(c).Error
+	return
+}
+
 func GetStakerWithdrawalsBetween(db *db.WrapDb, startBlock, endBlock uint64) (c []*StakerWithdrawal, err error) {
 	err = db.Find(&c, "block_number > ? and block_number <= ?", startBlock, endBlock).Error
 	return

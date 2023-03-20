@@ -544,16 +544,19 @@ no
 * status、message must be string format, data must be object
 
 
-| grade 1 | grade 2           | grade 3 | type   | must exist? | encode type | description           |
-| :------ | :---------------- | :------ | :----- | :---------- | :---------- | :-------------------- |
-| status  | N/A               | N/A     | string | Yes         | null        | status code           |
-| message | N/A               | N/A     | string | Yes         | null        | status info           |
-| data    | N/A               | N/A     | object | Yes         | null        | data                  |
-|         | poolEth           | N/A     | string | Yes         | null        | decimal format string |
-|         | unstakeableEth    | N/A     | string | Yes         | null        | decimal format string |
-|         | todayUnstakedEth  | N/A     | string | Yes         | null        | decimal format string |
-|         | waitingStakers    | N/A     | number | Yes         | null        | number                |
-|         | ejectedValidators | N/A     | number | Yes         | null        | number                |
+| grade 1 | grade 2             | grade 3       | type   | must exist? | encode type | description           |
+| :------ | :------------------ | :------------ | :----- | :---------- | :---------- | :-------------------- |
+| status  | N/A                 | N/A           | string | Yes         | null        | status code           |
+| message | N/A                 | N/A           | string | Yes         | null        | status info           |
+| data    | N/A                 | N/A           | object | Yes         | null        | data                  |
+|         | poolEth             | N/A           | string | Yes         | null        | decimal format string |
+|         | unstakeableEth      | N/A           | string | Yes         | null        | decimal format string |
+|         | todayUnstakedEth    | N/A           | string | Yes         | null        | decimal format string |
+|         | waitingStakers      | N/A           | number | Yes         | null        | number                |
+|         | ejectedValidators   | N/A           | number | Yes         | null        | number                |
+|         | latestUnstakeRecord | N/A           | number | Yes         | null        | number                |
+|         |                     | unstakeAmount | string | Yes         | null        | unstake eth amount    |
+|         |                     | timestamp     | number | Yes         | null        | unstake tx tiemstamp  |
 
 ## 14. validator propose block election list
 

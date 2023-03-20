@@ -13,6 +13,13 @@ definitions:
       status:
         type: integer
     type: object
+  node_handlers.LatestUnstakeRecord:
+    properties:
+      timestamp:
+        type: integer
+      unstakeAmount:
+        type: string
+    type: object
   node_handlers.ProposeElection:
     properties:
       choosenTime:
@@ -367,6 +374,8 @@ definitions:
     properties:
       ejectedValidators:
         type: integer
+      latestUnstakeRecord:
+        $ref: '#/definitions/node_handlers.LatestUnstakeRecord'
       poolEth:
         type: string
       todayUnstakedEth:

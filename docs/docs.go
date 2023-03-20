@@ -789,6 +789,17 @@ const docTemplate = `{
                 }
             }
         },
+        "node_handlers.LatestUnstakeRecord": {
+            "type": "object",
+            "properties": {
+                "timestamp": {
+                    "type": "integer"
+                },
+                "unstakeAmount": {
+                    "type": "string"
+                }
+            }
+        },
         "node_handlers.ProposeElection": {
             "type": "object",
             "properties": {
@@ -1323,6 +1334,9 @@ const docTemplate = `{
             "properties": {
                 "ejectedValidators": {
                     "type": "integer"
+                },
+                "latestUnstakeRecord": {
+                    "$ref": "#/definitions/node_handlers.LatestUnstakeRecord"
                 },
                 "poolEth": {
                     "type": "string"

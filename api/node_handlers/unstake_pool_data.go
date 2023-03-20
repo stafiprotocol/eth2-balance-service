@@ -11,14 +11,21 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"gorm.io/gorm"
 )
 
 type RspUnstakePoolData struct {
-	PoolEth           string `json:"poolEth"`
-	TodayUnstakedEth  string `json:"todayUnstakedEth"`
-	UnstakeableEth    string `json:"unstakeableEth"`
-	WaitingStakers    uint64 `json:"waitingStakers"`
-	EjectedValidators uint64 `json:"ejectedValidators"`
+	PoolEth             string              `json:"poolEth"`
+	TodayUnstakedEth    string              `json:"todayUnstakedEth"`
+	UnstakeableEth      string              `json:"unstakeableEth"`
+	WaitingStakers      uint64              `json:"waitingStakers"`
+	EjectedValidators   uint64              `json:"ejectedValidators"`
+	LatestUnstakeRecord LatestUnstakeRecord `json:"latestUnstakeRecord"`
+}
+
+type LatestUnstakeRecord struct {
+	UnstakeAmount string `json:"unstakeAmount"`
+	Timestamp     uint64 `json:"timestamp"`
 }
 
 // @Summary unstake pool data
@@ -30,11 +37,12 @@ type RspUnstakePoolData struct {
 func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 
 	rsp := RspUnstakePoolData{
-		PoolEth:           "0",
-		TodayUnstakedEth:  "0",
-		UnstakeableEth:    "0",
-		WaitingStakers:    0,
-		EjectedValidators: 0,
+		PoolEth:             "0",
+		TodayUnstakedEth:    "0",
+		UnstakeableEth:      "0",
+		WaitingStakers:      0,
+		EjectedValidators:   0,
+		LatestUnstakeRecord: LatestUnstakeRecord{},
 	}
 
 	poolInfo, err := dao_chaos.GetPoolInfo(h.db)
@@ -97,6 +105,19 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetStakerWithdrawalListNotClaimed err %v", err)
 		return
+	}
+
+	latestStakerWithdrawal, err := dao_staker.GetLatestStakerWithdrawal(h.db)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("GetLatestStakerWithdrawal err %v", err)
+		return
+	}
+	if err == nil {
+		rsp.LatestUnstakeRecord = LatestUnstakeRecord{
+			UnstakeAmount: latestStakerWithdrawal.EthAmount,
+			Timestamp:     latestStakerWithdrawal.Timestamp,
+		}
 	}
 
 	rsp.PoolEth = poolEthDeci.StringFixed(0)
