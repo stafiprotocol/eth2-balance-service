@@ -169,8 +169,6 @@ func GetNodeManagedEth(nodeDeposit, balance uint64, status uint8) uint64 {
 
 	case ValidatorStatusStaked, ValidatorStatusWaiting:
 		return StandardEffectiveBalance
-	case ValidatorStatusActive, ValidatorStatusExited:
-		return balance
 
 	default:
 		return balance

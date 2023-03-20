@@ -91,7 +91,7 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 			selfDepositedEth += l.NodeDepositAmount
 		}
 
-		totalReward := utils.GetValidatorTotalReward(l.Balance, l.TotalWithdrawal, 0)
+		totalReward := utils.GetValidatorTotalReward(l.Balance, l.TotalWithdrawal, l.TotalFee)
 		_, nodeReward, _ := utils.GetUserNodePlatformRewardV2(l.NodeDepositAmount, decimal.NewFromInt(int64(totalReward)))
 		selfRewardEth += nodeReward.BigInt().Uint64()
 

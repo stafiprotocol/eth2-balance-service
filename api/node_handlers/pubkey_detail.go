@@ -122,6 +122,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	case utils.ValidatorStatusDeposited,
 		utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch,
 		utils.ValidatorStatusOffBoard, utils.ValidatorStatusOffBoardCanWithdraw:
+
 		nodeDepositAmount := validator.NodeDepositAmount
 		switch validator.NodeType {
 		case utils.NodeTypeLight:
@@ -156,6 +157,8 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 
 		rsp.CurrentBalance = "0"
 		rsp.EffectiveBalance = "0"
+		rsp.DepositBalance = "0"
+		rsp.NodeDepositAmount = "0"
 
 	default:
 		utils.Err(c, utils.CodeInternalErr, "not supported status")
@@ -167,24 +170,50 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 	rsp.EthPrice = ethPrice
 
 	if rsp.EligibleEpoch != 0 {
-		rsp.EligibleDays = (infoFinalEpoch - validator.EligibleEpoch) * 32 * 12 / (60 * 60 * 24)
+		latestWorkEpoch := infoFinalEpoch
+		if validator.ExitEpoch != 0 && validator.ExitEpoch < infoFinalEpoch {
+			latestWorkEpoch = validator.ExitEpoch
+		}
+		rsp.EligibleDays = (latestWorkEpoch - validator.EligibleEpoch) * 32 * 12 / (60 * 60 * 24)
 	}
+
 	// already active
 	if rsp.ActiveEpoch != 0 {
-		rsp.ActiveDays = (infoFinalEpoch - validator.ActiveEpoch) * 32 * 12 / (60 * 60 * 24)
+		latestWorkEpoch := infoFinalEpoch
+		if validator.ExitEpoch != 0 && validator.ExitEpoch < infoFinalEpoch {
+			latestWorkEpoch = validator.ExitEpoch
+		}
+		rsp.ActiveDays = (latestWorkEpoch - validator.ActiveEpoch) * 32 * 12 / (60 * 60 * 24)
 
 		epochBefore24H := infoFinalEpoch - 225
-		validatorBalance, err := dao_node.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epochBefore24H)
-		if err != nil {
-			if err != gorm.ErrRecordNotFound {
-				utils.Err(c, utils.CodeInternalErr, err.Error())
-				logrus.Errorf("dao.GetValidatorBalance err %s", err)
-				return
+
+		if latestWorkEpoch > epochBefore24H {
+			validatorBalance, err := dao_node.GetValidatorBalanceBefore(h.db, validator.ValidatorIndex, epochBefore24H)
+			if err != nil {
+				if err != gorm.ErrRecordNotFound {
+					utils.Err(c, utils.CodeInternalErr, err.Error())
+					logrus.Errorf("dao.GetValidatorBalance err %s", err)
+					return
+				} else {
+					totalAmount := validator.Balance + validator.TotalWithdrawal + validator.TotalFee
+					reward := int64(0)
+					if totalAmount > utils.StandardEffectiveBalance {
+						reward = int64(totalAmount) - int64(utils.StandardEffectiveBalance)
+					}
+					rsp.Last24hRewardEth = decimal.NewFromInt(reward).Mul(utils.GweiDeci).StringFixed(0)
+				}
 			} else {
-				rsp.Last24hRewardEth = decimal.NewFromInt(int64(validator.Balance - utils.StandardEffectiveBalance)).Mul(utils.GweiDeci).String()
+				totalAmountNow := validator.Balance + validator.TotalWithdrawal + validator.TotalFee
+				totalAmountBefore := validatorBalance.Balance + validatorBalance.TotalWithdrawal + validatorBalance.TotalFee
+				reward := int64(0)
+				if totalAmountNow > totalAmountBefore {
+					reward = int64(totalAmountNow) - int64(totalAmountBefore)
+				}
+				rsp.Last24hRewardEth = decimal.NewFromInt(reward).Mul(utils.GweiDeci).String()
 			}
+
 		} else {
-			rsp.Last24hRewardEth = decimal.NewFromInt(int64(validator.Balance - validatorBalance.Balance)).Mul(utils.GweiDeci).String()
+			rsp.Last24hRewardEth = "0"
 		}
 	}
 
