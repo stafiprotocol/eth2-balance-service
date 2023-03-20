@@ -44,7 +44,7 @@ func GetEjectorUptimeListWithIndexListBetween(db *db.WrapDb, validatorIndexList 
 	return
 }
 
-func GetEjectorOneDayUptime(db *db.WrapDb, validatorIndex uint64) (float64, error) {
+func GetEjectorOneDayUptimeRate(db *db.WrapDb, validatorIndex uint64) (float64, error) {
 	now := uint64(time.Now().Unix()) - 10*60
 	timeEnd := ((now / utils.EjectorUptimeInterval) - 1) * utils.EjectorUptimeInterval
 	timeStart := (((now - 24*60*60) / utils.EjectorUptimeInterval) - 1) * utils.EjectorUptimeInterval
@@ -61,7 +61,7 @@ func GetEjectorOneDayUptime(db *db.WrapDb, validatorIndex uint64) (float64, erro
 	return float64(len(list)) / float64(total), nil
 }
 
-func GetEjectorOneDayUptimeList(db *db.WrapDb, validatorIndexList []uint64) ([]float64, error) {
+func GetEjectorOneDayUptimeRateList(db *db.WrapDb, validatorIndexList []uint64) ([]float64, error) {
 	now := uint64(time.Now().Unix()) - 10*60
 	timeEnd := ((now / utils.EjectorUptimeInterval) - 1) * utils.EjectorUptimeInterval
 	timeStart := (((now - 24*60*60) / utils.EjectorUptimeInterval) - 1) * utils.EjectorUptimeInterval

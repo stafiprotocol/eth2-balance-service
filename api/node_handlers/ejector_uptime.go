@@ -114,7 +114,7 @@ func (h *Handler) HandlePostEjectorUptime(c *gin.Context) {
 		validatorIndexList = vs
 	}
 
-	uptimes, err := dao_node.GetEjectorOneDayUptimeList(h.db, validatorIndexList)
+	uptimes, err := dao_node.GetEjectorOneDayUptimeRateList(h.db, validatorIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetEjectorOneDayUptimeList err %v", err)

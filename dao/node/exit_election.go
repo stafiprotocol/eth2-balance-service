@@ -4,8 +4,6 @@
 package dao_node
 
 import (
-	"fmt"
-
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
@@ -72,7 +70,7 @@ func GetExitElectionTotalCount(db *db.WrapDb) (count int64, err error) {
 	return
 }
 
-func GetExitElectionListWithPageIn(db *db.WrapDb, pageIndex, pageCount int, valIndexList []uint64) (c []*ExitElection, count int64, err error) {
+func GetExitElectionListWithPageOfValidators(db *db.WrapDb, pageIndex, pageCount int, valIndexList []uint64) (c []*ExitElection, count int64, err error) {
 	if len(valIndexList) == 0 {
 		return nil, 0, nil
 	}
@@ -86,38 +84,17 @@ func GetExitElectionListWithPageIn(db *db.WrapDb, pageIndex, pageCount int, valI
 	if pageCount > 50 {
 		pageCount = 50
 	}
-	InStatus := "( "
-	for _, index := range valIndexList {
-		InStatus += fmt.Sprintf("%d", index)
-		InStatus += ","
-	}
-	InStatus = InStatus[:len(InStatus)-1]
-	InStatus += " )"
-	sqlWhere := fmt.Sprintf("validator_index in %s", InStatus)
 
-	err = db.Model(&ExitElection{}).Where(sqlWhere).Count(&count).Error
+	err = db.Model(&ExitElection{}).Where("validator_index in ?", valIndexList).Count(&count).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	err = db.Order("notify_timestamp desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, sqlWhere).Error
+	err = db.Order("notify_timestamp desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "validator_index in ?", valIndexList).Error
 	return
 }
 
-func GetNotExitElectionListIn(db *db.WrapDb, valIndexList []uint64) (c []*ExitElection, err error) {
-	if len(valIndexList) == 0 {
-		return nil, nil
-	}
-
-	InStatus := "( "
-	for _, index := range valIndexList {
-		InStatus += fmt.Sprintf("%d", index)
-		InStatus += ","
-	}
-	InStatus = InStatus[:len(InStatus)-1]
-	InStatus += " )"
-	sqlWhere := fmt.Sprintf("exit_epoch > 0 and validator_index in %s", InStatus)
-
-	err = db.Find(&c, sqlWhere).Error
+func GetNotExitElectionListOfValidators(db *db.WrapDb, valIndexList []uint64) (c []*ExitElection, err error) {
+	err = db.Find(&c, "exit_epoch = 0 and validator_index in ?", valIndexList).Error
 	return
 }

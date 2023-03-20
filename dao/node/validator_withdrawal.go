@@ -5,7 +5,6 @@ package dao_node
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
@@ -66,21 +65,4 @@ func GetValidatorTotalWithdrawalBeforeSlot(db *db.WrapDb, valIndex, slot uint64)
 		valIndex, slot).Scan(&value).Error
 
 	return uint64(value.Int64), err
-}
-
-func GetValidatorWithdrawalsIn(db *db.WrapDb, valIndexList []uint64) (c []*ValidatorWithdrawal, err error) {
-	if len(valIndexList) == 0 {
-		return nil, nil
-	}
-	InStatus := "( "
-	for _, index := range valIndexList {
-		InStatus += fmt.Sprintf("%d", index)
-		InStatus += ","
-	}
-	InStatus = InStatus[:len(InStatus)-1]
-	InStatus += " )"
-	sqlWhere := fmt.Sprintf("validator_index in %s", InStatus)
-
-	err = db.Find(&c, sqlWhere).Error
-	return
 }

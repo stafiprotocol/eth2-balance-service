@@ -57,23 +57,24 @@ slash : 51 52 53 54 55
 * status、message must be string format, data must be object
 
 
-| grade 1 | grade 2          | grade 3 | type   | must exist? | encode type | description                                                       |
-| :------ | :--------------- | :------ | :----- | :---------- | :---------- | :---------------------------------------------------------------- |
-| status  | N/A              | N/A     | string | Yes         | null        | status code                                                       |
-| message | N/A              | N/A     | string | Yes         | null        | status info                                                       |
-| data    | N/A              | N/A     | object | Yes         | null        | data                                                              |
-|         | selfDepositedEth | N/A     | string | Yes         | null        | decimal format string, reward of last era, "" represent no reward |
-|         | totalManagedEth  | N/A     | string | Yes         | null        | decimal format string, reward of last era, "" represent no reward |
-|         | selfRewardEth    | N/A     | string | Yes         | null        | decimal format string, reward of last era, "" represent no reward |
-|         | ethPrice         | N/A     | number | Yes         | null        | eth price                                                         |
-|         | pendingCount     | N/A     | number | Yes         | null        | node total pending count                                          |
-|         | activeCount      | N/A     | number | Yes         | null        | node total active count                                           |
-|         | exitedCount      | N/A     | number | Yes         | null        | node total exited count                                           |
-|         | slashCount       | N/A     | number | Yes         | null        | node total slash count                                            |
-|         | totalCount       | N/A     | number | Yes         | null        | pubkey list total count                                           |
-|         | pubkeyList       | N/A     | list   | Yes         | null        | list                                                              |
-|         |                  | pubkey  | string | Yes         | null        | hex string                                                        |
-|         |                  | status  | number | Yes         | null        | see notice                                                        |
+| grade 1 | grade 2          | grade 3 | type   | must exist? | encode type | description                               |
+| :------ | :--------------- | :------ | :----- | :---------- | :---------- | :---------------------------------------- |
+| status  | N/A              | N/A     | string | Yes         | null        | status code                               |
+| message | N/A              | N/A     | string | Yes         | null        | status info                               |
+| data    | N/A              | N/A     | object | Yes         | null        | data                                      |
+|         | selfDepositedEth | N/A     | string | Yes         | null        | decimal format string, self deposited eth |
+|         | totalManagedEth  | N/A     | string | Yes         | null        | decimal format string, total managed eth  |
+|         | selfRewardEth    | N/A     | string | Yes         | null        | decimal format string, self node reward   |
+|         | totalSlashAmount | N/A     | string | Yes         | null        | decimal format string, total slash amount |
+|         | ethPrice         | N/A     | number | Yes         | null        | eth price                                 |
+|         | pendingCount     | N/A     | number | Yes         | null        | node total pending count                  |
+|         | activeCount      | N/A     | number | Yes         | null        | node total active count                   |
+|         | exitedCount      | N/A     | number | Yes         | null        | node total exited count                   |
+|         | slashCount       | N/A     | number | Yes         | null        | node total slash count                    |
+|         | totalCount       | N/A     | number | Yes         | null        | pubkey list total count                   |
+|         | pubkeyList       | N/A     | list   | Yes         | null        | list                                      |
+|         |                  | pubkey  | string | Yes         | null        | hex string                                |
+|         |                  | status  | number | Yes         | null        | see notice                                |
 
 
 ## 2. reward info

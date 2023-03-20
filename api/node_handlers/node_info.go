@@ -31,6 +31,7 @@ type RspNodeInfo struct {
 	SelfDepositedEth string      `json:"selfDepositedEth"`
 	SelfRewardEth    string      `json:"selfRewardEth"`
 	TotalManagedEth  string      `json:"totalManagedEth"`
+	TotalSlashAmount string      `json:"totalSlashAmount"`
 	EthPrice         float64     `json:"ethPrice"`
 	List             []ResPubkey `json:"pubkeyList"`
 }
@@ -83,18 +84,51 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	selfDepositedEth := uint64(0)
 	selfRewardEth := uint64(0)
 	totalManagedEth := uint64(0)
+
+	pendingCount := int64(0)
+	activeCount := int64(0)
+	exitedCount := int64(0)
+	slashCount := int64(0)
+
+	valIndexList := make([]uint64, 0)
 	for _, l := range totalList {
+		valIndexList = append(valIndexList, l.ValidatorIndex)
+
+		// cal selfDeposited
 		switch l.Status {
 		case utils.ValidatorStatusWithdrawDone, utils.ValidatorStatusWithdrawDoneSlash,
 			utils.ValidatorStatusDistributed, utils.ValidatorStatusDistributedSlash:
 		default:
 			selfDepositedEth += l.NodeDepositAmount
 		}
+		// cal count
+		switch l.Status {
+		case utils.ValidatorStatusDeposited,
+			utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch,
+			utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
 
+			pendingCount++
+
+		case utils.ValidatorStatusActive:
+
+			activeCount++
+
+		case utils.ValidatorStatusActiveSlash, utils.ValidatorStatusExitedSlash, utils.ValidatorStatusWithdrawableSlash,
+			utils.ValidatorStatusWithdrawDoneSlash, utils.ValidatorStatusDistributedSlash:
+
+			slashCount++
+
+		case utils.ValidatorStatusExited, utils.ValidatorStatusWithdrawable, utils.ValidatorStatusWithdrawDone, utils.ValidatorStatusDistributed:
+
+			exitedCount++
+		}
+
+		// cal self reward
 		totalReward := utils.GetValidatorTotalReward(l.Balance, l.TotalWithdrawal, l.TotalFee)
 		_, nodeReward, _ := utils.GetUserNodePlatformRewardV2(l.NodeDepositAmount, decimal.NewFromInt(int64(totalReward)))
 		selfRewardEth += nodeReward.BigInt().Uint64()
 
+		// balance is zero after exited
 		totalManagedEth += utils.GetNodeManagedEth(l.NodeDepositAmount, l.Balance, l.Status)
 
 		logrus.WithFields(logrus.Fields{
@@ -106,30 +140,13 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		}).Debug("GetNodeReward")
 	}
 
-	_, pendingCount, err := dao_node.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{20}, req.PageIndex, req.PageCount)
+	totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
+		logrus.Errorf("dao.GetTotalSlashAmountWithIndexList err %v", err)
 		return
 	}
-	_, activeCount, err := dao_node.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{9}, req.PageIndex, req.PageCount)
-	if err != nil {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
-		return
-	}
-	_, exitedCount, err := dao_node.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{10}, req.PageIndex, req.PageCount)
-	if err != nil {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
-		return
-	}
-	_, slashCount, err := dao_node.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, []uint8{30}, req.PageIndex, req.PageCount)
-	if err != nil {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao.GetValidatorListByNodeWithPage err %v", err)
-		return
-	}
+
 	rsp.PendingCount = pendingCount
 	rsp.ActiveCount = activeCount
 	rsp.ExitedCount = exitedCount
@@ -165,9 +182,10 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	}).Debug("rsp info")
 
 	rsp.TotalCount = totalCount
-	rsp.SelfDepositedEth = decimal.NewFromInt(int64(selfDepositedEth)).Mul(utils.GweiDeci).String()
-	rsp.SelfRewardEth = decimal.NewFromInt(int64(selfRewardEth)).Mul(utils.GweiDeci).String()
-	rsp.TotalManagedEth = decimal.NewFromInt(int64(totalManagedEth)).Mul(utils.GweiDeci).String()
+	rsp.SelfDepositedEth = decimal.NewFromInt(int64(selfDepositedEth)).Mul(utils.GweiDeci).StringFixed(0)
+	rsp.SelfRewardEth = decimal.NewFromInt(int64(selfRewardEth)).Mul(utils.GweiDeci).StringFixed(0)
+	rsp.TotalManagedEth = decimal.NewFromInt(int64(totalManagedEth)).Mul(utils.GweiDeci).StringFixed(0)
+	rsp.TotalSlashAmount = decimal.NewFromInt(int64(totalSlashAmount)).Mul(utils.GweiDeci).StringFixed(0)
 	rsp.EthPrice = ethPrice
 	for _, l := range list {
 		rsp.List = append(rsp.List, ResPubkey{

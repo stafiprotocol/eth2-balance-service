@@ -4,8 +4,6 @@
 package dao_node
 
 import (
-	"fmt"
-
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 )
 
@@ -83,10 +81,7 @@ func GetProposedBlockTotalCount(db *db.WrapDb) (count int64, err error) {
 	return
 }
 
-func GetProposedBlockListInWithPage(db *db.WrapDb, pageIndex, pageCount int, valIndexList []uint64) (c []*ProposedBlock, count int64, err error) {
-	if len(valIndexList) == 0 {
-		return nil, 0, nil
-	}
+func GetProposedBlockListInWithPageOfValidators(db *db.WrapDb, pageIndex, pageCount int, valIndexList []uint64) (c []*ProposedBlock, count int64, err error) {
 
 	if pageIndex <= 0 {
 		pageIndex = 1
@@ -97,38 +92,18 @@ func GetProposedBlockListInWithPage(db *db.WrapDb, pageIndex, pageCount int, val
 	if pageCount > 50 {
 		pageCount = 50
 	}
-	InStatus := "( "
-	for _, index := range valIndexList {
-		InStatus += fmt.Sprintf("%d", index)
-		InStatus += ","
-	}
-	InStatus = InStatus[:len(InStatus)-1]
-	InStatus += " )"
-	sqlWhere := fmt.Sprintf("validator_index in %s", InStatus)
 
-	err = db.Model(&ProposedBlock{}).Where(sqlWhere).Count(&count).Error
+	err = db.Model(&ProposedBlock{}).Where("validator_index in ?", valIndexList).Count(&count).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	err = db.Order("slot desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, sqlWhere).Error
+	err = db.Order("slot desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "validator_index in ?", valIndexList).Error
 	return
 }
 
-func GetLatestProposedBlock(db *db.WrapDb, valIndexList []uint64) (c *ProposedBlock, err error) {
-	if len(valIndexList) == 0 {
-		return nil, fmt.Errorf("valIndexList empty")
-	}
-	InStatus := "( "
-	for _, index := range valIndexList {
-		InStatus += fmt.Sprintf("%d", index)
-		InStatus += ","
-	}
-	InStatus = InStatus[:len(InStatus)-1]
-	InStatus += " )"
-	sqlWhere := fmt.Sprintf("validator_index in %s", InStatus)
-
+func GetLatestProposedBlockOfValidators(db *db.WrapDb, valIndexList []uint64) (c *ProposedBlock, err error) {
 	c = &ProposedBlock{}
-	err = db.Order("block_number desc").Take(c, sqlWhere).Error
+	err = db.Order("block_number desc").Take(c, "validator_index in ?", valIndexList).Error
 	return
 }

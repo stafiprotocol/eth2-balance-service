@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
+// frontend types: 1 choosed to exit 2 run client 3 set fee recipient 4 slashed
 const (
 	notifyMsgChooseToExit    = uint8(1)
 	notifyMsgRunClient       = uint8(2)
@@ -32,7 +34,6 @@ type RspNotifyMsgList struct {
 	List []ResNotifyMsg `json:"msgList"`
 }
 
-// 1 choosed to exit 2 run client 3 set fee recipient 4 slashed
 type ResNotifyMsg struct {
 	MsgType uint8  `json:"msgType"`
 	MsgId   string `json:"msgId"`
@@ -60,7 +61,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		List: []ResNotifyMsg{},
 	}
 
-	valList, err := dao_node.GetValidatorListByNode(h.db, req.NodeAddress, 0)
+	valList, err := dao_node.GetValidatorListByNode(h.db, req.NodeAddress, utils.ValidatorStatusActive)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetValidatorListByNode err %v", err)
@@ -75,7 +76,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		valIndexList = append(valIndexList, val.ValidatorIndex)
 	}
 	// exit election
-	notExitElectionList, err := dao_node.GetNotExitElectionListIn(h.db, valIndexList)
+	notExitElectionList, err := dao_node.GetNotExitElectionListOfValidators(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetValidatorListByNode err %v", err)
@@ -106,6 +107,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		})
 
 		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("startSlot:%d+slashType:%d", slashList[0].StartSlot, slashList[0].SlashType)))
+
 		rsp.List = append(rsp.List, ResNotifyMsg{
 			MsgType: notifyMsgSlashed,
 			MsgId:   msgId.String(),
@@ -113,7 +115,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 	}
 
 	// fee recipient
-	latestProposedBlock, err := dao_node.GetLatestProposedBlock(h.db, valIndexList)
+	latestProposedBlock, err := dao_node.GetLatestProposedBlockOfValidators(h.db, valIndexList)
 	if err == nil {
 		poolInfo, err := dao_chaos.GetPoolInfo(h.db)
 		if err != nil {
@@ -125,12 +127,32 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 			!strings.EqualFold(latestProposedBlock.FeeRecipient, poolInfo.SuperNodeFeePool) {
 
 			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("valIndex:%d+blockNumber:%d", latestProposedBlock.ValidatorIndex, latestProposedBlock.BlockNumber)))
+
 			rsp.List = append(rsp.List, ResNotifyMsg{
 				MsgType: notifyMsgSetFeeRecipient,
 				MsgId:   msgId.String(),
 			})
 		}
+	}
+	// ejector client
+	uptimeRateList, err := dao_node.GetEjectorOneDayUptimeRateList(h.db, valIndexList)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("GetPoolInfo err %v", err)
+		return
+	}
 
+	for _, uptimeRate := range uptimeRateList {
+		if uptimeRate == 0 {
+			// one msg one day
+			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("ejectior uptime: day:%d", time.Now().Day())))
+
+			rsp.List = append(rsp.List, ResNotifyMsg{
+				MsgType: notifyMsgRunClient,
+				MsgId:   msgId.String(),
+			})
+			break
+		}
 	}
 
 	utils.Ok(c, "success", rsp)

@@ -5,7 +5,6 @@ package dao_node
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
@@ -72,7 +71,16 @@ func GetSlashEventList(db *db.WrapDb, validatorIndex uint64, pageIndex, pageCoun
 	return
 }
 
-func GetTotalSlashAmount(db *db.WrapDb, validatorIndex uint64) (totalSlashAmount uint64, err error) {
+func GetTotalSlashAmount(db *db.WrapDb) (totalSlashAmount uint64, err error) {
+	value := sql.NullInt64{}
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where slash_type in (1,2,3,5)").Scan(&value).Error
+	if err != nil {
+		return 0, err
+	}
+	return uint64(value.Int64), nil
+}
+
+func GetTotalSlashAmountOfValidator(db *db.WrapDb, validatorIndex uint64) (totalSlashAmount uint64, err error) {
 	value := sql.NullInt64{}
 	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where validator_index = ? and slash_type in (1,2,3,5)",
 		validatorIndex).Scan(&value).Error
@@ -93,22 +101,9 @@ func GetTotalSlashAmountBefore(db *db.WrapDb, validatorIndex, epoch uint64) (tot
 }
 
 func GetTotalSlashAmountBeforeWithIndexList(db *db.WrapDb, valIndexList []uint64, targetEpoch uint64) (totalSlashAmount uint64, err error) {
-	if len(valIndexList) == 0 {
-		return 0, nil
-	}
-
-	InStatus := "( "
-	for _, index := range valIndexList {
-		InStatus += fmt.Sprintf("%d", index)
-		InStatus += ","
-	}
-	InStatus = InStatus[:len(InStatus)-1]
-	InStatus += " )"
-	sqlWhere := fmt.Sprintf("validator_index in %s", InStatus)
-
 	value := sql.NullInt64{}
-	err = db.Raw(fmt.Sprintf("select sum(slash_amount) as total_slash_amount from reth_slash_events where %s and epoch <= ? and slash_type in (1,2,3,5)", sqlWhere),
-		targetEpoch).Scan(&value).Error
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch <= ? and slash_type in (1,2,3,5) and validator_index in ?",
+		targetEpoch, valIndexList).Scan(&value).Error
 	if err != nil {
 		return 0, err
 	}
@@ -116,21 +111,8 @@ func GetTotalSlashAmountBeforeWithIndexList(db *db.WrapDb, valIndexList []uint64
 }
 
 func GetTotalSlashAmountWithIndexList(db *db.WrapDb, valIndexList []uint64) (totalSlashAmount uint64, err error) {
-	if len(valIndexList) == 0 {
-		return 0, nil
-	}
-
-	InStatus := "( "
-	for _, index := range valIndexList {
-		InStatus += fmt.Sprintf("%d", index)
-		InStatus += ","
-	}
-	InStatus = InStatus[:len(InStatus)-1]
-	InStatus += " )"
-	sqlWhere := fmt.Sprintf("validator_index in %s", InStatus)
-
 	value := sql.NullInt64{}
-	err = db.Raw(fmt.Sprintf("select sum(slash_amount) as total_slash_amount from reth_slash_events where %s and slash_type in (1,2,3,5)", sqlWhere)).Scan(&value).Error
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where slash_type in (1,2,3,5) and validator_index in ?", valIndexList).Scan(&value).Error
 	if err != nil {
 		return 0, err
 	}
@@ -138,19 +120,6 @@ func GetTotalSlashAmountWithIndexList(db *db.WrapDb, valIndexList []uint64) (tot
 }
 
 func GetSlashEventListWithIndex(db *db.WrapDb, valIndexList []uint64) (c []*SlashEvent, err error) {
-	if len(valIndexList) == 0 {
-		return nil, nil
-	}
-
-	InStatus := "( "
-	for _, index := range valIndexList {
-		InStatus += fmt.Sprintf("%d", index)
-		InStatus += ","
-	}
-	InStatus = InStatus[:len(InStatus)-1]
-	InStatus += " )"
-	sqlWhere := fmt.Sprintf("validator_index in %s", InStatus)
-
-	err = db.Find(&c, sqlWhere).Error
+	err = db.Find(&c, "validator_index in ?", valIndexList).Error
 	return
 }

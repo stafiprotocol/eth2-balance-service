@@ -304,7 +304,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		return
 	}
 
-	totalSlashAmount, err := dao_node.GetTotalSlashAmount(h.db, validator.ValidatorIndex)
+	totalSlashAmount, err := dao_node.GetTotalSlashAmountOfValidator(h.db, validator.ValidatorIndex)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetTotalSlashAmount err %s", err)
