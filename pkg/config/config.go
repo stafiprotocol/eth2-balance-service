@@ -21,7 +21,6 @@ type Config struct {
 	MaxGasPrice             string
 	RewardEpochInterval     uint64
 	Version                 string // v1/dev/v2
-	EnableDistribute        bool   // used by voter
 	SlashStartEpoch         uint64 // used by eth2block syncer
 	UnstakingStartTimestamp uint64 // used by api server
 	StafiInfoEndpoint       string // used by api server

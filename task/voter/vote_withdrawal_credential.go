@@ -1,9 +1,7 @@
 package task_voter
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/prysmaticlabs/prysm/v3/contracts/deposit"
@@ -191,36 +189,7 @@ func (task *Task) voteForLightNode(lightNodeContract *light_node.LightNode, vali
 	}
 	logrus.Info("send vote tx hash: ", tx.Hash().String())
 
-	retry := 0
-	for {
-		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return fmt.Errorf("lightNodeContract.VoteWithdrawCredentials tx reach retry limit")
-		}
-		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
-		if err == nil && !pending {
-			break
-		} else {
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":  err.Error(),
-					"hash": tx.Hash(),
-				}).Warn("tx status")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"hash":   tx.Hash(),
-					"status": "pending",
-				}).Warn("tx status")
-			}
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-	}
-	logrus.WithFields(logrus.Fields{
-		"tx": tx.Hash(),
-	}).Info("vote tx send ok")
-	return nil
+	return task.waitTxOk(tx.Hash())
 }
 
 func (task *Task) voteForSuperNode(superNodeContract *super_node.SuperNode, validatorPubkeys [][]byte, matchs []bool) error {
@@ -252,37 +221,7 @@ func (task *Task) voteForSuperNode(superNodeContract *super_node.SuperNode, vali
 		return err
 	}
 	logrus.Info("send vote tx hash: ", tx.Hash().String())
-
-	retry := 0
-	for {
-		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return fmt.Errorf("superNodeContract.VoteWithdrawCredentials tx reach retry limit")
-		}
-		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
-		if err == nil && !pending {
-			break
-		} else {
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":  err.Error(),
-					"hash": tx.Hash(),
-				}).Warn("tx status")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"hash":   tx.Hash(),
-					"status": "pending",
-				}).Warn("tx status")
-			}
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-	}
-	logrus.WithFields(logrus.Fields{
-		"tx": tx.Hash(),
-	}).Info("vote tx send ok")
-	return nil
+	return task.waitTxOk(tx.Hash())
 }
 
 func pubkeyToHex(pubkeys [][]byte) []string {

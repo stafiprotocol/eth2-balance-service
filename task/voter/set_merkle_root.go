@@ -1,16 +1,13 @@
 package task_voter
 
 import (
-	"context"
 	"encoding/hex"
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
-	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
 
@@ -61,34 +58,5 @@ func (task *Task) sendSetMerkleRootTx(rootHash *dao_node.RootHash) error {
 
 	logrus.Info("send SetMerkleRoot tx hash: ", tx.Hash().String())
 
-	retry := 0
-	for {
-		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return fmt.Errorf("SetMerkleRoot tx reach retry limit")
-		}
-		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
-		if err == nil && !pending {
-			break
-		} else {
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":  err.Error(),
-					"hash": tx.Hash(),
-				}).Warn("tx status")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"hash":   tx.Hash(),
-					"status": "pending",
-				}).Warn("tx status")
-			}
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-	}
-	logrus.WithFields(logrus.Fields{
-		"tx": tx.Hash(),
-	}).Info("SetMerkleRoot tx send ok")
-	return nil
+	return task.waitTxOk(tx.Hash())
 }

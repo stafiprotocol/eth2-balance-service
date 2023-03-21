@@ -1,10 +1,8 @@
 package task_voter
 
 import (
-	"context"
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
@@ -178,34 +176,17 @@ func (task *Task) checkSyncStateForRate() (uint64, uint64, bool, error) {
 		return 0, 0, false, nil
 	}
 
-	eth2ValidatorInfoSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
-	if err != nil {
-		return 0, 0, false, err
-	}
 	eth2ValidatorBalanceSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
-	if err != nil {
-		return 0, 0, false, err
-	}
-	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
 	if err != nil {
 		return 0, 0, false, err
 	}
 	logrus.WithFields(logrus.Fields{
 		"targetEpoch":                  targetEpoch,
 		"eth2BalanceSyncerDealedEpoch": eth2ValidatorBalanceSyncerMetaData.DealedEpoch,
-		"eth2BlockSyncerDealedEpoch":   eth2BlockSyncerMetaData.DealedEpoch,
 	}).Debug("epocheInfo")
 
-	// ensure eth2 info have synced
-	if eth2ValidatorInfoSyncerMetaData.DealedEpoch < targetEpoch {
-		return 0, 0, false, nil
-	}
 	// ensure eth2 balances have synced
 	if eth2ValidatorBalanceSyncerMetaData.DealedEpoch < targetEpoch {
-		return 0, 0, false, nil
-	}
-	// ensure eth2 block have synced
-	if eth2BlockSyncerMetaData.DealedEpoch < targetEpoch {
 		return 0, 0, false, nil
 	}
 
@@ -213,16 +194,6 @@ func (task *Task) checkSyncStateForRate() (uint64, uint64, bool, error) {
 	targetEpochStartBlockHeight, err := task.getEpochStartBlocknumber(targetEpoch)
 	if err != nil {
 		return 0, 0, false, err
-	}
-
-	eth1BlockSynceMetaDatar, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
-	if err != nil {
-		return 0, 0, false, err
-	}
-
-	// ensure all eth1 event synced
-	if eth1BlockSynceMetaDatar.DealedBlockHeight < targetEpochStartBlockHeight {
-		return 0, 0, false, nil
 	}
 
 	return targetEpoch, targetEpochStartBlockHeight, true, nil
@@ -247,37 +218,5 @@ func (task *Task) sendVoteRateTx(balancesEpoch, totalUserEth, totalStakingEth, r
 
 	logrus.Info("send submitBalances tx hash: ", tx.Hash().String())
 
-	// todo extract and check tx status
-	retry := 0
-	for {
-		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return fmt.Errorf("networkBalancesContract.SubmitBalances tx reach retry limit")
-		}
-		tx, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
-		if err == nil && !pending {
-			break
-		} else {
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":  err.Error(),
-					"hash": tx.Hash(),
-				}).Warn("tx status")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"hash":   tx.Hash(),
-					"status": "pending",
-				}).Warn("tx status")
-			}
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-
-	}
-	logrus.WithFields(logrus.Fields{
-		"tx": tx.Hash(),
-	}).Info("submitBalances tx send ok")
-
-	return nil
+	return task.waitTxOk(tx.Hash())
 }

@@ -44,28 +44,26 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	if task.enableDistribute {
-		stafiDistributorAddress, err := task.getContractAddress(storageContract, "stafiDistributor")
-		if err != nil {
-			return err
-		}
-		task.distributorContract, err = distributor.NewDistributor(stafiDistributorAddress, task.connection.Eth1Client())
-		if err != nil {
-			return err
-		}
-
-		stafiFeePoolAddress, err := task.getContractAddress(storageContract, "stafiFeePool")
-		if err != nil {
-			return err
-		}
-		task.feePoolAddress = stafiFeePoolAddress
-
-		stafiSuperNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiSuperNodeFeePool")
-		if err != nil {
-			return err
-		}
-		task.superNodeFeePoolAddress = stafiSuperNodeFeePoolAddress
+	stafiDistributorAddress, err := task.getContractAddress(storageContract, "stafiDistributor")
+	if err != nil {
+		return err
 	}
+	task.distributorContract, err = distributor.NewDistributor(stafiDistributorAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+
+	stafiFeePoolAddress, err := task.getContractAddress(storageContract, "stafiFeePool")
+	if err != nil {
+		return err
+	}
+	task.feePoolAddress = stafiFeePoolAddress
+
+	stafiSuperNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiSuperNodeFeePool")
+	if err != nil {
+		return err
+	}
+	task.superNodeFeePoolAddress = stafiSuperNodeFeePoolAddress
 
 	networkBalancesAddress, err := task.getContractAddress(storageContract, "stafiNetworkBalances")
 	if err != nil {

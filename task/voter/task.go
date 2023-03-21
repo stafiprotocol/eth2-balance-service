@@ -40,7 +40,6 @@ type Task struct {
 	storageContractAddress common.Address
 	rewardEpochInterval    uint64
 	version                string
-	enableDistribute       bool
 
 	// need init on start()
 	connection           *shared.Connection
@@ -107,7 +106,6 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 		version:                cfg.Version,
-		enableDistribute:       cfg.EnableDistribute,
 	}
 	return s, nil
 }
@@ -213,18 +211,15 @@ func (task *Task) voteHandler() {
 			}
 			logrus.Debug("voteWithdrawalCredential end -----------\n")
 
-			if task.version != utils.V1 && task.enableDistribute {
-				logrus.Debug("distributeFee start -----------")
-
-				err = task.distributeFee()
-				if err != nil {
-					logrus.Warnf("distributeFee err %s", err)
-					time.Sleep(utils.RetryInterval)
-					retry++
-					continue
-				}
-				logrus.Debug("distributeFee end -----------\n")
+			logrus.Debug("distributeFee start -----------")
+			err = task.distributeFee()
+			if err != nil {
+				logrus.Warnf("distributeFee err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
 			}
+			logrus.Debug("distributeFee end -----------\n")
 
 			logrus.Debug("voteRate start -----------")
 			err = task.voteRate()
@@ -287,4 +282,38 @@ func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
 		break
 	}
 	return blocknumber, nil
+}
+
+func (task *Task) waitTxOk(txHash common.Hash) error {
+	retry := 0
+	for {
+		if retry > utils.RetryLimit {
+			utils.ShutdownRequestChannel <- struct{}{}
+			return fmt.Errorf("networkBalancesContract.SubmitBalances tx reach retry limit")
+		}
+		tx, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), txHash)
+		if err == nil && !pending {
+			break
+		} else {
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"err":  err.Error(),
+					"hash": tx.Hash(),
+				}).Warn("tx status")
+			} else {
+				logrus.WithFields(logrus.Fields{
+					"hash":   tx.Hash(),
+					"status": "pending",
+				}).Warn("tx status")
+			}
+			time.Sleep(utils.RetryInterval)
+			retry++
+			continue
+		}
+
+	}
+	logrus.WithFields(logrus.Fields{
+		"tx": txHash.String(),
+	}).Info("tx send ok")
+	return nil
 }

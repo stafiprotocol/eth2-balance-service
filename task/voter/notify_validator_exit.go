@@ -156,37 +156,7 @@ func (task *Task) sendReserveTx(preCycle uint64) error {
 
 	logrus.Info("send ReserveEthForWithdraw tx hash: ", tx.Hash().String())
 
-	retry := 0
-	for {
-		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return fmt.Errorf("ReserveEthForWithdraw tx reach retry limit")
-		}
-		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
-		if err == nil && !pending {
-			break
-		} else {
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":  err.Error(),
-					"hash": tx.Hash(),
-				}).Warn("tx status")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"hash":   tx.Hash(),
-					"status": "pending",
-				}).Warn("tx status")
-			}
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-	}
-	logrus.WithFields(logrus.Fields{
-		"tx": tx.Hash(),
-	}).Info("ReserveEthForWithdraw tx send ok")
-
-	return nil
+	return task.waitTxOk(tx.Hash())
 }
 
 func (task *Task) sendNotifyExitTx(preCycle, startCycle uint64, selectVal []*big.Int) error {
@@ -202,36 +172,7 @@ func (task *Task) sendNotifyExitTx(preCycle, startCycle uint64, selectVal []*big
 
 	logrus.Info("send NotifyValidatorExit tx hash: ", tx.Hash().String())
 
-	retry := 0
-	for {
-		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return fmt.Errorf("NotifyValidatorExit tx reach retry limit")
-		}
-		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), tx.Hash())
-		if err == nil && !pending {
-			break
-		} else {
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":  err.Error(),
-					"hash": tx.Hash(),
-				}).Warn("tx status")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"hash":   tx.Hash(),
-					"status": "pending",
-				}).Warn("tx status")
-			}
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-	}
-	logrus.WithFields(logrus.Fields{
-		"tx": tx.Hash(),
-	}).Info("NotifyValidatorExit tx send ok")
-	return nil
+	return task.waitTxOk(tx.Hash())
 }
 
 func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, targetEpoch uint64) ([]*big.Int, error) {

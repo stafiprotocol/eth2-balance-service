@@ -100,6 +100,9 @@ func TestDecodeInputData(t *testing.T) {
 		t.Fatal(err)
 	}
 	hashs := []string{
+		"0x68e297c767a3f65c44a97c464618b064a851b0c18b79c2da44d1f3723fdf35e3",
+		"0x07a03487c382f31b34431ffb1ec8a5ee19998bb3a938ea62921d541edd18ec43",
+		"0xa97d54212df21092bfc95375be4eee72cd148e514943f3f875a9eb48e9d0cc9b",
 		"0x34490e517c0ce6345937b0c594165b1943296e64bfdec073006227b3a16319e3",
 		"0x53bbcec2c9efdb8a0067d1336f21253a9874c8ee0c739a2f0461e8e29a6f8470",
 		"0xfdf97b3502f4456f2712c29589639ea93233dd01736b8f40c0a1ee787d2867ff",
@@ -141,6 +144,15 @@ func TestDecodeInputData(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		receipient, err := client.TransactionReceipt(context.Background(), common.HexToHash(hash))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		t.Log("iiiiiii")
+		for _, log := range receipient.Logs {
+			t.Log("log ", log.Data)
+		}
 		method, err := withdrawal.MethodById(tx.Data()[:4])
 		if err != nil {
 			t.Fatal(err)
@@ -161,12 +173,9 @@ func TestDecodeInputData(t *testing.T) {
 		totalNodeAmount1 = new(big.Int).Add(totalNodeAmount1, p.NodeAmount)
 		totalPlatformAmount1 = new(big.Int).Add(totalPlatformAmount1, p.PlatformAmount)
 
-		user, node, platform := utils.GetUserNodePlatformRewardV2(4000000000, decimal.NewFromBigInt(total, 0))
-		t.Log(user, node, platform)
-
-		totalUserAmount = new(big.Int).Add(totalUserAmount, user.BigInt())
-		totalNodeAmount = new(big.Int).Add(totalNodeAmount, node.BigInt())
-		totalPlatformAmount = new(big.Int).Add(totalPlatformAmount, platform.BigInt())
+		// totalUserAmount = new(big.Int).Add(totalUserAmount, user.BigInt())
+		// totalNodeAmount = new(big.Int).Add(totalNodeAmount, node.BigInt())
+		// totalPlatformAmount = new(big.Int).Add(totalPlatformAmount, platform.BigInt())
 	}
 	t.Log(totalUserAmount, totalNodeAmount, totalPlatformAmount, new(big.Int).Add(totalNodeAmount, totalPlatformAmount))
 	t.Log(totalUserAmount1, totalNodeAmount1, totalPlatformAmount1, new(big.Int).Add(totalNodeAmount1, totalPlatformAmount1))
@@ -225,7 +234,7 @@ func TestStorage(t *testing.T) {
 	}
 	t.Log("withdrawPoolAddress: ", withdrawPoolAddress)
 
-	withdrawPoolBalance, err := client.BalanceAt(context.Background(), withdrawPoolAddress, nil)
+	withdrawPoolBalance, err := client.BalanceAt(context.Background(), withdrawPoolAddress, big.NewInt(319237))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -244,7 +253,7 @@ func TestStorage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("latestDistributeHeight: ", latestDistributeHeight)
+	t.Log("latestDistributeWithdrawalHeight: ", latestDistributeHeight)
 
 	maxClaimableWithdrawIndex, err := withdrawPoolContract.MaxClaimableWithdrawIndex(&bind.CallOpts{})
 	if err != nil {
@@ -276,3 +285,6 @@ func TestStorage(t *testing.T) {
 	}
 	t.Log("userDepositPoolBalance: ", decimal.NewFromBigInt(userDepositPoolBalance, -18))
 }
+
+// 0x04df80 319360
+// 0x039fc6d02bbbc0 1020101175000000
