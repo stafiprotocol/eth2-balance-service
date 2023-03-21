@@ -234,7 +234,7 @@ func TestStorage(t *testing.T) {
 	}
 	t.Log("withdrawPoolAddress: ", withdrawPoolAddress)
 
-	withdrawPoolBalance, err := client.BalanceAt(context.Background(), withdrawPoolAddress, big.NewInt(319237))
+	withdrawPoolBalance, err := client.BalanceAt(context.Background(), withdrawPoolAddress, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -266,6 +266,20 @@ func TestStorage(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("NextWithdrawIndex: ", NextWithdrawIndex)
+
+	unclaimedWithdrawals, err := withdrawPoolContract.GetUnclaimedWithdrawalsOfUser(&bind.CallOpts{}, common.HexToAddress("0x99C6a3B0d131C996D9f65275fB5a196a8B57B583"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, w := range unclaimedWithdrawals {
+		withdrawal, err := withdrawPoolContract.WithdrawalAtIndex(&bind.CallOpts{}, w)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("withdrawal ", withdrawal.Address, withdrawal.Amount)
+	}
+
 	//---------user deposit pool
 	userDepositPoolAddress, err := s.GetAddress(&bind.CallOpts{
 		Context: context.Background(),

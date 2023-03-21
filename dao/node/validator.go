@@ -107,8 +107,8 @@ func GetValidatorListStatusActive(db *db.WrapDb) (c []*Validator, err error) {
 	return
 }
 
-func GetValidatorListNotExit(db *db.WrapDb) (c []*Validator, err error) {
-	err = db.Find(&c, "exit_epoch = 0").Error
+func GetValidatorListActiveAndNotExit(db *db.WrapDb) (c []*Validator, err error) {
+	err = db.Find(&c, "status = ? and exit_epoch = 0", utils.ValidatorStatusActive).Error
 	return
 }
 

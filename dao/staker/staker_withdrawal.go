@@ -12,8 +12,7 @@ type StakerWithdrawal struct {
 	db.BaseModel
 	WithdrawIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:withdraw_index;uinqueIndex"`
 
-	Address                    string `gorm:"type:varchar(100) not null;default:'';column:address"`      //hex with 0x prefix
-	Amount                     uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:amount"` //
+	Address                    string `gorm:"type:varchar(100) not null;default:'';column:address"` //hex with 0x prefix
 	EthAmount                  string `gorm:"type:varchar(40) not null;default:'0';column:eth_amount"`
 	BlockNumber                uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:block_number;index"`
 	ClaimedBlockNumber         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:claimed_block_number"`

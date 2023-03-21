@@ -100,10 +100,10 @@ func (h *Handler) HandlePostEjectorUptime(c *gin.Context) {
 
 	validatorIndexList := req.ValidatorIndexList
 	if len(req.ValidatorIndexList) == 0 {
-		validators, err := dao_node.GetValidatorListNotExit(h.db)
+		validators, err := dao_node.GetValidatorListActiveAndNotExit(h.db)
 		if err != nil {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
-			logrus.Errorf("GetValidatorListNotExiterr %v", err)
+			logrus.Errorf("GetValidatorListActiveAndNotExit err: %v", err)
 			return
 		}
 

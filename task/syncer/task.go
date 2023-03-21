@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	deposit_contract "github.com/stafiprotocol/eth2-balance-service/bindings/DepositContract"
 	distributor "github.com/stafiprotocol/eth2-balance-service/bindings/Distributor"
@@ -22,7 +21,6 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/dao"
 	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
-	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
@@ -186,24 +184,6 @@ func (task *Task) Start() error {
 	err = task.fetchDistributorContractEvents(1, eth1LatestBlock)
 	if err != nil {
 		return err
-	}
-
-	//
-	zeroList, err := dao_staker.GetStakerWithdrawalListEthAmountZero(task.db)
-	if err != nil {
-		return err
-	}
-
-	for _, stakerWithdrawal := range zeroList {
-		amountDeci, err := decimal.NewFromString(fmt.Sprintf("%d", stakerWithdrawal.Amount))
-		if err != nil {
-			return err
-		}
-		stakerWithdrawal.EthAmount = amountDeci.StringFixed(0)
-		err = dao_staker.UpOrInStakerWithdrawal(task.db, stakerWithdrawal)
-		if err != nil {
-			return err
-		}
 	}
 
 	utils.SafeGoWithRestart(task.syncEth1BlockHandler)

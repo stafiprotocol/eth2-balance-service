@@ -176,8 +176,7 @@ func (task *Task) sendNotifyExitTx(preCycle, startCycle uint64, selectVal []*big
 }
 
 func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, targetEpoch uint64) ([]*big.Int, error) {
-
-	notExitValidatorList, err := dao_node.GetValidatorListNotExit(task.db)
+	notExitValidatorList, err := dao_node.GetValidatorListActiveAndNotExit(task.db)
 	if err != nil {
 		return nil, err
 	}
