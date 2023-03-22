@@ -129,6 +129,8 @@ definitions:
     type: object
   node_handlers.ResNotifyMsg:
     properties:
+      msgData:
+        type: string
       msgId:
         type: string
       msgType:
@@ -225,6 +227,8 @@ definitions:
       totalCount:
         type: integer
       totalManagedEth:
+        type: string
+      totalSlashAmount:
         type: string
     type: object
   node_handlers.RspNotifyMsgList:

@@ -15,10 +15,11 @@ import (
 )
 
 func (task *Task) notifyValidatorExit() error {
+	// utc 8:00
 	currentCycle := (time.Now().Unix() - 28800) / 86400
-
 	preCycle := currentCycle - 1
-	targetTimestamp := currentCycle * 86400
+	targetTimestamp := currentCycle*86400 + 28800
+
 	targetEpoch := utils.EpochAtTimestamp(task.eth2Config, uint64(targetTimestamp))
 	targetBlockNumber, err := task.getEpochStartBlocknumber(targetEpoch)
 	if err != nil {

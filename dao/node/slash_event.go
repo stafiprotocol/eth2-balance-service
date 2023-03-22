@@ -120,6 +120,6 @@ func GetTotalSlashAmountWithIndexList(db *db.WrapDb, valIndexList []uint64) (tot
 }
 
 func GetSlashEventListWithIndex(db *db.WrapDb, valIndexList []uint64) (c []*SlashEvent, err error) {
-	err = db.Find(&c, "validator_index in ?", valIndexList).Error
+	err = db.Find(&c, "slash_amount > 0 and validator_index in ?", valIndexList).Error
 	return
 }

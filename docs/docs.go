@@ -965,6 +965,9 @@ const docTemplate = `{
         "node_handlers.ResNotifyMsg": {
             "type": "object",
             "properties": {
+                "msgData": {
+                    "type": "string"
+                },
                 "msgId": {
                     "type": "string"
                 },
@@ -1112,6 +1115,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalManagedEth": {
+                    "type": "string"
+                },
+                "totalSlashAmount": {
                     "type": "string"
                 }
             }

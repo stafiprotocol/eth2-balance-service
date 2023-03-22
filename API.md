@@ -682,6 +682,7 @@ no
 |         | msgList | N/A     | list   | Yes         | null        | list                                                         |
 |         |         | msgType | number | Yes         | null        | 1 choosed to exit 2 run client 3 set fee recipient 4 slashed |
 |         |         | msgId   | string | Yes         | null        | unique msg id                                                |
+|         |         | msgData | string | Yes         | null        | msg data                                                     |
 
 ## 17. ejector uptime
 

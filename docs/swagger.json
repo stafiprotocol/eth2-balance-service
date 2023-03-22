@@ -958,6 +958,9 @@
         "node_handlers.ResNotifyMsg": {
             "type": "object",
             "properties": {
+                "msgData": {
+                    "type": "string"
+                },
                 "msgId": {
                     "type": "string"
                 },
@@ -1105,6 +1108,9 @@
                     "type": "integer"
                 },
                 "totalManagedEth": {
+                    "type": "string"
+                },
+                "totalSlashAmount": {
                     "type": "string"
                 }
             }

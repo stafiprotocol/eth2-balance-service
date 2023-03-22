@@ -12,6 +12,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
@@ -37,6 +38,7 @@ type RspNotifyMsgList struct {
 type ResNotifyMsg struct {
 	MsgType uint8  `json:"msgType"`
 	MsgId   string `json:"msgId"`
+	MsgData string `json:"msgData"`
 }
 
 // @Summary notify msg list
@@ -87,13 +89,26 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 			return notExitElectionList[i].NotifyBlockNumber > notExitElectionList[j].NotifyBlockNumber
 		})
 
-		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("valIndex:%d+notifyNumber:%d", notExitElectionList[0].ValidatorIndex, notExitElectionList[0].NotifyBlockNumber)))
+		for _, ele := range notExitElectionList {
+			// next withdraw cycle start time
+			maxExitMsgTimestamp := (ele.WithdrawCycle+1)*86400 + 28800
+			now := time.Now().Unix()
+			if maxExitMsgTimestamp < uint64(now) {
+				leftHourDeci := decimal.NewFromInt(now).Sub(decimal.NewFromInt(int64(maxExitMsgTimestamp))).Div(decimal.NewFromInt(60 * 60))
 
-		rsp.List = append(rsp.List, ResNotifyMsg{
-			MsgType: notifyMsgChooseToExit,
-			MsgId:   msgId.String(),
-		})
+				msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("valIndex:%d+notifyNumber:%d", ele.ValidatorIndex, ele.NotifyBlockNumber)))
+
+				rsp.List = append(rsp.List, ResNotifyMsg{
+					MsgType: notifyMsgChooseToExit,
+					MsgId:   msgId.String(),
+					MsgData: fmt.Sprintf("exit in %s hours", leftHourDeci.StringFixed(1)),
+				})
+
+				break
+			}
+		}
 	}
+
 	// slash
 	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList)
 	if err != nil {
@@ -107,10 +122,12 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		})
 
 		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("startSlot:%d+slashType:%d", slashList[0].StartSlot, slashList[0].SlashType)))
+		slashAmountDeci := decimal.NewFromInt(int64(slashList[0].SlashAmount)).Div(utils.GweiDeci)
 
 		rsp.List = append(rsp.List, ResNotifyMsg{
 			MsgType: notifyMsgSlashed,
 			MsgId:   msgId.String(),
+			MsgData: fmt.Sprintf("slashed of %s ETH", slashAmountDeci.StringFixed(9)),
 		})
 	}
 
@@ -134,6 +151,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 			})
 		}
 	}
+
 	// ejector client
 	uptimeRateList, err := dao_node.GetEjectorOneDayUptimeRateList(h.db, valIndexList)
 	if err != nil {
@@ -147,9 +165,12 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 			// one msg one day
 			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("ejectior uptime: day:%d", time.Now().Day())))
 
+			before := time.Now().Add(time.Hour * 24)
+
 			rsp.List = append(rsp.List, ResNotifyMsg{
 				MsgType: notifyMsgRunClient,
 				MsgId:   msgId.String(),
+				MsgData: fmt.Sprintf("before: %s UTC", before.UTC().Format("2006-01-02 15:04")),
 			})
 			break
 		}
