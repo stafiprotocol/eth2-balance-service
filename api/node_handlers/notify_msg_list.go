@@ -36,9 +36,15 @@ type RspNotifyMsgList struct {
 }
 
 type ResNotifyMsg struct {
-	MsgType uint8  `json:"msgType"`
-	MsgId   string `json:"msgId"`
-	MsgData string `json:"msgData"`
+	MsgType uint8   `json:"msgType"`
+	MsgId   string  `json:"msgId"`
+	MsgData MsgData `json:"msgData"`
+}
+
+type MsgData struct {
+	Timestamp   uint64 `json:"timestamp"`
+	ExitHours   uint64 `json:"exitHours"`
+	SlashAmount string `json:"slashAmount"`
 }
 
 // @Summary notify msg list
@@ -94,14 +100,16 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 			maxExitMsgTimestamp := (ele.WithdrawCycle+1)*86400 + 28800
 			now := time.Now().Unix()
 			if maxExitMsgTimestamp < uint64(now) {
-				leftHourDeci := decimal.NewFromInt(now).Sub(decimal.NewFromInt(int64(maxExitMsgTimestamp))).Div(decimal.NewFromInt(60 * 60))
-
 				msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("valIndex:%d+notifyNumber:%d", ele.ValidatorIndex, ele.NotifyBlockNumber)))
 
 				rsp.List = append(rsp.List, ResNotifyMsg{
 					MsgType: notifyMsgChooseToExit,
 					MsgId:   msgId.String(),
-					MsgData: fmt.Sprintf("exit in %s hours", leftHourDeci.StringFixed(1)),
+					MsgData: MsgData{
+						Timestamp:   maxExitMsgTimestamp,
+						ExitHours:   48,
+						SlashAmount: "",
+					},
 				})
 
 				break
@@ -109,26 +117,33 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		}
 	}
 
-	// slash
-	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList)
+	// run ejector client
+	uptimeRateList, err := dao_node.GetEjectorOneDayUptimeRateList(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("GetSlashEventListWithIndex err %v", err)
+		logrus.Errorf("GetPoolInfo err %v", err)
 		return
 	}
-	if len(slashList) > 0 {
-		sort.SliceStable(slashList, func(i, j int) bool {
-			return slashList[i].StartSlot > slashList[j].StartSlot
-		})
 
-		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("startSlot:%d+slashType:%d", slashList[0].StartSlot, slashList[0].SlashType)))
-		slashAmountDeci := decimal.NewFromInt(int64(slashList[0].SlashAmount)).Div(utils.GweiDeci)
+	for _, uptimeRate := range uptimeRateList {
+		if uptimeRate == 0 {
+			// one msg one day
+			now := time.Now()
+			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("ejectior uptime: day:%d", now.Day())))
 
-		rsp.List = append(rsp.List, ResNotifyMsg{
-			MsgType: notifyMsgSlashed,
-			MsgId:   msgId.String(),
-			MsgData: fmt.Sprintf("slashed of %s ETH", slashAmountDeci.StringFixed(9)),
-		})
+			before := now.Add(time.Hour * 24)
+
+			rsp.List = append(rsp.List, ResNotifyMsg{
+				MsgType: notifyMsgRunClient,
+				MsgId:   msgId.String(),
+				MsgData: MsgData{
+					Timestamp:   uint64(before.Unix()),
+					ExitHours:   0,
+					SlashAmount: "",
+				},
+			})
+			break
+		}
 	}
 
 	// fee recipient
@@ -148,32 +163,35 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 			rsp.List = append(rsp.List, ResNotifyMsg{
 				MsgType: notifyMsgSetFeeRecipient,
 				MsgId:   msgId.String(),
+				MsgData: MsgData{},
 			})
 		}
 	}
 
-	// ejector client
-	uptimeRateList, err := dao_node.GetEjectorOneDayUptimeRateList(h.db, valIndexList)
+	// slash
+	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("GetPoolInfo err %v", err)
+		logrus.Errorf("GetSlashEventListWithIndex err %v", err)
 		return
 	}
+	if len(slashList) > 0 {
+		sort.SliceStable(slashList, func(i, j int) bool {
+			return slashList[i].StartSlot > slashList[j].StartSlot
+		})
 
-	for _, uptimeRate := range uptimeRateList {
-		if uptimeRate == 0 {
-			// one msg one day
-			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("ejectior uptime: day:%d", time.Now().Day())))
+		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("startSlot:%d+slashType:%d", slashList[0].StartSlot, slashList[0].SlashType)))
+		slashAmountDeci := decimal.NewFromInt(int64(slashList[0].SlashAmount)).Mul(utils.GweiDeci)
 
-			before := time.Now().Add(time.Hour * 24)
-
-			rsp.List = append(rsp.List, ResNotifyMsg{
-				MsgType: notifyMsgRunClient,
-				MsgId:   msgId.String(),
-				MsgData: fmt.Sprintf("before: %s UTC", before.UTC().Format("2006-01-02 15:04")),
-			})
-			break
-		}
+		rsp.List = append(rsp.List, ResNotifyMsg{
+			MsgType: notifyMsgSlashed,
+			MsgId:   msgId.String(),
+			MsgData: MsgData{
+				Timestamp:   0,
+				ExitHours:   0,
+				SlashAmount: slashAmountDeci.StringFixed(0),
+			},
+		})
 	}
 
 	utils.Ok(c, "success", rsp)

@@ -800,6 +800,20 @@ const docTemplate = `{
                 }
             }
         },
+        "node_handlers.MsgData": {
+            "type": "object",
+            "properties": {
+                "exitHours": {
+                    "type": "integer"
+                },
+                "slashAmount": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
         "node_handlers.ProposeElection": {
             "type": "object",
             "properties": {
@@ -966,7 +980,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "msgData": {
-                    "type": "string"
+                    "$ref": "#/definitions/node_handlers.MsgData"
                 },
                 "msgId": {
                     "type": "string"

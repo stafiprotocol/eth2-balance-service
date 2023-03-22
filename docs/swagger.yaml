@@ -20,6 +20,15 @@ definitions:
       unstakeAmount:
         type: string
     type: object
+  node_handlers.MsgData:
+    properties:
+      exitHours:
+        type: integer
+      slashAmount:
+        type: string
+      timestamp:
+        type: integer
+    type: object
   node_handlers.ProposeElection:
     properties:
       choosenTime:
@@ -130,7 +139,7 @@ definitions:
   node_handlers.ResNotifyMsg:
     properties:
       msgData:
-        type: string
+        $ref: '#/definitions/node_handlers.MsgData'
       msgId:
         type: string
       msgType:
