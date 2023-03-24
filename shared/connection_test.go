@@ -2,6 +2,7 @@ package shared_test
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"testing"
@@ -12,6 +13,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"github.com/stafiprotocol/eth2-balance-service/shared"
 	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
+	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 )
 
 func TestCallOpts(t *testing.T) {
@@ -100,6 +102,22 @@ func TestBlockDetail(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	head, err := c.Eth2BeaconHead()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pubkey, _ := types.HexToValidatorPubkey("93ce5068db907b2e5055dbb7805a3a3d7c56c9e82d010e864403e10a61235db4795949f01302dc2ad2b6225963599ed5")
+	status, err := c.Eth2Client().GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
+		Epoch: new(uint64),
+		Slot:  &head.Slot,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(hex.EncodeToString(status.WithdrawalCredentials.Bytes()))
 	eth1Block, err := c.Eth1Client().BlockByNumber(context.Background(), big.NewInt(190767))
 	if err != nil {
 		t.Fatal(err)

@@ -186,7 +186,7 @@ func TestDecodeInputData(t *testing.T) {
 }
 
 func TestGetUserNodePlatformRewardV2(t *testing.T) {
-	user, node, platform := utils.GetUserNodePlatformRewardV2(4000000000, decimal.NewFromInt(2465050000000000))
+	user, node, platform := utils.GetUserNodePlatformRewardV2(12000000000, decimal.NewFromInt(6300000))
 	t.Log(user, node, platform)
 }
 

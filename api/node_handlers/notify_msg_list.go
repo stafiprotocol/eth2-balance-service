@@ -17,6 +17,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"gorm.io/gorm"
 )
 
 // frontend types: 1 choosed to exit 2 run client 3 set fee recipient 4 slashed
@@ -83,7 +84,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 	for _, val := range valList {
 		valIndexList = append(valIndexList, val.ValidatorIndex)
 	}
-	// exit election
+	// 1 exit election
 	notExitElectionList, err := dao_node.GetNotExitElectionListOfValidators(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -117,7 +118,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		}
 	}
 
-	// run ejector client
+	// 2 run ejector client
 	uptimeRateList, err := dao_node.GetEjectorOneDayUptimeRateList(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -146,8 +147,20 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		}
 	}
 
-	// fee recipient
+	// 3 fee recipient
 	latestProposedBlock, err := dao_node.GetLatestProposedBlockOfValidators(h.db, valIndexList)
+	// hasn't proposed block
+	if err != nil && err == gorm.ErrRecordNotFound {
+		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("valIndex:%d+blockNumber:%d", latestProposedBlock.ValidatorIndex, 0)))
+
+		rsp.List = append(rsp.List, ResNotifyMsg{
+			MsgType: notifyMsgSetFeeRecipient,
+			MsgId:   msgId.String(),
+			MsgData: MsgData{},
+		})
+	}
+
+	// had proposed block
 	if err == nil {
 		poolInfo, err := dao_chaos.GetPoolInfo(h.db)
 		if err != nil {
@@ -168,7 +181,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		}
 	}
 
-	// slash
+	// 4 slash
 	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
