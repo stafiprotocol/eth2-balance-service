@@ -94,7 +94,14 @@ func GetExitElectionListWithPageOfValidators(db *db.WrapDb, pageIndex, pageCount
 	return
 }
 
-func GetNotExitElectionListOfValidators(db *db.WrapDb, valIndexList []uint64) (c []*ExitElection, err error) {
-	err = db.Find(&c, "exit_epoch = 0 and validator_index in ?", valIndexList).Error
+func GetLatestNotExitElectionOfValidators(db *db.WrapDb, valIndexList []uint64) (c *ExitElection, err error) {
+	c = &ExitElection{}
+	err = db.Order("notify_block_number desc").Take(c, "exit_epoch = 0 and validator_index in ?", valIndexList).Error
+	return
+}
+
+func GetLatestExitedElectionOfValidators(db *db.WrapDb, valIndexList []uint64) (c *ExitElection, err error) {
+	c = &ExitElection{}
+	err = db.Order("notify_block_number desc").Find(c, "exit_epoch <> 0 and validator_index in ?", valIndexList).Error
 	return
 }

@@ -674,18 +674,18 @@ no
 * status、message must be string format, data must be object
 
 
-| grade 1 | grade 2 | grade 3 | type        | must exist? | encode type | description                                                  |
-| :------ | :------ | :------ | :---------- | :---------- | :---------- | :----------------------------------------------------------- |
-| status  | N/A     | N/A     | string      | Yes         | null        | status code                                                  |
-| message | N/A     | N/A     | string      | Yes         | null        | status info                                                  |
-| data    | N/A     | N/A     | object      | Yes         | null        | data                                                         |
-|         | msgList | N/A     | list        | Yes         | null        | list                                                         |
-|         |         | msgType | number      | Yes         | null        | 1 choosed to exit 2 run client 3 set fee recipient 4 slashed |
-|         |         | msgId   | string      | Yes         | null        | unique msg id                                                |
-|         |         | msgData | object      | Yes         | null        | msg data                                                     |
-|         |         |         | timestamp   | Yes         | null        | number                                                       |
-|         |         |         | exitHours   | Yes         | null        | number                                                       |
-|         |         |         | slashAmount | Yes         | null        | string                                                       |
+| grade 1 | grade 2 | grade 3 | type        | must exist? | encode type | description                                                                                              |
+| :------ | :------ | :------ | :---------- | :---------- | :---------- | :------------------------------------------------------------------------------------------------------- |
+| status  | N/A     | N/A     | string      | Yes         | null        | status code                                                                                              |
+| message | N/A     | N/A     | string      | Yes         | null        | status info                                                                                              |
+| data    | N/A     | N/A     | object      | Yes         | null        | data                                                                                                     |
+|         | msgList | N/A     | list        | Yes         | null        | list                                                                                                     |
+|         |         | msgType | number      | Yes         | null        | 1 choosed to exit and not exited 2 run client 3 set fee recipient 4 slashed 5 choosed to exit and exited |
+|         |         | msgId   | string      | Yes         | null        | unique msg id                                                                                            |
+|         |         | msgData | object      | Yes         | null        | msg data                                                                                                 |
+|         |         |         | timestamp   | Yes         | null        | number                                                                                                   |
+|         |         |         | exitHours   | Yes         | null        | number                                                                                                   |
+|         |         |         | slashAmount | Yes         | null        | string                                                                                                   |
 
 ## 17. ejector uptime
 

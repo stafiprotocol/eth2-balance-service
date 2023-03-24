@@ -20,12 +20,13 @@ import (
 	"gorm.io/gorm"
 )
 
-// frontend types: 1 choosed to exit 2 run client 3 set fee recipient 4 slashed
+// frontend types: 1 choosed to exit and not exited 2 run client 3 set fee recipient 4 slashed 5 choosed to exit and exited
 const (
-	notifyMsgChooseToExit    = uint8(1)
-	notifyMsgRunClient       = uint8(2)
-	notifyMsgSetFeeRecipient = uint8(3)
-	notifyMsgSlashed         = uint8(4)
+	notifyMsgChooseToExitAndNotExited = uint8(1)
+	notifyMsgRunClient                = uint8(2)
+	notifyMsgSetFeeRecipient          = uint8(3)
+	notifyMsgSlashed                  = uint8(4)
+	notifyMsgChooseToExitAndExited    = uint8(5)
 )
 
 type ReqNotifyMsgList struct {
@@ -84,37 +85,29 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 	for _, val := range valList {
 		valIndexList = append(valIndexList, val.ValidatorIndex)
 	}
-	// 1 exit election
-	notExitElectionList, err := dao_node.GetNotExitElectionListOfValidators(h.db, valIndexList)
-	if err != nil {
+	// 1 exit election not exited
+	notExitElection, err := dao_node.GetLatestNotExitElectionOfValidators(h.db, valIndexList)
+	if err != nil && err != gorm.ErrRecordNotFound {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetValidatorListByNode err %v", err)
 		return
 	}
-	if len(notExitElectionList) > 0 {
-		sort.SliceStable(notExitElectionList, func(i, j int) bool {
-			return notExitElectionList[i].NotifyBlockNumber > notExitElectionList[j].NotifyBlockNumber
-		})
+	if err == nil {
+		// next withdraw cycle start time
+		maxExitMsgTimestamp := (notExitElection.WithdrawCycle+1)*86400 + 28800
+		now := time.Now().Unix()
+		if maxExitMsgTimestamp < uint64(now) {
+			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("notExitedElection-valIndex:%d+notifyNumber:%d", notExitElection.ValidatorIndex, notExitElection.NotifyBlockNumber)))
 
-		for _, ele := range notExitElectionList {
-			// next withdraw cycle start time
-			maxExitMsgTimestamp := (ele.WithdrawCycle+1)*86400 + 28800
-			now := time.Now().Unix()
-			if maxExitMsgTimestamp < uint64(now) {
-				msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("valIndex:%d+notifyNumber:%d", ele.ValidatorIndex, ele.NotifyBlockNumber)))
-
-				rsp.List = append(rsp.List, ResNotifyMsg{
-					MsgType: notifyMsgChooseToExit,
-					MsgId:   msgId.String(),
-					MsgData: MsgData{
-						Timestamp:   maxExitMsgTimestamp,
-						ExitHours:   48,
-						SlashAmount: "",
-					},
-				})
-
-				break
-			}
+			rsp.List = append(rsp.List, ResNotifyMsg{
+				MsgType: notifyMsgChooseToExitAndNotExited,
+				MsgId:   msgId.String(),
+				MsgData: MsgData{
+					Timestamp:   maxExitMsgTimestamp,
+					ExitHours:   48,
+					SlashAmount: "",
+				},
+			})
 		}
 	}
 
@@ -130,7 +123,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		if uptimeRate == 0 {
 			// one msg one day
 			now := time.Now()
-			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("ejectior uptime: day:%d", now.Day())))
+			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("ejectior-day:%d", now.Day())))
 
 			before := now.Add(time.Hour * 24)
 
@@ -151,7 +144,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 	latestProposedBlock, err := dao_node.GetLatestProposedBlockOfValidators(h.db, valIndexList)
 	// hasn't proposed block
 	if err != nil && err == gorm.ErrRecordNotFound {
-		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("valIndex:%d+blockNumber:%d", latestProposedBlock.ValidatorIndex, 0)))
+		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("feeRecipient-valIndex:%d-blockNumber:%d", latestProposedBlock.ValidatorIndex, 0)))
 
 		rsp.List = append(rsp.List, ResNotifyMsg{
 			MsgType: notifyMsgSetFeeRecipient,
@@ -160,7 +153,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		})
 	}
 
-	// had proposed block
+	// has proposed block
 	if err == nil {
 		poolInfo, err := dao_chaos.GetPoolInfo(h.db)
 		if err != nil {
@@ -171,7 +164,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		if !strings.EqualFold(latestProposedBlock.FeeRecipient, poolInfo.FeePool) &&
 			!strings.EqualFold(latestProposedBlock.FeeRecipient, poolInfo.SuperNodeFeePool) {
 
-			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("valIndex:%d+blockNumber:%d", latestProposedBlock.ValidatorIndex, latestProposedBlock.BlockNumber)))
+			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("feeRecipient-valIndex:%d-blockNumber:%d", latestProposedBlock.ValidatorIndex, latestProposedBlock.BlockNumber)))
 
 			rsp.List = append(rsp.List, ResNotifyMsg{
 				MsgType: notifyMsgSetFeeRecipient,
@@ -193,7 +186,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 			return slashList[i].StartSlot > slashList[j].StartSlot
 		})
 
-		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("startSlot:%d+slashType:%d", slashList[0].StartSlot, slashList[0].SlashType)))
+		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("slash-startSlot:%d-slashType:%d", slashList[0].StartSlot, slashList[0].SlashType)))
 		slashAmountDeci := decimal.NewFromInt(int64(slashList[0].SlashAmount)).Mul(utils.GweiDeci)
 
 		rsp.List = append(rsp.List, ResNotifyMsg{
@@ -205,6 +198,28 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 				SlashAmount: slashAmountDeci.StringFixed(0),
 			},
 		})
+	}
+
+	// 5 exit election already exited
+	exitedExitElection, err := dao_node.GetLatestExitedElectionOfValidators(h.db, valIndexList)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("GetLatestExitedElectionOfValidators err %v", err)
+		return
+	}
+	if err == nil {
+		// next withdraw cycle start time
+		maxExitMsgTimestamp := (exitedExitElection.WithdrawCycle+1)*86400 + 28800
+		now := time.Now().Unix()
+		if maxExitMsgTimestamp < uint64(now) {
+			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("exitedElection-valIndex:%d-notifyNumber:%d", exitedExitElection.ValidatorIndex, exitedExitElection.NotifyBlockNumber)))
+
+			rsp.List = append(rsp.List, ResNotifyMsg{
+				MsgType: notifyMsgChooseToExitAndExited,
+				MsgId:   msgId.String(),
+				MsgData: MsgData{},
+			})
+		}
 	}
 
 	utils.Ok(c, "success", rsp)
