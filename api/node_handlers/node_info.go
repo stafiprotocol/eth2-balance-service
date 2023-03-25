@@ -88,7 +88,6 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	pendingCount := int64(0)
 	activeCount := int64(0)
 	exitedCount := int64(0)
-	slashCount := int64(0)
 
 	valIndexList := make([]uint64, 0)
 	for _, l := range totalList {
@@ -116,8 +115,6 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		case utils.ValidatorStatusActiveSlash, utils.ValidatorStatusExitedSlash, utils.ValidatorStatusWithdrawableSlash,
 			utils.ValidatorStatusWithdrawDoneSlash, utils.ValidatorStatusDistributedSlash:
 
-			slashCount++
-
 		case utils.ValidatorStatusExited, utils.ValidatorStatusWithdrawable, utils.ValidatorStatusWithdrawDone, utils.ValidatorStatusDistributed:
 
 			exitedCount++
@@ -140,17 +137,23 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		}).Debug("GetNodeReward")
 	}
 
-	totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(h.db, valIndexList)
+	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao.GetTotalSlashAmountWithIndexList err %v", err)
+		logrus.Errorf("GetSlashEventListWithIndex err %v", err)
 		return
+	}
+	var slashIndex = make(map[uint64]struct{})
+	var totalSlashAmount = uint64(0)
+	for _, slash := range slashList {
+		totalSlashAmount += slash.SlashAmount
+		slashIndex[slash.ValidatorIndex] = struct{}{}
 	}
 
 	rsp.PendingCount = pendingCount
 	rsp.ActiveCount = activeCount
 	rsp.ExitedCount = exitedCount
-	rsp.SlashCount = slashCount
+	rsp.SlashCount = int64(len(slashIndex))
 
 	list, totalCount, err := dao_node.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, willUseStatusList, req.PageIndex, req.PageCount)
 	if err != nil {
