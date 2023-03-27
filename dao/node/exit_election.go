@@ -102,6 +102,6 @@ func GetLatestNotExitElectionOfValidators(db *db.WrapDb, valIndexList []uint64) 
 
 func GetLatestExitedElectionOfValidators(db *db.WrapDb, valIndexList []uint64) (c *ExitElection, err error) {
 	c = &ExitElection{}
-	err = db.Order("notify_block_number desc").Find(c, "exit_epoch <> 0 and validator_index in ?", valIndexList).Error
+	err = db.Order("notify_block_number desc").Take(c, "exit_epoch <> 0 and validator_index in ?", valIndexList).Error
 	return
 }

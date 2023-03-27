@@ -82,16 +82,13 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		return
 	}
 	valIndexList := make([]uint64, 0)
+	valMap := make(map[uint64]*dao_node.Validator)
 	for _, val := range valList {
 		valIndexList = append(valIndexList, val.ValidatorIndex)
+		valMap[val.ValidatorIndex] = val
 	}
 	// 1 exit election not exited
 	notExitElection, err := dao_node.GetLatestNotExitElectionOfValidators(h.db, valIndexList)
-	if err != nil && err != gorm.ErrRecordNotFound {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("GetValidatorListByNode err %v", err)
-		return
-	}
 	if err == nil {
 		// next withdraw cycle start time
 		maxExitMsgTimestamp := (notExitElection.WithdrawCycle+1)*86400 + 28800
@@ -113,57 +110,64 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 
 	// 2 run ejector client
 	uptimeRateList, err := dao_node.GetEjectorOneDayUptimeRateList(h.db, valIndexList)
-	if err != nil {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("GetPoolInfo err %v", err)
-		return
-	}
+	if err == nil {
+		for _, uptimeRate := range uptimeRateList {
+			if uptimeRate == 0 {
+				// one msg one day
+				now := time.Now()
+				msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("ejectior-day:%d", now.Day())))
 
-	for _, uptimeRate := range uptimeRateList {
-		if uptimeRate == 0 {
-			// one msg one day
-			now := time.Now()
-			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("ejectior-day:%d", now.Day())))
+				before := now.Add(time.Hour * 24)
 
-			before := now.Add(time.Hour * 24)
-
-			rsp.List = append(rsp.List, ResNotifyMsg{
-				MsgType: notifyMsgRunClient,
-				MsgId:   msgId.String(),
-				MsgData: MsgData{
-					Timestamp:   uint64(before.Unix()),
-					ExitHours:   0,
-					SlashAmount: "",
-				},
-			})
-			break
+				rsp.List = append(rsp.List, ResNotifyMsg{
+					MsgType: notifyMsgRunClient,
+					MsgId:   msgId.String(),
+					MsgData: MsgData{
+						Timestamp:   uint64(before.Unix()),
+						ExitHours:   0,
+						SlashAmount: "",
+					},
+				})
+				break
+			}
 		}
 	}
 
 	// 3 fee recipient
 	latestProposedBlock, err := dao_node.GetLatestProposedBlockOfValidators(h.db, valIndexList)
-	// hasn't proposed block
-	if err != nil && err == gorm.ErrRecordNotFound {
-		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("feeRecipient-valIndex:%d-blockNumber:%d", latestProposedBlock.ValidatorIndex, 0)))
+	if err != nil {
+		// hasn't proposed block
+		if err == gorm.ErrRecordNotFound {
+			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("feeRecipient-valIndex:%d-blockNumber:%d", latestProposedBlock.ValidatorIndex, 0)))
 
-		rsp.List = append(rsp.List, ResNotifyMsg{
-			MsgType: notifyMsgSetFeeRecipient,
-			MsgId:   msgId.String(),
-			MsgData: MsgData{},
-		})
-	}
-
-	// has proposed block
-	if err == nil {
+			rsp.List = append(rsp.List, ResNotifyMsg{
+				MsgType: notifyMsgSetFeeRecipient,
+				MsgId:   msgId.String(),
+				MsgData: MsgData{},
+			})
+		}
+	} else {
+		// has proposed block
 		poolInfo, err := dao_chaos.GetPoolInfo(h.db)
 		if err != nil {
 			utils.Err(c, utils.CodeInternalErr, err.Error())
 			logrus.Errorf("GetPoolInfo err %v", err)
 			return
 		}
-		if !strings.EqualFold(latestProposedBlock.FeeRecipient, poolInfo.FeePool) &&
-			!strings.EqualFold(latestProposedBlock.FeeRecipient, poolInfo.SuperNodeFeePool) {
 
+		shouldNotify := false
+		switch valMap[latestProposedBlock.ValidatorIndex].NodeType {
+		case utils.NodeTypeCommon, utils.NodeTypeLight:
+			if !strings.EqualFold(latestProposedBlock.FeeRecipient, poolInfo.FeePool) {
+				shouldNotify = true
+			}
+		case utils.NodeTypeTrust, utils.NodeTypeSuper:
+			if !strings.EqualFold(latestProposedBlock.FeeRecipient, poolInfo.SuperNodeFeePool) {
+				shouldNotify = true
+			}
+		}
+
+		if shouldNotify {
 			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("feeRecipient-valIndex:%d-blockNumber:%d", latestProposedBlock.ValidatorIndex, latestProposedBlock.BlockNumber)))
 
 			rsp.List = append(rsp.List, ResNotifyMsg{
@@ -172,41 +176,34 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 				MsgData: MsgData{},
 			})
 		}
+
 	}
 
 	// 4 slash
 	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList)
-	if err != nil {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("GetSlashEventListWithIndex err %v", err)
-		return
-	}
-	if len(slashList) > 0 {
-		sort.SliceStable(slashList, func(i, j int) bool {
-			return slashList[i].StartSlot > slashList[j].StartSlot
-		})
+	if err == nil {
+		if len(slashList) > 0 {
+			sort.SliceStable(slashList, func(i, j int) bool {
+				return slashList[i].StartSlot > slashList[j].StartSlot
+			})
 
-		msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("slash-startSlot:%d-slashType:%d", slashList[0].StartSlot, slashList[0].SlashType)))
-		slashAmountDeci := decimal.NewFromInt(int64(slashList[0].SlashAmount)).Mul(utils.GweiDeci)
+			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("slash-startSlot:%d-slashType:%d", slashList[0].StartSlot, slashList[0].SlashType)))
+			slashAmountDeci := decimal.NewFromInt(int64(slashList[0].SlashAmount)).Mul(utils.GweiDeci)
 
-		rsp.List = append(rsp.List, ResNotifyMsg{
-			MsgType: notifyMsgSlashed,
-			MsgId:   msgId.String(),
-			MsgData: MsgData{
-				Timestamp:   0,
-				ExitHours:   0,
-				SlashAmount: slashAmountDeci.StringFixed(0),
-			},
-		})
+			rsp.List = append(rsp.List, ResNotifyMsg{
+				MsgType: notifyMsgSlashed,
+				MsgId:   msgId.String(),
+				MsgData: MsgData{
+					Timestamp:   0,
+					ExitHours:   0,
+					SlashAmount: slashAmountDeci.StringFixed(0),
+				},
+			})
+		}
 	}
 
 	// 5 exit election already exited
 	exitedExitElection, err := dao_node.GetLatestExitedElectionOfValidators(h.db, valIndexList)
-	if err != nil && err != gorm.ErrRecordNotFound {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("GetLatestExitedElectionOfValidators err %v", err)
-		return
-	}
 	if err == nil {
 		// next withdraw cycle start time
 		maxExitMsgTimestamp := (exitedExitElection.WithdrawCycle+1)*86400 + 28800
