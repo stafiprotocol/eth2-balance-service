@@ -809,6 +809,9 @@ const docTemplate = `{
                 "slashAmount": {
                     "type": "string"
                 },
+                "slashType": {
+                    "type": "integer"
+                },
                 "timestamp": {
                     "type": "integer"
                 }

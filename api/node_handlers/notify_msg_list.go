@@ -47,6 +47,7 @@ type MsgData struct {
 	Timestamp   uint64 `json:"timestamp"`
 	ExitHours   uint64 `json:"exitHours"`
 	SlashAmount string `json:"slashAmount"`
+	SlashType   uint8  `json:"slashType"`
 }
 
 // @Summary notify msg list
@@ -187,8 +188,9 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 				return slashList[i].StartSlot > slashList[j].StartSlot
 			})
 
-			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("slash-startSlot:%d-slashType:%d", slashList[0].StartSlot, slashList[0].SlashType)))
-			slashAmountDeci := decimal.NewFromInt(int64(slashList[0].SlashAmount)).Mul(utils.GweiDeci)
+			willUseSlash := slashList[0]
+			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("slash-startSlot:%d-slashType:%d", willUseSlash.StartSlot, willUseSlash.SlashType)))
+			slashAmountDeci := decimal.NewFromInt(int64(willUseSlash.SlashAmount)).Mul(utils.GweiDeci)
 
 			rsp.List = append(rsp.List, ResNotifyMsg{
 				MsgType: notifyMsgSlashed,
@@ -197,6 +199,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 					Timestamp:   0,
 					ExitHours:   0,
 					SlashAmount: slashAmountDeci.StringFixed(0),
+					SlashType:   willUseSlash.SlashType,
 				},
 			})
 		}

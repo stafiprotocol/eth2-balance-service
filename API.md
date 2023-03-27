@@ -688,6 +688,7 @@ no
 |         |         |         | timestamp   | Yes         | null        | number                                                                                                   |
 |         |         |         | exitHours   | Yes         | null        | number                                                                                                   |
 |         |         |         | slashAmount | Yes         | null        | string                                                                                                   |
+|         |         |         | slashType   | Yes         | null        | number                                                                                                   |
 
 ## 17. ejector uptime
 

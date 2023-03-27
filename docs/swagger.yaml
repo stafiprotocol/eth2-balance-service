@@ -26,6 +26,8 @@ definitions:
         type: integer
       slashAmount:
         type: string
+      slashType:
+        type: integer
       timestamp:
         type: integer
     type: object
