@@ -57,12 +57,32 @@ func GetNodeBalanceListByNodeWithPage(db *db.WrapDb, nodeAddress string, pageInd
 		pageCount = 50
 	}
 
-	err = db.Model(&Validator{}).Where("node_address = ?", nodeAddress).Count(&count).Error
+	err = db.Model(&NodeBalance{}).Where("node_address = ?", nodeAddress).Count(&count).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
 	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ?", nodeAddress).Error
+	return
+}
+
+func GetNodeBalanceListHasRewardByNodeWithPage(db *db.WrapDb, nodeAddress string, pageIndex, pageCount int) (c []*NodeBalance, count int64, err error) {
+	if pageIndex <= 0 {
+		pageIndex = 1
+	}
+	if pageCount <= 0 {
+		pageCount = 10
+	}
+	if pageCount > 50 {
+		pageCount = 50
+	}
+
+	err = db.Model(&NodeBalance{}).Where("node_address = ? and total_era_reward > 0", nodeAddress).Count(&count).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "node_address = ? and total_era_reward > 0", nodeAddress).Error
 	return
 }
 

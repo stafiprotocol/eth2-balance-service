@@ -80,7 +80,7 @@ func (h *Handler) HandlePostRewardInfo(c *gin.Context) {
 		lastEraReward = firstPage[0].TotalEraReward
 	}
 
-	list, totalCount, err := dao_node.GetNodeBalanceListByNodeWithPage(h.db, req.NodeAddress, req.PageIndex, req.PageCount)
+	list, totalCount, err := dao_node.GetNodeBalanceListHasRewardByNodeWithPage(h.db, req.NodeAddress, req.PageIndex, req.PageCount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetNodeBalanceListByNodeWithPage err %v", err)
