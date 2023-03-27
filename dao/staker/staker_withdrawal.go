@@ -16,7 +16,7 @@ type StakerWithdrawal struct {
 	EthAmount                  string `gorm:"type:varchar(40) not null;default:'0';column:eth_amount"`
 	BlockNumber                uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:block_number;index"`
 	ClaimedBlockNumber         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:claimed_block_number"`
-	Timestamp                  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
+	Timestamp                  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`                    // unstake tx timestamp
 	ExpectedClaimableTimestamp uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:expected_claimable_timestamp"` /// 0: undealed 1: claimable x: expected claimable timestamp
 }
 

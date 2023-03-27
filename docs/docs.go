@@ -1355,6 +1355,9 @@ const docTemplate = `{
                 "ejectedValidators": {
                     "type": "integer"
                 },
+                "last24hWaitingStakers": {
+                    "type": "integer"
+                },
                 "latestUnstakeRecord": {
                     "$ref": "#/definitions/node_handlers.LatestUnstakeRecord"
                 },
@@ -1369,6 +1372,9 @@ const docTemplate = `{
                 },
                 "waitingStakers": {
                     "type": "integer"
+                },
+                "waitingWithdrawEth": {
+                    "type": "string"
                 }
             }
         },

@@ -387,6 +387,8 @@ definitions:
     properties:
       ejectedValidators:
         type: integer
+      last24hWaitingStakers:
+        type: integer
       latestUnstakeRecord:
         $ref: '#/definitions/node_handlers.LatestUnstakeRecord'
       poolEth:
@@ -397,6 +399,8 @@ definitions:
         type: string
       waitingStakers:
         type: integer
+      waitingWithdrawEth:
+        type: string
     type: object
   node_handlers.RspWithdrawInfo:
     properties:

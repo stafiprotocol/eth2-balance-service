@@ -62,7 +62,7 @@ func (task *Task) calcMerkleTree() error {
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return errors.Wrap(err, "dao_node.GetProof failed")
 		}
-		// fetch total slash amount
+		// ----fetch total slash amount
 		valList, err := dao_node.GetValidatorListByNode(task.db, nodeBalance.NodeAddress, 0)
 		if err != nil {
 			return err
@@ -78,24 +78,33 @@ func (task *Task) calcMerkleTree() error {
 		totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).
 			Mul(utils.GweiDeci)
 
-		// total claimable deposit
+		// ---- total claimable deposit
 		totalExitDepositAmountDeci := decimal.NewFromInt(int64(nodeBalance.TotalExitNodeDepositAmount)).
 			Mul(utils.GweiDeci)
 
-		// total claimable node reward
+		// ----- total claimable node reward
 		totalClaimableNodeRewardAmountDeci := decimal.NewFromInt(int64(nodeBalance.TotalSelfClaimableReward)).
 			Mul(utils.GweiDeci)
 		finalTotalClaimableNodeRewardAmountDeci := totalClaimableNodeRewardAmountDeci.
 			Sub(totalSlashAmountDeci)
+
+		// sub from exit deposit amount if un cover slash
+		unCoveredSlashAmount := decimal.Zero
 		if finalTotalClaimableNodeRewardAmountDeci.IsNegative() {
+			unCoveredSlashAmount = finalTotalClaimableNodeRewardAmountDeci.Abs()
 			finalTotalClaimableNodeRewardAmountDeci = decimal.Zero
+		}
+
+		finalTotalExitDepositAmountDeci := totalExitDepositAmountDeci.Sub(unCoveredSlashAmount)
+		if finalTotalExitDepositAmountDeci.IsNegative() {
+			finalTotalExitDepositAmountDeci = decimal.Zero
 		}
 
 		proof.DealedEpoch = uint32(targetEpoch)
 		proof.Address = nodeBalance.NodeAddress
 		proof.Index = uint32(i)
 
-		proof.TotalExitDepositAmount = totalExitDepositAmountDeci.StringFixed(0)
+		proof.TotalExitDepositAmount = finalTotalExitDepositAmountDeci.StringFixed(0)
 		proof.TotalRewardAmount = finalTotalClaimableNodeRewardAmountDeci.StringFixed(0)
 
 		proofList[i] = proof

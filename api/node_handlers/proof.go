@@ -116,6 +116,9 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).
 		Mul(utils.GweiDeci)
 	finalOverallAmount := overallAmount.Sub(totalSlashAmountDeci)
+	if finalOverallAmount.IsNegative() {
+		finalOverallAmount = decimal.Zero
+	}
 
 	needWait := uint64(0)
 	if minExitEpoch != uint64(math.MaxUint64) && valInfoMeta.DealedEpoch < minExitEpoch {

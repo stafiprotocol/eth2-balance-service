@@ -4,6 +4,8 @@
 package node_handlers
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -15,12 +17,14 @@ import (
 )
 
 type RspUnstakePoolData struct {
-	PoolEth             string              `json:"poolEth"`
-	TodayUnstakedEth    string              `json:"todayUnstakedEth"`
-	UnstakeableEth      string              `json:"unstakeableEth"`
-	WaitingStakers      uint64              `json:"waitingStakers"`
-	EjectedValidators   uint64              `json:"ejectedValidators"`
-	LatestUnstakeRecord LatestUnstakeRecord `json:"latestUnstakeRecord"`
+	PoolEth               string              `json:"poolEth"`
+	TodayUnstakedEth      string              `json:"todayUnstakedEth"`
+	UnstakeableEth        string              `json:"unstakeableEth"`
+	WaitingWithdrawEth    string              `json:"waitingWithdrawEth"`
+	WaitingStakers        uint64              `json:"waitingStakers"`
+	Last24hWaitingStakers uint64              `json:"last24hWaitingStakers"`
+	EjectedValidators     uint64              `json:"ejectedValidators"`
+	LatestUnstakeRecord   LatestUnstakeRecord `json:"latestUnstakeRecord"`
 }
 
 type LatestUnstakeRecord struct {
@@ -107,6 +111,24 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 		return
 	}
 
+	waitingWithdrawEth := decimal.Zero
+	stakersMap := make(map[string]struct{}, 0)
+	last24h := time.Now().Unix() - 24*60*60
+	last24hWaitingStakersMap := make(map[string]struct{}, 0)
+	for _, staker := range stakers {
+		ethAmountDeci, err := decimal.NewFromString(staker.EthAmount)
+		if err != nil {
+			utils.Err(c, utils.CodeInternalErr, err.Error())
+			logrus.Errorf("staker.EthAmount cast err %v", err)
+			return
+		}
+		waitingWithdrawEth = waitingWithdrawEth.Add(ethAmountDeci)
+		stakersMap[staker.Address] = struct{}{}
+		if staker.Timestamp > uint64(last24h) {
+			last24hWaitingStakersMap[staker.Address] = struct{}{}
+		}
+	}
+
 	latestStakerWithdrawal, err := dao_staker.GetLatestStakerWithdrawal(h.db)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -123,7 +145,9 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 	rsp.PoolEth = poolEthDeci.StringFixed(0)
 	rsp.TodayUnstakedEth = totalWithdrawAmountCurrentCycleDeci.StringFixed(0)
 	rsp.UnstakeableEth = unstakeableEth.StringFixed(0)
-	rsp.WaitingStakers = uint64(len(stakers))
+	rsp.WaitingWithdrawEth = waitingWithdrawEth.StringFixed(0)
+	rsp.WaitingStakers = uint64(len(stakersMap))
+	rsp.Last24hWaitingStakers = uint64(len(last24hWaitingStakersMap))
 	rsp.EjectedValidators = uint64(electionCount)
 
 	// rsp
