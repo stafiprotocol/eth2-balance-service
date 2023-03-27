@@ -83,7 +83,7 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		return
 	}
 
-	minExitEpoch := uint64(math.MaxUint64)
+	minWithdrawDownEpoch := uint64(math.MaxUint64)
 	overallAmount := decimal.Zero
 	valIndexList := make([]uint64, 0)
 	for _, val := range valList {
@@ -97,9 +97,9 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 
 		// only deal after sending exit msg
 		if val.ExitEpoch != 0 {
-			if val.Status != utils.ValidatorStatusWithdrawDone && val.Status != utils.ValidatorStatusWithdrawDoneSlash {
-				if minExitEpoch > val.ExitEpoch {
-					minExitEpoch = val.ExitEpoch
+			if val.Status != utils.ValidatorStatusDistributed && val.Status != utils.ValidatorStatusDistributedSlash {
+				if minWithdrawDownEpoch > val.WithdrawableEpoch {
+					minWithdrawDownEpoch = val.WithdrawableEpoch
 				}
 			}
 			overallAmount = overallAmount.Add(decimal.NewFromInt(int64(val.NodeDepositAmount)))
@@ -120,11 +120,13 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		finalOverallAmount = decimal.Zero
 	}
 
-	needWait := uint64(0)
-	if minExitEpoch != uint64(math.MaxUint64) && valInfoMeta.DealedEpoch < minExitEpoch {
-		needWait = minExitEpoch - valInfoMeta.DealedEpoch
+	needWaitEpoch := uint64(0)
+	// has exited validator && exit epoch > cur epoch
+	if minWithdrawDownEpoch != uint64(math.MaxUint64) && valInfoMeta.DealedEpoch < minWithdrawDownEpoch+utils.MaxDistributeEpochInterval {
+		needWaitEpoch = minWithdrawDownEpoch + utils.MaxDistributeEpochInterval - valInfoMeta.DealedEpoch
 	}
-	waitSeconds := needWait*32*12 + utils.MaxDistributeInterval
+
+	waitSeconds := needWaitEpoch * 32 * 12
 
 	retP := RspProof{
 		Index:                  uint64(proof.Index),

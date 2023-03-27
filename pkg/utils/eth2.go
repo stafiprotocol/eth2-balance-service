@@ -121,7 +121,8 @@ var (
 const (
 	StakerWithdrawalClaimableTimestamp = uint64(1)
 	MinValidatorWithdrawabilityDelay   = uint64(256 + 5)
-	MaxDistributeInterval              = uint64(8 * 60 * 60)
+	MaxDistributeSecondsInterval       = uint64(8 * 60 * 60)
+	MaxDistributeEpochInterval         = uint64(75)
 
 	EjectorUptimeInterval = uint64(10 * 60)
 )

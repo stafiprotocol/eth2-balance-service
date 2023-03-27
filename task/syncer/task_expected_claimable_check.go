@@ -70,7 +70,7 @@ func (task *Task) expectedClaimableCheck() error {
 		}
 
 		if expectedClaimableTimestamp != 0 {
-			stakerWithdrawal.ExpectedClaimableTimestamp = expectedClaimableTimestamp + utils.MaxDistributeInterval
+			stakerWithdrawal.ExpectedClaimableTimestamp = expectedClaimableTimestamp + utils.MaxDistributeSecondsInterval
 		} else {
 			stakerWithdrawal.ExpectedClaimableTimestamp = poolInfo.CurrentWithdrawableTimestamp
 		}
