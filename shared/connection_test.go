@@ -98,7 +98,8 @@ func TestBlockReward(t *testing.T) {
 
 func TestBlockDetail(t *testing.T) {
 
-	c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
+	// c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
+	c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon-lighthouse-zhejiang.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

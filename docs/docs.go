@@ -1365,6 +1365,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/node_handlers.LatestUnstakeRecord"
                 },
                 "poolEth": {
+                    "description": "available + can withdraw but not withdraw",
                     "type": "string"
                 },
                 "todayUnstakedEth": {

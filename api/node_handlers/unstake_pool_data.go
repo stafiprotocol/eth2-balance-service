@@ -17,7 +17,7 @@ import (
 )
 
 type RspUnstakePoolData struct {
-	PoolEth               string              `json:"poolEth"`
+	PoolEth               string              `json:"poolEth"` // available + can withdraw but not withdraw
 	TodayUnstakedEth      string              `json:"todayUnstakedEth"`
 	UnstakeableEth        string              `json:"unstakeableEth"`
 	WaitingWithdrawEth    string              `json:"waitingWithdrawEth"`
@@ -75,9 +75,9 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 		logrus.Errorf("TotalMissingAmountForWithdraw cast decimals err %v", err)
 		return
 	}
-	poolEthDeci := depositPoolBalanceDeci.Sub(totalMissingAmountForWithdrawDeci)
-	if poolEthDeci.IsNegative() {
-		poolEthDeci = decimal.Zero
+	depositPoolEthDeci := depositPoolBalanceDeci.Sub(totalMissingAmountForWithdrawDeci)
+	if depositPoolEthDeci.IsNegative() {
+		depositPoolEthDeci = decimal.Zero
 	}
 
 	totalWithdrawAmountCurrentCycleDeci, err := decimal.NewFromString(poolInfo.TotalWithdrawAmountCurrentCycle)
@@ -99,8 +99,8 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 		canWithdrawTodayDeci = decimal.Zero
 	}
 
-	unstakeableEth := poolEthDeci
-	if poolEthDeci.GreaterThan(canWithdrawTodayDeci) {
+	unstakeableEth := depositPoolEthDeci
+	if depositPoolEthDeci.GreaterThan(canWithdrawTodayDeci) {
 		unstakeableEth = canWithdrawTodayDeci
 	}
 
@@ -112,6 +112,8 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 	}
 
 	waitingWithdrawEth := decimal.Zero
+	withdrawableButNotWithdrawalEth := decimal.Zero
+
 	stakersMap := make(map[string]struct{}, 0)
 	last24h := time.Now().Unix() - 24*60*60
 	last24hWaitingStakersMap := make(map[string]struct{}, 0)
@@ -123,12 +125,17 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 			return
 		}
 		waitingWithdrawEth = waitingWithdrawEth.Add(ethAmountDeci)
+
 		stakersMap[staker.Address] = struct{}{}
 		if staker.Timestamp > uint64(last24h) {
 			last24hWaitingStakersMap[staker.Address] = struct{}{}
 		}
+		if staker.WithdrawIndex <= poolInfo.MaxClaimableWithdrawIndex {
+			withdrawableButNotWithdrawalEth = withdrawableButNotWithdrawalEth.Add(ethAmountDeci)
+		}
 	}
 
+	// latest unstake record
 	latestStakerWithdrawal, err := dao_staker.GetLatestStakerWithdrawal(h.db)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -142,7 +149,7 @@ func (h *Handler) HandleGetUnstakePoolData(c *gin.Context) {
 		}
 	}
 
-	rsp.PoolEth = poolEthDeci.StringFixed(0)
+	rsp.PoolEth = unstakeableEth.Add(withdrawableButNotWithdrawalEth).StringFixed(0)
 	rsp.TodayUnstakedEth = totalWithdrawAmountCurrentCycleDeci.StringFixed(0)
 	rsp.UnstakeableEth = unstakeableEth.StringFixed(0)
 	rsp.WaitingWithdrawEth = waitingWithdrawEth.StringFixed(0)
