@@ -91,9 +91,12 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	exitedCount := int64(0)
 
 	valIndexList := make([]uint64, 0)
+	slashCount := int64(0)
 	for _, l := range totalList {
 		valIndexList = append(valIndexList, l.ValidatorIndex)
-
+		if l.EverSlashed == 1 {
+			slashCount++
+		}
 		// cal selfDeposited
 		switch l.Status {
 		case utils.ValidatorStatusWithdrawDone, utils.ValidatorStatusWithdrawDoneSlash,
@@ -138,23 +141,17 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		}).Debug("GetNodeReward")
 	}
 
-	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList)
+	totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(h.db, valIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetSlashEventListWithIndex err %v", err)
 		return
 	}
-	var slashIndex = make(map[uint64]bool)
-	var totalSlashAmount = uint64(0)
-	for _, slash := range slashList {
-		totalSlashAmount += slash.SlashAmount
-		slashIndex[slash.ValidatorIndex] = true
-	}
 
 	rsp.PendingCount = pendingCount
 	rsp.ActiveCount = activeCount
 	rsp.ExitedCount = exitedCount
-	rsp.SlashCount = int64(len(slashIndex))
+	rsp.SlashCount = slashCount
 
 	list, totalCount, err := dao_node.GetValidatorListByNodeWithPageWithStatusList(h.db, req.NodeAddress, willUseStatusList, req.PageIndex, req.PageCount)
 	if err != nil {
@@ -196,7 +193,7 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		rsp.List = append(rsp.List, ResPubkey{
 			Status:      l.Status,
 			Pubkey:      l.Pubkey,
-			EverSlashed: slashIndex[l.ValidatorIndex],
+			EverSlashed: l.EverSlashed == 1,
 		})
 	}
 

@@ -91,7 +91,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		"validatorStatuses len": len(validatorStatusMap),
 	}).Debug("validator statuses")
 
-	// update validator info
+	// ---- update validator info
 	for pubkey, status := range validatorStatusMap {
 		pubkeyStr := hexutil.Encode(pubkey.Bytes())
 		if status.Exists {
@@ -186,7 +186,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		}
 	}
 
-	//--- check distributed status
+	// --- check distributed status
 	needCheckDistributedValidatorList, err := dao_node.GetValidatorListNeedCheckDistributed(task.db)
 	if err != nil {
 		return err
@@ -222,6 +222,25 @@ func (task *Task) syncValidatorLatestInfo() error {
 				return fmt.Errorf("validator status: %d not match", val.Status)
 			}
 
+			err = dao_node.UpOrInValidator(task.db, val)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	//----- ever slashed
+	allValidatorList, err := dao_node.GetAllValidatorList(task.db)
+	if err != nil {
+		return err
+	}
+	for _, val := range allValidatorList {
+		slashAmount, err := dao_node.GetTotalSlashAmountOfValidator(task.db, val.ValidatorIndex)
+		if err != nil {
+			return err
+		}
+		if slashAmount > 0 {
+			val.EverSlashed = 1
 			err = dao_node.UpOrInValidator(task.db, val)
 			if err != nil {
 				return err

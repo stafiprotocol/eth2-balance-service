@@ -21,7 +21,8 @@ import (
 func TestStatus(t *testing.T) {
 	// c, err := client.NewStandardHttpClient("https://27Y0WDKrX1dYIkBXOugsSLh9hfr:a7c3849eba862fdd67382dab42e2a23c@eth2-beacon-mainnet.infura.io")
 	// c, err := client.NewStandardHttpClient("https://beaconcha-rpc2.stafi.io")
-	c, err := client.NewStandardHttpClient("https://beacon.zhejiang.ethpandaops.io")
+	// c, err := client.NewStandardHttpClient("https://beacon.zhejiang.ethpandaops.io")
+	c, err := client.NewStandardHttpClient("https://beacon-lighthouse-zhejiang.stafi.io")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,12 +35,15 @@ func TestStatus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	epoch1 := uint64(8993)
+	epoch1 := uint64(12489)
 	// epoch2 := uint64(168121)
 	// epoch3 := uint64(167678)
 	startStatus1, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
 		Epoch: &epoch1,
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	t.Logf("%+v %v, %v,%d", startStatus1.Balance, startStatus1.Slashed, startStatus1.Status, startStatus1.ExitEpoch)
 	// startStatus2, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{

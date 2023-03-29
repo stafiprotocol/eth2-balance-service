@@ -37,6 +37,7 @@ type Validator struct {
 	NodeType       uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:node_type"`       // 1 common node 2 trust node(used in v1) 3 light node 4 super node‰
 	Status         uint8  `gorm:"type:tinyint(3) unsigned not null;default:0;column:status"`          // status details defined in pkg/utils/eth2.go
 	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index"` // Notice: validator index is zero before status waiting
+	EverSlashed    uint8  `gorm:"type:tinyint(1) unsigned not null;default:0;column:ever_slashed"`    // ever slashed by protocol 0 false 1 true
 }
 
 func (f Validator) TableName() string {
@@ -125,7 +126,7 @@ func GetValidatorListByNode(db *db.WrapDb, nodeAddress string, status uint8) (c 
 // 1 deposited { 2 withdrawl match 3 staked 4 withdrawl unmatch } { 5 offboard 6 OffBoard can withdraw 7 OffBoard withdrawed } 8 waiting 9 active 10 exited 11 withdrawable 12 withdrawdone { 13 distributed }
 // 51 active+slash 52 exit+slash 53 withdrawable+slash 54 withdrawdone+slash 55 distributed+slash
 
-// status from front-end must in (0,9,10,20,30)
+// status from front-end must in (0,9,10,20,30) 30: ever slashed by protocol
 func GetValidatorListByNodeWithPageWithStatusList(db *db.WrapDb, nodeAddress string, statusList []uint8, pageIndex, pageCount int) (c []*Validator, count int64, err error) {
 	if pageIndex <= 0 {
 		pageIndex = 1
@@ -137,6 +138,7 @@ func GetValidatorListByNodeWithPageWithStatusList(db *db.WrapDb, nodeAddress str
 		pageCount = 50
 	}
 
+	sqlEverSlashed := ""
 	statusMap := make(map[uint8]bool)
 	for _, status := range statusList {
 		switch status {
@@ -163,11 +165,7 @@ func GetValidatorListByNodeWithPageWithStatusList(db *db.WrapDb, nodeAddress str
 			statusMap[55] = true
 
 		case 30: //slash
-			statusMap[51] = true
-			statusMap[52] = true
-			statusMap[53] = true
-			statusMap[54] = true
-			statusMap[55] = true
+			sqlEverSlashed = " ever_slashed = 1 "
 		case 0: //all
 			for _, value := range []uint8{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 51, 52, 53, 54, 55} {
 				statusMap[value] = true
@@ -176,18 +174,35 @@ func GetValidatorListByNodeWithPageWithStatusList(db *db.WrapDb, nodeAddress str
 			return nil, 0, fmt.Errorf("not supported status: %d", status)
 		}
 	}
-	if len(statusMap) == 0 {
-		return nil, 0, fmt.Errorf("status list empty")
-	}
 
-	InStatus := "( "
-	for status := range statusMap {
-		InStatus += fmt.Sprintf("%d", status)
-		InStatus += ","
+	sqlWhere := ""
+	switch {
+	case len(sqlEverSlashed) == 0 && len(statusMap) == 0:
+		return nil, 0, fmt.Errorf("status list and sqlEverSlashed empty")
+	case len(sqlEverSlashed) != 0 && len(statusMap) != 0:
+		InStatus := "( "
+		for status := range statusMap {
+			InStatus += fmt.Sprintf("%d", status)
+			InStatus += ","
+		}
+		InStatus = InStatus[:len(InStatus)-1]
+		InStatus += " )"
+		sqlWhere = fmt.Sprintf("node_address = ? and (status in %s or %s)", InStatus, sqlEverSlashed)
+
+	case len(sqlEverSlashed) != 0 && len(statusMap) == 0:
+		sqlWhere = fmt.Sprintf("node_address = ? and %s", sqlEverSlashed)
+	case len(sqlEverSlashed) == 0 && len(statusMap) != 0:
+		InStatus := "( "
+		for status := range statusMap {
+			InStatus += fmt.Sprintf("%d", status)
+			InStatus += ","
+		}
+		InStatus = InStatus[:len(InStatus)-1]
+		InStatus += " )"
+		sqlWhere = fmt.Sprintf("node_address = ? and status in %s", InStatus)
+	default:
+		return nil, 0, fmt.Errorf("unreachable status")
 	}
-	InStatus = InStatus[:len(InStatus)-1]
-	InStatus += " )"
-	sqlWhere := fmt.Sprintf("node_address = ? and status in %s", InStatus)
 
 	err = db.Model(&Validator{}).Where(sqlWhere, nodeAddress).Count(&count).Error
 	if err != nil {
