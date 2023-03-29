@@ -898,7 +898,9 @@ func (c *StandardHttpClient) getSyncCommittees(stateId string, epoch *uint64) (S
 func (c *StandardHttpClient) getRequest(requestPath string) ([]byte, int, error) {
 
 	// Send request
-	response, err := http.Get(fmt.Sprintf(RequestUrlFormat, c.providerAddress, requestPath))
+	client := http.Client{Timeout: 60 * time.Second}
+
+	response, err := client.Get(fmt.Sprintf(RequestUrlFormat, c.providerAddress, requestPath))
 	if err != nil {
 		return []byte{}, 0, err
 	}
@@ -928,7 +930,8 @@ func (c *StandardHttpClient) postRequest(requestPath string, requestBody interfa
 	requestBodyReader := bytes.NewReader(requestBodyBytes)
 
 	// Send request
-	response, err := http.Post(fmt.Sprintf(RequestUrlFormat, c.providerAddress, requestPath), RequestContentType, requestBodyReader)
+	client := http.Client{Timeout: 60 * time.Second}
+	response, err := client.Post(fmt.Sprintf(RequestUrlFormat, c.providerAddress, requestPath), RequestContentType, requestBodyReader)
 	if err != nil {
 		return []byte{}, 0, err
 	}
