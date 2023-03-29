@@ -996,6 +996,9 @@ const docTemplate = `{
         "node_handlers.ResPubkey": {
             "type": "object",
             "properties": {
+                "everSlashed": {
+                    "type": "boolean"
+                },
                 "pubkey": {
                     "type": "string"
                 },

@@ -202,13 +202,15 @@ func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targ
 			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
 		}
 
-		totalReward := int64(w.Amount)
+		totalReward := int64(0)
 		userDeposit := int64(0)
 		nodeDeposit := int64(0)
 
 		switch {
 
 		case w.Amount < utils.MaxPartialWithdrawalAmount: // partial withdrawal
+			totalReward = int64(w.Amount)
+
 		case w.Amount >= utils.MaxPartialWithdrawalAmount && w.Amount < utils.StandardEffectiveBalance: // slash
 			totalReward = 0
 

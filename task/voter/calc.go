@@ -40,7 +40,7 @@ func (task *Task) getUserEthInfoFromValidatorBalance(validator *dao_node.Validat
 			return 0, 0, err
 		}
 		// withdrawdone case
-		if validator.Balance == 0 {
+		if validatorBalance.Balance == 0 {
 			userDepositBalance = 0
 		}
 

@@ -149,6 +149,8 @@ definitions:
     type: object
   node_handlers.ResPubkey:
     properties:
+      everSlashed:
+        type: boolean
       pubkey:
         type: string
       status:

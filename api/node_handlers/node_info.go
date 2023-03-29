@@ -37,8 +37,9 @@ type RspNodeInfo struct {
 }
 
 type ResPubkey struct {
-	Status uint8  `json:"status"`
-	Pubkey string `json:"pubkey"`
+	Status      uint8  `json:"status"`
+	Pubkey      string `json:"pubkey"`
+	EverSlashed bool   `json:"everSlashed"`
 }
 
 // @Summary node info
@@ -143,11 +144,11 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		logrus.Errorf("GetSlashEventListWithIndex err %v", err)
 		return
 	}
-	var slashIndex = make(map[uint64]struct{})
+	var slashIndex = make(map[uint64]bool)
 	var totalSlashAmount = uint64(0)
 	for _, slash := range slashList {
 		totalSlashAmount += slash.SlashAmount
-		slashIndex[slash.ValidatorIndex] = struct{}{}
+		slashIndex[slash.ValidatorIndex] = true
 	}
 
 	rsp.PendingCount = pendingCount
@@ -191,9 +192,11 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	rsp.TotalSlashAmount = decimal.NewFromInt(int64(totalSlashAmount)).Mul(utils.GweiDeci).StringFixed(0)
 	rsp.EthPrice = ethPrice
 	for _, l := range list {
+
 		rsp.List = append(rsp.List, ResPubkey{
-			Status: l.Status,
-			Pubkey: l.Pubkey,
+			Status:      l.Status,
+			Pubkey:      l.Pubkey,
+			EverSlashed: slashIndex[l.ValidatorIndex],
 		})
 	}
 
