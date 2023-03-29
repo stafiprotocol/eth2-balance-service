@@ -509,18 +509,21 @@ no
 * status、message must be string format,data must be object
 
 
-| grade 1 | grade 2                | type        | must exist? | encode type | description                                |
-| :------ | :--------------------- | :---------- | :---------- | :---------- | :----------------------------------------- |
-| status  | N/A                    | string      | Yes         | null        | status code                                |
-| message | N/A                    | string      | Yes         | null        | status info                                |
-| data    | N/A                    | object      | Yes         | null        | data                                       |
-|         | index                  | number      | Yes         | null        | user index of this epoch                   |
-|         | address                | string      | Yes         | null        | node address                               |
-|         | totalRewardAmount      | string      | Yes         | null        | total reward amount decimals 18            |
-|         | totalExitDepositAmount | string      | Yes         | null        | total exit deposit amount decimals 18      |
-|         | proof                  | string list | Yes         | null        | proof of claim, hex string list            |
-|         | remainingSeconds       | number      | Yes         | null        | withdraw remaining time(seconds)           |
-|         | overallAmount          | string      | Yes         | null        | overall amount(self deposit + self reward) |
+| grade 1 | grade 2                  | type        | must exist? | encode type | description                                |
+| :------ | :----------------------- | :---------- | :---------- | :---------- | :----------------------------------------- |
+| status  | N/A                      | string      | Yes         | null        | status code                                |
+| message | N/A                      | string      | Yes         | null        | status info                                |
+| data    | N/A                      | object      | Yes         | null        | data                                       |
+|         | index                    | number      | Yes         | null        | user index of this epoch                   |
+|         | address                  | string      | Yes         | null        | node address                               |
+|         | totalRewardAmount        | string      | Yes         | null        | total reward amount decimals 18            |
+|         | totalExitDepositAmount   | string      | Yes         | null        | total exit deposit amount decimals 18      |
+|         | proof                    | string list | Yes         | null        | proof of claim, hex string list            |
+|         | remainingSeconds         | number      | Yes         | null        | withdraw remaining time(seconds)           |
+|         | overallAmount            | string      | Yes         | null        | overall amount(self deposit + self reward) |
+|         | overallRewardAmount      | string      | Yes         | null        | overall amount(self reward)                |
+|         | overallExitDepositAmount | string      | Yes         | null        | overall amount(self deposit)               |
+|         | overallSlashAmount       | string      | Yes         | null        | overall amount(slash)                      |
 
 
 ## 13. unstake pool data

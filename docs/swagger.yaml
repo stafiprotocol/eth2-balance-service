@@ -289,6 +289,12 @@ definitions:
         type: integer
       overallAmount:
         type: string
+      overallExitDepositAmount:
+        type: string
+      overallRewardAmount:
+        type: string
+      overallSlashAmount:
+        type: string
       proof:
         items:
           type: string

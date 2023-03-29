@@ -1206,6 +1206,15 @@ const docTemplate = `{
                 "overallAmount": {
                     "type": "string"
                 },
+                "overallExitDepositAmount": {
+                    "type": "string"
+                },
+                "overallRewardAmount": {
+                    "type": "string"
+                },
+                "overallSlashAmount": {
+                    "type": "string"
+                },
                 "proof": {
                     "type": "array",
                     "items": {

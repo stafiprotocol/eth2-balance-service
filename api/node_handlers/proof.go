@@ -28,8 +28,12 @@ type RspProof struct {
 	TotalRewardAmount      string   `json:"totalRewardAmount"`
 	TotalExitDepositAmount string   `json:"totalExitDepositAmount"`
 	Proof                  []string `json:"proof"`
-	RemainingSeconds       uint64   `json:"remainingSeconds"`
-	OverallAmount          string   `json:"overallAmount"`
+
+	RemainingSeconds         uint64 `json:"remainingSeconds"`
+	OverallAmount            string `json:"overallAmount"`
+	OverallRewardAmount      string `json:"overallRewardAmount"`
+	OverallExitDepositAmount string `json:"overallExitDepositAmount"`
+	OverallSlashAmount       string `json:"overallSlashAmount"`
 }
 
 // @Summary get proof of claim
@@ -84,7 +88,8 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	}
 
 	minWithdrawDownEpoch := uint64(math.MaxUint64)
-	overallAmount := decimal.Zero
+	overallRewardAmountDeci := decimal.Zero
+	overallExitDepositAmountDeci := decimal.Zero
 	valIndexList := make([]uint64, 0)
 	for _, val := range valList {
 		valIndexList = append(valIndexList, val.ValidatorIndex)
@@ -93,7 +98,7 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		// todo calc by two sections on mainnet
 		_, nodeRewardOfThisValidatorDeci, _ := utils.GetUserNodePlatformRewardV2(val.NodeDepositAmount, decimal.NewFromInt(int64(validatorTotalReward)))
 
-		overallAmount = overallAmount.Add(nodeRewardOfThisValidatorDeci)
+		overallRewardAmountDeci = overallRewardAmountDeci.Add(nodeRewardOfThisValidatorDeci)
 
 		// only deal after sending exit msg
 		if val.ExitEpoch != 0 {
@@ -102,10 +107,11 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 					minWithdrawDownEpoch = val.WithdrawableEpoch
 				}
 			}
-			overallAmount = overallAmount.Add(decimal.NewFromInt(int64(val.NodeDepositAmount)))
+			overallExitDepositAmountDeci = overallExitDepositAmountDeci.Add(decimal.NewFromInt(int64(val.NodeDepositAmount)))
 		}
 	}
-	overallAmount = overallAmount.Mul(utils.GweiDeci)
+	overallExitDepositAmountDeci = overallExitDepositAmountDeci.Mul(utils.GweiDeci)
+	overallRewardAmountDeci = overallRewardAmountDeci.Mul(utils.GweiDeci)
 
 	totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(h.db, valIndexList)
 	if err != nil {
@@ -115,10 +121,6 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	}
 	totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).
 		Mul(utils.GweiDeci)
-	finalOverallAmount := overallAmount.Sub(totalSlashAmountDeci)
-	if finalOverallAmount.IsNegative() {
-		finalOverallAmount = decimal.Zero
-	}
 
 	needWaitEpoch := uint64(0)
 	// has exited validator && exit epoch > cur epoch
@@ -134,8 +136,12 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		TotalRewardAmount:      proof.TotalRewardAmount,
 		TotalExitDepositAmount: proof.TotalExitDepositAmount,
 		Proof:                  strings.Split(proof.Proof, ":"),
-		RemainingSeconds:       waitSeconds,
-		OverallAmount:          finalOverallAmount.StringFixed(0),
+
+		RemainingSeconds:         waitSeconds,
+		OverallAmount:            overallExitDepositAmountDeci.Add(overallRewardAmountDeci).StringFixed(0),
+		OverallRewardAmount:      overallRewardAmountDeci.StringFixed(0),
+		OverallExitDepositAmount: overallExitDepositAmountDeci.StringFixed(0),
+		OverallSlashAmount:       totalSlashAmountDeci.StringFixed(0),
 	}
 
 	utils.Ok(c, "success", retP)
