@@ -54,7 +54,7 @@ func (h *Handler) HandlePostUploadEjectorUptime(c *gin.Context) {
 		now := uint64(time.Now().Unix())
 		uptime := (now / utils.EjectorUptimeInterval) * utils.EjectorUptimeInterval
 
-		ejectorUptime, _ := dao_node.GetEjectorUptime(h.db, index, uptime)
+		ejectorUptime, _ := dao_node.GetEjectorUptime(h.db, index)
 		ejectorUptime.ValidatorIndex = index
 		ejectorUptime.UploadTimestamp = uptime
 
@@ -75,8 +75,8 @@ type RspEjectorUptime struct {
 }
 
 type UpTime struct {
-	ValidatorIndex uint64  `json:"validatorIndex"`
-	Uptime         float64 `json:"uptime"`
+	ValidatorIndex  uint64 `json:"validatorIndex"`
+	LatestTimestamp uint64 `json:"latestTimestamp"`
 }
 
 // @Summary ejector uptime
@@ -84,7 +84,7 @@ type UpTime struct {
 // @Tags v1
 // @Accept json
 // @Produce json
-// @Param param body ReqEjectorUptime true "ejector uptime"
+// @Param param body ReqEjectorUptime true "ejector uptime list"
 // @Success 200 {object} utils.Rsp{data=RspEjectorUptime}
 // @Router /v1/ejectorUptime [post]
 func (h *Handler) HandlePostEjectorUptime(c *gin.Context) {
@@ -114,7 +114,7 @@ func (h *Handler) HandlePostEjectorUptime(c *gin.Context) {
 		validatorIndexList = vs
 	}
 
-	uptimes, err := dao_node.GetEjectorOneDayUptimeRateList(h.db, validatorIndexList)
+	uptimes, err := dao_node.GetEjectorUptimeListWithIndexList(h.db, validatorIndexList)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetEjectorOneDayUptimeList err %v", err)
@@ -126,8 +126,8 @@ func (h *Handler) HandlePostEjectorUptime(c *gin.Context) {
 	}
 	for i, v := range validatorIndexList {
 		rsp.UptimeList = append(rsp.UptimeList, UpTime{
-			ValidatorIndex: v,
-			Uptime:         uptimes[i],
+			ValidatorIndex:  v,
+			LatestTimestamp: uptimes[i].UploadTimestamp,
 		})
 	}
 

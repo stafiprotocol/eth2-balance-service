@@ -722,11 +722,11 @@ no
 * status、message must be string format, data must be object
 
 
-| grade 1 | grade 2    | grade 3        | type   | must exist? | encode type | description     |
-| :------ | :--------- | :------------- | :----- | :---------- | :---------- | :-------------- |
-| status  | N/A        | N/A            | string | Yes         | null        | status code     |
-| message | N/A        | N/A            | string | Yes         | null        | status info     |
-| data    | N/A        | N/A            | object | Yes         | null        | data            |
-|         | uptimeList | N/A            | list   | Yes         | null        | list            |
-|         |            | validatorIndex | number | Yes         | null        | validator index |
-|         |            | uptime         | float  | Yes         | null        | uptime(xxx%)    |
+| grade 1 | grade 2    | grade 3         | type   | must exist? | encode type | description             |
+| :------ | :--------- | :-------------- | :----- | :---------- | :---------- | :---------------------- |
+| status  | N/A        | N/A             | string | Yes         | null        | status code             |
+| message | N/A        | N/A             | string | Yes         | null        | status info             |
+| data    | N/A        | N/A             | object | Yes         | null        | data                    |
+|         | uptimeList | N/A             | list   | Yes         | null        | list                    |
+|         |            | validatorIndex  | number | Yes         | null        | validator index         |
+|         |            | latestTimestamp | number | Yes         | null        | latest upload timestamp |

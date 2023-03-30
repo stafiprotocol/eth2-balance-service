@@ -83,10 +83,17 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		return
 	}
 	valIndexList := make([]uint64, 0)
+	valIndexListExistOnBeacon := make([]uint64, 0)
 	valMap := make(map[uint64]*dao_node.Validator)
 	for _, val := range valList {
-		valIndexList = append(valIndexList, val.ValidatorIndex)
-		valMap[val.ValidatorIndex] = val
+		if _, exist := valMap[val.ValidatorIndex]; !exist {
+			valMap[val.ValidatorIndex] = val
+			valIndexList = append(valIndexList, val.ValidatorIndex)
+
+			if val.ActiveEpoch != 0 {
+				valIndexListExistOnBeacon = append(valIndexListExistOnBeacon, val.ValidatorIndex)
+			}
+		}
 	}
 	// 1 exit election not exited
 	notExitElection, err := dao_node.GetLatestNotExitElectionOfValidators(h.db, valIndexList)
@@ -110,27 +117,37 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 	}
 
 	// 2 run ejector client
-	uptimeRateList, err := dao_node.GetEjectorOneDayUptimeRateList(h.db, valIndexList)
+	uptimeList, err := dao_node.GetEjectorUptimeListWithIndexList(h.db, valIndexListExistOnBeacon)
 	if err == nil {
-		for _, uptimeRate := range uptimeRateList {
-			if uptimeRate == 0 {
-				// one msg one day
-				now := time.Now()
-				msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("ejectior-day:%d", now.Day())))
+		shouldNotify := false
+		if len(uptimeList) < len(valIndexListExistOnBeacon) {
+			shouldNotify = true
+		}
+		now := time.Now()
 
-				before := now.Add(time.Hour * 24)
+		minTime := now.Unix() - int64(24*time.Hour.Seconds())
+		runBefore := now.Add(time.Hour * 24)
 
-				rsp.List = append(rsp.List, ResNotifyMsg{
-					MsgType: notifyMsgRunClient,
-					MsgId:   msgId.String(),
-					MsgData: MsgData{
-						Timestamp:   uint64(before.Unix()),
-						ExitHours:   0,
-						SlashAmount: "",
-					},
-				})
+		for _, uptime := range uptimeList {
+			if uptime.UploadTimestamp < uint64(minTime) {
+				shouldNotify = true
 				break
 			}
+		}
+
+		if shouldNotify {
+			// one msg one day
+			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("ejectior-day:%d", now.Day())))
+
+			rsp.List = append(rsp.List, ResNotifyMsg{
+				MsgType: notifyMsgRunClient,
+				MsgId:   msgId.String(),
+				MsgData: MsgData{
+					Timestamp:   uint64(runBefore.Unix()),
+					ExitHours:   0,
+					SlashAmount: "",
+				},
+			})
 		}
 	}
 

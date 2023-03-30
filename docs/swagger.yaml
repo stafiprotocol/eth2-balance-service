@@ -439,8 +439,8 @@ definitions:
     type: object
   node_handlers.UpTime:
     properties:
-      uptime:
-        type: number
+      latestTimestamp:
+        type: integer
       validatorIndex:
         type: integer
     type: object
@@ -504,7 +504,7 @@ paths:
       - application/json
       description: ejector uptime
       parameters:
-      - description: ejector uptime
+      - description: ejector uptime list
         in: body
         name: param
         required: true

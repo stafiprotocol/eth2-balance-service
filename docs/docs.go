@@ -34,7 +34,7 @@ const docTemplate = `{
                 "summary": "ejector uptime",
                 "parameters": [
                     {
-                        "description": "ejector uptime",
+                        "description": "ejector uptime list",
                         "name": "param",
                         "in": "body",
                         "required": true,
@@ -1434,8 +1434,8 @@ const docTemplate = `{
         "node_handlers.UpTime": {
             "type": "object",
             "properties": {
-                "uptime": {
-                    "type": "number"
+                "latestTimestamp": {
+                    "type": "integer"
                 },
                 "validatorIndex": {
                     "type": "integer"
