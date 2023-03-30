@@ -158,26 +158,3 @@ const (
 	// Unknown / missing client type
 	Unknown
 )
-
-// Beacon client interface
-type Client interface {
-	GetClientType() (BeaconClientType, error)
-	GetSyncStatus() (SyncStatus, error)
-	GetEth2Config() (Eth2Config, error)
-	GetEth2DepositContract() (Eth2DepositContract, error)
-	GetAttestations(blockId string) ([]AttestationInfo, bool, error)
-	GetBeaconBlock(blockId string) (BeaconBlock, bool, error)
-	GetBeaconHead() (BeaconHead, error)
-	GetValidatorStatusByIndex(index string, opts *ValidatorStatusOptions) (ValidatorStatus, error)
-	GetValidatorStatus(pubkey types.ValidatorPubkey, opts *ValidatorStatusOptions) (ValidatorStatus, error)
-	GetValidatorStatuses(pubkeys []types.ValidatorPubkey, opts *ValidatorStatusOptions) (map[types.ValidatorPubkey]ValidatorStatus, error)
-	GetValidatorIndex(pubkey types.ValidatorPubkey) (uint64, error)
-	GetValidatorSyncDuties(indices []uint64, epoch uint64) (map[uint64]bool, error)
-	GetValidatorProposerDuties(epoch uint64) (map[uint64]uint64, error)
-	GetDomainData(domainType []byte, epoch uint64) ([]byte, error)
-	ExitValidator(validatorIndex, epoch uint64, signature types.ValidatorSignature) error
-	Close() error
-	GetEth1DataForEth2Block(blockId string) (Eth1Data, bool, error)
-	GetCommitteesForEpoch(epoch uint64) ([]Committee, error)
-	GetSyncCommitteesForEpoch(epoch uint64) ([]SyncCommittee, error)
-}

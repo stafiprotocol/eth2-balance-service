@@ -50,7 +50,7 @@ func (task *Server) fetchREthTotalApy() error {
 }
 
 func (task *Server) calValidatorAverageApr() error {
-	activeValidator, err := dao_node.GetValidatorListStatusActive(task.db)
+	activeValidator, err := dao_node.GetValidatorListStatusActiving(task.db)
 	if err != nil {
 		return err
 	}

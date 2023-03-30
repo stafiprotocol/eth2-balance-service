@@ -26,6 +26,7 @@ func TestStatus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	// pubkey, err := types.HexToValidatorPubkey("af93696b857fb621048539d0f9ee7722d801e05cf3be3039decd17b937dd9d69f4450c407f5ae4e96d875cb754840c1c")
 	// pubkey, err := types.HexToValidatorPubkey("b427ea30366336e4632d327428fac24ac3016534b18e0e39f5c2c4fffaa35656f982fba8e636599ae54b6f148a90a8e9")
 	// pubkey, err := types.HexToValidatorPubkey("ae9d34a72d6d16c17e3703a12eeaa45063128046055516f0611a337caaea7cf823e1ae8c9298154c325fc10fcb279d42")
@@ -36,7 +37,6 @@ func TestStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 	epoch1 := uint64(12489)
-	// epoch2 := uint64(168121)
 	// epoch3 := uint64(167678)
 	startStatus1, err := c.GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
 		Epoch: &epoch1,

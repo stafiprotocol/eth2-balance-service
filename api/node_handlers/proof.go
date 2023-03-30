@@ -122,6 +122,9 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).
 		Mul(utils.GweiDeci)
 
+	// needWaitEpoch:
+	// 0: 1 has exit and available withdraw 2 no exit
+	// n: has exit but not available withdraw
 	needWaitEpoch := uint64(0)
 	// has exited validator && exit epoch > cur epoch
 	if minWithdrawDownEpoch != uint64(math.MaxUint64) && valInfoMeta.DealedEpoch < minWithdrawDownEpoch+utils.MaxDistributeEpochInterval {
@@ -130,6 +133,7 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 
 	waitSeconds := needWaitEpoch * 32 * 12
 
+	// locked := OverallRewardAmount - TotalRewardAmount - OverallSlashAmount
 	retP := RspProof{
 		Index:                  uint64(proof.Index),
 		Address:                proof.Address,

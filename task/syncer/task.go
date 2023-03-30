@@ -653,16 +653,6 @@ func (task *Task) syncEth2BlockHandler() {
 			}
 			logrus.Debug("syncEth2Block end -----------")
 
-			logrus.Debug("syncSlashEventEndSlotInfo start -----------")
-			err = task.syncSlashEventEndSlotInfo()
-			if err != nil {
-				logrus.Warnf("syncSlashEventEndSlotInfo err: %s", err.Error())
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			}
-			logrus.Debug("syncSlashEventEndSlotInfo end -----------")
-
 			retry = 0
 		}
 	}

@@ -1,6 +1,6 @@
 rewardEpochInterval = 75
 eth1Endpoint = "https://rpc.zhejiang.ethpandaops.io"
-eth2Endpoint = "https://beacon.zhejiang.ethpandaops.io"
+eth2Endpoint = "https://beacon-lighthouse-zhejiang.stafi.io"
 logFilePath = ""
 version = "dev"          # v1 v2 dev
 slashStartEpoch = 4400

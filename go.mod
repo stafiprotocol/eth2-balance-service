@@ -22,6 +22,7 @@ require (
 	golang.org/x/crypto v0.1.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af
+	google.golang.org/protobuf v1.28.1
 	gorm.io/driver/mysql v1.4.0
 	gorm.io/gorm v1.24.0
 )
@@ -97,7 +98,6 @@ require (
 	golang.org/x/tools v0.2.0 // indirect
 	google.golang.org/genproto v0.0.0-20210624195500-8bfb893ecb84 // indirect
 	google.golang.org/grpc v1.40.0 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

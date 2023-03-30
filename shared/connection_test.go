@@ -103,6 +103,19 @@ func TestBlockDetail(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	rewards, err := c.GetRewardsForEpoch(152)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(len(rewards))
+	t.Log(rewards[18182].String())
+
+	balance, err := c.Eth2Client().Balance(77999, 61730)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(balance)
+	return
 
 	head, err := c.Eth2BeaconHead()
 	if err != nil {

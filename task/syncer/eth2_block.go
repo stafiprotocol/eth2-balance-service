@@ -2,13 +2,9 @@ package task_syncer
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"math"
-	"math/big"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -16,8 +12,6 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
-
-	// rethTypes "github.com/stafiprotocol/eth2-balance-service/shared/types"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 )
@@ -31,7 +25,7 @@ import (
 // SlashTypeProposerMiss  = uint8(6)
 
 // sync feeRecipient and slash events
-// only cal slash amount of 1 2 3 5 slash type, 4 6 is 0
+// only cal slash amount of 1 2 3 4 5 6 slash type,  type 6 now slash 0 eth
 func (task *Task) syncEth2BlockInfo() error {
 	eth2ValidatorLatestInfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 	if err != nil {
@@ -69,7 +63,10 @@ func (task *Task) syncEth2BlockInfo() error {
 		g := new(errgroup.Group)
 		g.SetLimit(32)
 
-		// sync slash event of type 1 2 3 4 6 and withdrawals/proposed block
+		// sync slash event of type 1 2 3 6, type 6 now slash 0 eth
+		// save withdrawals
+		// save proposed block
+		// save voluntary exit msg
 		for slot := startSlot; slot <= endSlot; slot++ {
 
 			newSlot := slot
@@ -83,65 +80,42 @@ func (task *Task) syncEth2BlockInfo() error {
 			})
 		}
 
-		// sync slash of type 5 attester miss
-		// g.Go(func() error {
-		// 	validatorList, err := dao.GetValidatorListActive(task.db)
-		// 	if err != nil {
-		// 		return err
-		// 	}
+		// sync slash of type 4 (sync committee miss)
+		// sync slash of type 5 (attester miss)
+		g.Go(func() error {
+			rewardsMap, err := task.connection.GetRewardsForEpoch(willUseEpoch)
+			if err != nil {
+				return err
+			}
+			validatorList, err := dao_node.GetAllValidatorList(task.db)
+			if err != nil {
+				return err
+			}
+			for _, val := range validatorList {
+				// skip not active vals
+				if val.ValidatorIndex == 0 {
+					continue
+				}
 
-		// 	pubkeys := make([]rethTypes.ValidatorPubkey, 0)
-		// 	for _, validator := range validatorList {
-		// 		pubkey, err := rethTypes.HexToValidatorPubkey(validator.Pubkey[2:])
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 		pubkeys = append(pubkeys, pubkey)
-		// 	}
+				if reward, exist := rewardsMap[val.ValidatorIndex]; exist {
+					attesterPenalty := reward.AttestationSourcePenalty + reward.AttestationTargetPenalty
+					if attesterPenalty > 0 {
+						err := task.saveAttesterMissEvent(utils.StartSlotOfEpoch(task.eth2Config, willUseEpoch), willUseEpoch, val.ValidatorIndex, attesterPenalty)
+						if err != nil {
+							return err
+						}
+					}
 
-		// 	validatorsStatus, err := task.connection.GetValidatorStatuses(pubkeys, &beacon.ValidatorStatusOptions{
-		// 		Epoch: &willUseEpoch,
-		// 	})
-		// 	if err != nil {
-		// 		return errors.Wrap(err, "syncSlashEvent GetValidatorStatuses failed")
-		// 	}
-
-		// 	preEpoch := willUseEpoch - 1
-		// 	validatorsStatusPre, err := task.connection.GetValidatorStatuses(pubkeys, &beacon.ValidatorStatusOptions{
-		// 		Epoch: &preEpoch,
-		// 	})
-		// 	if err != nil {
-		// 		return errors.Wrap(err, "syncSlashEvent GetValidatorStatuses preEpoch failed")
-		// 	}
-
-		// 	for pubkey, status := range validatorsStatus {
-		// 		if statusPre, exist := validatorsStatusPre[pubkey]; exist {
-		// 			if status.Balance < statusPre.Balance && !status.Slashed {
-
-		// 				slashEvent, err := dao.GetSlashEvent(task.db, status.Index, startSlot, utils.SlashTypeAttesterMiss)
-		// 				if err != nil && err != gorm.ErrRecordNotFound {
-		// 					return errors.Wrap(err, "dao.GetSlashEvent")
-		// 				}
-
-		// 				slashEvent.ValidatorIndex = status.Index
-		// 				slashEvent.StartSlot = startSlot
-		// 				slashEvent.EndSlot = endSlot
-		// 				slashEvent.Epoch = willUseEpoch
-		// 				slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, startSlot)
-		// 				slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, endSlot)
-		// 				slashEvent.SlashType = utils.SlashTypeAttesterMiss
-		// 				slashEvent.SlashAmount = statusPre.Balance - status.Balance
-
-		// 				err = dao.UpOrInSlashEvent(task.db, slashEvent)
-		// 				if err != nil {
-		// 					return errors.Wrap(err, "dao.UpOrInSlashEvent")
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-
-		// 	return nil
-		// })
+					if reward.SyncCommitteePenalty > 0 {
+						err := task.saveSyncMissEvent(utils.StartSlotOfEpoch(task.eth2Config, willUseEpoch), willUseEpoch, val.ValidatorIndex, reward.SyncCommitteePenalty)
+						if err != nil {
+							return err
+						}
+					}
+				}
+			}
+			return nil
+		})
 
 		err = g.Wait()
 		if err != nil {
@@ -159,10 +133,10 @@ func (task *Task) syncEth2BlockInfo() error {
 	return nil
 }
 
-// sync 1 2 3 slash and slash amount
-// sync 4 6 slash and slash amount is zero
+// sync 1 2 3 6 slash event and slash amount, type 6 now slash 0 eth
 // sync withdrawals
 // sync proposaled block
+// sync voluntary exit msg
 func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncCommittees []beacon.SyncCommittee) error {
 	beaconBlock, exist, err := task.connection.GetBeaconBlock(fmt.Sprintf("%d", slot))
 	if err != nil {
@@ -182,6 +156,7 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 
 		return nil
 	}
+
 	if beaconBlock.ProposerIndex != proposer {
 		return fmt.Errorf("beaconBlock.ProposerIndex %d not euqal proposer %d", beaconBlock.ProposerIndex, proposer)
 	}
@@ -214,27 +189,6 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 			}
 		}
 	}
-
-	//slash type 4, save sync committee slash
-	for i := uint64(0); i < beaconBlock.SyncAggregate.SyncCommitteeBits.Len(); i++ {
-		if !beaconBlock.SyncAggregate.SyncCommitteeBits.BitAt(i) && len(syncCommittees) > int(i) {
-			valIndex := syncCommittees[i].ValIndex
-
-			_, err := dao_node.GetValidatorByIndex(task.db, valIndex)
-			if err != nil && err != gorm.ErrRecordNotFound {
-				return errors.Wrap(err, "dao_node.GetValidatorByIndex")
-			}
-
-			if valIndex != 0 && err == nil {
-				err := task.saveSyncMissEvent(slot, epoch, valIndex)
-				if err != nil {
-					return errors.Wrap(err, "saveSyncMissEvent")
-				}
-			}
-
-		}
-	}
-
 	//slash type 1, deal recipient after merge
 	if beaconBlock.HasExecutionPayload {
 		validator, err := dao_node.GetValidatorByIndex(task.db, beaconBlock.ProposerIndex)
@@ -247,6 +201,23 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 			err := task.saveProposedBlockAndRecipientUnMatchEvent(slot, epoch, &beaconBlock, validator)
 			if err != nil {
 				return errors.Wrap(err, "saveRecipientUnMatchEvent")
+			}
+		}
+	}
+
+	//slash type 2, save proposer slash events
+	for _, proposerSlash := range beaconBlock.ProposerSlashings {
+		proposerValidatorIndex := proposerSlash.SignedHeader1.ProposerIndex
+
+		_, err := dao_node.GetValidatorByIndex(task.db, proposerValidatorIndex)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return errors.Wrap(err, "dao_node.GetValidatorByIndex")
+		}
+
+		if proposerValidatorIndex != 0 && err == nil {
+			err := task.saveProposerSlashEvent(slot, epoch, proposerValidatorIndex)
+			if err != nil {
+				return errors.Wrap(err, "saveProposerSlashEvent")
 			}
 		}
 	}
@@ -283,22 +254,6 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 		}
 	}
 
-	//slash type 2, save proposer slash events
-	for _, proposerSlash := range beaconBlock.ProposerSlashings {
-		proposerValidatorIndex := proposerSlash.SignedHeader1.ProposerIndex
-
-		_, err := dao_node.GetValidatorByIndex(task.db, proposerValidatorIndex)
-		if err != nil && err != gorm.ErrRecordNotFound {
-			return errors.Wrap(err, "dao_node.GetValidatorByIndex")
-		}
-
-		if proposerValidatorIndex != 0 && err == nil {
-			err := task.saveProposerSlashEvent(slot, epoch, proposerValidatorIndex)
-			if err != nil {
-				return errors.Wrap(err, "saveProposerSlashEvent")
-			}
-		}
-	}
 	return nil
 }
 
@@ -330,7 +285,7 @@ func (task *Task) saveProposerMissEvent(slot, epoch, proposer uint64) error {
 	return nil
 }
 
-func (task *Task) saveSyncMissEvent(slot, epoch, valIndex uint64) error {
+func (task *Task) saveSyncMissEvent(slot, epoch, valIndex, slashAmount uint64) error {
 	logrus.WithFields(logrus.Fields{
 		"type":     "sync committee miss",
 		"slot":     slot,
@@ -350,7 +305,36 @@ func (task *Task) saveSyncMissEvent(slot, epoch, valIndex uint64) error {
 	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
 	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
 	slashEvent.SlashType = utils.SlashTypeSyncMiss
-	slashEvent.SlashAmount = 0
+	slashEvent.SlashAmount = slashAmount
+
+	err = dao_node.UpOrInSlashEvent(task.db, slashEvent)
+	if err != nil {
+		return errors.Wrap(err, "dao_node.UpOrInSlashEvent")
+	}
+	return nil
+}
+
+func (task *Task) saveAttesterMissEvent(slot, epoch, valIndex, slashAmount uint64) error {
+	logrus.WithFields(logrus.Fields{
+		"type":     "sync committee miss",
+		"slot":     slot,
+		"epoch":    epoch,
+		"valIndex": valIndex,
+	}).Debug("saveAttesterMissEvent")
+
+	slashEvent, err := dao_node.GetSlashEvent(task.db, valIndex, slot, utils.SlashTypeAttesterMiss)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return errors.Wrap(err, "dao_node.GetSlashEvent")
+	}
+
+	slashEvent.ValidatorIndex = valIndex
+	slashEvent.StartSlot = slot
+	slashEvent.EndSlot = slot
+	slashEvent.Epoch = epoch
+	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	slashEvent.SlashType = utils.SlashTypeAttesterMiss
+	slashEvent.SlashAmount = slashAmount
 
 	err = dao_node.UpOrInSlashEvent(task.db, slashEvent)
 	if err != nil {
@@ -405,23 +389,9 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 	proposedBlock.FeeRecipient = beaconBlock.FeeRecipient.String()
 
 	// cal total priority fee
-	var eth1Block *types.Block
-	eth1Block, err = task.connection.Eth1Client().BlockByNumber(context.Background(), big.NewInt(int64(beaconBlock.ExecutionBlockNumber)))
+	totalFee, err := task.connection.GetELRewardForBlock(beaconBlock.ExecutionBlockNumber)
 	if err != nil {
-		return errors.Wrap(err, "Eth1Client().BlockByNumber")
-	}
-
-	totalFee := big.NewInt(0)
-	for _, tx := range eth1Block.Transactions() {
-		var receipt *types.Receipt
-		receipt, err = task.connection.Eth1Client().TransactionReceipt(context.Background(), tx.Hash())
-		if err != nil {
-			return errors.Wrap(err, "Eth1Client().TransactionReceipt")
-		}
-
-		priorityGasFee := tx.EffectiveGasTipValue(eth1Block.BaseFee())
-
-		totalFee = new(big.Int).Add(totalFee, new(big.Int).Mul(priorityGasFee, big.NewInt(int64(receipt.GasUsed))))
+		return errors.Wrap(err, "GetELRewardForBlock failed")
 	}
 
 	proposedBlock.FeeAmount = decimal.NewFromBigInt(totalFee, 0).StringFixed(0)
@@ -435,17 +405,9 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 
 	// insert into table slashEvent if feeRecipient not match
 	shouldSlash := false
-	switch validator.NodeType {
-	case utils.NodeTypeCommon, utils.NodeTypeLight:
-		if !bytes.EqualFold(beaconBlock.FeeRecipient[:], task.lightNodeFeePoolAddress[:]) {
-			shouldSlash = true
-		}
-	case utils.NodeTypeTrust, utils.NodeTypeSuper:
-		if !bytes.EqualFold(beaconBlock.FeeRecipient[:], task.superNodeFeePoolAddress[:]) {
-			shouldSlash = true
-		}
-	default:
-		return fmt.Errorf("unknown validator nodeType: %d", validator.NodeType)
+	if !bytes.EqualFold(beaconBlock.FeeRecipient[:], task.lightNodeFeePoolAddress[:]) &&
+		!bytes.EqualFold(beaconBlock.FeeRecipient[:], task.superNodeFeePoolAddress[:]) {
+		shouldSlash = true
 	}
 
 	if shouldSlash {
@@ -484,52 +446,6 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 	return nil
 }
 
-func (task *Task) saveAttesterSlashEvent(slot, epoch, valIndex uint64) error {
-	logrus.WithFields(logrus.Fields{
-		"slot":     slot,
-		"epoch":    epoch,
-		"valIndex": valIndex,
-	}).Debug("saveAttesterSlashEvent")
-
-	slashEvent, err := dao_node.GetSlashEvent(task.db, valIndex, slot, utils.SlashTypeAttesterSlash)
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return errors.Wrap(err, "dao_node.GetSlashEvent")
-	}
-	slashEvent.ValidatorIndex = valIndex
-	slashEvent.StartSlot = slot
-	slashEvent.Epoch = epoch
-	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
-	slashEvent.SlashType = utils.SlashTypeAttesterSlash
-
-	validatorStart, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(valIndex), &beacon.ValidatorStatusOptions{
-		Slot: &slot,
-	})
-	if err != nil {
-		return err
-	}
-	endSlot := utils.StartSlotOfEpoch(task.eth2Config, epoch+1)
-	validatorEnd, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(valIndex), &beacon.ValidatorStatusOptions{
-		Slot: &endSlot,
-	})
-	if err != nil {
-		return err
-	}
-	slashAmount := uint64(0)
-	if validatorStart.Balance > validatorEnd.Balance {
-		slashAmount = validatorStart.Balance - validatorEnd.Balance
-	}
-
-	slashEvent.EndSlot = endSlot
-	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, endSlot)
-	slashEvent.SlashAmount = slashAmount
-
-	err = dao_node.UpOrInSlashEvent(task.db, slashEvent)
-	if err != nil {
-		return errors.Wrap(err, "dao_node.UpOrInSlashEvent")
-	}
-	return nil
-}
-
 func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uint64) error {
 	slashEvent, err := dao_node.GetSlashEvent(task.db, proposerValidatorIndex, slot, utils.SlashTypeProposerSlash)
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -544,31 +460,12 @@ func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uin
 
 	slashEvent.ValidatorIndex = proposerValidatorIndex
 	slashEvent.StartSlot = slot
+	slashEvent.EndSlot = slot
 	slashEvent.Epoch = epoch
 	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
 	slashEvent.SlashType = utils.SlashTypeProposerSlash
-
-	validatorStart, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(proposerValidatorIndex), &beacon.ValidatorStatusOptions{
-		Slot: &slot,
-	})
-	if err != nil {
-		return err
-	}
-	endSlot := utils.StartSlotOfEpoch(task.eth2Config, epoch+1)
-	validatorEnd, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(proposerValidatorIndex), &beacon.ValidatorStatusOptions{
-		Slot: &endSlot,
-	})
-	if err != nil {
-		return err
-	}
-	slashAmount := uint64(0)
-	if validatorStart.Balance > validatorEnd.Balance {
-		slashAmount = validatorStart.Balance - validatorEnd.Balance
-	}
-
-	slashEvent.EndSlot = endSlot
-	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, endSlot)
-	slashEvent.SlashAmount = slashAmount
+	slashEvent.SlashAmount = utils.OfficialSlashAmount
 
 	err = dao_node.UpOrInSlashEvent(task.db, slashEvent)
 	if err != nil {
@@ -577,81 +474,29 @@ func (task *Task) saveProposerSlashEvent(slot, epoch, proposerValidatorIndex uin
 	return nil
 }
 
-// validator will be reduced eth until WithdrawableEpoch
-// so, we sync total slashed amount after WithdrawableEpoch
-func (task *Task) syncSlashEventEndSlotInfo() error {
-
-	slashEventList, err := dao_node.GetProposerAttesterSlashEventList(task.db)
-	if err != nil {
-		return err
-	}
-
+func (task *Task) saveAttesterSlashEvent(slot, epoch, valIndex uint64) error {
 	logrus.WithFields(logrus.Fields{
-		"slashEventListLen": len(slashEventList),
-	}).Debug("syncSlashEventEndSlotInfo")
+		"slot":     slot,
+		"epoch":    epoch,
+		"valIndex": valIndex,
+	}).Debug("saveAttesterSlashEvent")
 
-	if len(slashEventList) == 0 {
-		return nil
+	slashEvent, err := dao_node.GetSlashEvent(task.db, valIndex, slot, utils.SlashTypeAttesterSlash)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return errors.Wrap(err, "dao_node.GetSlashEvent")
 	}
+	slashEvent.ValidatorIndex = valIndex
+	slashEvent.StartSlot = slot
+	slashEvent.EndSlot = slot
+	slashEvent.Epoch = epoch
+	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	slashEvent.SlashType = utils.SlashTypeAttesterSlash
+	slashEvent.SlashAmount = utils.OfficialSlashAmount
 
-	beaconHead, err := task.connection.Eth2Client().GetBeaconHead()
+	err = dao_node.UpOrInSlashEvent(task.db, slashEvent)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "dao_node.UpOrInSlashEvent")
 	}
-
-	for _, slashEvent := range slashEventList {
-		validatorNow, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(slashEvent.ValidatorIndex), &beacon.ValidatorStatusOptions{
-			Epoch: &beaconHead.FinalizedEpoch,
-		})
-		if err != nil {
-			return err
-		}
-		if !validatorNow.Slashed {
-			return fmt.Errorf("validator %d should slashed", slashEvent.ValidatorIndex)
-		}
-
-		// ensure endEpoch <= withdrawableEpoch
-		endEpoch := beaconHead.FinalizedEpoch
-		if validatorNow.WithdrawableEpoch != math.MaxUint64 && validatorNow.WithdrawableEpoch < beaconHead.FinalizedEpoch {
-			endEpoch = validatorNow.WithdrawableEpoch
-		}
-		endSlot := utils.StartSlotOfEpoch(task.eth2Config, endEpoch)
-
-		// already dealed
-		if slashEvent.EndSlot == endSlot {
-			return nil
-		}
-
-		// balance will be reduced at slash block utils withdrawable epoch
-		startSlot := slashEvent.StartSlot
-		validatorStart, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(slashEvent.ValidatorIndex), &beacon.ValidatorStatusOptions{
-			Slot: &startSlot,
-		})
-		if err != nil {
-			return err
-		}
-
-		validatorEnd, err := task.connection.GetValidatorStatusByIndex(fmt.Sprint(slashEvent.ValidatorIndex), &beacon.ValidatorStatusOptions{
-			Slot: &endSlot,
-		})
-		if err != nil {
-			return err
-		}
-
-		slashAmount := uint64(0)
-		if validatorStart.Balance > validatorEnd.Balance {
-			slashAmount = validatorStart.Balance - validatorEnd.Balance
-		}
-
-		slashEvent.EndSlot = endSlot
-		slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, endSlot)
-		slashEvent.SlashAmount = slashAmount
-
-		err = dao_node.UpOrInSlashEvent(task.db, slashEvent)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }

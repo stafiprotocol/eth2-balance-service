@@ -103,7 +103,7 @@ func GetValidatorListNeedCheckDistributed(db *db.WrapDb) (c []*Validator, err er
 }
 
 // status is active when exiting
-func GetValidatorListStatusActive(db *db.WrapDb) (c []*Validator, err error) {
+func GetValidatorListStatusActiving(db *db.WrapDb) (c []*Validator, err error) {
 	err = db.Find(&c, "status = ?", utils.ValidatorStatusActive).Error
 	return
 }
