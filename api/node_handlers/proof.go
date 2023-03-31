@@ -87,7 +87,7 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		return
 	}
 
-	minWithdrawDownEpoch := uint64(math.MaxUint64)
+	minWithdrawAbleEpoch := uint64(math.MaxUint64)
 	overallRewardAmountDeci := decimal.Zero
 	overallExitDepositAmountDeci := decimal.Zero
 	valIndexList := make([]uint64, 0)
@@ -103,8 +103,8 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		// only deal after sending exit msg
 		if val.ExitEpoch != 0 {
 			if val.Status != utils.ValidatorStatusDistributed && val.Status != utils.ValidatorStatusDistributedSlash {
-				if minWithdrawDownEpoch > val.WithdrawableEpoch {
-					minWithdrawDownEpoch = val.WithdrawableEpoch
+				if minWithdrawAbleEpoch > val.WithdrawableEpoch {
+					minWithdrawAbleEpoch = val.WithdrawableEpoch
 				}
 			}
 			overallExitDepositAmountDeci = overallExitDepositAmountDeci.Add(decimal.NewFromInt(int64(val.NodeDepositAmount)))
@@ -122,13 +122,56 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).
 		Mul(utils.GweiDeci)
 
+	nodeClaimList, err := dao_node.GetNodeClaimListByNode(h.db, req.NodeAddress)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetNodeClaimListByNode err %v", err)
+		return
+	}
+	claimedDepositAmountDeci := decimal.Zero
+	for _, nodeClaim := range nodeClaimList {
+		claimableDepositAmountDeci, err := decimal.NewFromString(nodeClaim.ClaimableDeposit)
+		if err != nil {
+			utils.Err(c, utils.CodeInternalErr, err.Error())
+			return
+		}
+
+		switch nodeClaim.ClaimedType {
+		case utils.NodeClaimTypeClaimReward:
+
+		case utils.NodeClaimTypeClaimDeposit:
+			claimedDepositAmountDeci = claimedDepositAmountDeci.Add(claimableDepositAmountDeci)
+
+		case utils.NodeClaimTypeClaimTotal:
+			claimedDepositAmountDeci = claimedDepositAmountDeci.Add(claimableDepositAmountDeci)
+
+		default:
+			utils.Err(c, utils.CodeInternalErr, "unknow claim type")
+			return
+		}
+	}
+
 	// needWaitEpoch:
 	// 0: 1 has exit and available withdraw 2 no exit
 	// n: has exit but not available withdraw
 	needWaitEpoch := uint64(0)
+
 	// has exited validator && exit epoch > cur epoch
-	if minWithdrawDownEpoch != uint64(math.MaxUint64) && valInfoMeta.DealedEpoch < minWithdrawDownEpoch+utils.MaxDistributeEpochInterval {
-		needWaitEpoch = minWithdrawDownEpoch + utils.MaxDistributeEpochInterval - valInfoMeta.DealedEpoch
+	// todo mainnet waitSweepEpochs
+	waitSweepEpochs := uint64(66267 / 16 / 32)
+	maxDistributedEpoch := minWithdrawAbleEpoch + waitSweepEpochs + utils.MaxDistributeEpochInterval
+	if minWithdrawAbleEpoch != uint64(math.MaxUint64) && valInfoMeta.DealedEpoch < maxDistributedEpoch {
+		needWaitEpoch = maxDistributedEpoch - valInfoMeta.DealedEpoch
+	}
+
+	totalExitDepositAmountDeci, err := decimal.NewFromString(proof.TotalExitDepositAmount)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		return
+	}
+	// available withdraw case
+	if totalExitDepositAmountDeci.GreaterThan(claimedDepositAmountDeci) {
+		needWaitEpoch = 0
 	}
 
 	waitSeconds := needWaitEpoch * 32 * 12

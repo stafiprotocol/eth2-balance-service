@@ -347,12 +347,12 @@ func StafiWithdrawProposalNodeKey(sender common.Address, proposalId [32]byte) [3
 }
 
 func DistributeWithdrawalsProposalNodeKey(sender common.Address, _dealedHeight, _userAmount, _nodeAmount, _platformAmount, _maxClaimableWithdrawIndex *big.Int) [32]byte {
-	proposalId := crypto.Keccak256Hash(common.LeftPadBytes(_dealedHeight.Bytes(), 32), common.LeftPadBytes(_userAmount.Bytes(), 32),
+	proposalId := crypto.Keccak256Hash([]byte("distributeWithdrawals"), common.LeftPadBytes(_dealedHeight.Bytes(), 32), common.LeftPadBytes(_userAmount.Bytes(), 32),
 		common.LeftPadBytes(_nodeAmount.Bytes(), 32), common.LeftPadBytes(_platformAmount.Bytes(), 32), common.LeftPadBytes(_maxClaimableWithdrawIndex.Bytes(), 32))
 	return StafiWithdrawProposalNodeKey(sender, proposalId)
 }
 
-func StafiDistributorProposalNokeKey(sender common.Address, proposalId [32]byte) [32]byte {
+func StafiDistributorProposalNodeKey(sender common.Address, proposalId [32]byte) [32]byte {
 	return crypto.Keccak256Hash([]byte("stafiDistributor.proposal.node.key"), proposalId[:], sender.Bytes())
 }
 
@@ -361,13 +361,13 @@ func ReserveEthForWithdrawProposalId(cycle *big.Int) [32]byte {
 }
 
 func DistributeFeeProposalNodeKey(sender common.Address, _dealedHeight, _userAmount, _nodeAmount, _platformAmount *big.Int) [32]byte {
-	proposalId := crypto.Keccak256Hash(common.LeftPadBytes(_dealedHeight.Bytes(), 32), common.LeftPadBytes(_userAmount.Bytes(), 32),
+	proposalId := crypto.Keccak256Hash([]byte("distributeFee"), common.LeftPadBytes(_dealedHeight.Bytes(), 32), common.LeftPadBytes(_userAmount.Bytes(), 32),
 		common.LeftPadBytes(_nodeAmount.Bytes(), 32), common.LeftPadBytes(_platformAmount.Bytes(), 32))
-	return StafiDistributorProposalNokeKey(sender, proposalId)
+	return StafiDistributorProposalNodeKey(sender, proposalId)
 }
 
 func DistributeSuperNodeFeeProposalNodeKey(sender common.Address, _dealedHeight, _userAmount, _nodeAmount, _platformAmount *big.Int) [32]byte {
 	proposalId := crypto.Keccak256Hash([]byte("distributeSuperNodeFee"), common.LeftPadBytes(_dealedHeight.Bytes(), 32), common.LeftPadBytes(_userAmount.Bytes(), 32),
 		common.LeftPadBytes(_nodeAmount.Bytes(), 32), common.LeftPadBytes(_platformAmount.Bytes(), 32))
-	return StafiDistributorProposalNokeKey(sender, proposalId)
+	return StafiDistributorProposalNodeKey(sender, proposalId)
 }
