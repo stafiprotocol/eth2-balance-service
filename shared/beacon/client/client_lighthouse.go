@@ -52,6 +52,28 @@ func (c *StandardHttpClient) AttestationRewards(epoch uint64) (*AttestationRewar
 	return r, nil
 }
 
+func (c *StandardHttpClient) AttestationRewardsWithVals(epoch uint64, pubkeysOrIndexes []string) (*AttestationRewardsApiResponse, error) {
+	url := fmt.Sprintf("/eth/v1/beacon/rewards/attestations/%d", epoch)
+
+	bts, status, err := c.postRequest(url, pubkeysOrIndexes)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("http request AttestationRewardsWithVals error: %d", status)
+	}
+
+	r := &AttestationRewardsApiResponse{}
+
+	err = json.Unmarshal(bts, r)
+
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
 func (c *StandardHttpClient) SyncCommitteeRewards(slot uint64) (*SyncCommitteeRewardsApiResponse, error) {
 	url := fmt.Sprintf("/eth/v1/beacon/rewards/sync_committee/%d", slot)
 	bts, status, err := c.postRequest(url, []string{})

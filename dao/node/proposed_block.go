@@ -63,8 +63,8 @@ func GetProposedBlockList(db *db.WrapDb, pageIndex, pageCount int) (c []*Propose
 	return
 }
 
-func GetProposedBlockListBefore(db *db.WrapDb, validatorIndex, slot uint64, recipient string) (c []*ProposedBlock, err error) {
-	err = db.Find(&c, "validator_index = ? and slot <= ? and fee_recipient = ?", validatorIndex, slot, recipient).Error
+func GetProposedBlockListBefore(db *db.WrapDb, validatorIndex, slot uint64, recipientList []string) (c []*ProposedBlock, err error) {
+	err = db.Find(&c, "validator_index = ? and slot <= ? and fee_recipient in ?", validatorIndex, slot, recipientList).Error
 	return
 }
 

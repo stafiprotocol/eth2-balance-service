@@ -170,13 +170,11 @@ func (task *Task) syncValidatorEpochBalances() error {
 	return nil
 }
 
+// return gwei
 func (task *Task) calTotalFeeOfValidator(validatorIndex uint64, nodeType uint8, epoch uint64) (uint64, error) {
-	feePoolAddress := task.lightNodeFeePoolAddress
-	if nodeType == utils.NodeTypeSuper || nodeType == utils.NodeTypeTrust {
-		feePoolAddress = task.superNodeFeePoolAddress
-	}
+	feePoolAddressList := []string{task.lightNodeFeePoolAddress.String(), task.superNodeFeePoolAddress.String()}
 
-	proposedBlockList, err := dao_node.GetProposedBlockListBefore(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch), feePoolAddress.String())
+	proposedBlockList, err := dao_node.GetProposedBlockListBefore(task.db, validatorIndex, utils.StartSlotOfEpoch(task.eth2Config, epoch), feePoolAddressList)
 	if err != nil {
 		return 0, errors.Wrap(err, "GetProposedBlockListBefore failed")
 	}

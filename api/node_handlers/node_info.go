@@ -94,7 +94,7 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	slashCount := int64(0)
 	for _, l := range totalList {
 		valIndexList = append(valIndexList, l.ValidatorIndex)
-		if l.EverSlashed == 1 {
+		if l.EverSlashed == utils.ValidatorEverSlashedTrue {
 			slashCount++
 		}
 		// cal selfDeposited
@@ -193,7 +193,7 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		rsp.List = append(rsp.List, ResPubkey{
 			Status:      l.Status,
 			Pubkey:      l.Pubkey,
-			EverSlashed: l.EverSlashed == 1,
+			EverSlashed: l.EverSlashed == utils.ValidatorEverSlashedTrue,
 		})
 	}
 

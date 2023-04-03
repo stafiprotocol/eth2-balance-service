@@ -286,7 +286,7 @@ func statisticCmd() *cobra.Command {
 				}
 
 				// get eth1 block height
-				targetBeaconBlock, _, err := connection.Eth2Client().GetBeaconBlock(fmt.Sprint(utils.StartSlotOfEpoch(eth2Config, willDealEpoch)))
+				targetBeaconBlock, _, err := connection.Eth2Client().GetBeaconBlock(willDealEpoch)
 				if err != nil {
 					return err
 				}

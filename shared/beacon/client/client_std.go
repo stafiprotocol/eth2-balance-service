@@ -36,7 +36,7 @@ const (
 	RequestValidatorsPath            = "/eth/v1/beacon/states/%s/validators"
 	RequestVoluntaryExitPath         = "/eth/v1/beacon/pool/voluntary_exits"
 	RequestAttestationsPath          = "/eth/v1/beacon/blocks/%s/attestations"
-	RequestBeaconBlockPath           = "/eth/v2/beacon/blocks/%s"
+	RequestBeaconBlockPath           = "/eth/v2/beacon/blocks/%d"
 	RequestValidatorSyncDuties       = "/eth/v1/validator/duties/sync/%s"
 	RequestValidatorProposerDuties   = "/eth/v1/validator/duties/proposer/%s"
 	RequestSyncCommittees            = "/eth/v1/beacon/states/%s/sync_committees"
@@ -226,6 +226,7 @@ func (c *StandardHttpClient) getValidatorStatus(pubkeyOrIndex string, opts *beac
 }
 
 // Get multiple validators' statuses
+// epoch in opts == the first slot of epoch
 func (c *StandardHttpClient) GetValidatorStatuses(pubkeys []types.ValidatorPubkey, opts *beacon.ValidatorStatusOptions) (map[types.ValidatorPubkey]beacon.ValidatorStatus, error) {
 
 	// The null validator pubkey
@@ -428,7 +429,7 @@ func (c *StandardHttpClient) ExitValidator(validatorIndex, epoch uint64, signatu
 }
 
 // Get the ETH1 data for the target beacon block
-func (c *StandardHttpClient) GetEth1DataForEth2Block(blockId string) (beacon.Eth1Data, bool, error) {
+func (c *StandardHttpClient) GetEth1DataForEth2Block(blockId uint64) (beacon.Eth1Data, bool, error) {
 
 	// Get the Beacon block
 	block, exists, err := c.getBeaconBlock(blockId)
@@ -472,7 +473,7 @@ func (c *StandardHttpClient) GetAttestations(blockId string) ([]beacon.Attestati
 	return attestationInfo, true, nil
 }
 
-func (c *StandardHttpClient) GetBeaconBlock(blockId string) (beacon.BeaconBlock, bool, error) {
+func (c *StandardHttpClient) GetBeaconBlock(blockId uint64) (beacon.BeaconBlock, bool, error) {
 	block, exists, err := c.getBeaconBlock(blockId)
 	if err != nil {
 		return beacon.BeaconBlock{}, false, err
@@ -495,7 +496,7 @@ func (c *StandardHttpClient) GetBeaconBlock(blockId string) (beacon.BeaconBlock,
 		}
 		info.AggregationBits, err = hex.DecodeString(bitString)
 		if err != nil {
-			return beacon.BeaconBlock{}, false, fmt.Errorf("decoding aggregation bits for attestation %d of block %s err: %w", i, blockId, err)
+			return beacon.BeaconBlock{}, false, fmt.Errorf("decoding aggregation bits for attestation %d of block %d err: %w", i, blockId, err)
 		}
 		beaconBlock.Attestations = append(beaconBlock.Attestations, info)
 	}
@@ -506,7 +507,7 @@ func (c *StandardHttpClient) GetBeaconBlock(blockId string) (beacon.BeaconBlock,
 		bitString := utils.RemovePrefix(block.Data.Message.Body.SyncAggregate.SyncCommitteeBits)
 		syncAggregate.SyncCommitteeBits, err = hex.DecodeString(bitString)
 		if err != nil {
-			return beacon.BeaconBlock{}, false, fmt.Errorf("decoding aggregation bits for SyncCommitteeBits of block %s err: %w", blockId, err)
+			return beacon.BeaconBlock{}, false, fmt.Errorf("decoding aggregation bits for SyncCommitteeBits of block %d err: %w", blockId, err)
 		}
 		syncAggregate.SyncCommitteeSignature = block.Data.Message.Body.SyncAggregate.SyncCommitteeSignature
 
@@ -845,7 +846,7 @@ func (c *StandardHttpClient) getAttestations(blockId string) (AttestationsRespon
 }
 
 // Get the target beacon block
-func (c *StandardHttpClient) getBeaconBlock(blockId string) (BeaconBlockResponse, bool, error) {
+func (c *StandardHttpClient) getBeaconBlock(blockId uint64) (BeaconBlockResponse, bool, error) {
 	responseBody, status, err := c.getRequest(fmt.Sprintf(RequestBeaconBlockPath, blockId))
 	if err != nil {
 		return BeaconBlockResponse{}, false, fmt.Errorf("could not get beacon block data: %w", err)

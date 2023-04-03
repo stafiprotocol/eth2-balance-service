@@ -166,7 +166,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 			}
 
 			// cal total withdrawal
-			totalWithdrawal, err := dao_node.GetValidatorTotalWithdrawal(task.db, validator.ValidatorIndex)
+			totalWithdrawal, err := dao_node.GetValidatorTotalWithdrawalBeforeSlot(task.db, validator.ValidatorIndex, utils.StartSlotOfEpoch(task.eth2Config, finalEpoch))
 			if err != nil {
 				return err
 			}
@@ -196,13 +196,14 @@ func (task *Task) syncValidatorLatestInfo() error {
 	if err != nil {
 		return err
 	}
-	// distributed: withdrawdone && latest Distribute withdraw Height >  latest ValidatorWithdrawal.BlockNumber
+	// tag distributed: withdrawDone && latest Distribute withdraw Height >  latest ValidatorWithdrawal.BlockNumber
 	for _, val := range needCheckDistributedValidatorList {
 		latestWithdrawal, err := dao_node.GetValidatorLatestWithdrawal(task.db, val.ValidatorIndex)
 		if err != nil {
 			logrus.Warnf("GetValidatorLatestWithdrawal failed, val: %d", val.ValidatorIndex)
 			continue
 		}
+		// ensure withdrawDone
 		if latestWithdrawal.Slot < utils.StartSlotOfEpoch(task.eth2Config, val.WithdrawableEpoch) {
 			continue
 		}
@@ -229,7 +230,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		}
 	}
 
-	//----- ever slashed
+	//----- tag validator ever slashed: ever slashed by protocol
 	allValidatorList, err := dao_node.GetAllValidatorList(task.db)
 	if err != nil {
 		return err
@@ -240,7 +241,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 			return err
 		}
 		if slashAmount > 0 {
-			val.EverSlashed = 1
+			val.EverSlashed = utils.ValidatorEverSlashedTrue
 			err = dao_node.UpOrInValidator(task.db, val)
 			if err != nil {
 				return err

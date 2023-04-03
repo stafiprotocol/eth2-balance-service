@@ -83,37 +83,45 @@ func (task *Task) syncEth2BlockInfo() error {
 		// sync slash of type 4 (sync committee miss)
 		// sync slash of type 5 (attester miss)
 		g.Go(func() error {
-			rewardsMap, err := task.connection.GetRewardsForEpoch(willUseEpoch)
-			if err != nil {
-				return err
-			}
 			validatorList, err := dao_node.GetAllValidatorList(task.db)
 			if err != nil {
 				return err
 			}
+			valIndexes := make([]uint64, 0)
 			for _, val := range validatorList {
-				// skip not active vals
-				if val.ValidatorIndex == 0 {
+				// skip not active vals at target epoch
+				if val.ValidatorIndex == 0 ||
+					val.ActiveEpoch == 0 ||
+					val.ActiveEpoch < willUseEpoch ||
+					val.ExitEpoch >= willUseEpoch {
 					continue
 				}
 
-				if reward, exist := rewardsMap[val.ValidatorIndex]; exist {
-					attesterPenalty := reward.AttestationSourcePenalty + reward.AttestationTargetPenalty
-					if attesterPenalty > 0 {
-						err := task.saveAttesterMissEvent(utils.StartSlotOfEpoch(task.eth2Config, willUseEpoch), willUseEpoch, val.ValidatorIndex, attesterPenalty)
-						if err != nil {
-							return err
-						}
-					}
+				valIndexes = append(valIndexes, val.ValidatorIndex)
+			}
 
-					if reward.SyncCommitteePenalty > 0 {
-						err := task.saveSyncMissEvent(utils.StartSlotOfEpoch(task.eth2Config, willUseEpoch), willUseEpoch, val.ValidatorIndex, reward.SyncCommitteePenalty)
-						if err != nil {
-							return err
-						}
+			rewardsMap, err := task.connection.GetRewardsForEpochWithValidators(willUseEpoch, valIndexes)
+			if err != nil {
+				return err
+			}
+
+			for valIndex, reward := range rewardsMap {
+				attesterPenalty := reward.AttestationSourcePenalty + reward.AttestationTargetPenalty
+				if attesterPenalty > 0 {
+					err := task.saveAttesterMissEvent(utils.StartSlotOfEpoch(task.eth2Config, willUseEpoch), willUseEpoch, valIndex, attesterPenalty)
+					if err != nil {
+						return err
+					}
+				}
+
+				if reward.SyncCommitteePenalty > 0 {
+					err := task.saveSyncMissEvent(utils.StartSlotOfEpoch(task.eth2Config, willUseEpoch), willUseEpoch, valIndex, reward.SyncCommitteePenalty)
+					if err != nil {
+						return err
 					}
 				}
 			}
+
 			return nil
 		})
 
@@ -138,7 +146,7 @@ func (task *Task) syncEth2BlockInfo() error {
 // sync proposaled block
 // sync voluntary exit msg
 func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncCommittees []beacon.SyncCommittee) error {
-	beaconBlock, exist, err := task.connection.GetBeaconBlock(fmt.Sprintf("%d", slot))
+	beaconBlock, exist, err := task.connection.GetBeaconBlock(slot)
 	if err != nil {
 		return errors.Wrap(err, "GetBeaconBlock")
 	}

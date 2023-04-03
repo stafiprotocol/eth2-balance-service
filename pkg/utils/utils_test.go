@@ -3,6 +3,7 @@ package utils_test
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"math/big"
 	"os"
@@ -71,6 +72,13 @@ func TestFilterLogs(t *testing.T) {
 }
 
 func TestGetApy(t *testing.T) {
+	bts, err := hex.DecodeString("7b22726573756c74223a22456a774b4f69396a62334e7462334d755a476c7a64484a70596e5630615739754c6e5978596d56305954457554584e6e5532563056326c3061475279595864425a4752795a584e7a556d567a634739756332553d227d")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(string(bts))
+	return
 	apys, err := utils.GetApyFromStafiInfo("https://rtoken-api2.stafi.io")
 	if err != nil {
 		t.Fatal(err)

@@ -56,6 +56,11 @@ const (
 )
 
 const (
+	ValidatorEverSlashedFalse = uint8(0)
+	ValidatorEverSlashedTrue  = uint8(1)
+)
+
+const (
 	FeePool          = uint8(1)
 	SuperNodeFeePool = uint8(2)
 )

@@ -10,6 +10,7 @@ import (
 	// "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"github.com/stafiprotocol/eth2-balance-service/shared"
 	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
@@ -43,7 +44,7 @@ func TestCallOpts(t *testing.T) {
 	}
 	t.Log(gasPrice.String(), gasTip.String())
 
-	beaconBlock, exist, err := c.GetBeaconBlock(fmt.Sprint(5145404))
+	beaconBlock, exist, err := c.GetBeaconBlock(5145404)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +53,8 @@ func TestCallOpts(t *testing.T) {
 }
 
 func TestBlockReward(t *testing.T) {
-	c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beaconcha-rpc2.stafi.io", nil, nil, nil)
+	// c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beaconcha-rpc2.stafi.io", nil, nil, nil)
+	c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,18 +99,31 @@ func TestBlockReward(t *testing.T) {
 }
 
 func TestBlockDetail(t *testing.T) {
-
+	logrus.SetLevel(logrus.DebugLevel)
 	// c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
-	c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon-lighthouse-zhejiang.stafi.io", nil, nil, nil)
+	c, err := shared.NewConnection("https://mainnet.infura.io/v3/4d058381a4d64d31b00a4e15df3ddb94", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	rewards, err := c.GetRewardsForEpoch(152)
+	epoch := uint64(165126)
+	// arewards, err := c.Eth2Client().AttestationRewardsWithVals(epoch, []string{"347967", "480434"})
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// for _, r := range arewards.Data.TotalRewards {
+	// 	t.Log(r)
+	// }
+
+	vals := []uint64{347967, 347967, 480434}
+	rewards, err := c.GetRewardsForEpochWithValidators(epoch, vals)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(len(rewards))
-	t.Log(rewards[18182].String())
+	for _, val := range vals {
+		t.Logf("%+v", rewards[val])
+	}
+	return
 
 	balance, err := c.Eth2Client().Balance(77999, 61730)
 	if err != nil {
@@ -141,7 +156,7 @@ func TestBlockDetail(t *testing.T) {
 
 	}
 
-	beaconBlock, _, err := c.Eth2Client().GetBeaconBlock(fmt.Sprintf("%d", 199214))
+	beaconBlock, _, err := c.Eth2Client().GetBeaconBlock(199214)
 	if err != nil {
 		t.Fatal(err)
 	}

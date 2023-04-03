@@ -262,7 +262,7 @@ func (c *Connection) GetValidatorStatuses(pubkeys []types.ValidatorPubkey, opts 
 
 }
 
-func (c *Connection) GetBeaconBlock(blockId string) (beacon.BeaconBlock, bool, error) {
+func (c *Connection) GetBeaconBlock(blockId uint64) (beacon.BeaconBlock, bool, error) {
 	var retErr error
 	for i := 0; i < retryLimit; i++ {
 		status, ok, err := c.eth2Client.GetBeaconBlock(blockId)
@@ -420,7 +420,7 @@ func (c *Connection) GetRewardsForEpoch(epoch uint64) (map[uint64]*client.Valida
 	endSlot := startSlot + slotsPerEpoch - 1
 
 	g := new(errgroup.Group)
-	g.SetLimit(32)
+	g.SetLimit(16)
 
 	slotsToProposerIndex := make(map[uint64]uint64)
 	for _, pa := range proposerAssignments.Data {
@@ -510,6 +510,178 @@ func (c *Connection) GetRewardsForEpoch(epoch uint64) (map[uint64]*client.Valida
 
 	g.Go(func() error {
 		ar, err := c.eth2Client.AttestationRewards(epoch)
+		if err != nil {
+			return err
+		}
+		rewardsMux.Lock()
+		defer rewardsMux.Unlock()
+		for _, ar := range ar.Data.TotalRewards {
+			if rewards[ar.ValidatorIndex] == nil {
+				rewards[ar.ValidatorIndex] = &client.ValidatorEpochIncome{}
+			}
+
+			if ar.Head >= 0 {
+				rewards[ar.ValidatorIndex].AttestationHeadReward = uint64(ar.Head)
+			} else {
+				return fmt.Errorf("retrieved negative attestation head reward for validator %v: %v", ar.ValidatorIndex, ar.Head)
+			}
+
+			if ar.Source > 0 {
+				rewards[ar.ValidatorIndex].AttestationSourceReward = uint64(ar.Source)
+			} else {
+				rewards[ar.ValidatorIndex].AttestationSourcePenalty = uint64(ar.Source * -1)
+			}
+
+			if ar.Target > 0 {
+				rewards[ar.ValidatorIndex].AttestationTargetReward = uint64(ar.Target)
+			} else {
+				rewards[ar.ValidatorIndex].AttestationTargetPenalty = uint64(ar.Target * -1)
+			}
+
+			if ar.InclusionDelay <= 0 {
+				rewards[ar.ValidatorIndex].FinalityDelayPenalty = uint64(ar.InclusionDelay * -1)
+			} else {
+				return fmt.Errorf("retrieved positive inclusion delay penalty for validator %v: %v", ar.ValidatorIndex, ar.InclusionDelay)
+			}
+		}
+
+		return nil
+	})
+
+	err = g.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	return rewards, nil
+}
+
+// if validator not exist on beacon chain will return err
+// if exit after epoch will return zero reward
+func (c *Connection) GetRewardsForEpochWithValidators(epoch uint64, valIndexs []uint64) (map[uint64]*client.ValidatorEpochIncome, error) {
+	valIndexStrs := make([]string, 0)
+	valIndexMap := make(map[uint64]bool)
+	for _, index := range valIndexs {
+		if !valIndexMap[index] {
+			valIndexStrs = append(valIndexStrs, fmt.Sprintf("%d", index))
+			valIndexMap[index] = true
+		}
+	}
+
+	logrus.Debug("GetRewardsForEpochWithValidators", valIndexStrs)
+
+	proposerAssignments, err := c.eth2Client.ProposerAssignments(epoch)
+	if err != nil {
+		return nil, fmt.Errorf("client.ProposerAssignments %s", err)
+	}
+
+	slotsPerEpoch := uint64(len(proposerAssignments.Data))
+
+	startSlot := epoch * slotsPerEpoch
+	endSlot := startSlot + slotsPerEpoch - 1
+
+	g := new(errgroup.Group)
+	g.SetLimit(16)
+
+	slotsToProposerIndex := make(map[uint64]uint64)
+	for _, pa := range proposerAssignments.Data {
+		slotsToProposerIndex[uint64(pa.Slot)] = uint64(pa.ValidatorIndex)
+	}
+
+	rewardsMux := &sync.Mutex{}
+
+	rewards := make(map[uint64]*client.ValidatorEpochIncome)
+
+	for i := startSlot + 1; i <= endSlot; i++ {
+		i := i
+
+		g.Go(func() error {
+			proposer, found := slotsToProposerIndex[i]
+			if !found {
+				return fmt.Errorf("assigned proposer for slot %v not found", i)
+			}
+
+			// get sync rewards
+			syncRewards, err := c.eth2Client.SyncCommitteeRewards(i)
+			if err != nil {
+				if err != client.ErrSlotPreSyncCommittees {
+					return fmt.Errorf("client.SyncCommitteeRewards %s", err)
+				}
+			}
+
+			rewardsMux.Lock()
+			if syncRewards != nil {
+				for _, sr := range syncRewards.Data {
+					if !valIndexMap[proposer] {
+						continue
+					}
+
+					if rewards[sr.ValidatorIndex] == nil {
+						rewards[sr.ValidatorIndex] = &client.ValidatorEpochIncome{}
+					}
+
+					if sr.Reward > 0 {
+						rewards[sr.ValidatorIndex].SyncCommitteeReward += uint64(sr.Reward)
+					} else {
+						rewards[sr.ValidatorIndex].SyncCommitteePenalty += uint64(sr.Reward * -1)
+					}
+				}
+			}
+			rewardsMux.Unlock()
+
+			if !valIndexMap[proposer] {
+				return nil
+			}
+
+			// get proposer fee reward
+			execBlockNumber, err := c.eth2Client.ExecutionBlockNumber(i)
+			rewardsMux.Lock()
+			if rewards[proposer] == nil {
+				rewards[proposer] = &client.ValidatorEpochIncome{}
+			}
+			rewardsMux.Unlock()
+			if err != nil {
+				if err == client.ErrBlockNotFound {
+					rewardsMux.Lock()
+					rewards[proposer].ProposalsMissed += 1
+					rewardsMux.Unlock()
+					return nil
+				} else if err != client.ErrSlotPreMerge { // ignore
+					logrus.Errorf("error retrieving execution block number for slot %v: %v", i, err)
+					return err
+				}
+			} else {
+				txFeeIncome, err := c.GetELRewardForBlock(execBlockNumber)
+				if err != nil {
+					return fmt.Errorf("elrewards.GetELRewardForBlock %s", err)
+				}
+
+				rewardsMux.Lock()
+				rewards[proposer].TxFeeRewardWei = txFeeIncome.Bytes()
+				rewardsMux.Unlock()
+			}
+
+			// get proposer block rewards
+			blockRewards, err := c.eth2Client.BlockRewards(i)
+			if err != nil {
+				return fmt.Errorf("client.BlockRewards %s", err)
+			}
+
+			rewardsMux.Lock()
+			if rewards[blockRewards.Data.ProposerIndex] == nil {
+				rewards[blockRewards.Data.ProposerIndex] = &client.ValidatorEpochIncome{}
+			}
+			rewards[blockRewards.Data.ProposerIndex].ProposerAttestationInclusionReward += blockRewards.Data.Attestations
+			rewards[blockRewards.Data.ProposerIndex].ProposerSlashingInclusionReward += blockRewards.Data.AttesterSlashings + blockRewards.Data.ProposerSlashings
+			rewards[blockRewards.Data.ProposerIndex].ProposerSyncInclusionReward += blockRewards.Data.SyncAggregate
+			rewardsMux.Unlock()
+			return nil
+		})
+	}
+
+	g.Go(func() error {
+		// get attestion reward
+		ar, err := c.eth2Client.AttestationRewardsWithVals(epoch, valIndexStrs)
 		if err != nil {
 			return err
 		}
