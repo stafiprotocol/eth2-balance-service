@@ -22,10 +22,7 @@ func (task *Task) calcMerkleTree() error {
 		return err
 	}
 
-	// todo mainnet config
-	calMerkleTreeDu := task.rewardEpochInterval // 8 hours for test
-
-	targetEpoch := (beaconHead.FinalizedEpoch / calMerkleTreeDu) * calMerkleTreeDu
+	targetEpoch := (beaconHead.FinalizedEpoch / task.calMerkleTreeDu) * task.calMerkleTreeDu
 
 	rootHash, err := dao_node.GetRootHash(task.db, targetEpoch)
 	if err != nil && err != gorm.ErrRecordNotFound {

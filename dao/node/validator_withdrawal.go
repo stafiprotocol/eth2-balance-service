@@ -41,6 +41,12 @@ func GetValidatorLatestWithdrawal(db *db.WrapDb, valIndex uint64) (c *ValidatorW
 	return
 }
 
+func GetValidatorFirstWithdrawal(db *db.WrapDb, valIndex uint64) (c *ValidatorWithdrawal, err error) {
+	c = &ValidatorWithdrawal{}
+	err = db.Order("block_number asc").Take(c, "validator_index = ?", valIndex).Error
+	return
+}
+
 func GetValidatorWithdrawalsBetween(db *db.WrapDb, startBlock, endBlock uint64) (c []*ValidatorWithdrawal, err error) {
 	err = db.Find(&c, "block_number > ? and block_number <= ?", startBlock, endBlock).Error
 	return

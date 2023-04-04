@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"sort"
 	"testing"
 
 	// "github.com/ethereum/go-ethereum/common"
@@ -99,12 +100,21 @@ func TestBlockReward(t *testing.T) {
 }
 
 func TestBlockDetail(t *testing.T) {
+	s := make([]int64, 0)
+	sort.SliceStable(s, func(i, j int) bool { return s[i] < s[j] })
+
 	logrus.SetLevel(logrus.DebugLevel)
 	// c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
 	c, err := shared.NewConnection("https://mainnet.infura.io/v3/4d058381a4d64d31b00a4e15df3ddb94", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	re, err := c.Eth1Client().TransactionReceipt(context.Background(), common.HexToHash("0xdd897ec9e7eb8f43ec25def8025b1ca7f1b61a42db726f2371adbe878464d7e8"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(re.Status)
+	return
 	epoch := uint64(165126)
 	// arewards, err := c.Eth2Client().AttestationRewardsWithVals(epoch, []string{"347967", "480434"})
 	// if err != nil {

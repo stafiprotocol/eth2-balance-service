@@ -30,17 +30,20 @@ import (
 )
 
 type Task struct {
-	taskTicker             int64
-	stop                   chan struct{}
-	eth1Endpoint           string
-	eth2Endpoint           string
-	keyPair                *secp256k1.Keypair
-	gasLimit               *big.Int
-	maxGasPrice            *big.Int
-	storageContractAddress common.Address
-	rewardEpochInterval    uint64
-	version                string
-	rewardV1EndEpoch       uint64
+	taskTicker                             int64
+	stop                                   chan struct{}
+	eth1Endpoint                           string
+	eth2Endpoint                           string
+	keyPair                                *secp256k1.Keypair
+	gasLimit                               *big.Int
+	maxGasPrice                            *big.Int
+	storageContractAddress                 common.Address
+	rewardEpochInterval                    uint64
+	version                                string
+	rewardV1EndEpoch                       uint64
+	distributeFeeInitDealedHeight          int64 // dealedHeight is zero after upgrade new contract
+	distributeSuperNodeFeeInitDealedHeight int64
+	distributeWithdrawalInitDealedHeight   int64
 
 	// need init on start()
 	connection           *shared.Connection
@@ -69,9 +72,6 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("contracts address err")
 	}
-	if cfg.RewardEpochInterval != 75 {
-		return nil, fmt.Errorf("illegal RewardEpochInterval: %d", cfg.RewardEpochInterval)
-	}
 
 	gasLimitDeci, err := decimal.NewFromString(cfg.GasLimit)
 	if err != nil {
@@ -96,19 +96,30 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 	}
 
 	s := &Task{
-		taskTicker:             15,
-		stop:                   make(chan struct{}),
-		db:                     dao,
-		keyPair:                keyPair,
-		eth1Endpoint:           cfg.Eth1Endpoint,
-		eth2Endpoint:           cfg.Eth2Endpoint,
-		gasLimit:               gasLimitDeci.BigInt(),
-		maxGasPrice:            maxGasPriceDeci.BigInt(),
-		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
-		rewardEpochInterval:    cfg.RewardEpochInterval,
-		version:                cfg.Version,
-		rewardV1EndEpoch:       75,
+		taskTicker:                             15,
+		stop:                                   make(chan struct{}),
+		db:                                     dao,
+		keyPair:                                keyPair,
+		eth1Endpoint:                           cfg.Eth1Endpoint,
+		eth2Endpoint:                           cfg.Eth2Endpoint,
+		gasLimit:                               gasLimitDeci.BigInt(),
+		maxGasPrice:                            maxGasPriceDeci.BigInt(),
+		storageContractAddress:                 common.HexToAddress(cfg.Contracts.StorageContractAddress),
+		rewardEpochInterval:                    utils.RewardEpochInterval,
+		version:                                cfg.Version,
+		rewardV1EndEpoch:                       utils.RewardV1EndEpoch,
+		distributeFeeInitDealedHeight:          1, //todo mainnet config
+		distributeSuperNodeFeeInitDealedHeight: 1,
+		distributeWithdrawalInitDealedHeight:   1,
 	}
+
+	if cfg.Version == utils.Dev {
+		s.rewardV1EndEpoch = 750
+		s.distributeFeeInitDealedHeight = 1
+		s.distributeSuperNodeFeeInitDealedHeight = 1
+		s.distributeWithdrawalInitDealedHeight = 1
+	}
+
 	return s, nil
 }
 
@@ -291,11 +302,26 @@ func (task *Task) waitTxOk(txHash common.Hash) error {
 	for {
 		if retry > utils.RetryLimit {
 			utils.ShutdownRequestChannel <- struct{}{}
-			return fmt.Errorf("networkBalancesContract.SubmitBalances tx reach retry limit")
+			return fmt.Errorf("waitTxOk reach retry limit")
 		}
 		tx, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), txHash)
 		if err == nil && !pending {
-			break
+			receipt, err := task.connection.Eth1Client().TransactionReceipt(context.Background(), txHash)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"err":  err.Error(),
+					"hash": tx.Hash(),
+				}).Warn("tx TransactionReceipt")
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			if receipt.Status == 1 { //success
+				break
+			} else { //failed
+				utils.ShutdownRequestChannel <- struct{}{}
+				return fmt.Errorf("tx %s failed", txHash)
+			}
 		} else {
 			if err != nil {
 				logrus.WithFields(logrus.Fields{

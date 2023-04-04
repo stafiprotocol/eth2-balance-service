@@ -77,6 +77,10 @@ func (task *Task) checkStateForDistriSuperNodeFeePool() (uint64, uint64, bool, e
 	if err != nil {
 		return 0, 0, false, err
 	}
+	// init case
+	if latestDistributeHeight.Uint64() == 0 {
+		latestDistributeHeight = big.NewInt(task.distributeSuperNodeFeeInitDealedHeight)
+	}
 
 	if latestDistributeHeight.Uint64() >= targetEth1BlockHeight {
 		logrus.Debug("latestDistributeHeight >= targetEth1BlockHeight")
@@ -143,7 +147,7 @@ func (task Task) getUserNodePlatformFromSuperNodeFeePool(latestDistributeHeight,
 
 		// cal rewards
 		var userRewardDeci, nodeRewardDeci, platformFeeDeci = decimal.Zero, decimal.Zero, decimal.Zero
-		if w.Slot <= utils.StartSlotOfEpoch(task.eth2Config, task.rewardV1EndEpoch)+31 {
+		if w.Slot <= utils.StartSlotOfEpoch(task.eth2Config, task.rewardV1EndEpoch) {
 			userRewardDeci, nodeRewardDeci, platformFeeDeci = utils.GetUserNodePlatformRewardV1(validator.NodeDepositAmount, feeAmountDeci)
 		} else {
 

@@ -23,7 +23,6 @@ func (task *Task) distributeFeePool() error {
 		return nil
 	}
 
-	// todo deal init state latestDistributeHeight == 0 on mainnet
 	// ----1 cal eth(from withdrawals) of user/node/platform
 	totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, err := task.getUserNodePlatformFromFeePool(latestDistributeHeight, targetEth1BlockHeight)
 	if err != nil {
@@ -78,6 +77,10 @@ func (task *Task) checkStateForDistriFeePool() (uint64, uint64, bool, error) {
 	latestDistributeHeight, err := task.distributorContract.GetDistributeFeeDealedHeight(task.connection.CallOpts(nil))
 	if err != nil {
 		return 0, 0, false, err
+	}
+	// init case
+	if latestDistributeHeight.Uint64() == 0 {
+		latestDistributeHeight = big.NewInt(task.distributeFeeInitDealedHeight)
 	}
 
 	if latestDistributeHeight.Uint64() >= targetEth1BlockHeight {
@@ -145,13 +148,13 @@ func (task Task) getUserNodePlatformFromFeePool(latestDistributeHeight, targetEt
 
 		// cal rewards
 		var userRewardDeci, nodeRewardDeci, platformFeeDeci = decimal.Zero, decimal.Zero, decimal.Zero
-		if w.Slot <= utils.StartSlotOfEpoch(task.eth2Config, task.rewardV1EndEpoch)+31 {
+		if w.Slot <= utils.StartSlotOfEpoch(task.eth2Config, task.rewardV1EndEpoch) {
 			userRewardDeci, nodeRewardDeci, platformFeeDeci = utils.GetUserNodePlatformRewardV1(validator.NodeDepositAmount, feeAmountDeci)
 		} else {
 
 			userRewardDeci, nodeRewardDeci, platformFeeDeci = utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, feeAmountDeci)
 		}
-		
+
 		// cal reward + deposit
 		totalUserEthDeci = totalUserEthDeci.Add(userRewardDeci)
 		totalNodeEthDeci = totalNodeEthDeci.Add(nodeRewardDeci)

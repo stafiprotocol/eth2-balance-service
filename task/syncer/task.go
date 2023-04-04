@@ -46,10 +46,11 @@ type Task struct {
 	eth2Endpoint           string
 	storageContractAddress common.Address
 	rewardEpochInterval    uint64 //75
+	calMerkleTreeDu        uint64 //75
 	version                string
 	rewardV1EndEpoch       uint64
 	// for eth2 block syncer
-	slashStartEpoch uint64
+	eth2BlockStartEpoch uint64
 
 	// --- need init on start
 	db                      *db.WrapDb
@@ -75,9 +76,6 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("contracts address fmt err")
 	}
-	if cfg.RewardEpochInterval != 75 {
-		return nil, fmt.Errorf("illegal RewardEpochInterval: %d", cfg.RewardEpochInterval)
-	}
 
 	switch cfg.Version {
 	case utils.V1, utils.V2, utils.Dev:
@@ -94,14 +92,17 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		eth2Endpoint:    cfg.Eth2Endpoint,
 
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
-		rewardEpochInterval:    cfg.RewardEpochInterval,
+		rewardEpochInterval:    utils.RewardEpochInterval,
 		version:                cfg.Version,
-		rewardV1EndEpoch:       75,
-		slashStartEpoch:        cfg.SlashStartEpoch,
+		rewardV1EndEpoch:       utils.RewardV1EndEpoch,
+		calMerkleTreeDu:        utils.RewardEpochInterval,
+		eth2BlockStartEpoch:    utils.TheMergeEpoch,
 	}
 
 	if cfg.Version == utils.Dev {
 		s.eth1StartHeight = devStartBlocHeight
+		s.eth2BlockStartEpoch = devStartEpoch
+		s.rewardV1EndEpoch = 750
 	}
 
 	return s, nil
@@ -404,7 +405,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 			return err
 		}
 
-		eth2BlockSyncerMetaData.DealedEpoch = task.slashStartEpoch
+		eth2BlockSyncerMetaData.DealedEpoch = task.eth2BlockStartEpoch
 		eth2BlockSyncerMetaData.MetaType = utils.MetaTypeEth2BlockSyncer
 
 		err = dao.UpOrInMetaData(task.db, eth2BlockSyncerMetaData)
@@ -412,8 +413,8 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 			return err
 		}
 	} else {
-		if task.slashStartEpoch > eth2BlockSyncerMetaData.DealedEpoch {
-			eth2BlockSyncerMetaData.DealedEpoch = task.slashStartEpoch
+		if task.eth2BlockStartEpoch > eth2BlockSyncerMetaData.DealedEpoch {
+			eth2BlockSyncerMetaData.DealedEpoch = task.eth2BlockStartEpoch
 			err = dao.UpOrInMetaData(task.db, eth2BlockSyncerMetaData)
 			if err != nil {
 				return err

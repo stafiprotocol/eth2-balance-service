@@ -41,9 +41,6 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("contracts address fmt err")
 	}
-	if cfg.RewardEpochInterval == 0 {
-		return nil, fmt.Errorf("reward epoch interval is zero")
-	}
 
 	s := &Task{
 		taskTicker:       10,
@@ -54,7 +51,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		eth2Endpoint:     cfg.Eth2Endpoint,
 
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
-		rewardEpochInterval:    cfg.RewardEpochInterval,
+		rewardEpochInterval:    utils.RewardEpochInterval,
 	}
 	return s, nil
 }

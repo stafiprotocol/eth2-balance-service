@@ -231,7 +231,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}
 
 	//----- tag validator ever slashed: ever slashed by protocol
-	allValidatorList, err := dao_node.GetAllValidatorList(task.db) 
+	allValidatorList, err := dao_node.GetAllValidatorList(task.db)
 	if err != nil {
 		return err
 	}

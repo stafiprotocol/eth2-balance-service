@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"gorm.io/gorm"
 )
 
 func (task *Task) notifyValidatorExit() error {
@@ -119,9 +120,12 @@ func (task *Task) notifyValidatorExit() error {
 	// got final total missing amount
 	finalTotalMissingAmountDeci := newTotalMissingAmountDeci.Sub(totalPendingExitedUserAmountDeci)
 
-	selectVal, err := task.selectValidatorsForExit(finalTotalMissingAmountDeci, targetEpoch)
+	selectVals, err := task.selectValidatorsForExit(finalTotalMissingAmountDeci, targetEpoch)
 	if err != nil {
 		return err
+	}
+	if len(selectVals) == 0 {
+		return fmt.Errorf("selectValidatorsForExit select zero vals, target epoch: %d", targetEpoch)
 	}
 
 	// cal start cycle
@@ -136,11 +140,11 @@ func (task *Task) notifyValidatorExit() error {
 	logrus.WithFields(logrus.Fields{
 		"startCycle": startCycle,
 		"preCycle":   preCycle,
-		"selectVal":  selectVal,
+		"selectVal":  selectVals,
 	}).Debug("will sendNotifyValidatorExitTx")
 
 	// ---- send NotifyValidatorExit tx
-	return task.sendNotifyExitTx(uint64(preCycle), uint64(startCycle), selectVal)
+	return task.sendNotifyExitTx(uint64(preCycle), uint64(startCycle), selectVals)
 }
 
 func (task *Task) sendReserveTx(preCycle uint64) error {
@@ -176,6 +180,7 @@ func (task *Task) sendNotifyExitTx(preCycle, startCycle uint64, selectVal []*big
 	return task.waitTxOk(tx.Hash())
 }
 
+// select validators to exit
 func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, targetEpoch uint64) ([]*big.Int, error) {
 	notExitValidatorList, err := dao_node.GetValidatorListActiveAndNotExit(task.db)
 	if err != nil {
@@ -185,16 +190,36 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 	soloValidtors := make([]*dao_node.Validator, 0)
 	superValidtors := make([]*dao_node.Validator, 0)
 	for _, val := range notExitValidatorList {
-		// must actived over one week
-		if val.ActiveEpoch+7*225 > targetEpoch {
+		// must actived over one month
+		if val.ActiveEpoch+30*225 > targetEpoch {
 			continue
 		}
+		uptime, err := dao_node.GetEjectorUptime(task.db, val.ValidatorIndex)
+		if err != nil {
+			if err != gorm.ErrRecordNotFound {
+				return nil, err
+			} else {
+				// skip if no uptime
+				continue
+			}
+		} else {
+			// skip if no uptime at latest day
+			if uptime.UploadTimestamp < uint64(time.Now().Unix()-24*60*60) {
+				continue
+			}
+		}
+
 		if val.NodeType == utils.NodeTypeCommon || val.NodeType == utils.NodeTypeLight {
 			soloValidtors = append(soloValidtors, val)
 		} else {
 			superValidtors = append(superValidtors, val)
 		}
 	}
+
+	logrus.WithFields(logrus.Fields{
+		"soloValidators len":  len(soloValidtors),
+		"superValidators len": len(superValidtors),
+	}).Info("waiting selected validators info")
 
 	sort.SliceStable(soloValidtors, func(i, j int) bool {
 		aprI, _ := dao_node.GetValidatorAprForAverageApr(task.db, soloValidtors[i].ValidatorIndex)

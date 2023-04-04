@@ -88,8 +88,11 @@ const (
 )
 
 const (
-	V1EndEpoch      = uint64(148000)
-	Eth1StartHeight = uint64(15572967)
+	V1EndEpoch          = uint64(148000)
+	Eth1StartHeight     = uint64(15572967)
+	TheMergeEpoch       = uint64(148896)
+	RewardV1EndEpoch    = uint64(1) //todo mainnet
+	RewardEpochInterval = uint64(75)
 
 	StandardEffectiveBalance            = uint64(32e9) //gwei
 	StandardSuperNodeFakeDepositBalance = uint64(1e9)  //gwei
@@ -280,23 +283,23 @@ func GetUserNodePlatformRewardV1(nodeDepositBalance uint64, rewardDeci decimal.D
 	userDepositBalance := StandardEffectiveBalance - nodeDepositBalance
 
 	// platform Fee
-	platformFeeDeci := rewardDeci.Mul(PlatformFeeV1Deci)
+	platformFeeDeci := rewardDeci.Mul(PlatformFeeV1Deci) // 10%
 
 	// node+user stake reward
-	nodeAndUserStakeRewardDeci := rewardDeci.Sub(platformFeeDeci)
+	nodeAndUserStakeRewardDeci := rewardDeci.Sub(platformFeeDeci) // 90%
 
 	// user stake reward
-	userStakeRewardDeci := nodeAndUserStakeRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(int64(StandardEffectiveBalance)))
+	userStakeRewardDeci := nodeAndUserStakeRewardDeci.Mul(decimal.NewFromInt(int64(userDepositBalance))).Div(decimal.NewFromInt(int64(StandardEffectiveBalance))) // 90%*(1 - nodedeposit/32)
 	// node stake reward
-	nodeStakeRewardDeci := nodeAndUserStakeRewardDeci.Sub(userStakeRewardDeci)
+	nodeStakeRewardDeci := nodeAndUserStakeRewardDeci.Sub(userStakeRewardDeci) // 90%*(nodedeposit/32)
 
 	// node commisson reward from user
-	nodeCommissionRewardFromUserDeci := userStakeRewardDeci.Mul(NodeFeeV1Deci)
+	nodeCommissionRewardFromUserDeci := userStakeRewardDeci.Mul(NodeFeeV1Deci) // 90%*(1 - nodedeposit/32)*10%
 
 	// user reward
-	userRewardDeci := userStakeRewardDeci.Sub(nodeCommissionRewardFromUserDeci)
+	userRewardDeci := userStakeRewardDeci.Sub(nodeCommissionRewardFromUserDeci) // 90%*(1 - nodedeposit/32)*90%
 	// node reward
-	nodeRewardDeci := nodeStakeRewardDeci.Add(nodeCommissionRewardFromUserDeci)
+	nodeRewardDeci := nodeStakeRewardDeci.Add(nodeCommissionRewardFromUserDeci) // // 90%*(nodedeposit/32) + 90%*(1 - nodedeposit/32)*10%
 
 	return userRewardDeci, nodeRewardDeci, platformFeeDeci
 

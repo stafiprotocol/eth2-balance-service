@@ -48,9 +48,8 @@ func startSyncerCmd() *cobra.Command {
   logLevel: %s
   eth1Endpoint: %s
   eth2Endpoint: %s
-  slashStartEpoch: %d
   storageAddress:%s`,
-				cfg.Version, cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.SlashStartEpoch, cfg.Contracts.StorageContractAddress)
+				cfg.Version, cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.Contracts.StorageContractAddress)
 
 			err = log.InitLogFile(cfg.LogFilePath + "/syncer")
 			if err != nil {

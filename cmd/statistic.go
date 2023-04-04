@@ -63,18 +63,14 @@ func statisticCmd() *cobra.Command {
 	eth1Endpoint: %s
 	eth2Endpoint: %s
 	storageAddress:%s
-	eraCount:%d
-	rewardEpochInterval:%d`,
+	eraCount:%d`,
 				cfg.LogFilePath, logLevelStr,
 				cfg.Eth1Endpoint, cfg.Eth2Endpoint,
 				cfg.Contracts.StorageContractAddress,
-				cfg.EraCount, cfg.RewardEpochInterval)
+				cfg.EraCount)
 
 			if cfg.EraCount == 0 {
 				cfg.EraCount = 22
-			}
-			if cfg.RewardEpochInterval == 0 {
-				cfg.RewardEpochInterval = 75
 			}
 
 			statisticFilePath := cfg.LogFilePath + "/statistic_info.txt"
@@ -274,10 +270,10 @@ func statisticCmd() *cobra.Command {
 			}
 
 			for i := uint64(0); i < cfg.EraCount; i++ {
-				if eth2BalanceSyncerMetaData.DealedEpoch < i*cfg.RewardEpochInterval {
+				if eth2BalanceSyncerMetaData.DealedEpoch < i*utils.RewardEpochInterval {
 					break
 				}
-				willDealEpoch := eth2BalanceSyncerMetaData.DealedEpoch - i*cfg.RewardEpochInterval
+				willDealEpoch := eth2BalanceSyncerMetaData.DealedEpoch - i*utils.RewardEpochInterval
 
 				// get validator balance list
 				valBalanceList, err := dao_node.GetValidatorBalanceListByEpoch(db, willDealEpoch)
