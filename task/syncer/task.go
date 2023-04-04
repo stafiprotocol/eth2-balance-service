@@ -2,6 +2,7 @@ package task_syncer
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -47,8 +48,8 @@ type Task struct {
 	storageContractAddress common.Address
 	rewardEpochInterval    uint64 //75
 	calMerkleTreeDu        uint64 //75
-	version                string
 	rewardV1EndEpoch       uint64
+	dev                    bool
 	// for eth2 block syncer
 	eth2BlockStartEpoch uint64
 
@@ -77,12 +78,6 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		return nil, fmt.Errorf("contracts address fmt err")
 	}
 
-	switch cfg.Version {
-	case utils.V1, utils.V2, utils.Dev:
-	default:
-		return nil, fmt.Errorf("unsupport version: %s", cfg.Version)
-	}
-
 	s := &Task{
 		taskTicker:      15,
 		stop:            make(chan struct{}),
@@ -93,16 +88,9 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:    utils.RewardEpochInterval,
-		version:                cfg.Version,
 		rewardV1EndEpoch:       utils.RewardV1EndEpoch,
 		calMerkleTreeDu:        utils.RewardEpochInterval,
 		eth2BlockStartEpoch:    utils.TheMergeEpoch,
-	}
-
-	if cfg.Version == utils.Dev {
-		s.eth1StartHeight = devStartBlocHeight
-		s.eth2BlockStartEpoch = devStartEpoch
-		s.rewardV1EndEpoch = 750
 	}
 
 	return s, nil
@@ -114,6 +102,25 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
+	chainId, err := task.connection.Eth1Client().ChainID(context.Background())
+	if err != nil {
+		return err
+	}
+	switch chainId.Uint64() {
+	case 1:
+		task.dev = false
+	case 1337803: //zhejiang
+		task.dev = true
+	default:
+		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
+	}
+
+	if task.dev {
+		task.eth1StartHeight = devStartBlocHeight
+		task.eth2BlockStartEpoch = devStartEpoch
+		task.rewardV1EndEpoch = 750
+	}
+
 	task.eth2Config, err = task.connection.Eth2Client().GetEth2Config()
 	if err != nil {
 		return err
@@ -221,53 +228,51 @@ func (task *Task) initContract() error {
 	}
 
 	// v1 has no contracts below
-	if task.version != utils.V1 {
-		lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
-		if err != nil {
-			return err
-		}
-		logrus.Debugf("stafiLightNode address: %s", lightNodeAddress.String())
-		task.lightNodeContract, err = light_node.NewLightNode(lightNodeAddress, task.connection.Eth1Client())
-		if err != nil {
-			return err
-		}
-		superNodeAddress, err := task.getContractAddress(storageContract, "stafiSuperNode")
-		if err != nil {
-			return err
-		}
-		logrus.Debugf("stafiSuperNode address: %s", superNodeAddress.String())
-		task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connection.Eth1Client())
-		if err != nil {
-			return err
-		}
-		superNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiSuperNodeFeePool")
-		if err != nil {
-			return err
-		}
-		task.superNodeFeePoolAddress = superNodeFeePoolAddress
+	lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
+	if err != nil {
+		return err
+	}
+	logrus.Debugf("stafiLightNode address: %s", lightNodeAddress.String())
+	task.lightNodeContract, err = light_node.NewLightNode(lightNodeAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+	superNodeAddress, err := task.getContractAddress(storageContract, "stafiSuperNode")
+	if err != nil {
+		return err
+	}
+	logrus.Debugf("stafiSuperNode address: %s", superNodeAddress.String())
+	task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+	superNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiSuperNodeFeePool")
+	if err != nil {
+		return err
+	}
+	task.superNodeFeePoolAddress = superNodeFeePoolAddress
 
-		lightNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiFeePool")
-		if err != nil {
-			return err
-		}
-		task.lightNodeFeePoolAddress = lightNodeFeePoolAddress
+	lightNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiFeePool")
+	if err != nil {
+		return err
+	}
+	task.lightNodeFeePoolAddress = lightNodeFeePoolAddress
 
-		withdrawAddress, err := task.getContractAddress(storageContract, "stafiWithdraw")
-		if err != nil {
-			return err
-		}
-		task.withdrawContract, err = withdraw.NewWithdraw(withdrawAddress, task.connection.Eth1Client())
-		if err != nil {
-			return err
-		}
-		stafiDistributorAddress, err := task.getContractAddress(storageContract, "stafiDistributor")
-		if err != nil {
-			return err
-		}
-		task.distributorContract, err = distributor.NewDistributor(stafiDistributorAddress, task.connection.Eth1Client())
-		if err != nil {
-			return err
-		}
+	withdrawAddress, err := task.getContractAddress(storageContract, "stafiWithdraw")
+	if err != nil {
+		return err
+	}
+	task.withdrawContract, err = withdraw.NewWithdraw(withdrawAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
+	stafiDistributorAddress, err := task.getContractAddress(storageContract, "stafiDistributor")
+	if err != nil {
+		return err
+	}
+	task.distributorContract, err = distributor.NewDistributor(stafiDistributorAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
 	}
 
 	nodeDepositAddress, err := task.getContractAddress(storageContract, "stafiNodeDeposit")
@@ -331,7 +336,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 	}
 
 	// only dev need, v1/v2 will init on v1Syncer
-	if task.version == utils.Dev {
+	if task.dev {
 		// init eth2ValidatorInfoSyncer metaData
 		validatorInfoMeta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 		if err != nil {

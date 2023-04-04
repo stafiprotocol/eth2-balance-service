@@ -45,29 +45,27 @@ func (task *Task) syncEth1Block() error {
 			return err
 		}
 		// v1 has no contracts below
-		if task.version != utils.V1 {
-			err = task.fetchNodeDepositEvents(subStart, subEnd)
-			if err != nil {
-				return err
-			}
+		err = task.fetchNodeDepositEvents(subStart, subEnd)
+		if err != nil {
+			return err
+		}
 
-			err = task.fetchLightNodeEvents(subStart, subEnd)
-			if err != nil {
-				return err
-			}
+		err = task.fetchLightNodeEvents(subStart, subEnd)
+		if err != nil {
+			return err
+		}
 
-			err = task.fetchSuperNodeEvents(subStart, subEnd)
-			if err != nil {
-				return err
-			}
-			err = task.fetchWithdrawContractEvents(subStart, subEnd)
-			if err != nil {
-				return err
-			}
-			err = task.fetchDistributorContractEvents(subStart, subEnd)
-			if err != nil {
-				return err
-			}
+		err = task.fetchSuperNodeEvents(subStart, subEnd)
+		if err != nil {
+			return err
+		}
+		err = task.fetchWithdrawContractEvents(subStart, subEnd)
+		if err != nil {
+			return err
+		}
+		err = task.fetchDistributorContractEvents(subStart, subEnd)
+		if err != nil {
+			return err
 		}
 
 		err = task.fetchRateUpdateEvents(subStart, subEnd)

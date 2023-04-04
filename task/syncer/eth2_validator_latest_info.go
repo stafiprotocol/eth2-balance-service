@@ -74,17 +74,11 @@ func (task *Task) syncValidatorLatestInfo() error {
 	}
 
 	willUsePubkeys := pubkeys
-	var validatorStatusMap map[types.ValidatorPubkey]beacon.ValidatorStatus
-	switch task.version {
-	case utils.V1, utils.V2, utils.Dev:
-		validatorStatusMap, err = task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
-			Epoch: &finalEpoch,
-		})
-		if err != nil {
-			return errors.Wrap(err, "syncValidatorLatestInfo GetValidatorStatuses failed")
-		}
-	default:
-		return fmt.Errorf("unsupported version %s", task.version)
+	validatorStatusMap, err := task.connection.GetValidatorStatuses(willUsePubkeys, &beacon.ValidatorStatusOptions{
+		Epoch: &finalEpoch,
+	})
+	if err != nil {
+		return errors.Wrap(err, "syncValidatorLatestInfo GetValidatorStatuses failed")
 	}
 
 	logrus.WithFields(logrus.Fields{

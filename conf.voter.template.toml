@@ -1,4 +1,3 @@
-RewardEpochInterval = 75
 enableDistribute = true
 eth1Endpoint = "https://rpc.zhejiang.ethpandaops.io"
 eth2Endpoint = "https://beacon.zhejiang.ethpandaops.io"
@@ -7,7 +6,6 @@ gasLimit = "3000000"
 keystorePath = "./keys"
 logFilePath = ""
 maxGasPrice = "60000000000"                             #wei
-version = "dev"                                         # v1 v2 dev
 
 [contracts]
 storageContractAddress = "0x126d3C08Fb282d5417793B7677E3F7DA8347A384"

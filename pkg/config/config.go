@@ -19,7 +19,6 @@ type Config struct {
 	KeystorePath            string
 	GasLimit                string
 	MaxGasPrice             string
-	Version                 string // v1/dev/v2
 	UnstakingStartTimestamp uint64 // used by api server
 	StafiInfoEndpoint       string // used by api server
 	RewardStartEpoch        uint64 // used by v1 syncer to fetch history epoch balance info from start epoch

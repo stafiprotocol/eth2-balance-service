@@ -33,7 +33,7 @@ func (task *Task) voteRate() error {
 		return err
 	}
 	// sub initial issue if dev mode
-	if task.version == utils.Dev {
+	if task.dev {
 		rethTotalSupply = new(big.Int).Sub(rethTotalSupply, utils.OldRethSupply)
 	}
 	if rethTotalSupply.Cmp(big.NewInt(0)) <= 0 {
@@ -129,7 +129,7 @@ func (task *Task) voteRate() error {
 		}).Warn("new exchangeRate less than old")
 		return nil
 	}
-	if task.version != utils.Dev {
+	if !task.dev {
 		if newExchangeRateDeci.GreaterThan(oldExchangeRateDeci.Add(maxRateChangeDeci)) {
 			return fmt.Errorf("newExchangeRate %s too big than oldExchangeRate %s", newExchangeRateDeci.String(), oldExchangeRateDeci.String())
 		}

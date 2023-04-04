@@ -29,7 +29,7 @@ func (task *Task) syncContractsInfo() error {
 	if err != nil {
 		return err
 	}
-	if task.version == utils.Dev {
+	if task.dev {
 		rethSupply = new(big.Int).Sub(rethSupply, utils.OldRethSupply)
 	}
 	poolInfo.REthSupply = rethSupply.String()

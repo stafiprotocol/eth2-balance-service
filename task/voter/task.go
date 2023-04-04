@@ -39,11 +39,11 @@ type Task struct {
 	maxGasPrice                            *big.Int
 	storageContractAddress                 common.Address
 	rewardEpochInterval                    uint64
-	version                                string
 	rewardV1EndEpoch                       uint64
 	distributeFeeInitDealedHeight          int64 // dealedHeight is zero after upgrade new contract
 	distributeSuperNodeFeeInitDealedHeight int64
 	distributeWithdrawalInitDealedHeight   int64
+	dev                                    bool
 
 	// need init on start()
 	connection           *shared.Connection
@@ -89,12 +89,6 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		return nil, fmt.Errorf("max gas price is zero")
 	}
 
-	switch cfg.Version {
-	case utils.V2, utils.Dev:
-	default:
-		return nil, fmt.Errorf("unsupport version: %s", cfg.Version)
-	}
-
 	s := &Task{
 		taskTicker:                             15,
 		stop:                                   make(chan struct{}),
@@ -106,18 +100,10 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		maxGasPrice:                            maxGasPriceDeci.BigInt(),
 		storageContractAddress:                 common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:                    utils.RewardEpochInterval,
-		version:                                cfg.Version,
 		rewardV1EndEpoch:                       utils.RewardV1EndEpoch,
 		distributeFeeInitDealedHeight:          1, //todo mainnet config
 		distributeSuperNodeFeeInitDealedHeight: 1,
 		distributeWithdrawalInitDealedHeight:   1,
-	}
-
-	if cfg.Version == utils.Dev {
-		s.rewardV1EndEpoch = 750
-		s.distributeFeeInitDealedHeight = 1
-		s.distributeSuperNodeFeeInitDealedHeight = 1
-		s.distributeWithdrawalInitDealedHeight = 1
 	}
 
 	return s, nil
@@ -129,21 +115,6 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
-	task.eth2Config, err = task.connection.Eth2Client().GetEth2Config()
-	if err != nil {
-		return err
-	}
-
-	err = task.initContract()
-	if err != nil {
-		return err
-	}
-
-	credentials, err := task.networkSettingsContract.GetWithdrawalCredentials(task.connection.CallOpts(nil))
-	if err != nil {
-		return err
-	}
-	task.withdrawCredientials = hexutil.Encode(credentials)
 
 	// set domain by chainId
 	chainId, err := task.connection.Eth1Client().ChainID(context.Background())
@@ -161,6 +132,7 @@ func (task *Task) Start() error {
 			return err
 		}
 		task.domain = domain
+		task.dev = false
 	case 5: //goerli
 		domain, err := signing.ComputeDomain(
 			params.PraterConfig().DomainDeposit,
@@ -171,6 +143,7 @@ func (task *Task) Start() error {
 			return err
 		}
 		task.domain = domain
+		task.dev = true
 	case 1337803: //zhejiang
 		domain, err := signing.ComputeDomain(
 			params.PraterConfig().DomainDeposit,
@@ -181,6 +154,7 @@ func (task *Task) Start() error {
 			return err
 		}
 		task.domain = domain
+		task.dev = true
 	default:
 		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
 	}
@@ -188,6 +162,29 @@ func (task *Task) Start() error {
 	if len(task.domain) == 0 {
 		return fmt.Errorf("domain not ok")
 	}
+
+	if task.dev {
+		task.rewardV1EndEpoch = 750
+		task.distributeFeeInitDealedHeight = 1
+		task.distributeSuperNodeFeeInitDealedHeight = 1
+		task.distributeWithdrawalInitDealedHeight = 1
+	}
+
+	task.eth2Config, err = task.connection.Eth2Client().GetEth2Config()
+	if err != nil {
+		return err
+	}
+
+	err = task.initContract()
+	if err != nil {
+		return err
+	}
+
+	credentials, err := task.networkSettingsContract.GetWithdrawalCredentials(task.connection.CallOpts(nil))
+	if err != nil {
+		return err
+	}
+	task.withdrawCredientials = hexutil.Encode(credentials)
 
 	utils.SafeGoWithRestart(task.voteHandler)
 	return nil

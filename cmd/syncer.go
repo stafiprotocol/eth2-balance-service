@@ -43,13 +43,12 @@ func startSyncerCmd() *cobra.Command {
 			}
 			logrus.Infof(
 				`syncer config info:
-  version: %s
   logFilePath: %s
   logLevel: %s
   eth1Endpoint: %s
   eth2Endpoint: %s
   storageAddress:%s`,
-				cfg.Version, cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.Contracts.StorageContractAddress)
+				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.Contracts.StorageContractAddress)
 
 			err = log.InitLogFile(cfg.LogFilePath + "/syncer")
 			if err != nil {
