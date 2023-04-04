@@ -47,6 +47,7 @@ type Task struct {
 	storageContractAddress common.Address
 	rewardEpochInterval    uint64 //75
 	version                string
+	rewardV1EndEpoch       uint64
 	// for eth2 block syncer
 	slashStartEpoch uint64
 
@@ -95,6 +96,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 		version:                cfg.Version,
+		rewardV1EndEpoch:       75,
 		slashStartEpoch:        cfg.SlashStartEpoch,
 	}
 

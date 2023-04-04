@@ -67,9 +67,12 @@ func (task *Task) calcMerkleTree() error {
 		if err != nil {
 			return err
 		}
-		valIndexList := make([]uint64, len(valList))
-		for i, val := range valList {
-			valIndexList[i] = val.ValidatorIndex
+		valIndexList := make([]uint64, 0)
+		for _, val := range valList {
+			if val.ValidatorIndex == 0 {
+				continue
+			}
+			valIndexList = append(valIndexList, val.ValidatorIndex)
 		}
 		totalSlashAmount, err := dao_node.GetTotalSlashAmountBeforeWithIndexList(task.db, valIndexList, targetEpoch)
 		if err != nil {
@@ -88,7 +91,7 @@ func (task *Task) calcMerkleTree() error {
 		finalTotalClaimableNodeRewardAmountDeci := totalClaimableNodeRewardAmountDeci.
 			Sub(totalSlashAmountDeci)
 
-		// sub from exit deposit amount if un cover slash
+		// sub from exit deposit amount if can't cover slash
 		unCoveredSlashAmount := decimal.Zero
 		if finalTotalClaimableNodeRewardAmountDeci.IsNegative() {
 			unCoveredSlashAmount = finalTotalClaimableNodeRewardAmountDeci.Abs()

@@ -270,12 +270,14 @@ func GetUserValPlatformDepositAndRewardV1(validatorBalance, nodeDepositAmount ui
 	}
 }
 
+// v1: platform = 10% node = 90%*(nodedeposit/32)+90%*(1- nodedeposit/32)*10%  user = 90%*(1- nodedeposit/32)*90%
 // return (user reward, node reward, paltform fee)
-func GetUserNodePlatformRewardV1(userDepositBalance uint64, rewardDeci decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
+func GetUserNodePlatformRewardV1(nodeDepositBalance uint64, rewardDeci decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
 
-	if !rewardDeci.IsPositive() || userDepositBalance > StandardEffectiveBalance {
+	if !rewardDeci.IsPositive() || nodeDepositBalance > StandardEffectiveBalance {
 		return decimal.Zero, decimal.Zero, decimal.Zero
 	}
+	userDepositBalance := StandardEffectiveBalance - nodeDepositBalance
 
 	// platform Fee
 	platformFeeDeci := rewardDeci.Mul(PlatformFeeV1Deci)
@@ -300,7 +302,7 @@ func GetUserNodePlatformRewardV1(userDepositBalance uint64, rewardDeci decimal.D
 
 }
 
-// todo split v1/v2 by height
+// v2: platform = 5%  node = 5% + (90% * nodedeposit/32) user = 90%*(1-nodedeposit/32)
 // platform = 5%  node = 5% + (90% * nodedeposit/32)
 // rewardDeci decimals maybe 9/18, also the returns
 // return (user reward, node reward, paltform fee)

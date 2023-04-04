@@ -117,14 +117,39 @@ func (task *Task) collectNodeEpochBalances() error {
 				TotalEffectiveBalance += l.EffectiveBalance
 				TotalFee += l.TotalFee
 
-				// ---------total reward
+				// ---------total reward(staking+fee)
 				validatorTotalReward := utils.GetValidatorTotalReward(l.Balance, l.TotalWithdrawal, l.TotalFee)
+
 				TotalReward += validatorTotalReward
 
-				// todo calc by two sections on mainnet
-				_, nodeRewardOfThisValidator, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(validatorTotalReward)))
+				// ---------calc total self reward by two sections
+				validatorRewardV1TotalReward := uint64(0)
+				validatorRewardV2TotalReward := uint64(0)
+				if epoch <= task.rewardV1EndEpoch {
+					validatorRewardV1TotalReward = validatorTotalReward
+				} else {
+					valBalanceAtRewardV1EndEpoch, err := dao_node.GetValidatorBalance(task.db, l.ValidatorIndex, task.rewardV1EndEpoch)
+					if err != nil {
+						if err != gorm.ErrRecordNotFound {
+							return err
+						} else {
+							if task.rewardV1EndEpoch >= valInfo.ActiveEpoch {
+								return fmt.Errorf("not found validator %d balance but rewardV1EndEpoch > valInfo.ActiveEpoch", valInfo.ValidatorIndex)
+							}
+						}
+					} else {
+						validatorRewardV1TotalReward = utils.GetValidatorTotalReward(valBalanceAtRewardV1EndEpoch.Balance, valBalanceAtRewardV1EndEpoch.TotalWithdrawal, valBalanceAtRewardV1EndEpoch.TotalFee)
+					}
 
-				TotalSelfReward += nodeRewardOfThisValidator.BigInt().Uint64()
+					if validatorTotalReward > validatorRewardV1TotalReward {
+						validatorRewardV2TotalReward = validatorTotalReward - validatorRewardV1TotalReward
+					}
+
+				}
+				_, nodeRewardV1OfThisValidator, _ := utils.GetUserNodePlatformRewardV1(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV1TotalReward)))
+				_, nodeRewardV2OfThisValidator, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV2TotalReward)))
+
+				TotalSelfReward += (nodeRewardV1OfThisValidator.BigInt().Uint64() + nodeRewardV2OfThisValidator.BigInt().Uint64())
 
 				// -----total claimable reward
 				valTotalClaimableReward := l.TotalWithdrawal + l.TotalFee
@@ -136,10 +161,19 @@ func (task *Task) collectNodeEpochBalances() error {
 						valTotalClaimableReward = 0
 					}
 				}
+				//---------calc total self claimable reward by two sections
+				validatorRewardV1TotalClaimableReward := uint64(0)
+				validatorRewardV2TotalClaimableReward := uint64(0)
+				if valTotalClaimableReward <= validatorRewardV1TotalReward {
+					validatorRewardV1TotalClaimableReward = valTotalClaimableReward
+				} else {
+					validatorRewardV1TotalClaimableReward = validatorRewardV1TotalReward
+					validatorRewardV2TotalClaimableReward = valTotalClaimableReward - validatorRewardV1TotalReward
+				}
+				_, nodeClaimableRewardV1OfThisValidator, _ := utils.GetUserNodePlatformRewardV1(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV1TotalClaimableReward)))
+				_, nodeClaimableRewardV2OfThisValidator, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV2TotalClaimableReward)))
 
-				// todo calc by two sections on mainnet
-				_, nodeClaimableRewardOfThisValidator, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(valTotalClaimableReward)))
-				TotalSelfClaimableReward += nodeClaimableRewardOfThisValidator.BigInt().Uint64()
+				TotalSelfClaimableReward += (nodeClaimableRewardV1OfThisValidator.BigInt().Uint64() + nodeClaimableRewardV2OfThisValidator.BigInt().Uint64())
 			}
 			nodeBalance.TotalNodeDepositAmount = TotalNodeDepositAmount
 			nodeBalance.TotalExitNodeDepositAmount = TotalExitNodeDepositAmount
@@ -152,7 +186,7 @@ func (task *Task) collectNodeEpochBalances() error {
 			nodeBalance.TotalSelfReward = TotalSelfReward
 			nodeBalance.TotalSelfClaimableReward = TotalSelfClaimableReward
 
-			// calc era reward
+			// -------calc era reward
 			preEpoch := epoch - task.rewardEpochInterval
 			preEpochNodeBalance, err := dao_node.GetNodeBalance(task.db, nodeAddress, preEpoch)
 			if err != nil && err != gorm.ErrRecordNotFound {

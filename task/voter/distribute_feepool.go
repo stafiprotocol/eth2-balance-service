@@ -144,7 +144,14 @@ func (task Task) getUserNodePlatformFromFeePool(latestDistributeHeight, targetEt
 		totalAmountDeci = totalAmountDeci.Add(feeAmountDeci)
 
 		// cal rewards
-		userRewardDeci, nodeRewardDeci, platformFeeDeci := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, feeAmountDeci)
+		var userRewardDeci, nodeRewardDeci, platformFeeDeci = decimal.Zero, decimal.Zero, decimal.Zero
+		if w.Slot <= utils.StartSlotOfEpoch(task.eth2Config, task.rewardV1EndEpoch)+31 {
+			userRewardDeci, nodeRewardDeci, platformFeeDeci = utils.GetUserNodePlatformRewardV1(validator.NodeDepositAmount, feeAmountDeci)
+		} else {
+
+			userRewardDeci, nodeRewardDeci, platformFeeDeci = utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, feeAmountDeci)
+		}
+		
 		// cal reward + deposit
 		totalUserEthDeci = totalUserEthDeci.Add(userRewardDeci)
 		totalNodeEthDeci = totalNodeEthDeci.Add(nodeRewardDeci)

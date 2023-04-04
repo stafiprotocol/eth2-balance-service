@@ -24,8 +24,8 @@ import (
 // SlashTypeAttesterMiss  = uint8(5)
 // SlashTypeProposerMiss  = uint8(6)
 
-// sync feeRecipient and slash events
-// only cal slash amount of 1 2 3 4 5 6 slash type,  type 6 now slash 0 eth
+// sync withdrawals/proposed block/exit msg and slash events
+// only cal slash amount of 1 2 3 4 5 6 slash type,  type 6 will slash 0 eth
 func (task *Task) syncEth2BlockInfo() error {
 	eth2ValidatorLatestInfoMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
 	if err != nil {

@@ -40,6 +40,7 @@ type Task struct {
 	storageContractAddress common.Address
 	rewardEpochInterval    uint64
 	version                string
+	rewardV1EndEpoch       uint64
 
 	// need init on start()
 	connection           *shared.Connection
@@ -106,6 +107,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:    cfg.RewardEpochInterval,
 		version:                cfg.Version,
+		rewardV1EndEpoch:       75,
 	}
 	return s, nil
 }
