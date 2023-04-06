@@ -16,10 +16,10 @@ type ValidatorBalance struct {
 	ValidatorIndex uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:validator_index;uniqueIndex:uni_idx_val_epoch"`
 	Epoch          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:epoch;uniqueIndex:uni_idx_val_epoch;index"`
 
-	NodeAddress      string `gorm:"type:varchar(100) not null;default:'';column:node_address;index;"` //hex with 0x prefix
-	Balance          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance"`
-	TotalWithdrawal  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_withdrawal"` // total withdrawal amount up to the start slot of this epoch
-	TotalFee         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_fee"`        // total fee amount(transfer to feePool) up to the start slot of this epoch
+	NodeAddress      string `gorm:"type:varchar(100) not null;default:'';column:node_address;index;"`    //hex with 0x prefix
+	Balance          uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:balance"`          // decimals 9,
+	TotalWithdrawal  uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_withdrawal"` // decimals 9,total withdrawal amount up to the start slot of this epoch
+	TotalFee         uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:total_fee"`        // decimals 9 ,total fee amount(transfer to feePool) up to the start slot of this epoch
 	EffectiveBalance uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:effective_balance"`
 	Timestamp        uint64 `gorm:"type:bigint(20) unsigned not null;default:0;column:timestamp"`
 }

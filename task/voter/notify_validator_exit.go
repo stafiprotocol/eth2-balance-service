@@ -221,6 +221,9 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 		"superValidators len": len(superValidtors),
 	}).Info("waiting selected validators info")
 
+	// sort deposit 4(apr) (8/super) 12(not)
+
+	// solo  node max 2/per 2 week
 	sort.SliceStable(soloValidtors, func(i, j int) bool {
 		aprI, _ := dao_node.GetValidatorAprForAverageApr(task.db, soloValidtors[i].ValidatorIndex)
 		aprJ, _ := dao_node.GetValidatorAprForAverageApr(task.db, soloValidtors[j].ValidatorIndex)

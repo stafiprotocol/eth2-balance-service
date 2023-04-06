@@ -148,6 +148,14 @@ func (task *Task) syncValidatorEpochBalances() error {
 			validatorBalance.ValidatorIndex = validatorIndex
 			validatorBalance.Timestamp = utils.StartTimestampOfEpoch(task.eth2Config, epoch)
 
+			// !!!!!safe check
+			if validatorBalance.Balance+validatorBalance.TotalWithdrawal > utils.StandardEffectiveBalance+utils.MaxPartialWithdrawalAmount {
+				return fmt.Errorf("validator: %d staking reward abnormal, balance: %d, withdrawals: %d", validatorBalance.ValidatorIndex, validatorBalance.Balance, validatorBalance.TotalWithdrawal)
+			}
+			if validatorBalance.TotalFee > utils.MaxPartialWithdrawalAmount {
+				return fmt.Errorf("validator: %d priority fee abnormal, totalFee: %d", validatorBalance.ValidatorIndex, validatorBalance.TotalFee)
+			}
+
 			err = dao_node.UpOrInValidatorBalance(task.db, validatorBalance)
 			if err != nil {
 				return err

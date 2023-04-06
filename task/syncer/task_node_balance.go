@@ -209,6 +209,11 @@ func (task *Task) collectNodeEpochBalances() error {
 				nodeBalance.TotalEraReward = totalEraReward
 			}
 
+			// !!!!safe check
+			if nodeBalance.TotalSelfReward > nodeBalance.TotalReward {
+				return fmt.Errorf("node: %s reward abnormal, selfReward: %d totalReward: %d", nodeBalance.NodeAddress, nodeBalance.TotalSelfReward, nodeBalance.TotalReward)
+			}
+
 			err = dao_node.UpOrInNodeBalance(task.db, nodeBalance)
 			if err != nil {
 				return err
