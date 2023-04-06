@@ -20,7 +20,7 @@ func (task *Task) setMerkleTree() error {
 		return nil
 	}
 
-	dealedEpochOnchain, err := task.MerkleTreeDealedEpoch(task.storageContract)
+	dealedEpochOnchain, err := task.distributorContract.GetMerkleDealedEpoch(task.connection.CallOpts(nil))
 	if err != nil {
 		return err
 	}

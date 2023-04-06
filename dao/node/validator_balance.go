@@ -78,7 +78,6 @@ func GetLatestValidatorBalanceListBeforeEpoch(db *db.WrapDb, validatorIndex, epo
 
 // return 0 if no data used to cal rate
 func GetValidatorAprForAverageApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
-
 	validatorBalanceList, err := GetLatestValidatorBalanceList(db, validatorIndex)
 	if err != nil {
 		logrus.Errorf("dao_node.GetLatestValidatorBalanceList err: %s", err)
@@ -91,19 +90,11 @@ func GetValidatorAprForAverageApr(db *db.WrapDb, validatorIndex uint64) (float64
 
 		duBalance := uint64(0)
 
-		firstTotal := first.Balance + first.TotalWithdrawal + first.TotalFee
-		firstReward := uint64(0)
-		if firstTotal > utils.StandardEffectiveBalance {
-			firstReward = firstTotal - utils.StandardEffectiveBalance
-		}
-		endTotal := end.Balance + end.TotalWithdrawal + end.TotalFee
-		endReward := uint64(0)
-		if endTotal > utils.StandardEffectiveBalance {
-			endReward = endTotal - utils.StandardEffectiveBalance
-		}
+		firstReward := utils.GetValidatorTotalReward(first.Balance, first.TotalWithdrawal, first.TotalFee)
+		endReward := utils.GetValidatorTotalReward(end.Balance, end.TotalWithdrawal, end.TotalFee)
 
-		_, firstNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(firstReward, decimal.NewFromInt(int64(utils.StandardLightNodeDepositAmount)))
-		_, endNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(endReward, decimal.NewFromInt(int64(utils.StandardLightNodeDepositAmount)))
+		_, firstNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(utils.StandardLightNodeDepositAmount, decimal.NewFromInt(int64(firstReward)))
+		_, endNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(utils.StandardLightNodeDepositAmount, decimal.NewFromInt(int64(endReward)))
 
 		duBalanceDeci := firstNodeRewardDeci.Sub(endNodeRewardDeci)
 		if duBalanceDeci.IsPositive() {
@@ -141,19 +132,11 @@ func GetValidatorApr(db *db.WrapDb, validatorIndex, nodeDepositAmount uint64) (f
 
 		duBalance := uint64(0)
 
-		firstTotal := first.Balance + first.TotalWithdrawal + first.TotalFee
-		firstReward := uint64(0)
-		if firstTotal > utils.StandardEffectiveBalance {
-			firstReward = firstTotal - utils.StandardEffectiveBalance
-		}
-		endTotal := end.Balance + end.TotalWithdrawal + end.TotalFee
-		endReward := uint64(0)
-		if endTotal > utils.StandardEffectiveBalance {
-			endReward = endTotal - utils.StandardEffectiveBalance
-		}
+		firstReward := utils.GetValidatorTotalReward(first.Balance, first.TotalWithdrawal, first.TotalFee)
+		endReward := utils.GetValidatorTotalReward(end.Balance, end.TotalWithdrawal, end.TotalFee)
 
-		_, firstNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(firstReward, decimal.NewFromInt(int64(nodeDepositAmount)))
-		_, endNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(endReward, decimal.NewFromInt(int64(nodeDepositAmount)))
+		_, firstNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(nodeDepositAmount, decimal.NewFromInt(int64(firstReward)))
+		_, endNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(nodeDepositAmount, decimal.NewFromInt(int64(endReward)))
 
 		duBalanceDeci := firstNodeRewardDeci.Sub(endNodeRewardDeci)
 		if duBalanceDeci.IsPositive() {

@@ -64,11 +64,6 @@ const (
 	FeePool          = uint8(1)
 	SuperNodeFeePool = uint8(2)
 )
-const (
-	V1  = "v1"
-	V2  = "v2"
-	Dev = "dev"
-)
 
 const (
 	MetaTypeEth1BlockSyncer            = uint8(1) // dealed block height
@@ -88,10 +83,11 @@ const (
 )
 
 const (
-	V1EndEpoch          = uint64(148000)
-	Eth1StartHeight     = uint64(15572967)
-	TheMergeEpoch       = uint64(148896)
-	RewardV1EndEpoch    = uint64(1) //todo mainnet
+	TheMergeEpoch       = uint64(148000)
+	TheMergeSlot        = uint64(4736000)
+	TheMergeBlockNumber = uint64(15572967)
+
+	RewardV1EndEpoch    = uint64(192300) //todo mainnet
 	RewardEpochInterval = uint64(75)
 
 	StandardEffectiveBalance            = uint64(32e9) //gwei
@@ -153,24 +149,9 @@ func TimestampOfSlot(config beacon.Eth2Config, slot uint64) uint64 {
 func StartSlotOfEpoch(config beacon.Eth2Config, epoch uint64) uint64 {
 	return config.SlotsPerEpoch * epoch
 }
-
-// func GetNodeReward(balance, effectiveBalance, nodeDepositAmount uint64) uint64 {
-// 	if balance == 0 || effectiveBalance == 0 {
-// 		return 0
-// 	}
-// 	reward := uint64(0)
-// 	if balance > effectiveBalance {
-// 		reward = balance - effectiveBalance
-// 	}
-
-// 	rewardDeci := decimal.NewFromInt(int64(reward)).Mul(decimal.NewFromFloat(0.9))
-// 	nodeRewardDeci := decimal.NewFromInt(int64(nodeDepositAmount)).Mul(rewardDeci).Div(decimal.NewFromInt(int64(effectiveBalance)))
-// 	stakerRawReard := rewardDeci.Sub(nodeRewardDeci)
-
-// 	nodeRewardDeci = nodeRewardDeci.Add(stakerRawReard.Mul(decimal.NewFromFloat(0.1)))
-
-// 	return nodeRewardDeci.BigInt().Uint64()
-// }
+func EndSlotOfEpoch(config beacon.Eth2Config, epoch uint64) uint64 {
+	return config.SlotsPerEpoch*(epoch+1) - 1
+}
 
 func GetNodeManagedEth(nodeDeposit, balance uint64, status uint8) uint64 {
 	switch status {
@@ -337,13 +318,9 @@ func GetValidatorTotalReward(balance, totalWithdrawal, totalFee uint64) uint64 {
 	return 0
 }
 
+// keccak256(abi.encodePacked("contract.address", _contractName))
 func ContractStorageKey(name string) [32]byte {
-	// keccak256(abi.encodePacked("contract.address", _contractName))
 	return crypto.Keccak256Hash([]byte("contract.address"), []byte(name))
-}
-
-func MerkleTreeDealedEpochStorageKey() [32]byte {
-	return crypto.Keccak256Hash([]byte("stafiDistributor.merkleRoot.dealedEpoch"))
 }
 
 func NodeSubmissionKey(sender common.Address, _block *big.Int, _totalEth *big.Int, _stakingEth *big.Int, _rethSupply *big.Int) [32]byte {

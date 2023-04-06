@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"math/big"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
+	"github.com/prysmaticlabs/prysm/v3/config/params"
 	"github.com/sirupsen/logrus"
 	deposit_contract "github.com/stafiprotocol/eth2-balance-service/bindings/DepositContract"
 	distributor "github.com/stafiprotocol/eth2-balance-service/bindings/Distributor"
@@ -15,13 +17,13 @@ import (
 	network_balances "github.com/stafiprotocol/eth2-balance-service/bindings/NetworkBalances"
 	node_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/NodeDeposit"
 	reth "github.com/stafiprotocol/eth2-balance-service/bindings/Reth"
+	staking_pool_manager "github.com/stafiprotocol/eth2-balance-service/bindings/StakingPoolManager"
 	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
 	super_node "github.com/stafiprotocol/eth2-balance-service/bindings/SuperNode"
 	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
 	withdraw "github.com/stafiprotocol/eth2-balance-service/bindings/Withdraw"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
 	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
-	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
@@ -31,8 +33,9 @@ import (
 )
 
 var (
-	devStartEpoch      = uint64(4400)
-	devStartBlocHeight = uint64(133654)
+	devStartEpoch       = uint64(4400)
+	devStartBlocHeight  = uint64(133654)
+	devRewardV1EndEpoch = uint64(75)
 )
 
 // sync deposit/stake events and pool latest info from execute chain
@@ -50,22 +53,23 @@ type Task struct {
 	calMerkleTreeDu        uint64 //75
 	rewardV1EndEpoch       uint64
 	dev                    bool
-	// for eth2 block syncer
-	eth2BlockStartEpoch uint64
+
+	eth2BlockStartEpoch uint64 // for eth2 block syncer
 
 	// --- need init on start
-	db                      *db.WrapDb
-	connection              *shared.Connection
-	depositContract         *deposit_contract.DepositContract
-	lightNodeContract       *light_node.LightNode
-	nodeDepositContract     *node_deposit.NodeDeposit
-	superNodeContract       *super_node.SuperNode
-	rethContract            *reth.Reth
-	userDepositContract     *user_deposit.UserDeposit
-	networkBalancesContract *network_balances.NetworkBalances
-	withdrawContract        *withdraw.Withdraw
-	distributorContract     *distributor.Distributor
-	storageContract         *storage.Storage
+	db                         *db.WrapDb
+	connection                 *shared.Connection
+	depositContract            *deposit_contract.DepositContract
+	lightNodeContract          *light_node.LightNode
+	nodeDepositContract        *node_deposit.NodeDeposit
+	superNodeContract          *super_node.SuperNode
+	rethContract               *reth.Reth
+	userDepositContract        *user_deposit.UserDeposit
+	networkBalancesContract    *network_balances.NetworkBalances
+	withdrawContract           *withdraw.Withdraw
+	distributorContract        *distributor.Distributor
+	storageContract            *storage.Storage
+	stakingPoolManagerContract *staking_pool_manager.StakingPoolManger
 
 	lightNodeFeePoolAddress common.Address
 	superNodeFeePoolAddress common.Address
@@ -79,18 +83,19 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	}
 
 	s := &Task{
-		taskTicker:      15,
-		stop:            make(chan struct{}),
-		db:              dao,
-		eth1StartHeight: utils.Eth1StartHeight,
-		eth1Endpoint:    cfg.Eth1Endpoint,
-		eth2Endpoint:    cfg.Eth2Endpoint,
+		taskTicker:   15,
+		stop:         make(chan struct{}),
+		db:           dao,
+		eth1Endpoint: cfg.Eth1Endpoint,
+		eth2Endpoint: cfg.Eth2Endpoint,
 
-		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
+		eth1StartHeight:     utils.TheMergeBlockNumber,
+		eth2BlockStartEpoch: utils.TheMergeEpoch,
+		rewardV1EndEpoch:    utils.RewardV1EndEpoch,
+
 		rewardEpochInterval:    utils.RewardEpochInterval,
-		rewardV1EndEpoch:       utils.RewardV1EndEpoch,
 		calMerkleTreeDu:        utils.RewardEpochInterval,
-		eth2BlockStartEpoch:    utils.TheMergeEpoch,
+		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 	}
 
 	return s, nil
@@ -106,92 +111,46 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
-	switch chainId.Uint64() {
-	case 1:
-		task.dev = false
-	case 1337803: //zhejiang
-		task.dev = true
-	default:
-		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
-	}
-
-	if task.dev {
-		task.eth1StartHeight = devStartBlocHeight
-		task.eth2BlockStartEpoch = devStartEpoch
-		task.rewardV1EndEpoch = 750
-	}
-
 	task.eth2Config, err = task.connection.Eth2Client().GetEth2Config()
 	if err != nil {
 		return err
+	}
+
+	switch chainId.Uint64() {
+	case 1:
+		task.dev = false
+		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.MainnetConfig().GenesisForkVersion) {
+			return fmt.Errorf("endpoint network not match")
+		}
+	case 1337803: //zhejiang
+		task.dev = true
+		if !bytes.Equal(task.eth2Config.GenesisForkVersion, []byte{0x00, 0x00, 0x00, 0x69}) {
+			return fmt.Errorf("endpoint network not match")
+		}
+	default:
+		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
 	}
 
 	err = task.initContract()
 	if err != nil {
 		return err
 	}
-	err = task.mabyUpdateEth1StartHeightAndPoolInfo()
-	if err != nil {
-		return err
+
+	// for dev params
+	if task.dev {
+		task.eth1StartHeight = devStartBlocHeight
+		task.eth2BlockStartEpoch = devStartEpoch
+		task.rewardV1EndEpoch = devRewardV1EndEpoch
+	}
+	// only for mainnet
+	if !task.dev {
+		err = task.initV1Validators()
+		if err != nil {
+			return err
+		}
 	}
 
-	// --- clean db -----
-	// fetch proposed timestamp/ block number
-	list, err := dao_node.GetProposedBlockListTimestampZero(task.db)
-	if err != nil {
-		return err
-	}
-	for _, l := range list {
-		l.Timestamp = utils.TimestampOfSlot(task.eth2Config, l.Slot)
-		err := dao_node.UpOrInProposedBlock(task.db, l)
-		if err != nil {
-			return err
-		}
-	}
-	listBlockZero, err := dao_node.GetProposedBlockListBlockNumberZero(task.db)
-	if err != nil {
-		return err
-	}
-	for _, l := range listBlockZero {
-		l.Timestamp = utils.TimestampOfSlot(task.eth2Config, l.Slot)
-		beaconBlock, exit, err := task.connection.Eth2Client().GetBeaconBlock(l.Slot)
-		if err != nil {
-			return err
-		}
-		if !exit {
-			return fmt.Errorf("beacon block %d not exist", l.Slot)
-		}
-		l.BlockNumber = beaconBlock.ExecutionBlockNumber
-		err = dao_node.UpOrInProposedBlock(task.db, l)
-		if err != nil {
-			return err
-		}
-	}
-	// delete val index zero form val withdrawals
-	err = dao_node.DeleteValidatorWithdrawalsValIndexZero(task.db)
-	if err != nil {
-		return err
-	}
-	// delete exitElection not in validators
-	exitElectionList, err := dao_node.GetAllNotExitElectionList(task.db)
-	if err != nil {
-		return err
-	}
-	for _, val := range exitElectionList {
-		_, err := dao_node.GetValidatorByIndex(task.db, val.ValidatorIndex)
-		if err == gorm.ErrRecordNotFound {
-			err := dao_node.DeleteExitElectionByValIndex(task.db, val.ValidatorIndex)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	// fetch distributor events
-	eth1LatestBlock, err := task.connection.Eth1LatestBlock()
-	if err != nil {
-		return err
-	}
-	err = task.fetchDistributorContractEvents(1, eth1LatestBlock)
+	err = task.initStartHeightAndPoolInfo()
 	if err != nil {
 		return err
 	}
@@ -260,19 +219,30 @@ func (task *Task) initContract() error {
 
 	withdrawAddress, err := task.getContractAddress(storageContract, "stafiWithdraw")
 	if err != nil {
-		return err
+		if !strings.Contains(err.Error(), "address empty") {
+			return err
+		}
+		// maybe not exist
+		logrus.Warnf("stafiWithdraw contract not exist, will skip events")
+	} else {
+		task.withdrawContract, err = withdraw.NewWithdraw(withdrawAddress, task.connection.Eth1Client())
+		if err != nil {
+			return err
+		}
 	}
-	task.withdrawContract, err = withdraw.NewWithdraw(withdrawAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
-	}
+
 	stafiDistributorAddress, err := task.getContractAddress(storageContract, "stafiDistributor")
 	if err != nil {
-		return err
-	}
-	task.distributorContract, err = distributor.NewDistributor(stafiDistributorAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
+		if !strings.Contains(err.Error(), "address empty") {
+			return err
+		}
+		// maybe not exist
+		logrus.Warnf("stafiDistributor contract not exist, will skip events")
+	} else {
+		task.distributorContract, err = distributor.NewDistributor(stafiDistributorAddress, task.connection.Eth1Client())
+		if err != nil {
+			return err
+		}
 	}
 
 	nodeDepositAddress, err := task.getContractAddress(storageContract, "stafiNodeDeposit")
@@ -310,24 +280,32 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
+
+	// only for mainnet
+	if !task.dev {
+		stakingPoolManagerAddress, err := task.getContractAddress(storageContract, "stafiStakingPoolManager")
+		if err != nil {
+			return err
+		}
+		task.stakingPoolManagerContract, err = staking_pool_manager.NewStakingPoolManger(stakingPoolManagerAddress, task.connection.Eth1Client())
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
+func (task *Task) initStartHeightAndPoolInfo() error {
 	// init eth1Syncer metaData
 	eth1Meta, err := dao.GetMetaData(task.db, utils.MetaTypeEth1BlockSyncer)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			return err
 		}
-		// will init if meta data not exist
-		if task.eth1StartHeight == 0 {
-			eth1Meta.DealedBlockHeight = 0
-		} else {
-			eth1Meta.DealedBlockHeight = task.eth1StartHeight - 1
-		}
-
 		eth1Meta.MetaType = utils.MetaTypeEth1BlockSyncer
+
+		// will init if meta data not exist
+		eth1Meta.DealedBlockHeight = task.eth1StartHeight - 1
 
 		err = dao.UpOrInMetaData(task.db, eth1Meta)
 		if err != nil {
@@ -335,54 +313,67 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 		}
 	}
 
-	// only dev need, v1/v2 will init on v1Syncer
-	if task.dev {
-		// init eth2ValidatorInfoSyncer metaData
-		validatorInfoMeta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
-		if err != nil {
-			if err != gorm.ErrRecordNotFound {
-				return err
-			}
-			// will init if meta data not exist
-			validatorInfoMeta.MetaType = utils.MetaTypeEth2ValidatorInfoSyncer
-			validatorInfoMeta.DealedEpoch = devStartEpoch
-
-			err = dao.UpOrInMetaData(task.db, validatorInfoMeta)
-			if err != nil {
-				return err
-			}
+	// init eth2 block syncer info
+	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return err
 		}
 
-		// init eth2ValidatorBalanceSyncer metaData
-		validatorBalanceMeta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
-		if err != nil {
-			if err != gorm.ErrRecordNotFound {
-				return err
-			}
-			// will init if meta data not exist
-			validatorBalanceMeta.MetaType = utils.MetaTypeEth2ValidatorBalanceSyncer
-			validatorBalanceMeta.DealedEpoch = devStartEpoch
+		eth2BlockSyncerMetaData.MetaType = utils.MetaTypeEth2BlockSyncer
+		eth2BlockSyncerMetaData.DealedEpoch = task.eth2BlockStartEpoch - 1
 
-			err = dao.UpOrInMetaData(task.db, validatorBalanceMeta)
-			if err != nil {
-				return err
-			}
+		err = dao.UpOrInMetaData(task.db, eth2BlockSyncerMetaData)
+		if err != nil {
+			return err
 		}
+	}
 
-		// init eth2NodeCollector metaData
-		nodeBalanceMeta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2NodeBalanceCollector)
+	// init eth2ValidatorInfoSyncer metaData
+	validatorInfoMeta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorInfoSyncer)
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return err
+		}
+		// will init if meta data not exist
+		validatorInfoMeta.MetaType = utils.MetaTypeEth2ValidatorInfoSyncer
+		validatorInfoMeta.DealedEpoch = task.eth2BlockStartEpoch - 1
+
+		err = dao.UpOrInMetaData(task.db, validatorInfoMeta)
 		if err != nil {
-			if err != gorm.ErrRecordNotFound {
-				return err
-			}
-			// will init if meta data not exist
-			nodeBalanceMeta.MetaType = utils.MetaTypeEth2NodeBalanceCollector
-			nodeBalanceMeta.DealedEpoch = devStartEpoch
+			return err
+		}
+	}
 
-			err = dao.UpOrInMetaData(task.db, nodeBalanceMeta)
-			if err != nil {
-				return err
-			}
+	// init eth2ValidatorBalanceSyncer metaData
+	validatorBalanceMeta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2ValidatorBalanceSyncer)
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return err
+		}
+		// will init if meta data not exist
+		validatorBalanceMeta.MetaType = utils.MetaTypeEth2ValidatorBalanceSyncer
+		validatorBalanceMeta.DealedEpoch = task.eth2BlockStartEpoch - 1
+
+		err = dao.UpOrInMetaData(task.db, validatorBalanceMeta)
+		if err != nil {
+			return err
+		}
+	}
+
+	// init eth2NodeCollector metaData
+	nodeBalanceMeta, err := dao.GetMetaData(task.db, utils.MetaTypeEth2NodeBalanceCollector)
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return err
+		}
+		// will init if meta data not exist
+		nodeBalanceMeta.MetaType = utils.MetaTypeEth2NodeBalanceCollector
+		nodeBalanceMeta.DealedEpoch = task.eth2BlockStartEpoch - 1
+
+		err = dao.UpOrInMetaData(task.db, nodeBalanceMeta)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -400,31 +391,7 @@ func (task *Task) mabyUpdateEth1StartHeightAndPoolInfo() error {
 
 	err = task.syncContractsInfo()
 	if err != nil {
-		return err
-	}
-
-	// init eth2 block syncer info
-	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
-	if err != nil {
-		if err != gorm.ErrRecordNotFound {
-			return err
-		}
-
-		eth2BlockSyncerMetaData.DealedEpoch = task.eth2BlockStartEpoch
-		eth2BlockSyncerMetaData.MetaType = utils.MetaTypeEth2BlockSyncer
-
-		err = dao.UpOrInMetaData(task.db, eth2BlockSyncerMetaData)
-		if err != nil {
-			return err
-		}
-	} else {
-		if task.eth2BlockStartEpoch > eth2BlockSyncerMetaData.DealedEpoch {
-			eth2BlockSyncerMetaData.DealedEpoch = task.eth2BlockStartEpoch
-			err = dao.UpOrInMetaData(task.db, eth2BlockSyncerMetaData)
-			if err != nil {
-				return err
-			}
-		}
+		return errors.Wrap(err, "syncContractsInfo failed")
 	}
 
 	return nil
@@ -692,8 +659,4 @@ func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
 		break
 	}
 	return blocknumber, nil
-}
-
-func (task *Task) MerkleTreeDealedEpoch(storage *storage.Storage) (*big.Int, error) {
-	return storage.GetUint(task.connection.CallOpts(nil), utils.MerkleTreeDealedEpochStorageKey())
 }

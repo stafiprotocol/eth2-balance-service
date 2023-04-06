@@ -12,7 +12,6 @@ import (
 
 func (task *Task) fetchDistributorContractEvents(start, end uint64) error {
 	// unstake
-
 	iterClaimed, err := task.distributorContract.FilterClaimed(&bind.FilterOpts{
 		Start:   start,
 		End:     &end,

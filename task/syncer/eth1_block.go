@@ -44,7 +44,7 @@ func (task *Task) syncEth1Block() error {
 		if err != nil {
 			return err
 		}
-		// v1 has no contracts below
+
 		err = task.fetchNodeDepositEvents(subStart, subEnd)
 		if err != nil {
 			return err
@@ -59,13 +59,19 @@ func (task *Task) syncEth1Block() error {
 		if err != nil {
 			return err
 		}
-		err = task.fetchWithdrawContractEvents(subStart, subEnd)
-		if err != nil {
-			return err
+
+		if task.withdrawContract != nil {
+			err = task.fetchWithdrawContractEvents(subStart, subEnd)
+			if err != nil {
+				return err
+			}
 		}
-		err = task.fetchDistributorContractEvents(subStart, subEnd)
-		if err != nil {
-			return err
+
+		if task.distributorContract != nil && task.withdrawContract != nil {
+			err = task.fetchDistributorContractEvents(subStart, subEnd)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = task.fetchRateUpdateEvents(subStart, subEnd)

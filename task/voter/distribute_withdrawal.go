@@ -239,8 +239,9 @@ func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targ
 
 		// cal rewards
 		// the first withdrawal is different from the other withdrawals, as it include staking reward of rewardV1 and maybe rewardV2
-		var userRewardDeci, nodeRewardDeci, platformFeeDeci = decimal.Zero, decimal.Zero, decimal.Zero
-
+		var userRewardDeci decimal.Decimal
+		var nodeRewardDeci decimal.Decimal
+		var platformFeeDeci decimal.Decimal
 		firstWithdrawal, err := dao_node.GetValidatorFirstWithdrawal(task.db, w.ValidatorIndex)
 		if err != nil {
 			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, errors.Wrap(err, "dao_node.GetValidatorFirstWithdrawal failed")

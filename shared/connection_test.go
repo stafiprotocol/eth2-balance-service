@@ -109,22 +109,31 @@ func TestBlockDetail(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	re, err := c.Eth1Client().TransactionReceipt(context.Background(), common.HexToHash("0xdd897ec9e7eb8f43ec25def8025b1ca7f1b61a42db726f2371adbe878464d7e8"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(re.Status)
-	return
-	epoch := uint64(165126)
-	// arewards, err := c.Eth2Client().AttestationRewardsWithVals(epoch, []string{"347967", "480434"})
+
+	// beaconBlock, _, err := c.Eth2Client().GetBeaconBlock(5668634)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// t.Log(beaconBlock)
+	// return
+
+	// re, err := c.Eth1Client().TransactionReceipt(context.Background(), common.HexToHash("0xdd897ec9e7eb8f43ec25def8025b1ca7f1b61a42db726f2371adbe878464d7e8"))
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// t.Log(re.Status)
+	// return
+	epoch := uint64(158000)
+	// arewards, err := c.Eth2Client().AttestationRewardsWithVals(epoch, []string{"295761", "38488"})
 	// if err != nil {
 	// 	t.Fatal(err)
 	// }
 	// for _, r := range arewards.Data.TotalRewards {
 	// 	t.Log(r)
 	// }
+	// return
 
-	vals := []uint64{347967, 347967, 480434}
+	vals := []uint64{104143, 104525}
 	rewards, err := c.GetRewardsForEpochWithValidators(epoch, vals)
 	if err != nil {
 		t.Fatal(err)

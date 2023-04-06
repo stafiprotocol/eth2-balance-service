@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
@@ -20,62 +21,67 @@ func (task *Task) syncContractsInfo() error {
 	// --- deposit pool
 	poolBalance, err := task.userDepositContract.GetBalance(task.connection.CallOpts(nil))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "userDepositContract.GetBalance failed")
 	}
 	poolInfo.DepositPoolBalance = poolBalance.String()
 
 	// --- reth
 	rethSupply, err := task.rethContract.TotalSupply(task.connection.CallOpts(nil))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "rethContract.TotalSupply failed")
 	}
+	// for dev
 	if task.dev {
 		rethSupply = new(big.Int).Sub(rethSupply, utils.OldRethSupply)
 	}
 	poolInfo.REthSupply = rethSupply.String()
 
 	// --- withdraw pool
-	latestDistributeWithdrawalHeight, err := task.withdrawContract.LatestDistributeHeight(task.connection.CallOpts(nil))
-	if err != nil {
-		return err
+	if task.withdrawContract != nil {
+		latestDistributeWithdrawalHeight, err := task.withdrawContract.LatestDistributeHeight(task.connection.CallOpts(nil))
+		if err != nil {
+			return err
+		}
+		nextWithdrawIndex, err := task.withdrawContract.NextWithdrawIndex(task.connection.CallOpts(nil))
+		if err != nil {
+			return err
+		}
+		maxClaimableWithdrawIndex, err := task.withdrawContract.MaxClaimableWithdrawIndex(task.connection.CallOpts(nil))
+		if err != nil {
+			return err
+		}
+		totalMissingAmountForWithdraw, err := task.withdrawContract.TotalMissingAmountForWithdraw(task.connection.CallOpts(nil))
+		if err != nil {
+			return err
+		}
+		currentWithdrawCycle, err := task.withdrawContract.CurrentWithdrawCycle(task.connection.CallOpts(nil))
+		if err != nil {
+			return err
+		}
+		totalWithdrawAmountCurrentCycle, err := task.withdrawContract.TotalWithdrawAmountAtCycle(task.connection.CallOpts(nil), currentWithdrawCycle)
+		if err != nil {
+			return err
+		}
+		withdrawLimitPerCycle, err := task.withdrawContract.WithdrawLimitPerCycle(task.connection.CallOpts(nil))
+		if err != nil {
+			return err
+		}
+		poolInfo.LatestDistributeWithdrawalHeight = latestDistributeWithdrawalHeight.Uint64()
+		poolInfo.NextWithdrawIndex = nextWithdrawIndex.Uint64()
+		poolInfo.MaxClaimableWithdrawIndex = maxClaimableWithdrawIndex.Uint64()
+		poolInfo.TotalMissingAmountForWithdraw = totalMissingAmountForWithdraw.String()
+		poolInfo.TotalWithdrawAmountCurrentCycle = totalWithdrawAmountCurrentCycle.String()
+		poolInfo.WithdrawLimitPerCycle = withdrawLimitPerCycle.String()
 	}
-	nextWithdrawIndex, err := task.withdrawContract.NextWithdrawIndex(task.connection.CallOpts(nil))
-	if err != nil {
-		return err
-	}
-	maxClaimableWithdrawIndex, err := task.withdrawContract.MaxClaimableWithdrawIndex(task.connection.CallOpts(nil))
-	if err != nil {
-		return err
-	}
-	totalMissingAmountForWithdraw, err := task.withdrawContract.TotalMissingAmountForWithdraw(task.connection.CallOpts(nil))
-	if err != nil {
-		return err
-	}
-	currentWithdrawCycle, err := task.withdrawContract.CurrentWithdrawCycle(task.connection.CallOpts(nil))
-	if err != nil {
-		return err
-	}
-	totalWithdrawAmountCurrentCycle, err := task.withdrawContract.TotalWithdrawAmountAtCycle(task.connection.CallOpts(nil), currentWithdrawCycle)
-	if err != nil {
-		return err
-	}
-	withdrawLimitPerCycle, err := task.withdrawContract.WithdrawLimitPerCycle(task.connection.CallOpts(nil))
-	if err != nil {
-		return err
-	}
-	poolInfo.LatestDistributeWithdrawalHeight = latestDistributeWithdrawalHeight.Uint64()
-	poolInfo.NextWithdrawIndex = nextWithdrawIndex.Uint64()
-	poolInfo.MaxClaimableWithdrawIndex = maxClaimableWithdrawIndex.Uint64()
-	poolInfo.TotalMissingAmountForWithdraw = totalMissingAmountForWithdraw.String()
-	poolInfo.TotalWithdrawAmountCurrentCycle = totalWithdrawAmountCurrentCycle.String()
-	poolInfo.WithdrawLimitPerCycle = withdrawLimitPerCycle.String()
 
 	// ---- distributor
-	merkleTreeDealedEpochOnchain, err := task.MerkleTreeDealedEpoch(task.storageContract)
-	if err != nil {
-		return err
+	if task.distributorContract != nil && task.withdrawContract != nil {
+		merkleTreeDealedEpochOnchain, err := task.distributorContract.GetMerkleDealedEpoch(task.connection.CallOpts(nil))
+		if err != nil {
+			return err
+		}
+		poolInfo.LatestMerkleTreeEpoch = merkleTreeDealedEpochOnchain.Uint64()
 	}
-	poolInfo.LatestMerkleTreeEpoch = merkleTreeDealedEpochOnchain.Uint64()
 
 	// --- eth price
 	price, err := task.getEthPrice()

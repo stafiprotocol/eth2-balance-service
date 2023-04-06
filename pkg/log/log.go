@@ -29,8 +29,8 @@ func InitLogFile(logPath string) error {
 
 	hook := newBtmHook(logPath)
 	logrus.AddHook(hook)
-	//logrus.SetOutput(ioutil.Discard) //控制台不输出
 	logrus.SetFormatter(defaultFormatterConsoleUse)
+
 	fmt.Printf("all logs are output in the %s directory\n", logPath)
 	return nil
 }

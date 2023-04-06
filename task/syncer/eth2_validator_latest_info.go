@@ -14,6 +14,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
 	"github.com/stafiprotocol/eth2-balance-service/shared/types"
+	"gorm.io/gorm"
 )
 
 // get validator latest info of from beacon chain on finalized epoch
@@ -194,8 +195,10 @@ func (task *Task) syncValidatorLatestInfo() error {
 	for _, val := range needCheckDistributedValidatorList {
 		latestWithdrawal, err := dao_node.GetValidatorLatestWithdrawal(task.db, val.ValidatorIndex)
 		if err != nil {
-			logrus.Warnf("GetValidatorLatestWithdrawal failed, val: %d", val.ValidatorIndex)
-			continue
+			if err == gorm.ErrRecordNotFound {
+				continue
+			}
+			return fmt.Errorf("GetValidatorLatestWithdrawal failed, val: %d", val.ValidatorIndex)
 		}
 		// ensure withdrawDone
 		if latestWithdrawal.Slot < utils.StartSlotOfEpoch(task.eth2Config, val.WithdrawableEpoch) {

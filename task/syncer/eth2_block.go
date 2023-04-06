@@ -2,7 +2,9 @@ package task_syncer
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -61,22 +63,22 @@ func (task *Task) syncEth2BlockInfo() error {
 		}
 
 		g := new(errgroup.Group)
-		g.SetLimit(32)
+		g.SetLimit(16)
 
 		// sync slash event of type 1 2 3 6, type 6 now slash 0 eth
 		// save withdrawals
 		// save proposed block
 		// save voluntary exit msg
-		for slot := startSlot; slot <= endSlot; slot++ {
+		for i := startSlot; i <= endSlot; i++ {
 
-			newSlot := slot
+			slot := i
 
 			g.Go(func() error {
-				proposer, ok := proposerDuties[newSlot]
+				proposer, ok := proposerDuties[slot]
 				if !ok {
-					return fmt.Errorf("slot %d proposerDuties not exit", newSlot)
+					return fmt.Errorf("slot %d proposerDuties not exit", slot)
 				}
-				return task.syncBlockInfoAndSlashEvent(willUseEpoch, newSlot, proposer, syncCommittees)
+				return task.syncBlockInfoAndSlashEvent(willUseEpoch, slot, proposer, syncCommittees)
 			})
 		}
 
@@ -92,7 +94,7 @@ func (task *Task) syncEth2BlockInfo() error {
 				// skip not active vals at target epoch
 				if val.ValidatorIndex == 0 ||
 					val.ActiveEpoch == 0 ||
-					val.ActiveEpoch < willUseEpoch ||
+					val.ActiveEpoch > willUseEpoch ||
 					val.ExitEpoch >= willUseEpoch {
 					continue
 				}
@@ -108,14 +110,14 @@ func (task *Task) syncEth2BlockInfo() error {
 			for valIndex, reward := range rewardsMap {
 				attesterPenalty := reward.AttestationSourcePenalty + reward.AttestationTargetPenalty
 				if attesterPenalty > 0 {
-					err := task.saveAttesterMissEvent(utils.StartSlotOfEpoch(task.eth2Config, willUseEpoch), willUseEpoch, valIndex, attesterPenalty)
+					err := task.saveAttesterMissEvent(willUseEpoch, valIndex, attesterPenalty)
 					if err != nil {
 						return err
 					}
 				}
 
 				if reward.SyncCommitteePenalty > 0 {
-					err := task.saveSyncMissEvent(utils.StartSlotOfEpoch(task.eth2Config, willUseEpoch), willUseEpoch, valIndex, reward.SyncCommitteePenalty)
+					err := task.saveSyncMissEvent(willUseEpoch, valIndex, reward.SyncCommitteePenalty)
 					if err != nil {
 						return err
 					}
@@ -208,7 +210,7 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 		if beaconBlock.ProposerIndex != 0 && err == nil {
 			err := task.saveProposedBlockAndRecipientUnMatchEvent(slot, epoch, &beaconBlock, validator)
 			if err != nil {
-				return errors.Wrap(err, "saveRecipientUnMatchEvent")
+				return errors.Wrap(err, "saveProposedBlockAndRecipientUnMatchEvent")
 			}
 		}
 	}
@@ -293,25 +295,26 @@ func (task *Task) saveProposerMissEvent(slot, epoch, proposer uint64) error {
 	return nil
 }
 
-func (task *Task) saveSyncMissEvent(slot, epoch, valIndex, slashAmount uint64) error {
+func (task *Task) saveSyncMissEvent(epoch, valIndex, slashAmount uint64) error {
 	logrus.WithFields(logrus.Fields{
 		"type":     "sync committee miss",
-		"slot":     slot,
 		"epoch":    epoch,
 		"valIndex": valIndex,
 	}).Debug("saveSyncMissEvent")
+	startSlot := utils.StartSlotOfEpoch(task.eth2Config, epoch)
+	endSlot := utils.EndSlotOfEpoch(task.eth2Config, epoch)
 
-	slashEvent, err := dao_node.GetSlashEvent(task.db, valIndex, slot, utils.SlashTypeSyncMiss)
+	slashEvent, err := dao_node.GetSlashEvent(task.db, valIndex, startSlot, utils.SlashTypeSyncMiss)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return errors.Wrap(err, "dao_node.GetSlashEvent")
 	}
 
 	slashEvent.ValidatorIndex = valIndex
-	slashEvent.StartSlot = slot
-	slashEvent.EndSlot = slot
+	slashEvent.StartSlot = startSlot
+	slashEvent.EndSlot = endSlot
 	slashEvent.Epoch = epoch
-	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
-	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, startSlot)
+	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, endSlot)
 	slashEvent.SlashType = utils.SlashTypeSyncMiss
 	slashEvent.SlashAmount = slashAmount
 
@@ -322,25 +325,26 @@ func (task *Task) saveSyncMissEvent(slot, epoch, valIndex, slashAmount uint64) e
 	return nil
 }
 
-func (task *Task) saveAttesterMissEvent(slot, epoch, valIndex, slashAmount uint64) error {
+func (task *Task) saveAttesterMissEvent(epoch, valIndex, slashAmount uint64) error {
 	logrus.WithFields(logrus.Fields{
 		"type":     "sync committee miss",
-		"slot":     slot,
 		"epoch":    epoch,
 		"valIndex": valIndex,
 	}).Debug("saveAttesterMissEvent")
+	startSlot := utils.StartSlotOfEpoch(task.eth2Config, epoch)
+	endSlot := utils.EndSlotOfEpoch(task.eth2Config, epoch)
 
-	slashEvent, err := dao_node.GetSlashEvent(task.db, valIndex, slot, utils.SlashTypeAttesterMiss)
+	slashEvent, err := dao_node.GetSlashEvent(task.db, valIndex, startSlot, utils.SlashTypeAttesterMiss)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return errors.Wrap(err, "dao_node.GetSlashEvent")
 	}
 
 	slashEvent.ValidatorIndex = valIndex
-	slashEvent.StartSlot = slot
-	slashEvent.EndSlot = slot
+	slashEvent.StartSlot = startSlot
+	slashEvent.EndSlot = endSlot
 	slashEvent.Epoch = epoch
-	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
-	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, slot)
+	slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, startSlot)
+	slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, endSlot)
 	slashEvent.SlashType = utils.SlashTypeAttesterMiss
 	slashEvent.SlashAmount = slashAmount
 
@@ -394,7 +398,6 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 
 	proposedBlock.Slot = slot
 	proposedBlock.ValidatorIndex = beaconBlock.ProposerIndex
-	proposedBlock.FeeRecipient = beaconBlock.FeeRecipient.String()
 
 	// cal total priority fee
 	totalFee, err := task.connection.GetELRewardForBlock(beaconBlock.ExecutionBlockNumber)
@@ -402,9 +405,36 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 		return errors.Wrap(err, "GetELRewardForBlock failed")
 	}
 
-	proposedBlock.FeeAmount = decimal.NewFromBigInt(totalFee, 0).StringFixed(0)
 	proposedBlock.Timestamp = utils.TimestampOfSlot(task.eth2Config, slot)
 	proposedBlock.BlockNumber = beaconBlock.ExecutionBlockNumber
+
+	proposedBlock.FeeRecipient = beaconBlock.FeeRecipient.String()
+	proposedBlock.FeeAmount = decimal.NewFromBigInt(totalFee, 0).StringFixed(0)
+	shouldSlash := false
+	switch {
+	case bytes.EqualFold(beaconBlock.FeeRecipient[:], task.lightNodeFeePoolAddress[:]):
+	case bytes.EqualFold(beaconBlock.FeeRecipient[:], task.superNodeFeePoolAddress[:]):
+	default:
+		// maybe mev
+		shouldSlash = true
+		block, err := task.connection.Eth1Client().BlockByNumber(context.Background(), big.NewInt(int64(beaconBlock.ExecutionBlockNumber)))
+		if err != nil {
+			return err
+		}
+		for _, tx := range block.Transactions() {
+			if tx.To() != nil {
+				if bytes.EqualFold(tx.To()[:], task.lightNodeFeePoolAddress[:]) ||
+					bytes.EqualFold(tx.To()[:], task.superNodeFeePoolAddress[:]) {
+
+					proposedBlock.FeeRecipient = tx.To().String()
+					proposedBlock.FeeAmount = decimal.NewFromBigInt(tx.Value(), 0).StringFixed(0)
+
+					shouldSlash = false
+					break
+				}
+			}
+		}
+	}
 
 	err = dao_node.UpOrInProposedBlock(task.db, proposedBlock)
 	if err != nil {
@@ -412,12 +442,6 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 	}
 
 	// insert into table slashEvent if feeRecipient not match
-	shouldSlash := false
-	if !bytes.EqualFold(beaconBlock.FeeRecipient[:], task.lightNodeFeePoolAddress[:]) &&
-		!bytes.EqualFold(beaconBlock.FeeRecipient[:], task.superNodeFeePoolAddress[:]) {
-		shouldSlash = true
-	}
-
 	if shouldSlash {
 		willUseValIndex := proposedBlock.ValidatorIndex
 
@@ -444,7 +468,7 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 		slashEvent.StartTimestamp = utils.TimestampOfSlot(task.eth2Config, proposedBlock.Slot)
 		slashEvent.EndTimestamp = utils.TimestampOfSlot(task.eth2Config, proposedBlock.Slot)
 		slashEvent.SlashType = utils.SlashTypeFeeRecipient
-		slashEvent.SlashAmount = feeAmountDeci.Div(utils.GweiDeci).BigInt().Uint64() // use Gwei as unit
+		slashEvent.SlashAmount = feeAmountDeci.Div(utils.GweiDeci).BigInt().Uint64() // use Gwei
 
 		err = dao_node.UpOrInSlashEvent(task.db, slashEvent)
 		if err != nil {

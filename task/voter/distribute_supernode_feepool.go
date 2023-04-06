@@ -146,11 +146,12 @@ func (task Task) getUserNodePlatformFromSuperNodeFeePool(latestDistributeHeight,
 		totalAmountDeci = totalAmountDeci.Add(feeAmountDeci)
 
 		// cal rewards
-		var userRewardDeci, nodeRewardDeci, platformFeeDeci = decimal.Zero, decimal.Zero, decimal.Zero
+		var userRewardDeci decimal.Decimal
+		var nodeRewardDeci decimal.Decimal
+		var platformFeeDeci decimal.Decimal
 		if w.Slot <= utils.StartSlotOfEpoch(task.eth2Config, task.rewardV1EndEpoch) {
 			userRewardDeci, nodeRewardDeci, platformFeeDeci = utils.GetUserNodePlatformRewardV1(validator.NodeDepositAmount, feeAmountDeci)
 		} else {
-
 			userRewardDeci, nodeRewardDeci, platformFeeDeci = utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, feeAmountDeci)
 		}
 		// cal reward + deposit

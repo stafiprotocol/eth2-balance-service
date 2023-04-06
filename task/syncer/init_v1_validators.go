@@ -1,4 +1,4 @@
-package task_v1_syncer
+package task_syncer
 
 import (
 	// "fmt"
@@ -19,7 +19,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (task *Task) syncV1Validators() error {
+func (task *Task) initV1Validators() error {
 	beconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {
 		return err
@@ -28,15 +28,18 @@ func (task *Task) syncV1Validators() error {
 	if err != nil {
 		return err
 	}
-	logrus.Info("stakingPoolCount ", stakingPoolCount.String())
+	logrus.Info("v1 validators stakingPoolCount: ", stakingPoolCount.String())
 
 	metadata, err := dao.GetMetaData(task.db, utils.MetaTypeV1ValidatorSyncer)
 	if err != nil {
-		return err
+		if err != gorm.ErrRecordNotFound {
+			return err
+		}
+		metadata.MetaType = utils.MetaTypeV1ValidatorSyncer
+		metadata.DealedBlockHeight = 0
 	}
-	i := int64(metadata.DealedBlockHeight)
 
-	for ; i < stakingPoolCount.Int64(); i++ {
+	for i := int64(metadata.DealedBlockHeight); i < stakingPoolCount.Int64(); i++ {
 		stakingPoolAddress, err := task.stakingPoolManagerContract.GetStakingPoolAt(task.connection.CallOpts(nil), big.NewInt(i))
 		if err != nil {
 			return err
@@ -117,20 +120,16 @@ func (task *Task) syncV1Validators() error {
 		validator.PoolAddress = stakingPoolAddress.String()
 		validator.Pubkey = pubkeyStr
 		validator.Status = utils.ValidatorStatusStaked
-		// validator.ValidatorIndex = status.Index
+		validator.ValidatorIndex = status.Index
 
 		err = dao_node.UpOrInValidator(task.db, validator)
 		if err != nil {
 			return err
 		}
-		metaData, err := dao.GetMetaData(task.db, utils.MetaTypeV1ValidatorSyncer)
-		if err != nil {
-			return err
-		}
 
-		metaData.DealedBlockHeight = uint64(i)
+		metadata.DealedBlockHeight = uint64(i)
 
-		err = dao.UpOrInMetaData(task.db, metaData)
+		err = dao.UpOrInMetaData(task.db, metadata)
 		if err != nil {
 			return err
 		}
@@ -146,6 +145,6 @@ func (task *Task) syncV1Validators() error {
 		return err
 	}
 
-	logrus.Info("validators count ", len(list))
+	logrus.Info("already synced validators count ", len(list))
 	return nil
 }
