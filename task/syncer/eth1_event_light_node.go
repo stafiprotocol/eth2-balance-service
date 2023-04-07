@@ -2,6 +2,7 @@ package task_syncer
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -42,6 +43,14 @@ func (task *Task) fetchLightNodeEvents(start, end uint64) error {
 		validator.DepositTxHash = txHashStr
 		validator.DepositBlockHeight = iterDeposited.Event.Raw.BlockNumber
 		validator.DepositSignature = hexutil.Encode(iterDeposited.Event.ValidatorSignature)
+
+		switch validator.NodeDepositAmount {
+		case utils.NodeDepositAmount4:
+		case utils.NodeDepositAmount8:
+		case utils.NodeDepositAmount12:
+		default:
+			return fmt.Errorf("unknown nodeposit amount: %d", validator.NodeDepositAmount)
+		}
 
 		err = dao_node.UpOrInValidator(task.db, validator)
 		if err != nil {

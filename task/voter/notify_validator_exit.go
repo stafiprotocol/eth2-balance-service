@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
@@ -187,10 +188,12 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 		return nil, err
 	}
 
-	soloValidtors := make([]*dao_node.Validator, 0)
+	solo4Validtors := make([]*dao_node.Validator, 0)
+	solo8Validtors := make([]*dao_node.Validator, 0)
 	superValidtors := make([]*dao_node.Validator, 0)
+	solo12Validtors := make([]*dao_node.Validator, 0)
 	for _, val := range notExitValidatorList {
-		// must actived over one month
+		// sip if actived less than one month
 		if val.ActiveEpoch+30*225 > targetEpoch {
 			continue
 		}
@@ -203,30 +206,49 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 				continue
 			}
 		} else {
-			// skip if no uptime at latest day
+			// skip if no uptime within one day
 			if uptime.UploadTimestamp < uint64(time.Now().Unix()-24*60*60) {
 				continue
 			}
 		}
 
-		if val.NodeType == utils.NodeTypeCommon || val.NodeType == utils.NodeTypeLight {
-			soloValidtors = append(soloValidtors, val)
-		} else {
+		switch val.NodeDepositAmount {
+		case utils.NodeDepositAmount0:
 			superValidtors = append(superValidtors, val)
+		case utils.NodeDepositAmount4:
+			solo4Validtors = append(solo4Validtors, val)
+		case utils.NodeDepositAmount8:
+			solo8Validtors = append(solo8Validtors, val)
+		case utils.NodeDepositAmount12:
+			solo12Validtors = append(solo12Validtors, val)
+		default:
+			return nil, fmt.Errorf("unknown nodeposit amount: %d", val.NodeDepositAmount)
 		}
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"soloValidators len":  len(soloValidtors),
-		"superValidators len": len(superValidtors),
+		"solo4Validators len":  len(solo4Validtors),
+		"solo8Validators len":  len(solo8Validtors),
+		"solo12Validators len": len(solo12Validtors),
+		"superValidators len":  len(superValidtors),
 	}).Info("waiting selected validators info")
 
-	// sort deposit 4(apr) (8/super) 12(not)
-
-	// solo  node max 2/per 2 week
-	sort.SliceStable(soloValidtors, func(i, j int) bool {
-		aprI, _ := dao_node.GetValidatorAprForAverageApr(task.db, soloValidtors[i].ValidatorIndex)
-		aprJ, _ := dao_node.GetValidatorAprForAverageApr(task.db, soloValidtors[j].ValidatorIndex)
+	// sort by apr
+	// sort by deposit [4 8 0 12]
+	// solo node address exit max 2 vals within 2 weeks
+	sort.SliceStable(solo4Validtors, func(i, j int) bool {
+		aprI, _ := dao_node.GetValidatorAprForAverageApr(task.db, solo4Validtors[i].ValidatorIndex)
+		aprJ, _ := dao_node.GetValidatorAprForAverageApr(task.db, solo4Validtors[j].ValidatorIndex)
+		return aprI < aprJ
+	})
+	sort.SliceStable(solo8Validtors, func(i, j int) bool {
+		aprI, _ := dao_node.GetValidatorAprForAverageApr(task.db, solo8Validtors[i].ValidatorIndex)
+		aprJ, _ := dao_node.GetValidatorAprForAverageApr(task.db, solo8Validtors[j].ValidatorIndex)
+		return aprI < aprJ
+	})
+	sort.SliceStable(solo12Validtors, func(i, j int) bool {
+		aprI, _ := dao_node.GetValidatorAprForAverageApr(task.db, solo12Validtors[i].ValidatorIndex)
+		aprJ, _ := dao_node.GetValidatorAprForAverageApr(task.db, solo12Validtors[j].ValidatorIndex)
 		return aprI < aprJ
 	})
 
@@ -236,14 +258,46 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 		return aprI < aprJ
 	})
 
-	valQuene := append(soloValidtors, superValidtors...)
+	valQuene := make([]*dao_node.Validator, 0)
+	valQuene = append(valQuene, solo4Validtors...)
+	valQuene = append(valQuene, solo8Validtors...)
+	valQuene = append(valQuene, superValidtors...)
+	valQuene = append(valQuene, solo12Validtors...)
+
+	allExitElectionList, err := dao_node.GetAllExitElectionList(task.db)
+	if err != nil {
+		return nil, errors.Wrap(err, "dao_node.GetAllExitElectionList")
+	}
+	nodeExitNumberWithin2Weeks := make(map[string]int)
+	timestampBefore2Weeks := time.Now().Unix() - 14*24*60*60
+	for _, exitElection := range allExitElectionList {
+		if exitElection.ValidatorIndex == 0 {
+			continue
+		}
+		if exitElection.ExitTimestamp > uint64(timestampBefore2Weeks) {
+			val, err := dao_node.GetValidatorByIndex(task.db, exitElection.ValidatorIndex)
+			if err != nil {
+				return nil, err
+			}
+			nodeExitNumberWithin2Weeks[val.NodeAddress]++
+		}
+	}
 
 	selectVal := make([]*big.Int, 0)
 	totalExitAmountDeci := decimal.Zero
 	for _, val := range valQuene {
+		if (val.NodeType == utils.NodeTypeCommon || val.NodeType == utils.NodeTypeLight) &&
+			nodeExitNumberWithin2Weeks[val.NodeAddress] >= 2 {
+			continue
+		}
+
 		userAmountDeci := decimal.NewFromInt(int64(utils.StandardEffectiveBalance) - int64(val.NodeDepositAmount)).Mul(utils.GweiDeci)
 		totalExitAmountDeci = totalExitAmountDeci.Add(userAmountDeci)
+
 		selectVal = append(selectVal, big.NewInt(int64(val.ValidatorIndex)))
+
+		nodeExitNumberWithin2Weeks[val.NodeAddress]++
+
 		if totalExitAmountDeci.GreaterThanOrEqual(totalMissingAmount) {
 			break
 		}

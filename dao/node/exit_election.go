@@ -32,6 +32,11 @@ func GetExitElection(db *db.WrapDb, validatorIndex uint64) (c *ExitElection, err
 	return
 }
 
+func GetAllExitElectionList(db *db.WrapDb) (c []*ExitElection, err error) {
+	err = db.Find(&c).Error
+	return
+}
+
 func GetExitElectionList(db *db.WrapDb, pageIndex, pageCount int) (c []*ExitElection, count int64, err error) {
 	if pageIndex <= 0 {
 		pageIndex = 1

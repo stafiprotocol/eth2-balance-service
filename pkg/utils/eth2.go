@@ -95,6 +95,11 @@ const (
 	OfficialSlashAmount                 = uint64(1e9)  //gwei
 	StandardLightNodeDepositAmount      = uint64(12e9) //gwei
 	MaxPartialWithdrawalAmount          = uint64(8e9)  //gwei
+
+	NodeDepositAmount0  = uint64(0)    //gwei super
+	NodeDepositAmount4  = uint64(4e9)  //gwei solo 4
+	NodeDepositAmount8  = uint64(8e9)  //gwei solo 8
+	NodeDepositAmount12 = uint64(12e9) //gwei solo 12
 )
 
 //	enum ClaimType {
