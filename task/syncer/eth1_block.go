@@ -67,7 +67,7 @@ func (task *Task) syncEth1Block() error {
 			}
 		}
 
-		if task.distributorContract != nil && task.withdrawContract != nil {
+		if task.distributorContract != nil {
 			err = task.fetchDistributorContractEvents(subStart, subEnd)
 			if err != nil {
 				return err

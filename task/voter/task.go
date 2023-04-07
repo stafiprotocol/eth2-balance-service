@@ -101,9 +101,9 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		storageContractAddress:                 common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		rewardEpochInterval:                    utils.RewardEpochInterval,
 		rewardV1EndEpoch:                       utils.RewardV1EndEpoch,
-		distributeFeeInitDealedHeight:          1, //todo mainnet config
-		distributeSuperNodeFeeInitDealedHeight: 1,
-		distributeWithdrawalInitDealedHeight:   1,
+		distributeFeeInitDealedHeight:          1e17, //todo mainnet config
+		distributeSuperNodeFeeInitDealedHeight: 1e17,
+		distributeWithdrawalInitDealedHeight:   1e17,
 	}
 
 	return s, nil

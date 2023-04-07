@@ -75,7 +75,7 @@ func (task *Task) syncContractsInfo() error {
 	}
 
 	// ---- distributor
-	if task.distributorContract != nil && task.withdrawContract != nil {
+	if task.distributorContract != nil {
 		merkleTreeDealedEpochOnchain, err := task.distributorContract.GetMerkleDealedEpoch(task.connection.CallOpts(nil))
 		if err != nil {
 			return err

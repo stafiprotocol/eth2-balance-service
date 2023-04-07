@@ -186,7 +186,6 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	// v1 has no contracts below
 	lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
 	if err != nil {
 		return err
@@ -243,6 +242,14 @@ func (task *Task) initContract() error {
 		if err != nil {
 			return err
 		}
+
+		if !task.dev {
+			if strings.EqualFold(stafiDistributorAddress.String(), "0x014B688764422fd5A4f85bcFadf65Bb9a0CeeD90") {
+				task.distributorContract = nil
+				logrus.Warnf("stafiDistributor contract %s is old, will skip events", stafiDistributorAddress)
+			}
+		}
+
 	}
 
 	nodeDepositAddress, err := task.getContractAddress(storageContract, "stafiNodeDeposit")
