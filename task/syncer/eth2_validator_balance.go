@@ -152,7 +152,7 @@ func (task *Task) syncValidatorEpochBalances() error {
 			if validatorBalance.Balance+validatorBalance.TotalWithdrawal > utils.StandardEffectiveBalance+utils.MaxPartialWithdrawalAmount {
 				return fmt.Errorf("validator: %d staking reward abnormal, balance: %d, withdrawals: %d", validatorBalance.ValidatorIndex, validatorBalance.Balance, validatorBalance.TotalWithdrawal)
 			}
-			if validatorBalance.TotalFee > utils.MaxPartialWithdrawalAmount {
+			if validatorBalance.TotalFee > utils.StandardEffectiveBalance {
 				return fmt.Errorf("validator: %d priority fee abnormal, totalFee: %d", validatorBalance.ValidatorIndex, validatorBalance.TotalFee)
 			}
 
