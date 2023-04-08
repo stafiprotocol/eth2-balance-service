@@ -9,6 +9,7 @@ import "github.com/stafiprotocol/eth2-balance-service/pkg/db"
 // 3 eth2 validator epoch balance syncer
 // 4 v1 validator syncer
 // 5 eth2 block syncer
+// 6 node epoch balance syncer
 type MetaData struct {
 	db.BaseModel
 

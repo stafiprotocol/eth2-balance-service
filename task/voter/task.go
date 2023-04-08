@@ -50,14 +50,14 @@ type Task struct {
 	db                   *db.WrapDb
 	withdrawCredientials string
 
+	storageContract         *storage.Storage
+	userDepositContract     *user_deposit.UserDeposit
 	lightNodeContract       *light_node.LightNode
 	superNodeContract       *super_node.SuperNode
 	networkSettingsContract *network_settings.NetworkSettings
 	networkBalancesContract *network_balances.NetworkBalances
 	rethContract            *reth.Reth
-	userDepositContract     *user_deposit.UserDeposit
 	distributorContract     *distributor.Distributor
-	storageContract         *storage.Storage
 	withdrawContract        *withdraw.Withdraw
 
 	feePoolAddress          common.Address
