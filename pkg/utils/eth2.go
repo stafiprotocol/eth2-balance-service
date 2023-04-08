@@ -93,9 +93,9 @@ const (
 	StandardEffectiveBalance            = uint64(32e9) //gwei
 	StandardSuperNodeFakeDepositBalance = uint64(1e9)  //gwei
 	OfficialSlashAmount                 = uint64(1e9)  //gwei
-	StandardLightNodeDepositAmount      = uint64(12e9) //gwei
 	MaxPartialWithdrawalAmount          = uint64(8e9)  //gwei
 
+	// node deposit amount(gwei)
 	NodeDepositAmount0  = uint64(0)    //gwei super
 	NodeDepositAmount4  = uint64(4e9)  //gwei solo 4
 	NodeDepositAmount8  = uint64(8e9)  //gwei solo 8
@@ -131,8 +131,8 @@ var (
 const (
 	StakerWithdrawalClaimableTimestamp = uint64(1)
 	MinValidatorWithdrawabilityDelay   = uint64(256 + 5)
-	MaxDistributeSecondsInterval       = uint64(8 * 60 * 60)
-	MaxDistributeEpochInterval         = uint64(75)
+	MaxDistributeWaitSeconds           = uint64(8 * 60 * 60)
+	MaxDistributeWaitEpoch             = uint64(75)
 
 	EjectorUptimeInterval = uint64(10 * 60)
 )
@@ -259,14 +259,17 @@ func GetUserValPlatformDepositAndRewardV1(validatorBalance, nodeDepositAmount ui
 	}
 }
 
-// v1: platform = 10% node = 90%*(nodedeposit/32)+90%*(1- nodedeposit/32)*10%  user = 90%*(1- nodedeposit/32)*90%
+// v1:
+// user = 90%*(1- nodedeposit/32)*90%
+// node = 90%*(nodedeposit/32)+90%*(1- nodedeposit/32)*10%
+// platform = 10%
+// rewardDeci decimals maybe 9 or 18, also the returns
 // return (user reward, node reward, paltform fee)
-func GetUserNodePlatformRewardV1(nodeDepositBalance uint64, rewardDeci decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
-
-	if !rewardDeci.IsPositive() || nodeDepositBalance > StandardEffectiveBalance {
+func GetUserNodePlatformRewardV1(nodeDepositAmount uint64, rewardDeci decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
+	if !rewardDeci.IsPositive() || nodeDepositAmount > StandardEffectiveBalance {
 		return decimal.Zero, decimal.Zero, decimal.Zero
 	}
-	userDepositBalance := StandardEffectiveBalance - nodeDepositBalance
+	userDepositBalance := StandardEffectiveBalance - nodeDepositAmount
 
 	// platform Fee
 	platformFeeDeci := rewardDeci.Mul(PlatformFeeV1Deci) // 10%
@@ -288,12 +291,13 @@ func GetUserNodePlatformRewardV1(nodeDepositBalance uint64, rewardDeci decimal.D
 	nodeRewardDeci := nodeStakeRewardDeci.Add(nodeCommissionRewardFromUserDeci) // // 90%*(nodedeposit/32) + 90%*(1 - nodedeposit/32)*10%
 
 	return userRewardDeci, nodeRewardDeci, platformFeeDeci
-
 }
 
-// v2: platform = 5%  node = 5% + (90% * nodedeposit/32) user = 90%*(1-nodedeposit/32)
-// platform = 5%  node = 5% + (90% * nodedeposit/32)
-// rewardDeci decimals maybe 9/18, also the returns
+// v2:
+// user = 90%*(1-nodedeposit/32)
+// node = 5% + (90% * nodedeposit/32)
+// platform = 5%
+// rewardDeci decimals maybe 9 or 18, also the returns
 // return (user reward, node reward, paltform fee)
 func GetUserNodePlatformRewardV2(nodeDepositAmount uint64, rewardDeci decimal.Decimal) (decimal.Decimal, decimal.Decimal, decimal.Decimal) {
 	if !rewardDeci.IsPositive() || nodeDepositAmount > StandardEffectiveBalance {
@@ -312,7 +316,6 @@ func GetUserNodePlatformRewardV2(nodeDepositAmount uint64, rewardDeci decimal.De
 	}
 
 	return userRewardDeci, nodeRewardDeci, platformFeeDeci
-
 }
 
 func GetValidatorTotalReward(balance, totalWithdrawal, totalFee uint64) uint64 {

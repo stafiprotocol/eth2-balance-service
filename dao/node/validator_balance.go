@@ -76,42 +76,8 @@ func GetLatestValidatorBalanceListBeforeEpoch(db *db.WrapDb, validatorIndex, epo
 	return
 }
 
-// return 0 if no data used to cal rate
 func GetValidatorAprForAverageApr(db *db.WrapDb, validatorIndex uint64) (float64, error) {
-	validatorBalanceList, err := GetLatestValidatorBalanceList(db, validatorIndex)
-	if err != nil {
-		logrus.Errorf("dao_node.GetLatestValidatorBalanceList err: %s", err)
-		return 0, err
-	}
-
-	if len(validatorBalanceList) >= 2 {
-		first := validatorBalanceList[0]
-		end := validatorBalanceList[len(validatorBalanceList)-1]
-
-		duBalance := uint64(0)
-
-		firstReward := utils.GetValidatorTotalReward(first.Balance, first.TotalWithdrawal, first.TotalFee)
-		endReward := utils.GetValidatorTotalReward(end.Balance, end.TotalWithdrawal, end.TotalFee)
-
-		_, firstNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(utils.StandardLightNodeDepositAmount, decimal.NewFromInt(int64(firstReward)))
-		_, endNodeRewardDeci, _ := utils.GetUserNodePlatformRewardV2(utils.StandardLightNodeDepositAmount, decimal.NewFromInt(int64(endReward)))
-
-		duBalanceDeci := firstNodeRewardDeci.Sub(endNodeRewardDeci)
-		if duBalanceDeci.IsPositive() {
-			duBalance = duBalanceDeci.BigInt().Uint64()
-		}
-
-		du := int64(first.Timestamp - end.Timestamp)
-
-		if du > 0 {
-			apr, _ := decimal.NewFromInt(int64(duBalance)).
-				Mul(decimal.NewFromInt(365.25 * 24 * 60 * 60 * 100)).
-				Div(decimal.NewFromInt(du)).
-				Div(decimal.NewFromInt(int64(utils.StandardLightNodeDepositAmount))).Float64()
-			return apr, nil
-		}
-	}
-	return 0, nil
+	return GetValidatorApr(db, validatorIndex, utils.NodeDepositAmount12)
 }
 
 // return 0 if no data used to cal rate

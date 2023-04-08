@@ -159,7 +159,7 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	// has exited validator && exit epoch > cur epoch
 	// todo mainnet waitSweepEpochs
 	waitSweepEpochs := uint64(66267 / 16 / 32)
-	maxDistributedEpoch := minWithdrawAbleEpoch + waitSweepEpochs + utils.MaxDistributeEpochInterval
+	maxDistributedEpoch := minWithdrawAbleEpoch + waitSweepEpochs + utils.MaxDistributeWaitEpoch
 	if minWithdrawAbleEpoch != uint64(math.MaxUint64) && valInfoMeta.DealedEpoch < maxDistributedEpoch {
 		needWaitEpoch = maxDistributedEpoch - valInfoMeta.DealedEpoch
 	}

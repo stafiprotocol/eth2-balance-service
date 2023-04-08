@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// calc node epoch info on the basis of [node's validator balance list] at this epoch
+// calc node epoch info on the basis of [node's validator's balance list] at this epoch
 func (task *Task) collectNodeEpochBalances() error {
 	beaconHead, err := task.connection.Eth2BeaconHead()
 	if err != nil {

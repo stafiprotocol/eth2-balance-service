@@ -193,9 +193,88 @@ func TestDecodeInputData(t *testing.T) {
 	// utils_test.go:222: 4146766312500000 855681937500000 263286750000000
 }
 
-func TestGetUserNodePlatformRewardV2(t *testing.T) {
-	user, node, platform := utils.GetUserNodePlatformRewardV2(12000000000, decimal.NewFromInt(6300000))
-	t.Log(user, node, platform)
+func TestGetUserNodePlatformReward(t *testing.T) {
+	testCaseV1 := []struct {
+		NodeDeposit          uint64
+		TotalRewardAmount    decimal.Decimal
+		UserRewardAmount     decimal.Decimal
+		NodeRewardAmount     decimal.Decimal
+		PlatformRewardAmount decimal.Decimal
+	}{
+		{
+			utils.NodeDepositAmount4,
+			decimal.NewFromInt(0),
+			decimal.NewFromInt(0),
+			decimal.NewFromInt(0),
+			decimal.NewFromInt(0),
+		},
+		{
+			utils.NodeDepositAmount0,
+			decimal.NewFromInt(1000),
+			decimal.NewFromInt(810),
+			decimal.NewFromInt(90),
+			decimal.NewFromInt(100),
+		},
+		{
+			utils.NodeDepositAmount4,
+			decimal.NewFromInt(1000),
+			decimal.NewFromFloat(708.75),
+			decimal.NewFromFloat(191.25),
+			decimal.NewFromInt(100),
+		},
+	}
+	for _, tCase := range testCaseV1 {
+		// v1:
+		// user = 90%*(1- nodedeposit/32)*90%
+		// node = 90%*(nodedeposit/32)+90%*(1- nodedeposit/32)*10%
+		// platform = 10%
+		user, node, platform := utils.GetUserNodePlatformRewardV1(tCase.NodeDeposit, tCase.TotalRewardAmount)
+		if !user.Equal(tCase.UserRewardAmount) || !node.Equal(tCase.NodeRewardAmount) || !platform.Equal(tCase.PlatformRewardAmount) {
+			t.Fatalf("Not match: expected: %+v, actual: user %s node %s platform %s", tCase, user, node, platform)
+		}
+
+	}
+
+	testCaseV2 := []struct {
+		NodeDeposit          uint64
+		TotalRewardAmount    decimal.Decimal
+		UserRewardAmount     decimal.Decimal
+		NodeRewardAmount     decimal.Decimal
+		PlatformRewardAmount decimal.Decimal
+	}{
+		{
+			utils.NodeDepositAmount4,
+			decimal.NewFromInt(0),
+			decimal.NewFromInt(0),
+			decimal.NewFromInt(0),
+			decimal.NewFromInt(0),
+		},
+		{
+			utils.NodeDepositAmount0,
+			decimal.NewFromInt(1000),
+			decimal.NewFromInt(900),
+			decimal.NewFromInt(50),
+			decimal.NewFromInt(50),
+		},
+		{
+			utils.NodeDepositAmount4,
+			decimal.NewFromInt(1000),
+			decimal.NewFromFloat(787.5),
+			decimal.NewFromFloat(162.5),
+			decimal.NewFromInt(50),
+		},
+	}
+	for _, tCase := range testCaseV2 {
+		// v2:
+		// user = 90%*(1-nodedeposit/32)
+		// node = 5% + (90% * nodedeposit/32)
+		// platform = 5%
+		user, node, platform := utils.GetUserNodePlatformRewardV2(tCase.NodeDeposit, tCase.TotalRewardAmount)
+		if !user.Equal(tCase.UserRewardAmount) || !node.Equal(tCase.NodeRewardAmount) || !platform.Equal(tCase.PlatformRewardAmount) {
+			t.Fatalf("Not match: expected: %+v, actual: user %s node %s platform %s", tCase, user, node, platform)
+		}
+
+	}
 }
 
 func TestStorage(t *testing.T) {
