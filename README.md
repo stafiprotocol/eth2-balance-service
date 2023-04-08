@@ -18,13 +18,14 @@ Usage:
   reth [command]
 
 Available Commands:
-  gen-account  Generate ethereum keystore
-  start-syncer Start syncer
-  start-api    Start api server
-  start-voter  Start voter
-  sync-v1-data Sync data of v1
-  version      Show version information
-  help         Help about any command
+  gen-account     Generate ethereum keystore
+  start-syncer    Start syncer
+  start-api       Start api server
+  start-voter     Start voter
+  sync-mint-event Sync mint event
+  statistic       Statistic history reward info and save to statistic_info.txt
+  version         Show version information
+  help            Help about any command
 
 Flags:
   -h, --help   help for reth
