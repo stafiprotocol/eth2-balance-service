@@ -1,4 +1,3 @@
-enableDistribute = true
 eth1Endpoint = "https://rpc.zhejiang.ethpandaops.io"
 eth2Endpoint = "https://beacon.zhejiang.ethpandaops.io"
 from = "0xB20e8393C07FC446D17277c80b8E3f82Cd857A50"

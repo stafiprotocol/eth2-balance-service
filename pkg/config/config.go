@@ -21,7 +21,6 @@ type Config struct {
 	MaxGasPrice             string
 	UnstakingStartTimestamp uint64 // used by api server
 	StafiInfoEndpoint       string // used by api server
-	RewardStartEpoch        uint64 // used by v1 syncer to fetch history epoch balance info from start epoch
 
 	EraCount uint64 // used for statistic
 

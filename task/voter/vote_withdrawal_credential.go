@@ -2,6 +2,7 @@ package task_voter
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/prysmaticlabs/prysm/v3/contracts/deposit"
@@ -43,7 +44,7 @@ func (task *Task) voteWithdrawalCredential() error {
 
 		match := true
 		for _, l := range list {
-			if l.WithdrawalCredentials != task.withdrawCredientials {
+			if !strings.EqualFold(l.WithdrawalCredentials, task.withdrawCredientials) {
 				match = false
 			}
 		}
