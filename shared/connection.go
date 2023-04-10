@@ -434,7 +434,7 @@ func (c *Connection) GetRewardsForEpochWithValidators(epoch uint64, valIndexs []
 	endSlot := startSlot + slotsPerEpoch - 1
 
 	g := new(errgroup.Group)
-	g.SetLimit(8)
+	g.SetLimit(16)
 
 	slotsToProposerIndex := make(map[uint64]uint64)
 	for _, pa := range proposerAssignments.Data {
@@ -453,18 +453,16 @@ func (c *Connection) GetRewardsForEpochWithValidators(epoch uint64, valIndexs []
 				return fmt.Errorf("assigned proposer for slot %v not found", slot)
 			}
 
-			_, exist, err := c.GetBeaconBlock(slot)
-			if err != nil {
-				return errors.Wrap(err, "GetBeaconBlock")
-			}
-			if !exist {
-				return nil
-			}
-
 			// get sync rewards
 			syncRewards, err := c.eth2Client.SyncCommitteeRewards(slot)
 			if err != nil {
-				if err != client.ErrSlotPreSyncCommittees {
+				switch {
+				case strings.Contains(err.Error(), client.ErrBlockNotFound.Error()):
+					// block not exit, should return
+					return nil
+				case strings.Contains(err.Error(), client.ErrSlotPreSyncCommittees.Error()):
+					// skip err
+				default:
 					return fmt.Errorf("client.SyncCommitteeRewards err %s, slot: %d", err, slot)
 				}
 			}

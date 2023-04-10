@@ -63,7 +63,7 @@ func (task *Task) syncEth2BlockInfo() error {
 		}
 
 		g := new(errgroup.Group)
-		g.SetLimit(8)
+		g.SetLimit(16)
 
 		// sync slash event of type 1 2 3 6, type 6 now slash 0 eth
 		// save withdrawals

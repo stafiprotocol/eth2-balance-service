@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
+	"strings"
 	"testing"
 
 	// "github.com/ethereum/go-ethereum/common"
@@ -15,6 +16,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"github.com/stafiprotocol/eth2-balance-service/shared"
 	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
+	"github.com/stafiprotocol/eth2-balance-service/shared/beacon/client"
 	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 )
 
@@ -109,6 +111,24 @@ func TestBlockDetail(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	r, err := c.Eth2Client().SyncCommitteeRewards(6190497)
+	if err != nil {
+		if err != nil {
+			switch {
+			case strings.Contains(err.Error(), client.ErrBlockNotFound.Error()):
+				// block not exit, should return
+				t.Log("not exit")
+			case strings.Contains(err.Error(), client.ErrSlotPreSyncCommittees.Error()):
+				// skip err
+				t.Log("skip")
+			default:
+				t.Log(err)
+			}
+		}
+		t.Fatal(err)
+	}
+	t.Log(r)
+	return
 
 	// beaconBlock, _, err := c.Eth2Client().GetBeaconBlock(5668634)
 	// if err != nil {
