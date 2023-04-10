@@ -87,16 +87,50 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		return
 	}
 
+	valIndexList := make([]uint64, len(valList))
+	for i, val := range valList {
+		valIndexList[i] = val.ValidatorIndex
+	}
+
+	valBalanceAtRewardV1EndEpoch, err := dao_node.GetValidatorsBalanceListByEpoch(h.db, utils.RewardV1EndEpoch, valIndexList)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("GetValidatorsBalanceListByEpoch err %v", err)
+		return
+	}
+	valBalanceAtRewardV1EndEpochMap := make(map[uint64]*dao_node.ValidatorBalance)
+	for _, val := range valBalanceAtRewardV1EndEpoch {
+		valBalanceAtRewardV1EndEpochMap[val.ValidatorIndex] = val
+	}
+
 	minWithdrawAbleEpoch := uint64(math.MaxUint64)
 	overallRewardAmountDeci := decimal.Zero
 	overallExitDepositAmountDeci := decimal.Zero
-	valIndexList := make([]uint64, 0)
 	for _, val := range valList {
-		valIndexList = append(valIndexList, val.ValidatorIndex)
 		// cal overall
 		validatorTotalReward := utils.GetValidatorTotalReward(val.Balance, val.TotalWithdrawal, val.TotalFee)
-		// todo calc by two sections on mainnet
-		_, nodeRewardOfThisValidatorDeci, _ := utils.GetUserNodePlatformRewardV2(val.NodeDepositAmount, decimal.NewFromInt(int64(validatorTotalReward)))
+
+		// ---------calc total self reward by two sections
+		validatorRewardV1TotalReward := uint64(0)
+		validatorRewardV2TotalReward := uint64(0)
+		if valInfoMeta.DealedBlockHeight <= utils.RewardV1EndEpoch {
+			validatorRewardV1TotalReward = validatorTotalReward
+		} else {
+			valBalanceAtRewardV1EndEpoch, exist := valBalanceAtRewardV1EndEpochMap[val.ValidatorIndex]
+			if exist {
+				validatorRewardV1TotalReward = utils.GetValidatorTotalReward(valBalanceAtRewardV1EndEpoch.Balance, valBalanceAtRewardV1EndEpoch.TotalWithdrawal, valBalanceAtRewardV1EndEpoch.TotalFee)
+			}
+			// maybe not exist
+			// this case validatorRewardV1TotalReward = 0
+
+			if validatorTotalReward > validatorRewardV1TotalReward {
+				validatorRewardV2TotalReward = validatorTotalReward - validatorRewardV1TotalReward
+			}
+		}
+		_, nodeRewardV1OfThisValidator, _ := utils.GetUserNodePlatformRewardV1(val.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV1TotalReward)))
+		_, nodeRewardV2OfThisValidator, _ := utils.GetUserNodePlatformRewardV2(val.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV2TotalReward)))
+
+		nodeRewardOfThisValidatorDeci := nodeRewardV1OfThisValidator.Add(nodeRewardV2OfThisValidator)
 
 		overallRewardAmountDeci = overallRewardAmountDeci.Add(nodeRewardOfThisValidatorDeci)
 
@@ -157,8 +191,10 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	needWaitEpoch := uint64(0)
 
 	// has exited validator && exit epoch > cur epoch
-	// todo mainnet waitSweepEpochs
-	waitSweepEpochs := uint64(66267 / 16 / 32)
+	waitSweepEpochs := uint64(566267 / 16 / 32) //mainnet
+	if !strings.EqualFold(poolInfo.FeePool, "0x6fb2aa2443564d9430b9483b1a5eea13a522df45") {
+		waitSweepEpochs = uint64(66267 / 16 / 32) //zhejiang
+	}
 	maxDistributedEpoch := minWithdrawAbleEpoch + waitSweepEpochs + utils.MaxDistributeWaitEpoch
 	if minWithdrawAbleEpoch != uint64(math.MaxUint64) && valInfoMeta.DealedEpoch < maxDistributedEpoch {
 		needWaitEpoch = maxDistributedEpoch - valInfoMeta.DealedEpoch

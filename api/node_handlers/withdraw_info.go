@@ -7,10 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
+	"github.com/stafiprotocol/eth2-balance-service/dao"
+	dao_chaos "github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
@@ -78,12 +81,39 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 	if req.PageCount > 50 {
 		req.PageCount = 50
 	}
+	valInfoMeta, err := dao.GetMetaData(h.db, utils.MetaTypeEth2ValidatorInfoSyncer)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("GetMetaData failed,err: %v", err)
+		return
+	}
+	poolInfo, err := dao_chaos.GetPoolInfo(h.db)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao_claim.GetProof failed,err: %v", err)
+		return
+	}
 
 	validatorList, err := dao_node.GetValidatorListByNode(h.db, req.NodeAddress, 0)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("dao.GetValidatorListByNode err %v", err)
 		return
+	}
+	valIndexList := make([]uint64, len(validatorList))
+	for i, val := range validatorList {
+		valIndexList[i] = val.ValidatorIndex
+	}
+
+	valBalanceAtRewardV1EndEpoch, err := dao_node.GetValidatorsBalanceListByEpoch(h.db, utils.RewardV1EndEpoch, valIndexList)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("GetValidatorsBalanceListByEpoch err %v", err)
+		return
+	}
+	valBalanceAtRewardV1EndEpochMap := make(map[uint64]*dao_node.ValidatorBalance)
+	for _, val := range valBalanceAtRewardV1EndEpoch {
+		valBalanceAtRewardV1EndEpochMap[val.ValidatorIndex] = val
 	}
 
 	withdrawList := make([]ResWithdraw, 0)
@@ -102,8 +132,26 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 			}
 
 			validatorTotalReward := utils.GetValidatorTotalReward(validator.Balance, validator.TotalWithdrawal, validator.TotalFee)
-			// todo calc by two sections on mainnet
-			_, nodeRewardOfThisValidatorDeci, _ := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, decimal.NewFromInt(int64(validatorTotalReward)))
+			// ---------calc total self reward by two sections
+			validatorRewardV1TotalReward := uint64(0)
+			validatorRewardV2TotalReward := uint64(0)
+			if valInfoMeta.DealedBlockHeight <= utils.RewardV1EndEpoch {
+				validatorRewardV1TotalReward = validatorTotalReward
+			} else {
+				valBalanceAtRewardV1EndEpoch, exist := valBalanceAtRewardV1EndEpochMap[validator.ValidatorIndex]
+				if exist {
+					validatorRewardV1TotalReward = utils.GetValidatorTotalReward(valBalanceAtRewardV1EndEpoch.Balance, valBalanceAtRewardV1EndEpoch.TotalWithdrawal, valBalanceAtRewardV1EndEpoch.TotalFee)
+				}
+				// maybe not exist
+				// this case validatorRewardV1TotalReward = 0
+				if validatorTotalReward > validatorRewardV1TotalReward {
+					validatorRewardV2TotalReward = validatorTotalReward - validatorRewardV1TotalReward
+				}
+			}
+			_, nodeRewardV1OfThisValidator, _ := utils.GetUserNodePlatformRewardV1(validator.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV1TotalReward)))
+			_, nodeRewardV2OfThisValidator, _ := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV2TotalReward)))
+
+			nodeRewardOfThisValidatorDeci := nodeRewardV1OfThisValidator.Add(nodeRewardV2OfThisValidator)
 
 			rewardAmountDeci := nodeRewardOfThisValidatorDeci.Mul(utils.GweiDeci)
 			depositAmountDeci := decimal.NewFromInt(int64(validator.NodeDepositAmount)).Mul(utils.GweiDeci)
@@ -118,7 +166,10 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 				}
 			}
 
-			url := fmt.Sprintf("https://zhejiang.beaconcha.in/validator/%d", validator.ValidatorIndex)
+			url := fmt.Sprintf("https://beaconcha.in/validator/%d", validator.ValidatorIndex) // mainnet
+			if !strings.EqualFold(poolInfo.FeePool, "0x6fb2aa2443564d9430b9483b1a5eea13a522df45") {
+				url = fmt.Sprintf("https://zhejiang.beaconcha.in/validator/%d", validator.ValidatorIndex) // zhejiang
+			}
 
 			withdrawList = append(withdrawList, ResWithdraw{
 				RewardAmount:     rewardAmountDeci.StringFixed(0),
@@ -176,8 +227,10 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 			return
 		}
 
-		// todo mainet
-		url := fmt.Sprintf("https://blockscout.com/eth/zhejiang-testnet/tx/%s", nodeClaim.TxHash)
+		url := fmt.Sprintf("hhttps://etherscan.io/tx/%s", nodeClaim.TxHash) //mainnet
+		if !strings.EqualFold(poolInfo.FeePool, "0x6fb2aa2443564d9430b9483b1a5eea13a522df45") {
+			url = fmt.Sprintf("https://blockscout.com/eth/zhejiang-testnet/tx/%s", nodeClaim.TxHash) //zhejiang
+		}
 
 		withdrawList = append(withdrawList, ResWithdraw{
 			RewardAmount:     rewardAmountDeci.StringFixed(0),

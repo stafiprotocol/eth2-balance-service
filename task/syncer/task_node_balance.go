@@ -136,7 +136,8 @@ func (task *Task) collectNodeEpochBalances() error {
 							if task.rewardV1EndEpoch >= valInfo.ActiveEpoch {
 								return fmt.Errorf("not found validator %d balance but rewardV1EndEpoch > valInfo.ActiveEpoch", valInfo.ValidatorIndex)
 							}
-							// maybe not exist if activeEpoch > rewardV1EndEpoch, this case validatorRewardV1TotalReward = 0
+							// maybe not exist if activeEpoch > rewardV1EndEpoch,
+							// this case validatorRewardV1TotalReward = 0
 						}
 					} else {
 						validatorRewardV1TotalReward = utils.GetValidatorTotalReward(valBalanceAtRewardV1EndEpoch.Balance, valBalanceAtRewardV1EndEpoch.TotalWithdrawal, valBalanceAtRewardV1EndEpoch.TotalFee)
@@ -145,7 +146,6 @@ func (task *Task) collectNodeEpochBalances() error {
 					if validatorTotalReward > validatorRewardV1TotalReward {
 						validatorRewardV2TotalReward = validatorTotalReward - validatorRewardV1TotalReward
 					}
-
 				}
 				_, nodeRewardV1OfThisValidator, _ := utils.GetUserNodePlatformRewardV1(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV1TotalReward)))
 				_, nodeRewardV2OfThisValidator, _ := utils.GetUserNodePlatformRewardV2(valInfo.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV2TotalReward)))
