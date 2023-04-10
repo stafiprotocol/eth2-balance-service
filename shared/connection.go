@@ -492,32 +492,33 @@ func (c *Connection) GetRewardsForEpochWithValidators(epoch uint64, valIndexs []
 			}
 
 			// get proposer fee reward
-			execBlockNumber, err := c.eth2Client.ExecutionBlockNumber(slot)
-			rewardsMux.Lock()
-			if rewards[proposer] == nil {
-				rewards[proposer] = &client.ValidatorEpochIncome{}
-			}
-			rewardsMux.Unlock()
-			if err != nil {
-				if err == client.ErrBlockNotFound {
-					rewardsMux.Lock()
-					rewards[proposer].ProposalsMissed += 1
-					rewardsMux.Unlock()
-					return nil
-				} else if err != client.ErrSlotPreMerge { // ignore
-					logrus.Errorf("error retrieving execution block number for slot %v: %v", slot, err)
-					return err
-				}
-			} else {
-				txFeeIncome, err := c.GetELRewardForBlock(execBlockNumber)
-				if err != nil {
-					return fmt.Errorf("elrewards.GetELRewardForBlock %s", err)
-				}
+			// execBlockNumber, err := c.eth2Client.ExecutionBlockNumber(slot)
+			// rewardsMux.Lock()
+			// if rewards[proposer] == nil {
+			// 	rewards[proposer] = &client.ValidatorEpochIncome{}
+			// }
+			// rewardsMux.Unlock()
 
-				rewardsMux.Lock()
-				rewards[proposer].TxFeeRewardWei = txFeeIncome.Bytes()
-				rewardsMux.Unlock()
-			}
+			// if err != nil {
+			// 	if err == client.ErrBlockNotFound {
+			// 		rewardsMux.Lock()
+			// 		rewards[proposer].ProposalsMissed += 1
+			// 		rewardsMux.Unlock()
+			// 		return nil
+			// 	} else if err != client.ErrSlotPreMerge { // ignore
+			// 		logrus.Errorf("error retrieving execution block number for slot %v: %v", slot, err)
+			// 		return err
+			// 	}
+			// } else {
+			// 	txFeeIncome, err := c.GetELRewardForBlock(execBlockNumber)
+			// 	if err != nil {
+			// 		return fmt.Errorf("elrewards.GetELRewardForBlock %s", err)
+			// 	}
+
+			// 	rewardsMux.Lock()
+			// 	rewards[proposer].TxFeeRewardWei = txFeeIncome.Bytes()
+			// 	rewardsMux.Unlock()
+			// }
 
 			// get proposer block rewards
 			blockRewards, err := c.eth2Client.BlockRewards(slot)
