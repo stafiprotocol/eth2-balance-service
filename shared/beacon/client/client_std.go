@@ -583,6 +583,13 @@ func (c *StandardHttpClient) GetBeaconBlock(blockId uint64) (beacon.BeaconBlock,
 		})
 	}
 
+	for _, exitMsg := range block.Data.Message.Body.VoluntaryExits {
+		beaconBlock.VoluntaryExits = append(beaconBlock.VoluntaryExits, beacon.VoluntaryExit{
+			ValidatorIndex: uint64(exitMsg.Message.ValidatorIndex),
+			Epoch:          uint64(exitMsg.Message.Epoch),
+		})
+	}
+
 	// Execution payload only exists after the merge, so check for its existence
 	if block.Data.Message.Body.ExecutionPayload == nil {
 		beaconBlock.HasExecutionPayload = false

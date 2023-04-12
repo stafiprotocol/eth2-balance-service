@@ -193,8 +193,8 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 	superValidtors := make([]*dao_node.Validator, 0)
 	solo12Validtors := make([]*dao_node.Validator, 0)
 	for _, val := range notExitValidatorList {
-		// sip if actived less than one month
-		if val.ActiveEpoch+30*225 > targetEpoch {
+		// sip if actived less than 2 months
+		if val.ActiveEpoch+60*225 > targetEpoch {
 			continue
 		}
 		uptime, err := dao_node.GetEjectorUptime(task.db, val.ValidatorIndex)
@@ -235,7 +235,7 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 
 	// sort by apr
 	// sort by deposit [4 8 0 12]
-	// solo node address exit max 2 vals within 2 weeks
+	// solo node address exit max 2 vals within 2 months
 	sort.SliceStable(solo4Validtors, func(i, j int) bool {
 		aprI, _ := dao_node.GetValidatorAprForAverageApr(task.db, solo4Validtors[i].ValidatorIndex)
 		aprJ, _ := dao_node.GetValidatorAprForAverageApr(task.db, solo4Validtors[j].ValidatorIndex)
@@ -268,18 +268,20 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 	if err != nil {
 		return nil, errors.Wrap(err, "dao_node.GetAllExitElectionList")
 	}
-	nodeExitNumberWithin2Weeks := make(map[string]int)
-	timestampBefore2Weeks := time.Now().Unix() - 14*24*60*60
+
+	withinSeconds := 60 * 24 * 60 * 60 // 2 months
+	nodeExitNumberWithinSeconds := make(map[string]int)
+	timestampBeforeSeconds := time.Now().Unix() - int64(withinSeconds)
 	for _, exitElection := range allExitElectionList {
 		if exitElection.ValidatorIndex == 0 {
 			continue
 		}
-		if exitElection.ExitTimestamp > uint64(timestampBefore2Weeks) {
+		if exitElection.ExitTimestamp > uint64(timestampBeforeSeconds) {
 			val, err := dao_node.GetValidatorByIndex(task.db, exitElection.ValidatorIndex)
 			if err != nil {
 				return nil, err
 			}
-			nodeExitNumberWithin2Weeks[val.NodeAddress]++
+			nodeExitNumberWithinSeconds[val.NodeAddress]++
 		}
 	}
 
@@ -287,7 +289,7 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 	totalExitAmountDeci := decimal.Zero
 	for _, val := range valQuene {
 		if (val.NodeType == utils.NodeTypeCommon || val.NodeType == utils.NodeTypeLight) &&
-			nodeExitNumberWithin2Weeks[val.NodeAddress] >= 2 {
+			nodeExitNumberWithinSeconds[val.NodeAddress] >= 2 {
 			continue
 		}
 
@@ -296,7 +298,7 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 
 		selectVal = append(selectVal, big.NewInt(int64(val.ValidatorIndex)))
 
-		nodeExitNumberWithin2Weeks[val.NodeAddress]++
+		nodeExitNumberWithinSeconds[val.NodeAddress]++
 
 		if totalExitAmountDeci.GreaterThanOrEqual(totalMissingAmount) {
 			break

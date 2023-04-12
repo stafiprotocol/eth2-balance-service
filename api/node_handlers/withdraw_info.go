@@ -16,6 +16,7 @@ import (
 	dao_chaos "github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"gorm.io/gorm"
 )
 
 // status for frontend
@@ -157,13 +158,16 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 			depositAmountDeci := decimal.NewFromInt(int64(validator.NodeDepositAmount)).Mul(utils.GweiDeci)
 			totalAmountDeci := rewardAmountDeci.Add(depositAmountDeci)
 
+			operateTimestamp := uint64(0)
 			exitMsg, err := dao_node.GetExitMsg(h.db, validator.ValidatorIndex)
 			if err != nil {
-				if err != nil {
+				if err != gorm.ErrRecordNotFound {
 					utils.Err(c, utils.CodeInternalErr, err.Error())
 					logrus.Errorf("dao.GetExitMsg err %v", err)
 					return
 				}
+			} else {
+				operateTimestamp = exitMsg.BroadcastTimestamp
 			}
 
 			url := fmt.Sprintf("https://beaconcha.in/validator/%d", validator.ValidatorIndex) // mainnet
@@ -175,7 +179,7 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 				RewardAmount:     rewardAmountDeci.StringFixed(0),
 				DepositAmount:    depositAmountDeci.StringFixed(0),
 				TotalAmount:      totalAmountDeci.StringFixed(0),
-				OperateTimestamp: exitMsg.BroadcastTimestamp,
+				OperateTimestamp: operateTimestamp,
 				TimeLeft:         86400,
 				ReceivedAddress:  req.NodeAddress,
 				ExplorerUrl:      url,
