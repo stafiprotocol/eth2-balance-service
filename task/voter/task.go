@@ -217,15 +217,15 @@ func (task *Task) voteHandler() {
 			}
 			logrus.Debug("voteWithdrawalCredential end -----------\n")
 
-			logrus.Debug("distributeFee start -----------")
-			err = task.distributeFee()
+			logrus.Debug("distribute start -----------")
+			err = task.distribute()
 			if err != nil {
-				logrus.Warnf("distributeFee err %s", err)
+				logrus.Warnf("distribute err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("distributeFee end -----------\n")
+			logrus.Debug("distribute end -----------\n")
 
 			logrus.Debug("voteRate start -----------")
 			err = task.voteRate()

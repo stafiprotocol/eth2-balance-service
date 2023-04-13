@@ -126,9 +126,20 @@ func (task *Task) voteRate() error {
 	newExchangeRateDeci := totalUserEthDeci.Mul(decimal.NewFromInt(1e18)).Div(rethTotalSupplyDeci)
 
 	logrus.WithFields(logrus.Fields{
-		"newExchangeRate": newExchangeRateDeci.StringFixed(0),
-		"oldExchangeRate": oldExchangeRate.String(),
-	}).Debug("exchangeInfo")
+		"targetEth1Height":                      targetEth1BlockHeight,
+		"targetEpoch":                           targetEpoch,
+		"balancesEpoch":                         balancesEpoch,
+		"totalUserEthFromValidator":             totalUserEthFromValidatorDeci.StringFixed(0),
+		"userDepositPoolBalance":                userDepositPoolBalance,
+		"totalUserUndistributedWithdrawalsDeci": totalUserUndistributedWithdrawalsDeci.StringFixed(0),
+		"totalUnDistributedSlashAmountDeci":     totalSlashAmountDeci.StringFixed(0),
+		"totalMissingAmountForWithdrawDeci":     totalMissingAmountForWithdrawDeci.StringFixed(0),
+		"totalUserEth":                          totalUserEthDeci.StringFixed(0),
+		"totalStakingEth":                       totalStakingEthDeci.StringFixed(0),
+		"rethTotalSupply":                       rethTotalSupplyDeci.StringFixed(0),
+		"newExchangeRate":                       newExchangeRateDeci.StringFixed(0),
+		"oldExchangeRate":                       oldExchangeRateDeci.StringFixed(0),
+	}).Info("exchangeInfo")
 
 	if newExchangeRateDeci.LessThanOrEqual(oldExchangeRateDeci) {
 		logrus.WithFields(logrus.Fields{
@@ -142,20 +153,6 @@ func (task *Task) voteRate() error {
 			return fmt.Errorf("newExchangeRate %s too big than oldExchangeRate %s", newExchangeRateDeci.String(), oldExchangeRateDeci.String())
 		}
 	}
-
-	logrus.WithFields(logrus.Fields{
-		"targetEth1Height":          targetEth1BlockHeight,
-		"targetEpoch":               targetEpoch,
-		"balancesEpoch":             balancesEpoch,
-		"totalUserEthFromValidator": totalUserEthFromValidatorDeci.StringFixed(0),
-		"userDepositPoolBalance":    userDepositPoolBalance,
-		"totalUserEth":              totalUserEthDeci.StringFixed(0),
-		"totalStakingEth":           totalStakingEthDeci.StringFixed(0),
-		"rethTotalSupply":           rethTotalSupplyDeci.StringFixed(0),
-		"newExchangeRate":           newExchangeRateDeci.StringFixed(0),
-		"oldExchangeRate":           oldExchangeRateDeci.StringFixed(0),
-	}).Info("exchangeInfo")
-
 	// send vote tx
 	return task.sendVoteRateTx(balancesEpoch, totalUserEthDeci.BigInt(), totalStakingEthDeci.BigInt(), rethTotalSupply)
 }
