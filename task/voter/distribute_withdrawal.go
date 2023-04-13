@@ -228,7 +228,7 @@ func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targ
 			}
 
 		case w.Amount >= utils.StandardEffectiveBalance: // full withdrawal
-			totalReward = totalReward - utils.StandardEffectiveBalance
+			totalReward = w.Amount - utils.StandardEffectiveBalance
 
 			userDeposit = utils.StandardEffectiveBalance - validator.NodeDepositAmount
 			nodeDeposit = validator.NodeDepositAmount
