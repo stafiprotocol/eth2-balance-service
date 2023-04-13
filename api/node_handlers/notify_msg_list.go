@@ -198,7 +198,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 	}
 
 	// 4 slash
-	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList)
+	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList, h.slashStartEpoch)
 	if err == nil {
 		if len(slashList) > 0 {
 			sort.SliceStable(slashList, func(i, j int) bool {

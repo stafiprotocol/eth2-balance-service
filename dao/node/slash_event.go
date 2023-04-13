@@ -36,13 +36,7 @@ func GetSlashEvent(db *db.WrapDb, validatorIndex, startSlot uint64, slashType ui
 	return
 }
 
-// used for dev mode
-func GetSlashEventListOfType(db *db.WrapDb, validatorIndex uint64, slashType uint8) (c []*SlashEvent, err error) {
-	err = db.Find(&c, "validator_index = ? and slash_type = ?", validatorIndex, slashType).Error
-	return
-}
-
-func GetSlashEventList(db *db.WrapDb, validatorIndex uint64, pageIndex, pageCount int) (c []*SlashEvent, count int64, err error) {
+func GetSlashEventList(db *db.WrapDb, validatorIndex, startEpoch uint64, pageIndex, pageCount int) (c []*SlashEvent, count int64, err error) {
 	if pageIndex <= 0 {
 		pageIndex = 1
 	}
@@ -53,45 +47,55 @@ func GetSlashEventList(db *db.WrapDb, validatorIndex uint64, pageIndex, pageCoun
 		pageCount = 50
 	}
 
-	err = db.Model(&SlashEvent{}).Where("validator_index = ? and slash_amount > 0", validatorIndex).Count(&count).Error
+	err = db.Model(&SlashEvent{}).Where("epoch >= ? and validator_index = ? and slash_amount > 0", startEpoch, validatorIndex).Count(&count).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "validator_index = ? and slash_amount > 0", validatorIndex).Error
+	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "epoch >= ? and validator_index = ? and slash_amount > 0", startEpoch, validatorIndex).Error
 	return
 }
 
-func GetTotalSlashAmountOfValidator(db *db.WrapDb, validatorIndex uint64) (totalSlashAmount uint64, err error) {
+func GetTotalSlashAmountOfValidator(db *db.WrapDb, validatorIndex, startEpoch uint64) (totalSlashAmount uint64, err error) {
 	value := sql.NullInt64{}
-	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where validator_index = ?",
-		validatorIndex).Scan(&value).Error
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and validator_index = ?",
+		startEpoch, validatorIndex).Scan(&value).Error
 	if err != nil {
 		return 0, err
 	}
 	return uint64(value.Int64), nil
 }
 
-func GetTotalSlashAmountBeforeWithIndexList(db *db.WrapDb, valIndexList []uint64, targetEpoch uint64) (totalSlashAmount uint64, err error) {
+func GetTotalSlashAmountBeforeWithIndexList(db *db.WrapDb, valIndexList []uint64, startEpoch, targetEpoch uint64) (totalSlashAmount uint64, err error) {
 	value := sql.NullInt64{}
-	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch <= ? and validator_index in ?",
-		targetEpoch, valIndexList).Scan(&value).Error
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and epoch <= ? and validator_index in ?",
+		startEpoch, targetEpoch, valIndexList).Scan(&value).Error
 	if err != nil {
 		return 0, err
 	}
 	return uint64(value.Int64), nil
 }
 
-func GetTotalSlashAmountWithIndexList(db *db.WrapDb, valIndexList []uint64) (totalSlashAmount uint64, err error) {
+func GetTotalSlashAmountDuEpoch(db *db.WrapDb, startEpoch, targetEpoch uint64) (totalSlashAmount uint64, err error) {
 	value := sql.NullInt64{}
-	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where validator_index in ?", valIndexList).Scan(&value).Error
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and epoch <= ?",
+		startEpoch, targetEpoch).Scan(&value).Error
 	if err != nil {
 		return 0, err
 	}
 	return uint64(value.Int64), nil
 }
 
-func GetSlashEventListWithIndex(db *db.WrapDb, valIndexList []uint64) (c []*SlashEvent, err error) {
-	err = db.Find(&c, "slash_amount > 0 and validator_index in ?", valIndexList).Error
+func GetTotalSlashAmountWithIndexList(db *db.WrapDb, valIndexList []uint64, startEpoch uint64) (totalSlashAmount uint64, err error) {
+	value := sql.NullInt64{}
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and validator_index in ?", startEpoch, valIndexList).Scan(&value).Error
+	if err != nil {
+		return 0, err
+	}
+	return uint64(value.Int64), nil
+}
+
+func GetSlashEventListWithIndex(db *db.WrapDb, valIndexList []uint64, startEpoch uint64) (c []*SlashEvent, err error) {
+	err = db.Find(&c, "epoch >= ? and slash_amount > 0 and validator_index in ?", startEpoch, valIndexList).Error
 	return
 }

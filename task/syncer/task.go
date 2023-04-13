@@ -32,12 +32,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
-	devStartEpoch       = uint64(4400)
-	devStartBlocHeight  = uint64(133654)
-	devRewardV1EndEpoch = uint64(75)
-)
-
 // sync deposit/stake events and pool latest info from execute chain
 // sync validator latest info and epoch balance from consensus chain
 // sync beacon block info from consensus chain
@@ -52,6 +46,7 @@ type Task struct {
 	rewardEpochInterval    uint64 //75
 	calMerkleTreeDu        uint64 //75
 	rewardV1EndEpoch       uint64
+	slashStartEpoch        uint64
 	dev                    bool
 
 	eth2BlockStartEpoch uint64 // for eth2 block syncer
@@ -92,6 +87,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		eth1StartHeight:     utils.TheMergeBlockNumber,
 		eth2BlockStartEpoch: utils.TheMergeEpoch,
 		rewardV1EndEpoch:    utils.RewardV1EndEpoch,
+		slashStartEpoch:     utils.SlashStartEpoch,
 
 		rewardEpochInterval:    utils.RewardEpochInterval,
 		calMerkleTreeDu:        utils.RewardEpochInterval,
@@ -138,9 +134,10 @@ func (task *Task) Start() error {
 
 	// for dev params
 	if task.dev {
-		task.eth1StartHeight = devStartBlocHeight
-		task.eth2BlockStartEpoch = devStartEpoch
-		task.rewardV1EndEpoch = devRewardV1EndEpoch
+		task.eth1StartHeight = utils.DevTheMergeBlockNumber
+		task.eth2BlockStartEpoch = utils.DevTheMergeEpoch
+		task.rewardV1EndEpoch = utils.DevRewardV1EndEpoch
+		task.slashStartEpoch = utils.DevTheMergeEpoch
 	}
 	// only for mainnet
 	if !task.dev {

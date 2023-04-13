@@ -233,7 +233,7 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return err
 	}
 	for _, val := range allValidatorList {
-		slashAmount, err := dao_node.GetTotalSlashAmountOfValidator(task.db, val.ValidatorIndex)
+		slashAmount, err := dao_node.GetTotalSlashAmountOfValidator(task.db, val.ValidatorIndex, task.slashStartEpoch)
 		if err != nil {
 			return err
 		}

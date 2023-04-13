@@ -30,16 +30,18 @@ import (
 )
 
 type Task struct {
-	taskTicker                             int64
-	stop                                   chan struct{}
-	eth1Endpoint                           string
-	eth2Endpoint                           string
-	keyPair                                *secp256k1.Keypair
-	gasLimit                               *big.Int
-	maxGasPrice                            *big.Int
-	storageContractAddress                 common.Address
-	rewardEpochInterval                    uint64
-	rewardV1EndEpoch                       uint64
+	taskTicker             int64
+	stop                   chan struct{}
+	eth1Endpoint           string
+	eth2Endpoint           string
+	keyPair                *secp256k1.Keypair
+	gasLimit               *big.Int
+	maxGasPrice            *big.Int
+	storageContractAddress common.Address
+	rewardEpochInterval    uint64
+	rewardV1EndEpoch       uint64
+	slashStartEpoch        uint64
+
 	distributeFeeInitDealedHeight          int64 // dealedHeight is zero after upgrade new contract
 	distributeSuperNodeFeeInitDealedHeight int64
 	distributeWithdrawalInitDealedHeight   int64
@@ -90,17 +92,20 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 	}
 
 	s := &Task{
-		taskTicker:                             15,
-		stop:                                   make(chan struct{}),
-		db:                                     dao,
-		keyPair:                                keyPair,
-		eth1Endpoint:                           cfg.Eth1Endpoint,
-		eth2Endpoint:                           cfg.Eth2Endpoint,
-		gasLimit:                               gasLimitDeci.BigInt(),
-		maxGasPrice:                            maxGasPriceDeci.BigInt(),
-		storageContractAddress:                 common.HexToAddress(cfg.Contracts.StorageContractAddress),
-		rewardEpochInterval:                    utils.RewardEpochInterval,
-		rewardV1EndEpoch:                       utils.RewardV1EndEpoch,
+		taskTicker:             15,
+		stop:                   make(chan struct{}),
+		db:                     dao,
+		keyPair:                keyPair,
+		eth1Endpoint:           cfg.Eth1Endpoint,
+		eth2Endpoint:           cfg.Eth2Endpoint,
+		gasLimit:               gasLimitDeci.BigInt(),
+		maxGasPrice:            maxGasPriceDeci.BigInt(),
+		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
+
+		rewardEpochInterval: utils.RewardEpochInterval,
+		rewardV1EndEpoch:    utils.RewardV1EndEpoch,
+		slashStartEpoch:     utils.SlashStartEpoch,
+
 		distributeFeeInitDealedHeight:          16638921,
 		distributeSuperNodeFeeInitDealedHeight: 17024852,
 		distributeWithdrawalInitDealedHeight:   1,
@@ -153,7 +158,9 @@ func (task *Task) Start() error {
 	}
 
 	if task.dev {
-		task.rewardV1EndEpoch = 750
+		task.rewardV1EndEpoch = utils.DevRewardV1EndEpoch
+		task.slashStartEpoch = utils.DevTheMergeEpoch
+
 		task.distributeFeeInitDealedHeight = 1
 		task.distributeSuperNodeFeeInitDealedHeight = 1
 		task.distributeWithdrawalInitDealedHeight = 1

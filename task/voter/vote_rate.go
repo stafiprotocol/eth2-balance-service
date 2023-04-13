@@ -87,8 +87,16 @@ func (task *Task) voteRate() error {
 	}
 	totalMissingAmountForWithdrawDeci := decimal.NewFromBigInt(totalMissingAmountForWithdraw, 0)
 
-	// ----final: total user eth = total user eth from validator + deposit pool balance + user undistributedWithdrawals - totalMissingAmountForWithdraw
-	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).Add(totalUserUndistributedWithdrawalsDeci).Sub(totalMissingAmountForWithdrawDeci)
+	// ----5 total undistributed slash amount
+	totalSlashAmount, err := dao_node.GetTotalSlashAmountDuEpoch(task.db, task.slashStartEpoch, targetEpoch)
+	if err != nil {
+		return err
+	}
+	totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).Mul(utils.GweiDeci)
+	//todo sub distributed amount
+
+	// ----final: total user eth = total user eth from validator + deposit pool balance + user undistributedWithdrawals + totalUndistributed slash amount - totalMissingAmountForWithdraw
+	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).Add(totalUserUndistributedWithdrawalsDeci).Add(totalSlashAmountDeci).Sub(totalMissingAmountForWithdrawDeci)
 	// should sub totalMissingAmountForWithdrawDeci, as there are checks on networkbalances `require(_stakingEth <= _totalEth, "Invalid network balances");`
 	totalStakingEthDeci = totalStakingEthDeci.Sub(totalMissingAmountForWithdrawDeci)
 

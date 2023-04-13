@@ -14,7 +14,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func InitRouters(db *db.WrapDb) http.Handler {
+func InitRouters(db *db.WrapDb, isDev bool, slashStartEpoch uint64) http.Handler {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
@@ -23,7 +23,7 @@ func InitRouters(db *db.WrapDb) http.Handler {
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	nodeHandler := node_handlers.NewHandler(db)
+	nodeHandler := node_handlers.NewHandler(db, isDev, slashStartEpoch)
 	router.POST("/reth/v1/nodeInfo", nodeHandler.HandlePostNodeInfo)
 	router.POST("/reth/v1/rewardInfo", nodeHandler.HandlePostRewardInfo)
 	router.POST("/reth/v1/withdrawInfo", nodeHandler.HandlePostWithdrawInfo)

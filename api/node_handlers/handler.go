@@ -8,9 +8,11 @@ import (
 )
 
 type Handler struct {
-	db *db.WrapDb
+	db              *db.WrapDb
+	slashStartEpoch uint64
+	isDev           bool
 }
 
-func NewHandler(db *db.WrapDb) *Handler {
-	return &Handler{db: db}
+func NewHandler(db *db.WrapDb, isDev bool, slashStartEpoch uint64) *Handler {
+	return &Handler{db: db, isDev: isDev, slashStartEpoch: slashStartEpoch}
 }

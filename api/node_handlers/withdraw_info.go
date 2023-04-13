@@ -7,13 +7,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
-	dao_chaos "github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
@@ -86,12 +84,6 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetMetaData failed,err: %v", err)
-		return
-	}
-	poolInfo, err := dao_chaos.GetPoolInfo(h.db)
-	if err != nil {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao_claim.GetProof failed,err: %v", err)
 		return
 	}
 
@@ -171,7 +163,7 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 			}
 
 			url := fmt.Sprintf("https://beaconcha.in/validator/%d", validator.ValidatorIndex) // mainnet
-			if !strings.EqualFold(poolInfo.FeePool, "0x6fb2aa2443564d9430b9483b1a5eea13a522df45") {
+			if h.isDev {
 				url = fmt.Sprintf("https://zhejiang.beaconcha.in/validator/%d", validator.ValidatorIndex) // zhejiang
 			}
 
@@ -232,7 +224,7 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 		}
 
 		url := fmt.Sprintf("hhttps://etherscan.io/tx/%s", nodeClaim.TxHash) //mainnet
-		if !strings.EqualFold(poolInfo.FeePool, "0x6fb2aa2443564d9430b9483b1a5eea13a522df45") {
+		if h.isDev {
 			url = fmt.Sprintf("https://blockscout.com/eth/zhejiang-testnet/tx/%s", nodeClaim.TxHash) //zhejiang
 		}
 

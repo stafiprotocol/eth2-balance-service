@@ -89,6 +89,11 @@ const (
 
 	RewardV1EndEpoch    = uint64(11192300) //todo mainnet
 	RewardEpochInterval = uint64(75)
+	SlashStartEpoch     = uint64(180000)
+	//dev
+	DevTheMergeEpoch       = uint64(4400)
+	DevTheMergeBlockNumber = uint64(133654)
+	DevRewardV1EndEpoch    = uint64(75)
 
 	StandardEffectiveBalance            = uint64(32e9) //gwei
 	StandardSuperNodeFakeDepositBalance = uint64(1e9)  //gwei
