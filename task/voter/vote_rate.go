@@ -14,7 +14,7 @@ import (
 
 const balancesEpochOffset = uint64(1e10)
 
-var maxRateChangeDeci = decimal.NewFromInt(1e14) //0.0001
+var maxRateChangeDeci = decimal.NewFromInt(2e14) //0.0002
 
 // update rate every rewardEpochInterval(default: 75 epoch)
 func (task *Task) voteRate() error {
