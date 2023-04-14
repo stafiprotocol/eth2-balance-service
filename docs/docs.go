@@ -806,6 +806,9 @@ const docTemplate = `{
                 "exitHours": {
                     "type": "integer"
                 },
+                "pubkey": {
+                    "type": "string"
+                },
                 "slashAmount": {
                     "type": "string"
                 },

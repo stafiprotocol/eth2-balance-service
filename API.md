@@ -693,6 +693,7 @@ no
 |         |         |         | exitHours   | Yes         | null        | number                                                                                                   |
 |         |         |         | slashAmount | Yes         | null        | string                                                                                                   |
 |         |         |         | slashType   | Yes         | null        | number                                                                                                   |
+|         |         |         | pubkey      | Yes         | null        | string                                                                                                   |
 
 ## 17. ejector uptime
 

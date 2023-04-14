@@ -24,6 +24,8 @@ definitions:
     properties:
       exitHours:
         type: integer
+      pubkey:
+        type: string
       slashAmount:
         type: string
       slashType:

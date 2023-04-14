@@ -48,6 +48,7 @@ type MsgData struct {
 	ExitHours   uint64 `json:"exitHours"`
 	SlashAmount string `json:"slashAmount"`
 	SlashType   uint8  `json:"slashType"`
+	Pubkey      string `json:"pubkey"`
 }
 
 // @Summary notify msg list
@@ -230,11 +231,18 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		now := time.Now().Unix()
 		if maxExitMsgTimestamp < uint64(now) {
 			msgId := crypto.Keccak256Hash([]byte(fmt.Sprintf("exitedElection-valIndex:%d-notifyNumber:%d", exitedExitElection.ValidatorIndex, exitedExitElection.NotifyBlockNumber)))
-
+			validator, err := dao_node.GetValidatorByIndex(h.db, exitedExitElection.ValidatorIndex)
+			if err != nil {
+				utils.Err(c, utils.CodeInternalErr, err.Error())
+				logrus.Errorf("GetValidatorByIndex err %v", err)
+				return
+			}
 			rsp.List = append(rsp.List, ResNotifyMsg{
 				MsgType: notifyMsgChooseToExitAndExited,
 				MsgId:   msgId.String(),
-				MsgData: MsgData{},
+				MsgData: MsgData{
+					Pubkey: validator.Pubkey,
+				},
 			})
 		}
 	}
