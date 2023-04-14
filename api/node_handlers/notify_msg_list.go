@@ -73,7 +73,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		List: []ResNotifyMsg{},
 	}
 
-	valList, err := dao_node.GetValidatorListByNode(h.db, req.NodeAddress, utils.ValidatorStatusActive)
+	valList, err := dao_node.GetValidatorListByNode(h.db, req.NodeAddress, 0)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetValidatorListByNode err %v", err)
@@ -83,21 +83,19 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 		utils.Ok(c, "success", rsp)
 		return
 	}
-	valIndexList := make([]uint64, 0)
+
 	valIndexListExistOnBeacon := make([]uint64, 0)
 	valMap := make(map[uint64]*dao_node.Validator)
 	for _, val := range valList {
 		if _, exist := valMap[val.ValidatorIndex]; !exist {
 			valMap[val.ValidatorIndex] = val
-			valIndexList = append(valIndexList, val.ValidatorIndex)
-
 			if val.ActiveEpoch != 0 {
 				valIndexListExistOnBeacon = append(valIndexListExistOnBeacon, val.ValidatorIndex)
 			}
 		}
 	}
 	// 1 exit election not exited
-	notExitElection, err := dao_node.GetLatestNotExitElectionOfValidators(h.db, valIndexList)
+	notExitElection, err := dao_node.GetLatestNotExitElectionOfValidators(h.db, valIndexListExistOnBeacon)
 	if err == nil {
 		// next withdraw cycle start time
 		maxExitMsgTimestamp := (notExitElection.WithdrawCycle+1)*86400 + 28800
@@ -153,7 +151,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 	}
 
 	// 3 fee recipient
-	latestProposedBlock, err := dao_node.GetLatestProposedBlockOfValidators(h.db, valIndexList)
+	latestProposedBlock, err := dao_node.GetLatestProposedBlockOfValidators(h.db, valIndexListExistOnBeacon)
 	if err != nil {
 		// hasn't proposed block
 		if err == gorm.ErrRecordNotFound {
@@ -199,7 +197,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 	}
 
 	// 4 slash
-	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexList, h.slashStartEpoch)
+	slashList, err := dao_node.GetSlashEventListWithIndex(h.db, valIndexListExistOnBeacon, h.slashStartEpoch)
 	if err == nil {
 		if len(slashList) > 0 {
 			sort.SliceStable(slashList, func(i, j int) bool {
@@ -224,7 +222,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 	}
 
 	// 5 exit election already exited
-	exitedExitElection, err := dao_node.GetLatestExitedElectionOfValidators(h.db, valIndexList)
+	exitedExitElection, err := dao_node.GetLatestExitedElectionOfValidators(h.db, valIndexListExistOnBeacon)
 	if err == nil {
 		// next withdraw cycle start time
 		maxExitMsgTimestamp := (exitedExitElection.WithdrawCycle+1)*86400 + 28800
