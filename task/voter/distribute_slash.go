@@ -13,7 +13,7 @@ import (
 )
 
 var minDistributeSlashAmount = uint64(5e8) //0.5 eth
-var maxDistributeSlashAmount = uint64(5e9) //5 eth
+var maxDistributeSlashAmount = uint64(3e9) //3 eth
 
 func (task *Task) distributeSlash() error {
 	latestDistributeEpoch, targetEoch, shouldGoNext, err := task.checkStateForDistriSlash()
@@ -41,7 +41,7 @@ func (task *Task) distributeSlash() error {
 		return nil
 	}
 	if totalSlashAmountDuEpoch > maxDistributeSlashAmount {
-		return fmt.Errorf("totalSlashAmountDuEpoch: %d", totalSlashAmountDuEpoch)
+		return fmt.Errorf("totalSlashAmountDuEpoch: %d too big, epoch start: %d end: %d", totalSlashAmountDuEpoch, latestDistributeEpoch+1, targetEoch)
 	}
 
 	totalSlashAmountDuEpochDeci := decimal.NewFromInt(int64(totalSlashAmountDuEpoch)).Mul(utils.GweiDeci)

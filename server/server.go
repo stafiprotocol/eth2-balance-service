@@ -23,12 +23,21 @@ type Server struct {
 }
 
 func NewServer(cfg *config.Config, dao *db.WrapDb) (*Server, error) {
+	if cfg.UnstakingStartTimestamp == 0 {
+		return nil, fmt.Errorf("UnstakingStartTimestamp is zero")
+	}
+	if cfg.RunClientStartTimestamp == 0 {
+		return nil, fmt.Errorf("RunClientStartTimestamp is zero")
+	}
+
 	s := &Server{
 		listenAddr:        cfg.ListenAddr,
 		stafiInfoEndpoint: cfg.StafiInfoEndpoint,
 		db:                dao,
 	}
+
 	utils.UnstakingStartTimestamp = cfg.UnstakingStartTimestamp
+	utils.RunClientStartTimestamp = cfg.RunClientStartTimestamp
 
 	pool, err := dao_chaos.GetPoolInfo(dao)
 	if err != nil {

@@ -7,7 +7,14 @@ import (
 	"database/sql"
 
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
+
+var showInFrontEndSlashTypes = []uint64{
+	uint64(utils.SlashTypeFeeRecipient),
+	uint64(utils.SlashTypeProposerSlash),
+	uint64(utils.SlashTypeAttesterSlash),
+}
 
 type SlashEvent struct {
 	db.BaseModel
@@ -37,8 +44,8 @@ func GetSlashEvent(db *db.WrapDb, validatorIndex, startSlot uint64, slashType ui
 }
 
 func GetSlashEventList(db *db.WrapDb, validatorIndex, startEpoch uint64, pageIndex, pageCount int) (c []*SlashEvent, count int64, err error) {
-	if pageIndex <= 0 {
-		pageIndex = 1
+	if pageIndex < 0 {
+		pageIndex = 0
 	}
 	if pageCount <= 0 {
 		pageCount = 10
@@ -47,29 +54,29 @@ func GetSlashEventList(db *db.WrapDb, validatorIndex, startEpoch uint64, pageInd
 		pageCount = 50
 	}
 
-	err = db.Model(&SlashEvent{}).Where("epoch >= ? and validator_index = ? and slash_amount > 0", startEpoch, validatorIndex).Count(&count).Error
+	err = db.Model(&SlashEvent{}).Where("epoch >= ? and validator_index = ? and slash_type in ?", startEpoch, validatorIndex, showInFrontEndSlashTypes).Count(&count).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	err = db.Order("id desc").Limit(pageCount).Offset((pageIndex-1)*pageCount).Find(&c, "epoch >= ? and validator_index = ? and slash_amount > 0", startEpoch, validatorIndex).Error
+	err = db.Order("id desc").Limit(pageCount).Offset(pageIndex*pageCount).Find(&c, "epoch >= ? and validator_index = ? and slash_type in ?", startEpoch, validatorIndex, showInFrontEndSlashTypes).Error
 	return
 }
 
 func GetTotalSlashAmountOfValidator(db *db.WrapDb, validatorIndex, startEpoch uint64) (totalSlashAmount uint64, err error) {
 	value := sql.NullInt64{}
-	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and validator_index = ?",
-		startEpoch, validatorIndex).Scan(&value).Error
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and validator_index = ? and slash_type in ?",
+		startEpoch, validatorIndex, showInFrontEndSlashTypes).Scan(&value).Error
 	if err != nil {
 		return 0, err
 	}
 	return uint64(value.Int64), nil
 }
 
-func GetTotalSlashAmountBeforeWithIndexList(db *db.WrapDb, valIndexList []uint64, startEpoch, targetEpoch uint64) (totalSlashAmount uint64, err error) {
+func GetTotalSlashAmountDuEpochWithIndexList(db *db.WrapDb, valIndexList []uint64, startEpoch, targetEpoch uint64) (totalSlashAmount uint64, err error) {
 	value := sql.NullInt64{}
-	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and epoch <= ? and validator_index in ?",
-		startEpoch, targetEpoch, valIndexList).Scan(&value).Error
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and epoch <= ? and validator_index in ? and slash_type in ?",
+		startEpoch, targetEpoch, valIndexList, showInFrontEndSlashTypes).Scan(&value).Error
 	if err != nil {
 		return 0, err
 	}
@@ -78,8 +85,8 @@ func GetTotalSlashAmountBeforeWithIndexList(db *db.WrapDb, valIndexList []uint64
 
 func GetTotalSlashAmountDuEpoch(db *db.WrapDb, startEpoch, targetEpoch uint64) (totalSlashAmount uint64, err error) {
 	value := sql.NullInt64{}
-	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and epoch <= ?",
-		startEpoch, targetEpoch).Scan(&value).Error
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and epoch <= ? and slash_type in ?",
+		startEpoch, targetEpoch, showInFrontEndSlashTypes).Scan(&value).Error
 	if err != nil {
 		return 0, err
 	}
@@ -88,14 +95,15 @@ func GetTotalSlashAmountDuEpoch(db *db.WrapDb, startEpoch, targetEpoch uint64) (
 
 func GetTotalSlashAmountWithIndexList(db *db.WrapDb, valIndexList []uint64, startEpoch uint64) (totalSlashAmount uint64, err error) {
 	value := sql.NullInt64{}
-	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and validator_index in ?", startEpoch, valIndexList).Scan(&value).Error
+	err = db.Raw("select sum(slash_amount) as total_slash_amount from reth_slash_events where epoch >= ? and validator_index in ? and slash_type in ?",
+		startEpoch, valIndexList, showInFrontEndSlashTypes).Scan(&value).Error
 	if err != nil {
 		return 0, err
 	}
 	return uint64(value.Int64), nil
 }
 
-func GetSlashEventListWithIndex(db *db.WrapDb, valIndexList []uint64, startEpoch uint64) (c []*SlashEvent, err error) {
-	err = db.Find(&c, "epoch >= ? and slash_amount > 0 and validator_index in ?", startEpoch, valIndexList).Error
+func GetSlashEventListWithIndexList(db *db.WrapDb, valIndexList []uint64, startEpoch uint64) (c []*SlashEvent, err error) {
+	err = db.Find(&c, "epoch >= ? and validator_index in ? and slash_type in ?", startEpoch, valIndexList, showInFrontEndSlashTypes).Error
 	return
 }

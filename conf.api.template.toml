@@ -1,6 +1,7 @@
 listenAddr = ":8083"
 logFilePath = ""
 unstakingStartTimestamp = 1675973448
+runClientStartTimestamp = 1675973448
 stafiInfoEndpoint = "https://rtoken-api2.stafi.io"
 
 [db]

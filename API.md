@@ -152,7 +152,7 @@ slash : 51 52 53 54 55
 | :------------- | :----- | :------------------------ |
 | pubkey         | string | pubkey, hex string        |
 | chartDuSeconds | number | chart data during seconds |
-| pageIndex      | number | page index                |
+| pageIndex      | number | page index, start from 0  |
 | pageCount      | number | page count                |
 
 

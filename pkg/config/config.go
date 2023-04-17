@@ -20,6 +20,7 @@ type Config struct {
 	GasLimit                string
 	MaxGasPrice             string
 	UnstakingStartTimestamp uint64 // used by api server
+	RunClientStartTimestamp uint64 // used by api server
 	StafiInfoEndpoint       string // used by api server
 
 	EraCount uint64 // used for statistic
