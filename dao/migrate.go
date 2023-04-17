@@ -15,6 +15,7 @@ func AutoMigrate(db *db.WrapDb) error {
 		AutoMigrate(MetaData{},
 			dao_node.Validator{}, dao_node.Deposit{}, dao_node.ValidatorBalance{}, dao_node.NodeBalance{}, dao_node.SlashEvent{}, dao_node.ProposedBlock{},
 			dao_node.ValidatorWithdrawal{}, dao_node.ExitElection{}, dao_node.Proof{}, dao_node.RootHash{}, dao_node.NodeClaim{}, dao_node.ExitMsg{}, dao_node.EjectorUptime{},
+			dao_node.DistributeSlash{},
 			dao_staker.RateInfo{}, dao_staker.StakerMint{}, dao_staker.StakerUnstakingPlan{}, dao_staker.StakerWithdrawal{},
 			dao_chaos.PoolInfo{}, dao_chaos.DistributeFee{},
 		)

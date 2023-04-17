@@ -43,56 +43,9 @@ func (task *Task) distributeWithdrawals() error {
 	}
 
 	// -----2 cal maxClaimableWithdrawIndex
-	calOpts := task.connection.CallOpts(big.NewInt(int64(targetEth1BlockHeight)))
-	maxClaimableWithdrawIndex, err := task.withdrawContract.MaxClaimableWithdrawIndex(calOpts)
+	newMaxClaimableWithdrawIndex, err := task.calMaxClaimableWithdrawIndex(targetEth1BlockHeight, totalUserEthDeci)
 	if err != nil {
-		return err
-	}
-	// nextWithdrawIndex <= real value
-	nextWithdrawIndex, err := task.withdrawContract.NextWithdrawIndex(calOpts)
-	if err != nil {
-		return err
-	}
-	totalMissingAmountForWithdraw, err := task.withdrawContract.TotalMissingAmountForWithdraw(calOpts)
-	if err != nil {
-		return err
-	}
-	newMaxClaimableWithdrawIndex := uint64(0)
-	totalMissingAmountForWithdrawDeci := decimal.NewFromBigInt(totalMissingAmountForWithdraw, 0)
-	if totalMissingAmountForWithdrawDeci.LessThanOrEqual(totalUserEthDeci) {
-		if nextWithdrawIndex.Uint64() >= 1 {
-			newMaxClaimableWithdrawIndex = nextWithdrawIndex.Uint64() - 1
-		}
-	} else {
-		willMissingAmountDeci := totalMissingAmountForWithdrawDeci.Sub(totalUserEthDeci)
-		if nextWithdrawIndex.Uint64() >= 1 {
-			latestUsersWaitAmountDeci := decimal.Zero
-			for i := nextWithdrawIndex.Uint64() - 1; i > maxClaimableWithdrawIndex.Uint64(); i-- {
-				withdrawal, err := dao_staker.GetStakerWithdrawal(task.db, i)
-				if err != nil {
-					return err
-				}
-				// skip instantly withdrawal
-				if withdrawal.ClaimedBlockNumber == withdrawal.BlockNumber {
-					continue
-				}
-
-				ethAmountDeci, err := decimal.NewFromString(withdrawal.EthAmount)
-				if err != nil {
-					return err
-				}
-				latestUsersWaitAmountDeci = latestUsersWaitAmountDeci.Add(ethAmountDeci)
-				if latestUsersWaitAmountDeci.GreaterThan(willMissingAmountDeci) {
-					if i >= 1 {
-						newMaxClaimableWithdrawIndex = i - 1
-					}
-					break
-				}
-			}
-		}
-	}
-	if newMaxClaimableWithdrawIndex < maxClaimableWithdrawIndex.Uint64() {
-		newMaxClaimableWithdrawIndex = maxClaimableWithdrawIndex.Uint64()
+		return errors.Wrap(err, "calMaxClaimableWithdrawIndex failed")
 	}
 
 	// check voted
@@ -117,6 +70,62 @@ func (task *Task) distributeWithdrawals() error {
 	// -----3 send vote tx
 	return task.sendDistributeWithdrawalsTx(big.NewInt(int64(targetEth1BlockHeight)),
 		totalUserEthDeci.BigInt(), totalNodeEthDeci.BigInt(), totalPlatformEthDeci.BigInt(), big.NewInt(int64(newMaxClaimableWithdrawIndex)))
+}
+
+func (task *Task) calMaxClaimableWithdrawIndex(targetEth1BlockHeight uint64, totalUserEthDeci decimal.Decimal) (uint64, error) {
+	calOpts := task.connection.CallOpts(big.NewInt(int64(targetEth1BlockHeight)))
+	maxClaimableWithdrawIndex, err := task.withdrawContract.MaxClaimableWithdrawIndex(calOpts)
+	if err != nil {
+		return 0, err
+	}
+	// nextWithdrawIndex <= real value
+	nextWithdrawIndex, err := task.withdrawContract.NextWithdrawIndex(calOpts)
+	if err != nil {
+		return 0, err
+	}
+	totalMissingAmountForWithdraw, err := task.withdrawContract.TotalMissingAmountForWithdraw(calOpts)
+	if err != nil {
+		return 0, err
+	}
+	newMaxClaimableWithdrawIndex := uint64(0)
+	totalMissingAmountForWithdrawDeci := decimal.NewFromBigInt(totalMissingAmountForWithdraw, 0)
+	if totalMissingAmountForWithdrawDeci.LessThanOrEqual(totalUserEthDeci) {
+		if nextWithdrawIndex.Uint64() >= 1 {
+			newMaxClaimableWithdrawIndex = nextWithdrawIndex.Uint64() - 1
+		}
+	} else {
+		willMissingAmountDeci := totalMissingAmountForWithdrawDeci.Sub(totalUserEthDeci)
+		if nextWithdrawIndex.Uint64() >= 1 {
+			latestUsersWaitAmountDeci := decimal.Zero
+			for i := nextWithdrawIndex.Uint64() - 1; i > maxClaimableWithdrawIndex.Uint64(); i-- {
+				withdrawal, err := dao_staker.GetStakerWithdrawal(task.db, i)
+				if err != nil {
+					return 0, err
+				}
+				// skip instantly withdrawal
+				if withdrawal.ClaimedBlockNumber == withdrawal.BlockNumber {
+					continue
+				}
+
+				ethAmountDeci, err := decimal.NewFromString(withdrawal.EthAmount)
+				if err != nil {
+					return 0, err
+				}
+				latestUsersWaitAmountDeci = latestUsersWaitAmountDeci.Add(ethAmountDeci)
+				if latestUsersWaitAmountDeci.GreaterThan(willMissingAmountDeci) {
+					if i >= 1 {
+						newMaxClaimableWithdrawIndex = i - 1
+					}
+					break
+				}
+			}
+		}
+	}
+	if newMaxClaimableWithdrawIndex < maxClaimableWithdrawIndex.Uint64() {
+		newMaxClaimableWithdrawIndex = maxClaimableWithdrawIndex.Uint64()
+	}
+
+	return newMaxClaimableWithdrawIndex, nil
 }
 
 func (task *Task) sendDistributeWithdrawalsTx(targetEth1BlockHeight, totalUserEth, totalNodeEth, totalPlatformEth, newMaxClaimableWithdrawIndex *big.Int) error {

@@ -17,10 +17,8 @@ import (
 )
 
 func (task *Task) notifyValidatorExit() error {
-	// utc 8:00
-	currentCycle := (time.Now().Unix() - 28800) / 86400
+	currentCycle, targetTimestamp := currentCycleAndStartTimestamp()
 	preCycle := currentCycle - 1
-	targetTimestamp := currentCycle*86400 + 28800
 
 	targetEpoch := utils.EpochAtTimestamp(task.eth2Config, uint64(targetTimestamp))
 	targetBlockNumber, err := task.getEpochStartBlocknumber(targetEpoch)
@@ -146,6 +144,13 @@ func (task *Task) notifyValidatorExit() error {
 
 	// ---- send NotifyValidatorExit tx
 	return task.sendNotifyExitTx(uint64(preCycle), uint64(startCycle), selectVals)
+}
+
+// utc 8:00
+func currentCycleAndStartTimestamp() (int64, int64) {
+	currentCycle := (time.Now().Unix() - 28800) / 86400
+	targetTimestamp := currentCycle*86400 + 28800
+	return currentCycle, targetTimestamp
 }
 
 func (task *Task) sendReserveTx(preCycle uint64) error {

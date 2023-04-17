@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/shopspring/decimal"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
 
@@ -47,6 +48,46 @@ func (task *Task) fetchDistributorContractEvents(start, end uint64) error {
 		nodeClaim.Timestamp = block.Header().Time
 
 		err = dao_node.UpOrInNodeClaim(task.db, nodeClaim)
+		if err != nil {
+			return err
+		}
+	}
+
+	// distributeSlash
+	iterDistributerSlash, err := task.distributorContract.FilterDistributeSlash(&bind.FilterOpts{
+		Start:   start,
+		End:     &end,
+		Context: context.Background(),
+	})
+	if err != nil {
+		return err
+	}
+	for iterDistributerSlash.Next() {
+
+		txHashStr := iterDistributerSlash.Event.Raw.TxHash.String()
+		logIndex := uint32(iterDistributerSlash.Event.Raw.Index)
+
+		distributerSlash, err := dao_node.GetDistributeSlash(task.db, txHashStr, logIndex)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return err
+		}
+		if err == nil {
+			continue
+		}
+		distributerSlash.TxHash = txHashStr
+		distributerSlash.LogIndex = logIndex
+
+		distributerSlash.BlockNumber = iterDistributerSlash.Event.Raw.BlockNumber
+		distributerSlash.SlashAmount = decimal.NewFromBigInt(iterDistributerSlash.Event.SlashAmount, 0).Div(utils.GweiDeci).BigInt().Uint64() // gwei
+		distributerSlash.DealedHeight = iterDistributerSlash.Event.DealedHeight.Uint64()
+
+		block, err := task.connection.Eth1Client().BlockByNumber(context.Background(), big.NewInt(int64(distributerSlash.BlockNumber)))
+		if err != nil {
+			return err
+		}
+		distributerSlash.Timestamp = block.Header().Time
+
+		err = dao_node.UpOrInDistributeSlash(task.db, distributerSlash)
 		if err != nil {
 			return err
 		}

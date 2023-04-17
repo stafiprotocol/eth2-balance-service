@@ -93,10 +93,19 @@ func (task *Task) voteRate() error {
 		return err
 	}
 	totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).Mul(utils.GweiDeci)
-	//todo sub distributed amount
+
+	totalDistribute, err := dao_node.GetTotalDistributeSlashBefore(task.db, targetEth1BlockHeight)
+	if err != nil {
+		return err
+	}
+	totalDistributeSlashDeci := decimal.NewFromInt(int64(totalDistribute)).Mul(utils.GweiDeci)
+	undistributeSlashDeci := totalSlashAmountDeci.Sub(totalDistributeSlashDeci)
+	if undistributeSlashDeci.IsNegative() {
+		return fmt.Errorf("totalSlashAmountDeci %s less than totalDistributeSlashDeci %s", totalSlashAmountDeci.StringFixed(0), totalDistributeSlashDeci.StringFixed(0))
+	}
 
 	// ----final: total user eth = total user eth from validator + deposit pool balance + user undistributedWithdrawals + totalUndistributed slash amount - totalMissingAmountForWithdraw
-	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).Add(totalUserUndistributedWithdrawalsDeci).Add(totalSlashAmountDeci).Sub(totalMissingAmountForWithdrawDeci)
+	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).Add(totalUserUndistributedWithdrawalsDeci).Add(undistributeSlashDeci).Sub(totalMissingAmountForWithdrawDeci)
 	// should sub totalMissingAmountForWithdrawDeci, as there are checks on networkbalances `require(_stakingEth <= _totalEth, "Invalid network balances");`
 	totalStakingEthDeci = totalStakingEthDeci.Sub(totalMissingAmountForWithdrawDeci)
 

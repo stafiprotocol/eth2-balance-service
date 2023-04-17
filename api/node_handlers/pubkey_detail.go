@@ -296,7 +296,7 @@ func (h *Handler) HandlePostPubkeyDetail(c *gin.Context) {
 		}
 	}
 
-	// slash events, onlay return 1 2 3 5 slash type event
+	// slash events
 	slashList, total, err := dao_node.GetSlashEventList(h.db, validator.ValidatorIndex, h.slashStartEpoch, req.PageIndex, req.PageCount)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())

@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/prysmaticlabs/prysm/v3/beacon-chain/core/signing"
 	"github.com/prysmaticlabs/prysm/v3/config/params"
 	"github.com/shopspring/decimal"
@@ -248,6 +249,16 @@ func (task *Task) voteHandler() {
 			}
 			logrus.Debug("setMerkleTree end -----------\n")
 
+			logrus.Debug("distributeSlash start -----------")
+			err = task.distributeSlash()
+			if err != nil {
+				logrus.Warnf("distributeSlash err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("distributeSlash end -----------\n")
+
 			logrus.Debug("notifyValidatorExit start -----------")
 			err = task.notifyValidatorExit()
 			if err != nil {
@@ -264,7 +275,7 @@ func (task *Task) voteHandler() {
 
 func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
 	eth2ValidatorBalanceSyncerStartSlot := utils.StartSlotOfEpoch(task.eth2Config, epoch)
-	blocknumber := uint64(0)
+
 	retry := 0
 	for {
 		if retry > 5 {
@@ -282,59 +293,79 @@ func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
 			continue
 		}
 		if targetBeaconBlock.ExecutionBlockNumber == 0 {
-			return 0, fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
+			return 0, fmt.Errorf("beacon slot %d executionBlockNumber is zero", eth2ValidatorBalanceSyncerStartSlot)
 		}
-		blocknumber = targetBeaconBlock.ExecutionBlockNumber
-		break
+		return targetBeaconBlock.ExecutionBlockNumber, nil
 	}
-	return blocknumber, nil
 }
 
-func (task *Task) waitTxOk(txHash common.Hash) error {
+func (task *Task) waitTxOk(txHash common.Hash) (err error) {
+	defer func() {
+		if err != nil {
+			utils.ShutdownRequestChannel <- struct{}{}
+		}
+	}()
+
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return fmt.Errorf("waitTxOk reach retry limit")
+			return fmt.Errorf("waitTx %s reach retry limit", txHash.String())
 		}
-		tx, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), txHash)
-		if err == nil && !pending {
-			receipt, err := task.connection.Eth1Client().TransactionReceipt(context.Background(), txHash)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":  err.Error(),
-					"hash": tx.Hash(),
-				}).Warn("tx TransactionReceipt")
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			}
-			if receipt.Status == 1 { //success
-				break
-			} else { //failed
-				utils.ShutdownRequestChannel <- struct{}{}
-				return fmt.Errorf("tx %s failed", txHash)
-			}
-		} else {
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":  err.Error(),
-					"hash": tx.Hash(),
-				}).Warn("tx status")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"hash":   tx.Hash(),
-					"status": "pending",
-				}).Warn("tx status")
-			}
+		_, pending, err := task.connection.Eth1Client().TransactionByHash(context.Background(), txHash)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"hash": txHash.String(),
+				"err":  err.Error(),
+			}).Warn("TransactionByHash")
+
 			time.Sleep(utils.RetryInterval)
 			retry++
 			continue
-		}
+		} else {
+			if pending {
+				logrus.WithFields(logrus.Fields{
+					"hash":    txHash.String(),
+					"pending": pending,
+				}).Warn("TransactionByHash")
 
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			} else {
+				// check status
+				var receipt *types.Receipt
+				subRetry := 0
+				for {
+					if subRetry > utils.RetryLimit {
+						return fmt.Errorf("TransactionReceipt %s reach retry limit", txHash.String())
+					}
+
+					receipt, err = task.connection.Eth1Client().TransactionReceipt(context.Background(), txHash)
+					if err != nil {
+						logrus.WithFields(logrus.Fields{
+							"hash": txHash.String(),
+							"err":  err.Error(),
+						}).Warn("tx TransactionReceipt")
+
+						time.Sleep(utils.RetryInterval)
+						subRetry++
+						continue
+					}
+					break
+				}
+
+				if receipt.Status == 1 { //success
+					break
+				} else { //failed
+					return fmt.Errorf("tx %s failed", txHash.String())
+				}
+			}
+		}
 	}
+
 	logrus.WithFields(logrus.Fields{
 		"tx": txHash.String(),
 	}).Info("tx send ok")
+
 	return nil
 }
