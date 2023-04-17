@@ -46,7 +46,8 @@ type Task struct {
 	distributeFeeInitDealedHeight          int64 // dealedHeight is zero after upgrade new contract
 	distributeSuperNodeFeeInitDealedHeight int64
 	distributeWithdrawalInitDealedHeight   int64
-	dev                                    bool
+
+	dev bool
 
 	// need init on start()
 	connection           *shared.Connection

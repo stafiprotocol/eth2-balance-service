@@ -13,6 +13,7 @@ import (
 )
 
 var minDistributeSlashAmount = uint64(5e8) //0.5 eth
+var maxDistributeSlashAmount = uint64(5e9) //5 eth
 
 func (task *Task) distributeSlash() error {
 	latestDistributeEpoch, targetEoch, shouldGoNext, err := task.checkStateForDistriSlash()
@@ -39,6 +40,9 @@ func (task *Task) distributeSlash() error {
 	if totalSlashAmountDuEpoch < minDistributeSlashAmount {
 		return nil
 	}
+	if totalSlashAmountDuEpoch > maxDistributeSlashAmount {
+		return fmt.Errorf("totalSlashAmountDuEpoch: %d", totalSlashAmountDuEpoch)
+	}
 
 	totalSlashAmountDuEpochDeci := decimal.NewFromInt(int64(totalSlashAmountDuEpoch)).Mul(utils.GweiDeci)
 	logrus.WithFields(logrus.Fields{
@@ -62,12 +66,19 @@ func (task *Task) checkStateForDistriSlash() (uint64, uint64, bool, error) {
 
 	targetEpoch := (finalEpoch / task.rewardEpochInterval) * task.rewardEpochInterval
 
-	latestDistributeEpoch, err := task.distributorContract.GetDistributeSlashDealedHeight(task.connection.CallOpts(nil))
+	latestDistributeEpochBig, err := task.distributorContract.GetDistributeSlashDealedHeight(task.connection.CallOpts(nil))
 	if err != nil {
 		return 0, 0, false, err
 	}
 
-	if latestDistributeEpoch.Uint64() >= targetEpoch {
+	latestDistributeEpoch := latestDistributeEpochBig.Uint64()
+
+	// check latest distribute epoch
+	if latestDistributeEpoch < task.slashStartEpoch {
+		latestDistributeEpoch = task.slashStartEpoch
+	}
+
+	if latestDistributeEpoch >= targetEpoch {
 		logrus.Debug("latestDistributeEpoch.Uint64() >= targetEpoch")
 		return 0, 0, false, nil
 	}
@@ -83,7 +94,7 @@ func (task *Task) checkStateForDistriSlash() (uint64, uint64, bool, error) {
 		return 0, 0, false, nil
 	}
 
-	return latestDistributeEpoch.Uint64(), targetEpoch, true, nil
+	return latestDistributeEpoch, targetEpoch, true, nil
 }
 
 func (task *Task) sendDistributeSlashTx(targetEpoch, slashAmount *big.Int) error {
