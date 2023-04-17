@@ -238,43 +238,24 @@ func (task *Task) syncValidatorLatestInfo() error {
 			return err
 		}
 		if slashAmount > 0 {
-			val.EverSlashed = utils.ValidatorEverSlashedTrue
-			err = dao_node.UpOrInValidator(task.db, val)
-			if err != nil {
-				return err
+			if val.EverSlashed != utils.ValidatorEverSlashedTrue {
+				val.EverSlashed = utils.ValidatorEverSlashedTrue
+				err = dao_node.UpOrInValidator(task.db, val)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			if val.EverSlashed != utils.ValidatorEverSlashedFalse {
+				val.EverSlashed = utils.ValidatorEverSlashedFalse
+				err = dao_node.UpOrInValidator(task.db, val)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
 
 	eth2ValidatorInfoMetaData.DealedEpoch = finalEpoch
 	return dao.UpOrInMetaData(task.db, eth2ValidatorInfoMetaData)
-}
-
-func (task *Task) exitElectionCheck() error {
-	notExitElectionList, err := dao_node.GetAllNotExitElectionList(task.db)
-	if err != nil {
-		return errors.Wrap(err, "GetAllNotExitElectionList faile")
-	}
-	logrus.WithFields(logrus.Fields{
-		"notExitElectionList length": len(notExitElectionList),
-	}).Debug("exitElectionCheck info")
-
-	for _, val := range notExitElectionList {
-		valInfo, err := dao_node.GetValidatorByIndex(task.db, val.ValidatorIndex)
-		if err != nil {
-			logrus.Warnf("exitElectionCheck GetValidatorByIndex err: %s, val index: %d", err, val.ValidatorIndex)
-			continue
-		}
-
-		if valInfo.ExitEpoch != 0 {
-			val.ExitEpoch = valInfo.ExitEpoch
-			val.ExitTimestamp = utils.TimestampOfSlot(task.eth2Config, utils.StartSlotOfEpoch(task.eth2Config, valInfo.ExitEpoch))
-
-			err := dao_node.UpOrInExitElection(task.db, val)
-			if err != nil {
-				return errors.Wrap(err, "UpOrInExitElection failed")
-			}
-		}
-	}
-	return err
 }

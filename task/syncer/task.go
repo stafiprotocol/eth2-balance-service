@@ -24,6 +24,7 @@ import (
 	withdraw "github.com/stafiprotocol/eth2-balance-service/bindings/Withdraw"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
 	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
+	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
@@ -461,6 +462,15 @@ func (task *Task) syncEth1BlockHandler() {
 			}
 			logrus.Debug("expectedClaimableCheck end -----------")
 
+			logrus.Debug("exitElectionCheck start -----------")
+			err = task.exitElectionCheck()
+			if err != nil {
+				logrus.Warnf("exitElectionCheck err: %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("exitElectionCheck end -----------")
 			retry = 0
 		}
 
@@ -494,16 +504,6 @@ func (task *Task) syncEth2ValidatorLatestInfoHandler() {
 				continue
 			}
 			logrus.Debug("syncValidatorLatestInfo end -----------")
-
-			logrus.Debug("exitElectionCheck start -----------")
-			err = task.exitElectionCheck()
-			if err != nil {
-				logrus.Warnf("exitElectionCheck err: %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			}
-			logrus.Debug("exitElectionCheck end -----------")
 
 			retry = 0
 		}
@@ -632,6 +632,16 @@ func (task *Task) syncEth2BlockHandler() {
 			}
 			logrus.Debug("syncEth2Block end -----------")
 
+			logrus.Debug("notExitSlashCheck start -----------")
+			err = task.notExitSlashCheck()
+			if err != nil {
+				logrus.Warnf("notExitSlashCheck err: %s , will retry", err.Error())
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("notExitSlashCheck end -----------")
+
 			retry = 0
 		}
 	}
@@ -663,4 +673,33 @@ func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
 		break
 	}
 	return blocknumber, nil
+}
+
+func (task *Task) exitElectionCheck() error {
+	notExitElectionList, err := dao_node.GetAllNotExitElectionList(task.db)
+	if err != nil {
+		return errors.Wrap(err, "GetAllNotExitElectionList faile")
+	}
+	logrus.WithFields(logrus.Fields{
+		"notExitElectionList length": len(notExitElectionList),
+	}).Debug("exitElectionCheck info")
+
+	for _, val := range notExitElectionList {
+		valInfo, err := dao_node.GetValidatorByIndex(task.db, val.ValidatorIndex)
+		if err != nil {
+			logrus.Warnf("exitElectionCheck GetValidatorByIndex err: %s, val index: %d", err, val.ValidatorIndex)
+			continue
+		}
+
+		if valInfo.ExitEpoch != 0 {
+			val.ExitEpoch = valInfo.ExitEpoch
+			val.ExitTimestamp = utils.TimestampOfSlot(task.eth2Config, utils.StartSlotOfEpoch(task.eth2Config, valInfo.ExitEpoch))
+
+			err := dao_node.UpOrInExitElection(task.db, val)
+			if err != nil {
+				return errors.Wrap(err, "UpOrInExitElection failed")
+			}
+		}
+	}
+	return nil
 }

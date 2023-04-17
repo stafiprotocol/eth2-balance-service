@@ -78,6 +78,8 @@ const (
 	SlashTypeProposerSlash = uint8(2)
 	SlashTypeAttesterSlash = uint8(3)
 
+	SlashTypeNotExitSlash = uint8(7)
+
 	// not show in front end
 	SlashTypeSyncMiss     = uint8(4)
 	SlashTypeAttesterMiss = uint8(5)
