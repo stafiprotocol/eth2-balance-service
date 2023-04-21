@@ -47,13 +47,12 @@ func poolInfoCmd() *cobra.Command {
 				return err
 			}
 			logrus.Infof(
-				`syncer config info:
-  logFilePath: %s
+				`config info:
   logLevel: %s
   eth1Endpoint: %s
   eth2Endpoint: %s
   storageAddress:%s`,
-				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.Contracts.StorageContractAddress)
+				logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.Contracts.StorageContractAddress)
 
 			client, err := ethclient.Dial(cfg.Eth1Endpoint)
 			if err != nil {
@@ -78,6 +77,7 @@ func poolInfoCmd() *cobra.Command {
 			}
 
 			// -------- stafi distributor
+			logrus.Info("------------------- stafi distributor ")
 			stafiDistributorAddress, err := s.GetAddress(&bind.CallOpts{
 				Context: context.Background(),
 			}, utils.ContractStorageKey("stafiDistributor"))
@@ -93,6 +93,7 @@ func poolInfoCmd() *cobra.Command {
 			logrus.Info("stafiDistributor balance: ", decimal.NewFromBigInt(distributorBalance, -18))
 
 			// ------ withdrawal pool
+			logrus.Info("------------------- withdrawal pool")
 			withdrawPoolAddress, err := s.GetAddress(&bind.CallOpts{
 				Context: context.Background(),
 			}, utils.ContractStorageKey("stafiWithdraw"))
@@ -105,7 +106,7 @@ func poolInfoCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			logrus.Info("withdrawPoolBalance: ", decimal.NewFromBigInt(withdrawPoolBalance, -18))
+			logrus.Info("withdrawPool balance: ", decimal.NewFromBigInt(withdrawPoolBalance, -18))
 
 			withdrawPoolContract, err := withdraw.NewWithdraw(withdrawPoolAddress, client)
 			if err != nil {
@@ -135,6 +136,7 @@ func poolInfoCmd() *cobra.Command {
 			logrus.Info("NextWithdrawIndex: ", NextWithdrawIndex)
 
 			//---------user deposit pool
+			logrus.Info("------------------- user deposit pool")
 			userDepositPoolAddress, err := s.GetAddress(&bind.CallOpts{
 				Context: context.Background(),
 			}, utils.ContractStorageKey("stafiUserDeposit"))
@@ -151,7 +153,7 @@ func poolInfoCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			logrus.Info("userDepositPoolBalance: ", decimal.NewFromBigInt(userDepositPoolBalance, -18))
+			logrus.Info("userDepositPool balance: ", decimal.NewFromBigInt(userDepositPoolBalance, -18))
 
 			return nil
 		},

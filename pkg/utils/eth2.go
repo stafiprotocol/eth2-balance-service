@@ -91,7 +91,7 @@ const (
 	TheMergeSlot        = uint64(4736000)
 	TheMergeBlockNumber = uint64(15572967)
 
-	RewardV1EndEpoch    = uint64(11192300) //todo mainnet
+	RewardV1EndEpoch    = uint64(195975) //todo mainnet
 	RewardEpochInterval = uint64(75)
 	SlashStartEpoch     = uint64(180000)
 	//dev
