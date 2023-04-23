@@ -151,6 +151,17 @@ func (task *Task) Start() error {
 		}
 		task.domain = domain
 		task.dev = true
+	case 11155111: // sepolia
+		domain, err := signing.ComputeDomain(
+			params.SepoliaConfig().DomainDeposit,
+			params.SepoliaConfig().GenesisForkVersion,
+			params.SepoliaConfig().ZeroHash[:],
+		)
+		if err != nil {
+			return err
+		}
+		task.domain = domain
+		task.dev = true
 	default:
 		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
 	}

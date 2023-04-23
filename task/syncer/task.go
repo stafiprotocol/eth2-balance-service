@@ -123,6 +123,12 @@ func (task *Task) Start() error {
 		if !bytes.Equal(task.eth2Config.GenesisForkVersion, []byte{0x00, 0x00, 0x00, 0x69}) {
 			return fmt.Errorf("endpoint network not match")
 		}
+	case 11155111: // sepolia
+		task.dev = true
+		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.SepoliaConfig().GenesisForkVersion) {
+			return fmt.Errorf("endpoint network not match")
+		}
+
 	default:
 		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
 	}
