@@ -90,7 +90,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		slashStartEpoch:     utils.SlashStartEpoch,
 
 		rewardEpochInterval:    utils.RewardEpochInterval,
-		calMerkleTreeDu:        utils.RewardEpochInterval,
+		calMerkleTreeDu:        utils.RewardEpochInterval * 3, // 24 h
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 	}
 

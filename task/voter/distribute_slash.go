@@ -64,7 +64,7 @@ func (task *Task) checkStateForDistriSlash() (uint64, uint64, bool, error) {
 	}
 	finalEpoch := beaconHead.FinalizedEpoch
 
-	targetEpoch := (finalEpoch / task.rewardEpochInterval) * task.rewardEpochInterval
+	targetEpoch := (finalEpoch / task.distributeEpochInterval) * task.distributeEpochInterval
 
 	latestDistributeEpochBig, err := task.distributorContract.GetDistributeSlashDealedHeight(task.connection.CallOpts(nil))
 	if err != nil {

@@ -31,17 +31,18 @@ import (
 )
 
 type Task struct {
-	taskTicker             int64
-	stop                   chan struct{}
-	eth1Endpoint           string
-	eth2Endpoint           string
-	keyPair                *secp256k1.Keypair
-	gasLimit               *big.Int
-	maxGasPrice            *big.Int
-	storageContractAddress common.Address
-	rewardEpochInterval    uint64
-	rewardV1EndEpoch       uint64
-	slashStartEpoch        uint64
+	taskTicker              int64
+	stop                    chan struct{}
+	eth1Endpoint            string
+	eth2Endpoint            string
+	keyPair                 *secp256k1.Keypair
+	gasLimit                *big.Int
+	maxGasPrice             *big.Int
+	storageContractAddress  common.Address
+	rewardEpochInterval     uint64
+	distributeEpochInterval uint64
+	rewardV1EndEpoch        uint64
+	slashStartEpoch         uint64
 
 	distributeFeeInitDealedHeight          int64 // dealedHeight is zero after upgrade new contract
 	distributeSuperNodeFeeInitDealedHeight int64
@@ -104,9 +105,11 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		maxGasPrice:            maxGasPriceDeci.BigInt(),
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 
-		rewardEpochInterval: utils.RewardEpochInterval,
-		rewardV1EndEpoch:    utils.RewardV1EndEpoch,
-		slashStartEpoch:     utils.SlashStartEpoch,
+		rewardEpochInterval:     utils.RewardEpochInterval,     // 75 epoch 8h
+		distributeEpochInterval: utils.RewardEpochInterval * 3, // 225 epoch 24h
+
+		rewardV1EndEpoch: utils.RewardV1EndEpoch,
+		slashStartEpoch:  utils.SlashStartEpoch,
 
 		distributeFeeInitDealedHeight:          16638921,
 		distributeSuperNodeFeeInitDealedHeight: 17024852,

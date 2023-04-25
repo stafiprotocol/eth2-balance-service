@@ -65,7 +65,7 @@ func (task *Task) checkStateForDistriSuperNodeFeePool() (uint64, uint64, bool, e
 	}
 	finalEpoch := beaconHead.FinalizedEpoch
 
-	targetEpoch := (finalEpoch / task.rewardEpochInterval) * task.rewardEpochInterval
+	targetEpoch := (finalEpoch / task.distributeEpochInterval) * task.distributeEpochInterval
 	targetEth1BlockHeight, err := task.getEpochStartBlocknumber(targetEpoch)
 	if err != nil {
 		return 0, 0, false, err
