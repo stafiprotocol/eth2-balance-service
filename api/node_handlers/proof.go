@@ -147,7 +147,7 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	overallExitDepositAmountDeci = overallExitDepositAmountDeci.Mul(utils.GweiDeci)
 	overallRewardAmountDeci = overallRewardAmountDeci.Mul(utils.GweiDeci)
 
-	totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(h.db, valIndexList, h.slashStartEpoch)
+	totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(h.db, valIndexList, utils.CacheSlashStartEpoch)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetTotalSlashAmountWithIndexList err %v", err)
@@ -192,7 +192,7 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 
 	// has exited validator && exit epoch > cur epoch
 	waitSweepEpochs := uint64(566267 / 16 / 32) //mainnet
-	if h.isDev {
+	if utils.CacheIsDev {
 		waitSweepEpochs = uint64(66267 / 16 / 32) //zhejiang
 	}
 	maxDistributedEpoch := minWithdrawAbleEpoch + waitSweepEpochs + utils.MaxDistributeWaitEpoch

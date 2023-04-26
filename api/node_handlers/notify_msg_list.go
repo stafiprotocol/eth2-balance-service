@@ -141,7 +141,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 				MsgType: notifyMsgRunClient,
 				MsgId:   msgId.String(),
 				MsgData: MsgData{
-					Timestamp:   utils.RunClientStartTimestamp,
+					Timestamp:   utils.CacheRunClientStartTimestamp,
 					ExitHours:   0,
 					SlashAmount: "",
 				},
@@ -196,7 +196,7 @@ func (h *Handler) HandlePostNotifyMsgList(c *gin.Context) {
 	}
 
 	// 4 slash
-	slashList, err := dao_node.GetSlashEventListWithIndexList(h.db, valIndexListExistOnBeacon, h.slashStartEpoch)
+	slashList, err := dao_node.GetSlashEventListWithIndexList(h.db, valIndexListExistOnBeacon, utils.CacheSlashStartEpoch)
 	if err == nil {
 		if len(slashList) > 0 {
 			sort.SliceStable(slashList, func(i, j int) bool {

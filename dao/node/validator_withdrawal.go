@@ -72,3 +72,11 @@ func GetValidatorTotalWithdrawalBeforeSlot(db *db.WrapDb, valIndex, slot uint64)
 
 	return uint64(value.Int64), err
 }
+
+func GetTotalWithdrawalAfter(db *db.WrapDb, blocknumber uint64) (totalWithdrawal uint64, err error) {
+	value := sql.NullInt64{}
+	err = db.Raw("select sum(amount) as totalWithdrawal from reth_validator_withdrawals where block_number > ?",
+		blocknumber).Scan(&value).Error
+
+	return uint64(value.Int64), err
+}

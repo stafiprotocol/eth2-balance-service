@@ -1177,6 +1177,9 @@ const docTemplate = `{
                 "mintedREth": {
                     "type": "string"
                 },
+                "platformEth": {
+                    "type": "string"
+                },
                 "poolEth": {
                     "description": "staker principal + validator principal + reward",
                     "type": "string"

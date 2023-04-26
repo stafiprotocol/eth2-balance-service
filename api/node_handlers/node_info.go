@@ -141,7 +141,7 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		}).Debug("GetNodeReward")
 	}
 
-	totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(h.db, valIndexList, h.slashStartEpoch)
+	totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(h.db, valIndexList, utils.CacheSlashStartEpoch)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
 		logrus.Errorf("GetSlashEventListWithIndex err %v", err)

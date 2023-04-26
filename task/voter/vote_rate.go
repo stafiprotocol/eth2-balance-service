@@ -172,6 +172,8 @@ func (task *Task) voteRate() error {
 		"totalUserEthFromValidator":         totalUserEthFromValidatorDeci.StringFixed(0),
 		"userDepositPoolBalanceDeci":        userDepositPoolBalanceDeci.StringFixed(0),
 		"userUndistributedWithdrawalsDeci":  userUndistributedWithdrawalsDeci.StringFixed(0),
+		"userUndistributedFeeDeci":          userUndistributedFeeDeci.StringFixed(0),
+		"userUndistributedSuperNodeFeeDeci": userUndistributedSuperNodeFeeDeci.StringFixed(0),
 		"unDistributedSlashAmountDeci":      undistributeSlashDeci.StringFixed(0),
 		"totalMissingAmountForWithdrawDeci": totalMissingAmountForWithdrawDeci.StringFixed(0),
 		"totalUserEth":                      totalUserEthDeci.StringFixed(0),

@@ -29,6 +29,7 @@ type RspPoolData struct {
 	ValidatorApr      float64 `json:"validatorApr"`
 	EthPrice          float64 `json:"ethPrice"`
 	AllEth            string  `json:"allEth"` // staker principal + validator principal + reward
+	PlatformEth       string  `json:"platformEth"`
 }
 
 // @Summary pool data
@@ -47,12 +48,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		UnmatchedEth: "0",
 	}
 
-	list, err := dao_node.GetAllValidatorList(h.db)
-	if err != nil {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("dao.GetStakedAndActiveValidatorList err %v", err)
-		return
-	}
 	poolInfo, err := dao_chaos.GetPoolInfo(h.db)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -68,6 +63,21 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		return
 	}
 
+	totalMissingAmountForWithdrawDeci, err := decimal.NewFromString(poolInfo.TotalMissingAmountForWithdraw)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("decimal.NewFromString(poolInfo.TotalMissingAmountForWithdraw) err %v", err)
+		return
+	}
+	// cal undistributed withdrawal
+	undistributedWithdrawal, err := dao_node.GetTotalWithdrawalAfter(h.db, poolInfo.LatestDistributeWithdrawalHeight)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao_node.GetTotalWithdrawalAfter err %v", err)
+		return
+	}
+	undistributedWithdrawalDeci := decimal.NewFromInt(int64(undistributedWithdrawal)).Mul(utils.GweiDeci)
+
 	// fetch price
 	ethPriceDeci, err := decimal.NewFromString(poolInfo.EthPrice)
 	if err != nil {
@@ -77,13 +87,57 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 	}
 	ethPrice, _ := ethPriceDeci.Div(decimal.NewFromInt(1e6)).Float64()
 
+	rewardEndValidators, err := dao_node.GetValidatorBalanceListByEpoch(h.db, utils.CacheRewardV1EndEpoch)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao_node.GetValidatorBalanceListByEpoch to decimal err %v", err)
+		return
+	}
+
+	v1RewardMap := make(map[uint64]uint64, 0)
+	for _, val := range rewardEndValidators {
+		if val.ValidatorIndex == 0 {
+			continue
+		}
+		total := val.Balance + val.TotalFee + val.TotalWithdrawal
+		if total > utils.StandardEffectiveBalance {
+			v1RewardMap[val.ValidatorIndex] = total - utils.StandardEffectiveBalance
+		}
+
+	}
+
 	// cal eth info from validator balance
 	stakerPlusValidatorDepositAmount := uint64(0)
-	allEth := uint64(0)
+	allEthOnBeacon := uint64(0)
 	matchedValidatorsNum := uint64(0)
+	totalPlatformEth := uint64(0)
 
 	// cal eth info on Deposit contract and operator
+	list, err := dao_node.GetAllValidatorList(h.db)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("dao.GetStakedAndActiveValidatorList err %v", err)
+		return
+	}
 	for _, l := range list {
+		if l.ValidatorIndex != 0 {
+			total := l.Balance + l.TotalFee + l.TotalWithdrawal
+			if total > utils.StandardEffectiveBalance {
+				totalReward := total - utils.StandardEffectiveBalance
+				v1TotalReward := v1RewardMap[l.ValidatorIndex]
+				v2TotalReward := uint64(0)
+				if totalReward > v1TotalReward {
+					v2TotalReward = totalReward - v1TotalReward
+				}
+
+				_, _, v1PlatformDeci := utils.GetUserNodePlatformRewardV1(l.NodeDepositAmount, decimal.NewFromInt(int64(v1TotalReward)))
+				_, _, v2PlatformDeci := utils.GetUserNodePlatformRewardV2(l.NodeDepositAmount, decimal.NewFromInt(int64(v2TotalReward)))
+
+				totalPlatformEth += v1PlatformDeci.BigInt().Uint64()
+				totalPlatformEth += v2PlatformDeci.BigInt().Uint64()
+			}
+		}
+
 		switch l.Status {
 		case utils.ValidatorStatusDeposited,
 			utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch,
@@ -93,11 +147,11 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 			case utils.NodeTypeSuper:
 				// will fetch 1 eth from pool when super node deposit, so we need add this
 				stakerPlusValidatorDepositAmount += utils.StandardSuperNodeFakeDepositBalance
-				allEth += utils.StandardSuperNodeFakeDepositBalance
+				allEthOnBeacon += utils.StandardSuperNodeFakeDepositBalance
 
 			case utils.NodeTypeLight:
 				stakerPlusValidatorDepositAmount += l.NodeDepositAmount
-				allEth += l.NodeDepositAmount
+				allEthOnBeacon += l.NodeDepositAmount
 
 			default:
 				utils.Err(c, utils.CodeInternalErr, "node type not supported")
@@ -107,7 +161,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 		case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
 			stakerPlusValidatorDepositAmount += utils.StandardEffectiveBalance
-			allEth += utils.StandardEffectiveBalance
+			allEthOnBeacon += utils.StandardEffectiveBalance
 
 			matchedValidatorsNum += 1
 
@@ -115,7 +169,7 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 			utils.ValidatorStatusActiveSlash, utils.ValidatorStatusExitedSlash, utils.ValidatorStatusWithdrawableSlash, utils.ValidatorStatusWithdrawDoneSlash:
 
 			stakerPlusValidatorDepositAmount += utils.StandardEffectiveBalance
-			allEth += l.Balance
+			allEthOnBeacon += l.Balance
 
 			matchedValidatorsNum += 1
 
@@ -129,29 +183,32 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 	rsp.DepositedEth = depositPoolBalanceDeci.
 		Add(decimal.NewFromInt(int64(stakerPlusValidatorDepositAmount)).Mul(utils.GweiDeci)).
-		String()
-	// cal minitedReth
+		StringFixed(0)
+	// cal mintedReth
 	rsp.MintedREth = poolInfo.REthSupply
 	// cal stakedEth
 	rsp.StakedEth = decimal.NewFromInt(int64(stakerPlusValidatorDepositAmount)).
 		Mul(utils.GweiDeci).
-		String()
+		StringFixed(0)
 	// pool eth
 	rsp.PoolEth = depositPoolBalanceDeci.
-		Add(decimal.NewFromInt(int64(allEth)).Mul(utils.GweiDeci)).
-		String()
+		Add(decimal.NewFromInt(int64(allEthOnBeacon)).Mul(utils.GweiDeci)).Add(undistributedWithdrawalDeci).Sub(totalMissingAmountForWithdrawDeci).
+		StringFixed(0)
 	// all eth
 	rsp.AllEth = depositPoolBalanceDeci.
-		Add(decimal.NewFromInt(int64(allEth)).Mul(utils.GweiDeci)).
-		String()
+		Add(decimal.NewFromInt(int64(allEthOnBeacon)).Mul(utils.GweiDeci)).Add(undistributedWithdrawalDeci).Sub(totalMissingAmountForWithdrawDeci).
+		StringFixed(0)
 
 	rsp.UnmatchedEth = poolInfo.DepositPoolBalance
 	rsp.MatchedValidators = matchedValidatorsNum
 	rsp.EthPrice = ethPrice
 
 	// apr
-	rsp.StakeApr = utils.REthTotalApy
-	rsp.ValidatorApr = utils.ValidatorAverageApr
+	rsp.StakeApr = utils.CacheREthTotalApy
+	rsp.ValidatorApr = utils.CacheValidatorAverageApr
+
+	// platform eth
+	rsp.PlatformEth = decimal.NewFromInt(int64(totalPlatformEth)).Mul(utils.GweiDeci).StringFixed(0)
 
 	// rsp
 	utils.Ok(c, "success", rsp)

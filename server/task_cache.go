@@ -45,7 +45,7 @@ func (task *Server) fetchREthTotalApy() error {
 		return fmt.Errorf("reth apy not match: %f", apy)
 	}
 
-	utils.REthTotalApy = apy
+	utils.CacheREthTotalApy = apy
 	return nil
 }
 
@@ -83,10 +83,10 @@ func (task *Server) calValidatorAverageApr() error {
 			sort.Float64s(aprList)
 			logrus.Debug("aprList ", aprList)
 			if len(aprList) >= 5 {
-				utils.ValidatorAverageApr = (aprList[len(aprList)-1] + aprList[len(aprList)-2] +
+				utils.CacheValidatorAverageApr = (aprList[len(aprList)-1] + aprList[len(aprList)-2] +
 					aprList[len(aprList)/2] + aprList[len(aprList)/2-1] + aprList[len(aprList)/2+1]) / 5
 			} else {
-				utils.ValidatorAverageApr = aprList[len(aprList)/2]
+				utils.CacheValidatorAverageApr = aprList[len(aprList)/2]
 			}
 		}
 	}

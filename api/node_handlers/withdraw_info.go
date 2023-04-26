@@ -163,7 +163,7 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 			}
 
 			url := fmt.Sprintf("https://beaconcha.in/validator/%d", validator.ValidatorIndex) // mainnet
-			if h.isDev {
+			if utils.CacheIsDev {
 				url = fmt.Sprintf("https://zhejiang.beaconcha.in/validator/%d", validator.ValidatorIndex) // zhejiang
 			}
 
@@ -224,7 +224,7 @@ func (h *Handler) HandlePostWithdrawInfo(c *gin.Context) {
 		}
 
 		url := fmt.Sprintf("hhttps://etherscan.io/tx/%s", nodeClaim.TxHash) //mainnet
-		if h.isDev {
+		if utils.CacheIsDev {
 			url = fmt.Sprintf("https://blockscout.com/eth/zhejiang-testnet/tx/%s", nodeClaim.TxHash) //zhejiang
 		}
 

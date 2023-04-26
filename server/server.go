@@ -36,8 +36,9 @@ func NewServer(cfg *config.Config, dao *db.WrapDb) (*Server, error) {
 		db:                dao,
 	}
 
-	utils.UnstakingStartTimestamp = cfg.UnstakingStartTimestamp
-	utils.RunClientStartTimestamp = cfg.RunClientStartTimestamp
+	// init cache var
+	utils.CacheUnstakingStartTimestamp = cfg.UnstakingStartTimestamp
+	utils.CacheRunClientStartTimestamp = cfg.RunClientStartTimestamp
 
 	pool, err := dao_chaos.GetPoolInfo(dao)
 	if err != nil {
@@ -47,14 +48,16 @@ func NewServer(cfg *config.Config, dao *db.WrapDb) (*Server, error) {
 		return nil, fmt.Errorf("fee pool not exist")
 	}
 
-	isDev := false
-	slashStartEpoch := utils.SlashStartEpoch
+	utils.CacheIsDev = false
+	utils.CacheSlashStartEpoch = utils.SlashStartEpoch
+	utils.CacheRewardV1EndEpoch = utils.RewardV1EndEpoch
 	if !strings.EqualFold(pool.FeePool, "0x6fb2aa2443564d9430b9483b1a5eea13a522df45") {
-		isDev = true
-		slashStartEpoch = 1
+		utils.CacheIsDev = true
+		utils.CacheSlashStartEpoch = 1
+		utils.CacheRewardV1EndEpoch = utils.DevRewardV1EndEpoch
 	}
 
-	handler := s.InitHandler(isDev, slashStartEpoch)
+	handler := s.InitHandler()
 
 	s.httpServer = &http.Server{
 		Addr:         s.listenAddr,
@@ -66,8 +69,8 @@ func NewServer(cfg *config.Config, dao *db.WrapDb) (*Server, error) {
 	return s, nil
 }
 
-func (svr *Server) InitHandler(isDev bool, slashStartEpoch uint64) http.Handler {
-	return api.InitRouters(svr.db, isDev, slashStartEpoch)
+func (svr *Server) InitHandler() http.Handler {
+	return api.InitRouters(svr.db)
 }
 
 func (svr *Server) ApiServer() {
@@ -90,7 +93,7 @@ func (svr *Server) Start() error {
 	if apy <= 0 {
 		return fmt.Errorf("eth apy not match: %f", apy)
 	}
-	utils.REthTotalApy = apy
+	utils.CacheREthTotalApy = apy
 
 	utils.SafeGoWithRestart(svr.ApiServer)
 	utils.SafeGoWithRestart(svr.taskCache)
