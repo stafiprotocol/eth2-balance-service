@@ -46,6 +46,7 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return fmt.Errorf("userDepositContract.GetBalance err: %s", err)
 	}
+	userDepositPoolBalanceDeci := decimal.NewFromBigInt(userDepositPoolBalance, 0)
 
 	// ----2 get all validator deposited before or equal targetHeight
 	validatorDepositedList, err := dao_node.GetValidatorDepositedListBeforeEqual(task.db, targetEth1BlockHeight)
@@ -71,11 +72,11 @@ func (task *Task) voteRate() error {
 	totalStakingEthDeci := decimal.NewFromInt(int64(totalStakingEthFromValidator)).Mul(utils.GweiDeci)
 
 	// // ----3 cal user undistributed withdrawals
-	latestDistributeHeight, err := task.withdrawContract.LatestDistributeHeight(callOpts)
+	latestDistributeWithdrawalHeight, err := task.withdrawContract.LatestDistributeHeight(callOpts)
 	if err != nil {
 		return err
 	}
-	totalUserUndistributedWithdrawalsDeci, _, _, _, err := task.getUserNodePlatformFromWithdrawals(latestDistributeHeight.Uint64(), targetEth1BlockHeight)
+	userUndistributedWithdrawalsDeci, _, _, _, err := task.getUserNodePlatformFromWithdrawals(latestDistributeWithdrawalHeight.Uint64(), targetEth1BlockHeight)
 	if err != nil {
 		return errors.Wrap(err, "getUserNodePlatformFromWithdrawals failed")
 	}
@@ -94,18 +95,48 @@ func (task *Task) voteRate() error {
 	}
 	totalSlashAmountDeci := decimal.NewFromInt(int64(totalSlashAmount)).Mul(utils.GweiDeci)
 
-	totalDistribute, err := dao_node.GetTotalDistributeSlashBefore(task.db, targetEth1BlockHeight)
+	totalDistributeSlash, err := dao_node.GetTotalDistributeSlashBefore(task.db, targetEth1BlockHeight)
 	if err != nil {
 		return err
 	}
-	totalDistributeSlashDeci := decimal.NewFromInt(int64(totalDistribute)).Mul(utils.GweiDeci)
+	totalDistributeSlashDeci := decimal.NewFromInt(int64(totalDistributeSlash)).Mul(utils.GweiDeci)
 	undistributeSlashDeci := totalSlashAmountDeci.Sub(totalDistributeSlashDeci)
 	if undistributeSlashDeci.IsNegative() {
 		return fmt.Errorf("totalSlashAmountDeci %s less than totalDistributeSlashDeci %s", totalSlashAmountDeci.StringFixed(0), totalDistributeSlashDeci.StringFixed(0))
 	}
+	// ----6 total user undistributed fee
+	latestDistributeFeeDealedHeight, err := task.distributorContract.GetDistributeFeeDealedHeight(callOpts)
+	if err != nil {
+		return err
+	}
+	// init case
+	if latestDistributeFeeDealedHeight.Uint64() == 0 {
+		latestDistributeFeeDealedHeight = big.NewInt(task.distributeFeeInitDealedHeight)
+	}
+	userUndistributedFeeDeci, _, _, _, err := task.getUserNodePlatformFromFeePool(latestDistributeFeeDealedHeight.Uint64(), targetEth1BlockHeight)
+	if err != nil {
+		return errors.Wrap(err, "getUserNodePlatformFromFeePool failed")
+	}
 
-	// ----final: total user eth = total user eth from validator + deposit pool balance + user undistributedWithdrawals + totalUndistributed slash amount - totalMissingAmountForWithdraw
-	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(decimal.NewFromBigInt(userDepositPoolBalance, 0)).Add(totalUserUndistributedWithdrawalsDeci).Add(undistributeSlashDeci).Sub(totalMissingAmountForWithdrawDeci)
+	// ----7 total user undistributed super node fee
+	latestDistributeSuperNodeFeeDealedHeight, err := task.distributorContract.GetDistributeSuperNodeFeeDealedHeight(callOpts)
+	if err != nil {
+		return err
+	}
+	// init case
+	if latestDistributeSuperNodeFeeDealedHeight.Uint64() == 0 {
+		latestDistributeSuperNodeFeeDealedHeight = big.NewInt(task.distributeSuperNodeFeeInitDealedHeight)
+	}
+	userUndistributedSuperNodeFeeDeci, _, _, _, err := task.getUserNodePlatformFromSuperNodeFeePool(latestDistributeSuperNodeFeeDealedHeight.Uint64(), targetEth1BlockHeight)
+	if err != nil {
+		return errors.Wrap(err, "getUserNodePlatformFromSuperNodeFeePool failed")
+	}
+
+	// ----final: total user eth = total user eth from validator + deposit pool balance + user undistributedWithdrawals + totalUndistributed slash amount
+	// 								+ user undistributed fee + user undistributed super node fee - totalMissingAmountForWithdraw
+	totalUserEthDeci := totalUserEthFromValidatorDeci.Add(userDepositPoolBalanceDeci).Add(userUndistributedWithdrawalsDeci).
+		Add(undistributeSlashDeci).Add(userUndistributedFeeDeci).Add(userUndistributedSuperNodeFeeDeci).Sub(totalMissingAmountForWithdrawDeci)
+
 	// should sub totalMissingAmountForWithdrawDeci, as there are checks on networkbalances `require(_stakingEth <= _totalEth, "Invalid network balances");`
 	totalStakingEthDeci = totalStakingEthDeci.Sub(totalMissingAmountForWithdrawDeci)
 
@@ -135,20 +166,20 @@ func (task *Task) voteRate() error {
 	newExchangeRateDeci := totalUserEthDeci.Mul(decimal.NewFromInt(1e18)).Div(rethTotalSupplyDeci)
 
 	logrus.WithFields(logrus.Fields{
-		"targetEth1Height":                      targetEth1BlockHeight,
-		"targetEpoch":                           targetEpoch,
-		"balancesEpoch":                         balancesEpoch,
-		"totalUserEthFromValidator":             totalUserEthFromValidatorDeci.StringFixed(0),
-		"userDepositPoolBalance":                userDepositPoolBalance,
-		"totalUserUndistributedWithdrawalsDeci": totalUserUndistributedWithdrawalsDeci.StringFixed(0),
-		"totalUnDistributedSlashAmountDeci":     undistributeSlashDeci.StringFixed(0),
-		"totalMissingAmountForWithdrawDeci":     totalMissingAmountForWithdrawDeci.StringFixed(0),
-		"totalUserEth":                          totalUserEthDeci.StringFixed(0),
-		"totalStakingEth":                       totalStakingEthDeci.StringFixed(0),
-		"rethTotalSupply":                       rethTotalSupplyDeci.StringFixed(0),
-		"newExchangeRate":                       newExchangeRateDeci.StringFixed(0),
-		"oldExchangeRate":                       oldExchangeRateDeci.StringFixed(0),
-	}).Info("exchangeInfo")
+		"targetEth1Height":                  targetEth1BlockHeight,
+		"targetEpoch":                       targetEpoch,
+		"balancesEpoch":                     balancesEpoch,
+		"totalUserEthFromValidator":         totalUserEthFromValidatorDeci.StringFixed(0),
+		"userDepositPoolBalanceDeci":        userDepositPoolBalanceDeci.StringFixed(0),
+		"userUndistributedWithdrawalsDeci":  userUndistributedWithdrawalsDeci.StringFixed(0),
+		"unDistributedSlashAmountDeci":      undistributeSlashDeci.StringFixed(0),
+		"totalMissingAmountForWithdrawDeci": totalMissingAmountForWithdrawDeci.StringFixed(0),
+		"totalUserEth":                      totalUserEthDeci.StringFixed(0),
+		"totalStakingEth":                   totalStakingEthDeci.StringFixed(0),
+		"rethTotalSupply":                   rethTotalSupplyDeci.StringFixed(0),
+		"newExchangeRate":                   newExchangeRateDeci.StringFixed(0),
+		"oldExchangeRate":                   oldExchangeRateDeci.StringFixed(0),
+	}).Info("exchangeRateInfo")
 
 	if newExchangeRateDeci.LessThanOrEqual(oldExchangeRateDeci) {
 		logrus.WithFields(logrus.Fields{
