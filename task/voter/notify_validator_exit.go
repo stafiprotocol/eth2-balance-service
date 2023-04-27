@@ -65,20 +65,20 @@ func (task *Task) notifyValidatorExit() error {
 			Context: context.Background(),
 		}, [][32]byte{reserveEthProposalId})
 		if err != nil {
-			return err
+			return errors.Wrap(err, "FilterProposalExecuted failed")
 		}
 		if !iter.Next() {
 			// ----- send reserve eth tx
 			err := task.sendReserveTx(uint64(preCycle))
 			if err != nil {
-				return err
+				return errors.Wrap(err, "sendReserveTx failed")
 			}
 
 			iter, err := task.withdrawContract.FilterProposalExecuted(&bind.FilterOpts{
 				Context: context.Background(),
 			}, [][32]byte{reserveEthProposalId})
 			if err != nil {
-				return err
+				return errors.Wrap(err, "FilterProposalExecuted sub failed")
 			}
 			if !iter.Next() {
 				return fmt.Errorf("reserveEthForWithdraw no excuted")
@@ -93,7 +93,7 @@ func (task *Task) notifyValidatorExit() error {
 
 	newTotalMissingAmount, err := task.withdrawContract.TotalMissingAmountForWithdraw(task.connection.CallOpts(big.NewInt(int64(targetBlockNumber))))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "withdrawContract.TotalMissingAmountForWithdraw failed")
 	}
 	logrus.Debugf("newTotalMissingAmount %s finalTargetBlockNumber %d", newTotalMissingAmount.String(), targetBlockNumber)
 
@@ -105,7 +105,7 @@ func (task *Task) notifyValidatorExit() error {
 	// calc exited but not withdrawal amount
 	pendingExitValidatorList, err := dao_node.GetValidatorListWithdrawableEpochAfter(task.db, targetEpoch)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "dao_node.GetValidatorListWithdrawableEpochAfter failed")
 	}
 	totalPendingExitedUserAmount := uint64(0)
 	for _, v := range pendingExitValidatorList {
@@ -121,7 +121,7 @@ func (task *Task) notifyValidatorExit() error {
 
 	selectVals, err := task.selectValidatorsForExit(finalTotalMissingAmountDeci, targetEpoch)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "selectValidatorsForExit failed")
 	}
 	if len(selectVals) == 0 {
 		return fmt.Errorf("selectValidatorsForExit select zero vals, target epoch: %d", targetEpoch)
@@ -130,7 +130,7 @@ func (task *Task) notifyValidatorExit() error {
 	// cal start cycle
 	notExitElectionList, err := dao_node.GetAllNotExitElectionList(task.db)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "dao_node.GetAllNotExitElectionList failed")
 	}
 	startCycle := preCycle - 1
 	if len(notExitElectionList) > 0 {

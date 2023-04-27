@@ -278,10 +278,26 @@ func TestGetUserNodePlatformReward(t *testing.T) {
 }
 
 func TestStorage(t *testing.T) {
-	client, err := ethclient.Dial("https://rpc.zhejiang.ethpandaops.io")
+	client, err := ethclient.Dial("https://mainnet.infura.io/v3/4190eadf65d1449cb6401fc6d5256d2c")
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	withdrawPoolContract, err := withdraw.NewWithdraw(common.HexToAddress("0x6c2f7b6110a37b3b0fbdd811876be368df02e8b0"), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reserveEthProposalId := utils.ReserveEthForWithdrawProposalId(big.NewInt(19473))
+
+	_, err = withdrawPoolContract.FilterProposalExecuted(&bind.FilterOpts{
+		Context: context.Background(),
+	}, [][32]byte{reserveEthProposalId})
+
+	if err != nil {
+		t.Log(err)
+	}
+
+	return
 	s, err := storage.NewStorage(common.HexToAddress("0x126d3C08Fb282d5417793B7677E3F7DA8347A384"), client)
 	if err != nil {
 		t.Fatal(err)
@@ -327,7 +343,7 @@ func TestStorage(t *testing.T) {
 	}
 	t.Log("withdrawPoolBalance: ", decimal.NewFromBigInt(withdrawPoolBalance, -18))
 
-	withdrawPoolContract, err := withdraw.NewWithdraw(withdrawPoolAddress, client)
+	withdrawPoolContract, err = withdraw.NewWithdraw(withdrawPoolAddress, client)
 	if err != nil {
 		t.Fatal(err)
 	}
