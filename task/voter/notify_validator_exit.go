@@ -121,7 +121,9 @@ func (task *Task) notifyValidatorExit() error {
 		return errors.Wrap(err, "dao_node.GetValidatorListWithdrawableEpochAfter failed")
 	}
 	totalExitedButNotDistributedUserAmount := uint64(0)
+	notDistributeValidators := make(map[uint64]bool)
 	for _, v := range exitButNotDistributedValidatorList {
+		notDistributeValidators[v.ValidatorIndex] = true
 		totalExitedButNotDistributedUserAmount += (utils.StandardEffectiveBalance - v.NodeDepositAmount)
 	}
 	totalExitedButNotDistributedUserAmountDeci := decimal.NewFromInt(int64(totalExitedButNotDistributedUserAmount)).Mul(utils.GweiDeci)
@@ -131,13 +133,14 @@ func (task *Task) notifyValidatorExit() error {
 	if err != nil {
 		return err
 	}
-	userUndistributedPartialWithdrawalsDeci, _, _, _, err := task.getUserNodePlatformFromPartialWithdrawals(latestDistributeWithdrawalHeight.Uint64(), farfutureBlockHeight)
+	// should exclude notDistributeValidators, as we has already calc
+	userUndistributedWithdrawalsDeci, _, _, _, err := task.getUserNodePlatformFromWithdrawals(latestDistributeWithdrawalHeight.Uint64(), farfutureBlockHeight, notDistributeValidators)
 	if err != nil {
 		return errors.Wrap(err, "getUserNodePlatformFromWithdrawals failed")
 	}
 
 	newTotalMissingAmountDeci := decimal.NewFromBigInt(newTotalMissingAmount, 0)
-	totalPendingAmountDeci := totalExitedButNotDistributedUserAmountDeci.Add(userUndistributedPartialWithdrawalsDeci)
+	totalPendingAmountDeci := totalExitedButNotDistributedUserAmountDeci.Add(userUndistributedWithdrawalsDeci)
 
 	// no need notify exit
 	if newTotalMissingAmountDeci.LessThanOrEqual(totalPendingAmountDeci) {

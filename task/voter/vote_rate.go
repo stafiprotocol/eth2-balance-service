@@ -76,7 +76,7 @@ func (task *Task) voteRate() error {
 	if err != nil {
 		return err
 	}
-	userUndistributedWithdrawalsDeci, _, _, _, err := task.getUserNodePlatformFromWithdrawals(latestDistributeWithdrawalHeight.Uint64(), targetEth1BlockHeight)
+	userUndistributedWithdrawalsDeci, _, _, _, err := task.getUserNodePlatformFromWithdrawals(latestDistributeWithdrawalHeight.Uint64(), targetEth1BlockHeight, nil)
 	if err != nil {
 		return errors.Wrap(err, "getUserNodePlatformFromWithdrawals failed")
 	}
