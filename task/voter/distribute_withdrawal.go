@@ -309,3 +309,99 @@ func (task Task) getUserNodePlatformFromWithdrawals(latestDistributeHeight, targ
 
 	return totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, nil
 }
+
+// return (user reward, node reward, platform fee, totalWithdrawAmount) decimals 18
+func (task Task) getUserNodePlatformFromPartialWithdrawals(latestDistributeHeight, targetEth1BlockHeight uint64) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal, error) {
+	withdrawals, err := dao_node.GetValidatorWithdrawalsBetween(task.db, latestDistributeHeight, targetEth1BlockHeight)
+	if err != nil {
+		return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, errors.Wrap(err, "GetValidatorWithdrawalsBetween failed")
+	}
+	totalAmount := uint64(0)
+	for _, w := range withdrawals {
+		totalAmount += w.Amount
+	}
+	totalAmountDeci := decimal.NewFromInt(int64(totalAmount)).Mul(utils.GweiDeci)
+
+	totalUserEthDeci := decimal.Zero
+	totalNodeEthDeci := decimal.Zero
+	totalPlatformEthDeci := decimal.Zero
+	for _, w := range withdrawals {
+		validator, err := dao_node.GetValidatorByIndex(task.db, w.ValidatorIndex)
+		if err != nil {
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, err
+		}
+
+		totalReward := uint64(0)
+		userDeposit := uint64(0)
+		nodeDeposit := uint64(0)
+
+		switch {
+		case w.Amount < utils.MaxPartialWithdrawalAmount: // partial withdrawal
+			totalReward = w.Amount
+		default:
+			continue
+		}
+
+		// cal rewards
+		// the first withdrawal is different from the other withdrawals, as it include staking reward of rewardV1 and maybe rewardV2
+		var userRewardDeci decimal.Decimal
+		var nodeRewardDeci decimal.Decimal
+		var platformFeeDeci decimal.Decimal
+		firstWithdrawal, err := dao_node.GetValidatorFirstWithdrawal(task.db, w.ValidatorIndex)
+		if err != nil {
+			return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, errors.Wrap(err, "dao_node.GetValidatorFirstWithdrawal failed")
+		}
+
+		if w.WithdrawIndex == firstWithdrawal.WithdrawIndex {
+			validatorRewardV1TotalWithdrawReward := uint64(0)
+			validatorRewardV2TotalWithdrawReward := uint64(0)
+
+			if w.Slot <= utils.StartSlotOfEpoch(task.eth2Config, task.rewardV1EndEpoch) {
+				validatorRewardV1TotalWithdrawReward = totalReward
+			} else {
+
+				rewardV1EndEpochBalance, err := dao_node.GetValidatorBalance(task.db, w.ValidatorIndex, task.rewardV1EndEpoch)
+				if err != nil {
+					if err != gorm.ErrRecordNotFound {
+						return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, errors.Wrap(err, "dao_node.GetValidatorBalance failed")
+					} else {
+
+						if task.rewardV1EndEpoch >= validator.ActiveEpoch {
+							return decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero, fmt.Errorf("not found validator %d balance but rewardV1EndEpoch > valInfo.ActiveEpoch", validator.ValidatorIndex)
+						}
+						// maybe not exist if activeEpoch > rewardV1EndEpoch, this case validatorRewardV1TotalWithdrawReward = 0
+					}
+				} else {
+					validatorRewardV1TotalWithdrawReward = utils.GetValidatorTotalReward(rewardV1EndEpochBalance.Balance, rewardV1EndEpochBalance.TotalWithdrawal, 0)
+				}
+
+				if totalReward > validatorRewardV1TotalWithdrawReward {
+					validatorRewardV2TotalWithdrawReward = totalReward - validatorRewardV1TotalWithdrawReward
+				}
+			}
+
+			userRewardDeciV1, nodeRewardDeciV1, platformFeeDeciV1 := utils.GetUserNodePlatformRewardV1(validator.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV1TotalWithdrawReward)))
+			userRewardDeciV2, nodeRewardDeciV2, platformFeeDeciV2 := utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV2TotalWithdrawReward)))
+
+			userRewardDeci, nodeRewardDeci, platformFeeDeci = userRewardDeciV1.Add(userRewardDeciV2), nodeRewardDeciV1.Add(nodeRewardDeciV2), platformFeeDeciV1.Add(platformFeeDeciV2)
+		} else {
+			if w.Slot <= utils.StartSlotOfEpoch(task.eth2Config, task.rewardV1EndEpoch) {
+				userRewardDeci, nodeRewardDeci, platformFeeDeci = utils.GetUserNodePlatformRewardV1(validator.NodeDepositAmount, decimal.NewFromInt(int64(totalReward)))
+			} else {
+				userRewardDeci, nodeRewardDeci, platformFeeDeci = utils.GetUserNodePlatformRewardV2(validator.NodeDepositAmount, decimal.NewFromInt(int64(totalReward)))
+			}
+		}
+
+		// cal reward + deposit
+		totalUserEthDeci = totalUserEthDeci.Add(userRewardDeci).Add(decimal.NewFromInt(int64(userDeposit)))
+		totalNodeEthDeci = totalNodeEthDeci.Add(nodeRewardDeci).Add(decimal.NewFromInt(int64(nodeDeposit)))
+		totalPlatformEthDeci = totalPlatformEthDeci.Add(platformFeeDeci)
+
+	}
+
+	totalUserEthDeci = totalUserEthDeci.Mul(utils.GweiDeci)
+	totalNodeEthDeci = totalNodeEthDeci.Mul(utils.GweiDeci)
+	totalPlatformEthDeci = totalPlatformEthDeci.Mul(utils.GweiDeci)
+
+	return totalUserEthDeci, totalNodeEthDeci, totalPlatformEthDeci, totalAmountDeci, nil
+}

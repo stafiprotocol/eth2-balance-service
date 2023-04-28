@@ -11,10 +11,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
+	"github.com/stafiprotocol/eth2-balance-service/dao"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"gorm.io/gorm"
 )
+
+var minReserveAmountForWithdraw = big.NewInt(5e17) //0.5 eth
+var farfutureBlockHeight = uint64(1e11)
 
 func (task *Task) notifyValidatorExit() error {
 	currentCycle, targetTimestamp := currentCycleAndStartTimestamp()
@@ -24,6 +28,15 @@ func (task *Task) notifyValidatorExit() error {
 	targetBlockNumber, err := task.getEpochStartBlocknumber(targetEpoch)
 	if err != nil {
 		return err
+	}
+
+	// check block syncer
+	eth2BlockSyncerMetaData, err := dao.GetMetaData(task.db, utils.MetaTypeEth2BlockSyncer)
+	if err != nil {
+		return err
+	}
+	if eth2BlockSyncerMetaData.DealedEpoch < targetEpoch {
+		return nil
 	}
 
 	ejectedValidator, err := task.withdrawContract.GetEjectedValidatorsAtCycle(task.connection.CallOpts(nil), big.NewInt(preCycle))
@@ -40,6 +53,7 @@ func (task *Task) notifyValidatorExit() error {
 	if err != nil {
 		return err
 	}
+
 	// no need notify exit
 	if totalMissingAmount.Cmp(big.NewInt(0)) == 0 {
 		return nil
@@ -57,9 +71,8 @@ func (task *Task) notifyValidatorExit() error {
 		"userDepositBalance": userDepositBalance,
 	}).Debug("notifyValidatorExit")
 
-	reserveEthProposalId := utils.ReserveEthForWithdrawProposalId(big.NewInt(preCycle))
-
-	if userDepositBalance.Cmp(big.NewInt(0)) > 0 {
+	if userDepositBalance.Cmp(minReserveAmountForWithdraw) > 0 {
+		reserveEthProposalId := utils.ReserveEthForWithdrawProposalId(big.NewInt(preCycle))
 
 		iter, err := task.withdrawContract.FilterProposalExecuted(&bind.FilterOpts{
 			Context: context.Background(),
@@ -102,22 +115,37 @@ func (task *Task) notifyValidatorExit() error {
 		return nil
 	}
 
-	// calc exited but not withdrawal amount
-	pendingExitValidatorList, err := dao_node.GetValidatorListWithdrawableEpochAfter(task.db, targetEpoch)
+	// calc exited but not distributed amount
+	exitButNotDistributedValidatorList, err := dao_node.GetValidatorListExitedButNotDistributed(task.db)
 	if err != nil {
 		return errors.Wrap(err, "dao_node.GetValidatorListWithdrawableEpochAfter failed")
 	}
-	totalPendingExitedUserAmount := uint64(0)
-	for _, v := range pendingExitValidatorList {
-		totalPendingExitedUserAmount += (utils.StandardEffectiveBalance - v.NodeDepositAmount)
+	totalExitedButNotDistributedUserAmount := uint64(0)
+	for _, v := range exitButNotDistributedValidatorList {
+		totalExitedButNotDistributedUserAmount += (utils.StandardEffectiveBalance - v.NodeDepositAmount)
 	}
-	totalPendingExitedUserAmountDeci := decimal.NewFromInt(int64(totalPendingExitedUserAmount)).Mul(utils.GweiDeci)
+	totalExitedButNotDistributedUserAmountDeci := decimal.NewFromInt(int64(totalExitedButNotDistributedUserAmount)).Mul(utils.GweiDeci)
+
+	// calc partial withdrawal not distributed amount
+	latestDistributeWithdrawalHeight, err := task.withdrawContract.LatestDistributeHeight(task.connection.CallOpts(big.NewInt(int64(targetBlockNumber))))
+	if err != nil {
+		return err
+	}
+	userUndistributedPartialWithdrawalsDeci, _, _, _, err := task.getUserNodePlatformFromPartialWithdrawals(latestDistributeWithdrawalHeight.Uint64(), farfutureBlockHeight)
+	if err != nil {
+		return errors.Wrap(err, "getUserNodePlatformFromWithdrawals failed")
+	}
+
 	newTotalMissingAmountDeci := decimal.NewFromBigInt(newTotalMissingAmount, 0)
-	if newTotalMissingAmountDeci.LessThanOrEqual(totalPendingExitedUserAmountDeci) {
+	totalPendingAmountDeci := totalExitedButNotDistributedUserAmountDeci.Add(userUndistributedPartialWithdrawalsDeci)
+
+	// no need notify exit
+	if newTotalMissingAmountDeci.LessThanOrEqual(totalPendingAmountDeci) {
 		return nil
 	}
-	// got final total missing amount
-	finalTotalMissingAmountDeci := newTotalMissingAmountDeci.Sub(totalPendingExitedUserAmountDeci)
+
+	// final total missing amount
+	finalTotalMissingAmountDeci := newTotalMissingAmountDeci.Sub(totalPendingAmountDeci)
 
 	selectVals, err := task.selectValidatorsForExit(finalTotalMissingAmountDeci, targetEpoch)
 	if err != nil {

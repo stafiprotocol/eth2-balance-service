@@ -297,7 +297,7 @@ func TestStorage(t *testing.T) {
 		t.Log(err)
 	}
 
-	for iter.Next(){
+	for iter.Next() {
 		t.Log(iter.Event.ProposalId)
 	}
 	return

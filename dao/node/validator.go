@@ -86,6 +86,11 @@ func GetValidatorListActiveEpochBefore(db *db.WrapDb, epoch uint64) (c []*Valida
 	return
 }
 
+func GetValidatorListExitedButNotDistributed(db *db.WrapDb) (c []*Validator, err error) {
+	err = db.Find(&c, "exit_epoch <> 0 and status not in (?, ?)", utils.ValidatorStatusDistributed, utils.ValidatorStatusDistributedSlash).Error
+	return
+}
+
 func GetValidatorListWithdrawableEpochAfter(db *db.WrapDb, epoch uint64) (c []*Validator, err error) {
 	err = db.Find(&c, "withdrawable_epoch > ?", epoch).Error
 	return
