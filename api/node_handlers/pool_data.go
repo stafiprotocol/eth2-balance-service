@@ -63,12 +63,6 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		return
 	}
 
-	totalMissingAmountForWithdrawDeci, err := decimal.NewFromString(poolInfo.TotalMissingAmountForWithdraw)
-	if err != nil {
-		utils.Err(c, utils.CodeInternalErr, err.Error())
-		logrus.Errorf("decimal.NewFromString(poolInfo.TotalMissingAmountForWithdraw) err %v", err)
-		return
-	}
 	// cal undistributed withdrawal
 	undistributedWithdrawal, err := dao_node.GetTotalWithdrawalAfter(h.db, poolInfo.LatestDistributeWithdrawalHeight)
 	if err != nil {
@@ -192,11 +186,11 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 		StringFixed(0)
 	// pool eth
 	rsp.PoolEth = depositPoolBalanceDeci.
-		Add(decimal.NewFromInt(int64(allEthOnBeacon)).Mul(utils.GweiDeci)).Add(undistributedWithdrawalDeci).Sub(totalMissingAmountForWithdrawDeci).
+		Add(decimal.NewFromInt(int64(allEthOnBeacon)).Mul(utils.GweiDeci)).Add(undistributedWithdrawalDeci).
 		StringFixed(0)
 	// all eth
 	rsp.AllEth = depositPoolBalanceDeci.
-		Add(decimal.NewFromInt(int64(allEthOnBeacon)).Mul(utils.GweiDeci)).Add(undistributedWithdrawalDeci).Sub(totalMissingAmountForWithdrawDeci).
+		Add(decimal.NewFromInt(int64(allEthOnBeacon)).Mul(utils.GweiDeci)).Add(undistributedWithdrawalDeci).
 		StringFixed(0)
 
 	rsp.UnmatchedEth = poolInfo.DepositPoolBalance
