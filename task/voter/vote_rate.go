@@ -139,6 +139,10 @@ func (task *Task) voteRate() error {
 
 	// should sub totalMissingAmountForWithdrawDeci, as there are checks on networkbalances `require(_stakingEth <= _totalEth, "Invalid network balances");`
 	totalStakingEthDeci = totalStakingEthDeci.Sub(totalMissingAmountForWithdrawDeci)
+	//testnet case:
+	if totalStakingEthDeci.IsNegative() {
+		totalStakingEthDeci = decimal.Zero
+	}
 
 	// check total user eth and staking eth
 	if totalUserEthDeci.LessThan(totalStakingEthDeci) {
