@@ -183,14 +183,25 @@ func (task *Task) voteRate() error {
 		"oldExchangeRate":                   oldExchangeRateDeci.StringFixed(0),
 	}).Info("exchangeRateInfo")
 
-	if newExchangeRateDeci.LessThanOrEqual(oldExchangeRateDeci) {
-		logrus.WithFields(logrus.Fields{
-			"newExchangeRate": newExchangeRateDeci.StringFixed(0),
-			"oldExchangeRate": oldExchangeRate.String(),
-		}).Warn("new exchangeRate less than old")
-		return nil
+	if task.dev {
+		if newExchangeRateDeci.LessThan(oldExchangeRateDeci) {
+			logrus.WithFields(logrus.Fields{
+				"newExchangeRate": newExchangeRateDeci.StringFixed(0),
+				"oldExchangeRate": oldExchangeRate.String(),
+			}).Warn("new exchangeRate less than old")
+			return nil
+		}
 	}
+
 	if !task.dev {
+		if newExchangeRateDeci.LessThanOrEqual(oldExchangeRateDeci) {
+			logrus.WithFields(logrus.Fields{
+				"newExchangeRate": newExchangeRateDeci.StringFixed(0),
+				"oldExchangeRate": oldExchangeRate.String(),
+			}).Warn("new exchangeRate less than old")
+			return nil
+		}
+
 		if newExchangeRateDeci.GreaterThan(oldExchangeRateDeci.Add(maxRateChangeDeci)) {
 			return fmt.Errorf("newExchangeRate %s too big than oldExchangeRate %s", newExchangeRateDeci.String(), oldExchangeRateDeci.String())
 		}
