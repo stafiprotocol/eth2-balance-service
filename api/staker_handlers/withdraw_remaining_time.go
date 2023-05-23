@@ -19,7 +19,7 @@ type ReqWithdrawRemainingTime struct {
 	StakerAddress string `json:"stakerAddress"` //hex string
 }
 type RspWithdrawRemainingTime struct {
-	RemainingSeconds uint64 `json:"remainingSeconds"` // staked waiting actived
+	RemainingSeconds int64 `json:"remainingSeconds"` // staked waiting actived
 }
 
 // @Summary staker withdraw remaining time
@@ -54,26 +54,33 @@ func (h *Handler) HandleGetWithdrawRemainingTime(c *gin.Context) {
 		return
 	}
 
-	minTimestamp := uint64(math.MaxUint64)
+	if len(notClaimedList) == 0 {
+		utils.Ok(c, "success", RspWithdrawRemainingTime{
+			RemainingSeconds: -1,
+		})
+		return
+	}
+
+	minTimestamp := int64(math.MaxInt64)
 	for _, withdrawal := range notClaimedList {
 		switch withdrawal.ExpectedClaimableTimestamp {
 		case 0: //not dealed
-			if poolInfo.CurrentWithdrawableTimestamp < minTimestamp {
-				minTimestamp = poolInfo.CurrentWithdrawableTimestamp
+			if int64(poolInfo.CurrentWithdrawableTimestamp) < minTimestamp {
+				minTimestamp = int64(poolInfo.CurrentWithdrawableTimestamp)
 			}
 		case utils.StakerWithdrawalClaimableTimestamp: // dealed and claimable
-			if utils.StakerWithdrawalClaimableTimestamp < minTimestamp {
-				minTimestamp = utils.StakerWithdrawalClaimableTimestamp
+			if int64(utils.StakerWithdrawalClaimableTimestamp) < minTimestamp {
+				minTimestamp = int64(utils.StakerWithdrawalClaimableTimestamp)
 			}
 		default: // dealed
-			if withdrawal.ExpectedClaimableTimestamp < minTimestamp {
-				minTimestamp = withdrawal.ExpectedClaimableTimestamp
+			if int64(withdrawal.ExpectedClaimableTimestamp) < minTimestamp {
+				minTimestamp = int64(withdrawal.ExpectedClaimableTimestamp)
 			}
 		}
 	}
 
-	remain := uint64(0)
-	now := uint64(time.Now().Unix())
+	remain := int64(0)
+	now := time.Now().Unix()
 	if minTimestamp > now {
 		remain = minTimestamp - now
 	}

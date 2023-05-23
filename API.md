@@ -474,12 +474,12 @@ no
 * status、message must be string format, data must be object
 
 
-| grade 1 | grade 2          | grade 3 | type   | must exist? | encode type | description                             |
-| :------ | :--------------- | :------ | :----- | :---------- | :---------- | :-------------------------------------- |
-| status  | N/A              | N/A     | string | Yes         | null        | status code                             |
-| message | N/A              | N/A     | string | Yes         | null        | status info                             |
-| data    | N/A              | N/A     | object | Yes         | null        | data                                    |
-|         | remainingSeconds | N/A     | number | Yes         | null        | staker withdraw remaining time(seconds) |
+| grade 1 | grade 2          | grade 3 | type   | must exist? | encode type | description                                                                   |
+| :------ | :--------------- | :------ | :----- | :---------- | :---------- | :---------------------------------------------------------------------------- |
+| status  | N/A              | N/A     | string | Yes         | null        | status code                                                                   |
+| message | N/A              | N/A     | string | Yes         | null        | status info                                                                   |
+| data    | N/A              | N/A     | object | Yes         | null        | data                                                                          |
+|         | remainingSeconds | N/A     | number | Yes         | null        | staker withdraw remaining time(seconds), return -1 if no claimable withdrawal |
 
 ## 12. get proof of claim
 
