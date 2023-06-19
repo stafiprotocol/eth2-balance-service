@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -75,14 +76,22 @@ func (c *Connection) connect() error {
 	var rpcClient *rpc.Client
 	var err error
 	// Start http or ws client
-	if strings.Contains(c.eth1Endpoint, "http") {
+	u, err := url.Parse(c.eth1Endpoint)
+	if err != nil {
+		return err
+	}
+	switch u.Scheme {
+	case "http", "https":
 		rpcClient, err = rpc.DialHTTP(c.eth1Endpoint)
-	} else {
-		rpcClient, err = rpc.DialWebsocket(context.Background(), c.eth1Endpoint, "/ws")
+	case "ws", "wss":
+		rpcClient, err = rpc.DialWebsocket(context.Background(), c.eth1Endpoint, fmt.Sprintf("/%s", u.Scheme))
+	default:
+		err = fmt.Errorf("unsupport scheme: %s", u.Scheme)
 	}
 	if err != nil {
 		return err
 	}
+
 	c.eth1Client = ethclient.NewClient(rpcClient)
 
 	c.eth1Rpc = rpcClient

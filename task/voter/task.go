@@ -102,15 +102,17 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 	}
 
 	s := &Task{
-		taskTicker:             15,
-		stop:                   make(chan struct{}),
-		db:                     dao,
-		keyPair:                keyPair,
-		eth1Endpoint:           cfg.Eth1Endpoint,
-		eth2Endpoint:           cfg.Eth2Endpoint,
-		gasLimit:               gasLimitDeci.BigInt(),
-		maxGasPrice:            maxGasPriceDeci.BigInt(),
-		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
+		taskTicker:                     15,
+		stop:                           make(chan struct{}),
+		db:                             dao,
+		keyPair:                        keyPair,
+		eth1Endpoint:                   cfg.Eth1Endpoint,
+		eth2Endpoint:                   cfg.Eth2Endpoint,
+		arbitrumEndpoint:               cfg.ArbitrumEndpoint,
+		gasLimit:                       gasLimitDeci.BigInt(),
+		maxGasPrice:                    maxGasPriceDeci.BigInt(),
+		storageContractAddress:         common.HexToAddress(cfg.Contracts.StorageContractAddress),
+		arbitrumStakePortalRateAddress: common.HexToAddress(cfg.Contracts.ArbitrumStakePortalRateAddress),
 
 		rewardEpochInterval:     utils.RewardEpochInterval,     // 75 epoch 8h
 		distributeEpochInterval: utils.RewardEpochInterval * 3, // 225 epoch 24h
