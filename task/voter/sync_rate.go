@@ -24,6 +24,8 @@ func (task *Task) syncRate() error {
 	}
 
 	if rateOnEth.Cmp(rateOnArbitrum) != 0 {
+		logrus.WithFields(logrus.Fields{"rateOnEth": rateOnEth.String(), "rateOnArbitrum": rateOnArbitrum.String()}).Info("rateInfo")
+
 		proposalId := getProposalId(0, rateOnEth, 0)
 		proposal, err := task.arbitrumStakePortalRateContract.Proposals(nil, proposalId)
 		if err != nil {
@@ -52,7 +54,7 @@ func (task *Task) syncRate() error {
 			return err
 		}
 
-		logrus.Info("send SetRate tx hash: ", tx.Hash().String())
+		logrus.Info("send VoteRate tx hash: ", tx.Hash().String())
 
 		err = task.waitArbitrumTxOk(tx.Hash())
 		if err != nil {
