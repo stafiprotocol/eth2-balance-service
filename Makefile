@@ -42,6 +42,7 @@ abi:
 	abigen --abi ./bindings/SuperNodeFeePool/supernodefeepool_abi.json --pkg super_node_fee_pool --type SuperNodeFeePool --out ./bindings/SuperNodeFeePool/SuperNodeFeePool.go
 	abigen --abi ./bindings/Withdraw/withdraw_abi.json --pkg withdraw --type Withdraw --out ./bindings/Withdraw/Withdraw.go
 	abigen --abi ./bindings/StafiEther/stafiether_abi.json --pkg stafi_ether --type StafiEther --out ./bindings/StafiEther/StafiEther.go
+	abigen --abi ./bindings/StakePortalRate/stakeportalrate_abi.json --pkg stake_portal_rate --type StakePortalRate --out ./bindings/StakePortalRate/StakePortalRate.go
 
 
 clean:

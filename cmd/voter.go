@@ -48,8 +48,11 @@ func startVoterCmd() *cobra.Command {
 	logFilePath: %s
 	logLevel: %s
 	eth1Endpoint: %s
-	eth2Endpoint: %s`,
-				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint)
+	eth2Endpoint: %s
+	arbitrumEndpoint: %s
+	storageContract: %s
+	arbitrumStakePortalRate: %s`,
+				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.ArbitrumEndpoint, cfg.Contracts.StorageContractAddress, cfg.Contracts.ArbitrumStakePortalRateAddress)
 
 			err = log.InitLogFile(cfg.LogFilePath + "/voter")
 			if err != nil {
