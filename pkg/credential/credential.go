@@ -6,15 +6,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/fynntang/staking-deposit/account_manager/verifier"
-	"github.com/fynntang/staking-deposit/constants"
-	"github.com/fynntang/staking-deposit/crypto/bls"
-	"github.com/fynntang/staking-deposit/crypto/bls/blst"
-	"github.com/fynntang/staking-deposit/crypto/key_derivation"
-	"github.com/fynntang/staking-deposit/crypto/keystore"
-	"github.com/fynntang/staking-deposit/crypto/ssz"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/constants"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls/blst"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/key_derivation"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/keystore"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/ssz"
 	consensus "github.com/umbracle/go-eth-consensus"
 	"math/big"
 	"strconv"
@@ -168,7 +167,7 @@ func (c *Credential) SignedDeposit() (*consensus.DepositData, error) {
 	}, nil
 }
 
-func (c *Credential) SigningDepositData() (*verifier.DepositData, error) {
+func (c *Credential) SigningDepositData() (*DepositData, error) {
 	signedDeposit, err := c.SignedDeposit()
 	if err != nil {
 		return nil, err
@@ -189,7 +188,7 @@ func (c *Credential) SigningDepositData() (*verifier.DepositData, error) {
 		return nil, err
 	}
 
-	return &verifier.DepositData{
+	return &DepositData{
 		PublicKey:             hex.EncodeToString(signedDeposit.Pubkey[:]),
 		WithdrawalCredentials: hex.EncodeToString(signedDeposit.WithdrawalCredentials[:]),
 		Amount:                signedDeposit.Amount,
@@ -201,7 +200,7 @@ func (c *Credential) SigningDepositData() (*verifier.DepositData, error) {
 		DepositCliVersion:     constants.DepositCliVersion,
 	}, nil
 }
-func (c *Credential) VerifyDepositData(data *verifier.DepositData) error {
+func (c *Credential) VerifyDepositData(data *DepositData) error {
 	pubkey, err := hex.DecodeString(data.PublicKey)
 	if err != nil {
 		return err
@@ -304,14 +303,14 @@ func (c *Credential) VerifyDepositData(data *verifier.DepositData) error {
 	return nil
 }
 
-func (c *Credential) SigningKeystore(password string) (*verifier.Keystore, error) {
+func (c *Credential) SigningKeystore(password string) (*Keystore, error) {
 	encryptor := keystore.NewScryptKeystoreEncryptor()
 	cryptoFields, err := encryptor.Encrypt(c.SigningSk.Marshal(), password)
 	if err != nil {
 		return nil, err
 	}
 
-	return &verifier.Keystore{
+	return &Keystore{
 		Description: encryptor.Name(),
 		Version:     encryptor.Version(),
 		UUID:        uuid.New().String(),
