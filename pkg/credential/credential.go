@@ -12,7 +12,6 @@ import (
 	"github.com/fynntang/staking-deposit/crypto/bls/blst"
 	"github.com/fynntang/staking-deposit/crypto/key_derivation"
 	"github.com/fynntang/staking-deposit/crypto/keystore"
-	_mnemonic "github.com/fynntang/staking-deposit/crypto/mnemonic"
 	"github.com/fynntang/staking-deposit/crypto/ssz"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
@@ -42,7 +41,7 @@ type Credential struct {
 //
 // Set path as EIP-2334 format
 // https://eips.ethereum.org/EIPS/eip-2334
-func NewCredential(mnemonic, mnemonicPassword string, index int, amount *big.Int, chain constants.Chain, eth1WithdrawalAddress string, withdrawalCredentialBytes []byte) (*Credential, error) {
+func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chain, eth1WithdrawalAddress string, withdrawalCredentialBytes []byte) (*Credential, error) {
 	purpose := 12381
 	coinType := 3600
 	account := strconv.Itoa(index)
@@ -50,19 +49,28 @@ func NewCredential(mnemonic, mnemonicPassword string, index int, amount *big.Int
 	withdrawalKeyPath := fmt.Sprintf("m/%d/%d/%s/0", purpose, coinType, account)
 	signingKeyPath := fmt.Sprintf("%s/0", withdrawalKeyPath)
 
-	seed := _mnemonic.NewSeed(mnemonic, mnemonicPassword)
-
 	var withdrawalSK *bls.PrivateKey
 	var err error
-	if len(withdrawalCredentialBytes) != 0 {
+	if len(withdrawalCredentialBytes) == 0 {
 		withdrawalSK, err = key_derivation.MnemonicAndPathToKey(seed, withdrawalKeyPath)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		if len(withdrawalCredentialBytes) != 32 {
+			return nil, fmt.Errorf("withdrawalCredentialBytes illegal")
+		}
 	}
+
 	signingSK, err := key_derivation.MnemonicAndPathToKey(seed, signingKeyPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(eth1WithdrawalAddress) != 0 {
+		if !common.IsHexAddress(eth1WithdrawalAddress) {
+			return nil, fmt.Errorf("eth1WithdrawalAddress illegal")
+		}
 	}
 
 	return &Credential{
@@ -100,7 +108,7 @@ func (c *Credential) WithdrawalCredentials() ([]byte, error) {
 	switch c.WithdrawalType() {
 	case BlsWithdrawal:
 		withdrawalCredentials = constants.BlsWithdrawalPrefix
-		sum := sha256.New().Sum(c.WithdrawalPK().Marshal()) // todo: 取值待确认
+		sum := sha256.New().Sum(c.WithdrawalPK().Marshal()) //todo
 		withdrawalCredentials = append(withdrawalCredentials, sum...)
 	case Eth1AddressWithdrawal:
 		if !c.IsEmptyEth1WithdrawalAddress() {
