@@ -88,9 +88,11 @@ func (c *Connection) connect() error {
 	c.eth1Rpc = rpcClient
 
 	// eth2 client
-	c.eth2Client, err = client.NewStandardHttpClient(c.eth2Endpoint)
-	if err != nil {
-		return err
+	if len(c.eth2Endpoint) != 0 {
+		c.eth2Client, err = client.NewStandardHttpClient(c.eth2Endpoint)
+		if err != nil {
+			return err
+		}
 	}
 
 	if c.kp != nil {

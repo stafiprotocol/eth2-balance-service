@@ -14,6 +14,7 @@ type Config struct {
 	ListenAddr              string
 	Eth1Endpoint            string // url for eth1 rpc endpoint
 	Eth2Endpoint            string // url for eth2 rpc endpoint
+	ArbitrumEndpoint        string // url for arbitrum rpc endpoint
 	LogFilePath             string
 	From                    string // address of voter
 	KeystorePath            string
@@ -31,7 +32,8 @@ type Config struct {
 }
 
 type Contracts struct {
-	StorageContractAddress string
+	StorageContractAddress         string
+	ArbitrumStakePortalRateAddress string
 }
 
 type Db struct {
