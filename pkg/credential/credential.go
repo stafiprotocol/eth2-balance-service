@@ -33,20 +33,19 @@ func init() {
 }
 
 type Credential struct {
-	SigningSk                 *bls.PrivateKey
-	WithdrawalSk              *bls.PrivateKey
-	WithdrawalCredentialBytes []byte
-	Amount                    *big.Int
-	Chain                     constants.Chain
-	Eth1WithdrawalAddress     common.Address
-	SigningKeyPath            string
+	SigningSk             *bls.PrivateKey
+	WithdrawalSk          *bls.PrivateKey
+	Amount                *big.Int
+	Chain                 constants.Chain
+	Eth1WithdrawalAddress common.Address
+	SigningKeyPath        string
 }
 
 // NewCredential
 //
 // Set path as EIP-2334 format
 // https://eips.ethereum.org/EIPS/eip-2334
-func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chain, eth1WithdrawalAddress string, withdrawalCredentialBytes []byte) (*Credential, error) {
+func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chain, eth1WithdrawalAddress string) (*Credential, error) {
 	purpose := 12381
 	coinType := 3600
 	account := strconv.Itoa(index)
@@ -56,14 +55,14 @@ func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chai
 
 	var withdrawalSK *bls.PrivateKey
 	var err error
-	if len(withdrawalCredentialBytes) == 0 {
+	if len(eth1WithdrawalAddress) == 0 {
 		withdrawalSK, err = key_derivation.MnemonicAndPathToKey(seed, withdrawalKeyPath)
 		if err != nil {
 			return nil, fmt.Errorf("MnemonicAndPathToKey failed: %s, withdrawalKeyPath: %s", err, withdrawalKeyPath)
 		}
 	} else {
-		if len(withdrawalCredentialBytes) != 32 {
-			return nil, fmt.Errorf("withdrawalCredentialBytes illegal")
+		if !common.IsHexAddress(eth1WithdrawalAddress) {
+			return nil, fmt.Errorf("eth1WithdrawalAddress illegal")
 		}
 	}
 
@@ -72,20 +71,13 @@ func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chai
 		return nil, fmt.Errorf("MnemonicAndPathToKey failed: %s, signingKeyPath: %s", err, signingKeyPath)
 	}
 
-	if len(eth1WithdrawalAddress) != 0 {
-		if !common.IsHexAddress(eth1WithdrawalAddress) {
-			return nil, fmt.Errorf("eth1WithdrawalAddress illegal")
-		}
-	}
-
 	return &Credential{
-		SigningSk:                 signingSK,
-		WithdrawalSk:              withdrawalSK,
-		WithdrawalCredentialBytes: withdrawalCredentialBytes,
-		Amount:                    amount,
-		Chain:                     chain,
-		Eth1WithdrawalAddress:     common.HexToAddress(eth1WithdrawalAddress),
-		SigningKeyPath:            signingKeyPath,
+		SigningSk:             signingSK,
+		WithdrawalSk:          withdrawalSK,
+		Amount:                amount,
+		Chain:                 chain,
+		Eth1WithdrawalAddress: common.HexToAddress(eth1WithdrawalAddress),
+		SigningKeyPath:        signingKeyPath,
 	}, nil
 }
 
@@ -105,10 +97,6 @@ func (c *Credential) WithdrawalType() WithdrawalType {
 	return WithdrawalType(bytes.Compare(c.WithdrawalPrefix(), constants.BlsWithdrawalPrefix))
 }
 func (c *Credential) WithdrawalCredentials() ([]byte, error) {
-	if len(c.WithdrawalCredentialBytes) != 0 {
-		return c.WithdrawalCredentialBytes, nil
-	}
-
 	var withdrawalCredentials []byte
 	switch c.WithdrawalType() {
 	case BlsWithdrawal:
@@ -120,7 +108,11 @@ func (c *Credential) WithdrawalCredentials() ([]byte, error) {
 			withdrawalCredentials = constants.Eth1AddressWithdrawalPrefix
 			withdrawalCredentials = append(withdrawalCredentials, make([]byte, 11)...)
 			withdrawalCredentials = append(withdrawalCredentials, c.Eth1WithdrawalAddress.Bytes()...)
+		} else {
+			return nil, fmt.Errorf("eth1WithdrawalAddress empty")
 		}
+	default:
+		return nil, fmt.Errorf("unsupport withdrdawalType: %d", c.WithdrawalType())
 	}
 	return withdrawalCredentials, nil
 }
