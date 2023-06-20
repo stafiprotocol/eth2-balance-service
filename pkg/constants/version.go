@@ -1,3 +1,3 @@
 package constants
 
-const DepositCliVersion = "2.5.0"
+const DepositCliVersion = "3.0.0"

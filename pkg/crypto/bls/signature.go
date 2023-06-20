@@ -2,8 +2,8 @@ package bls
 
 import (
 	"fmt"
-	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls/blst"
 	"github.com/herumi/bls-eth-go-binary/bls"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls/blst"
 )
 
 // Signature is a BLS signature.

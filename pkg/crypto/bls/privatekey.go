@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls/blst"
 	"github.com/herumi/bls-eth-go-binary/bls"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls/blst"
 )
 
 // PrivateKey is a private key in Ethereum 2.
