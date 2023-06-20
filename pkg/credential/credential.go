@@ -26,6 +26,12 @@ const (
 	Eth1AddressWithdrawal
 )
 
+func init() {
+	if err := bls.InitBLS(); err != nil {
+		panic(fmt.Sprintf("failed to init bls: %v", err))
+	}
+}
+
 type Credential struct {
 	SigningSk                 *bls.PrivateKey
 	WithdrawalSk              *bls.PrivateKey
@@ -53,7 +59,7 @@ func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chai
 	if len(withdrawalCredentialBytes) == 0 {
 		withdrawalSK, err = key_derivation.MnemonicAndPathToKey(seed, withdrawalKeyPath)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("MnemonicAndPathToKey failed: %s, withdrawalKeyPath: %s", err, withdrawalKeyPath)
 		}
 	} else {
 		if len(withdrawalCredentialBytes) != 32 {
@@ -63,7 +69,7 @@ func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chai
 
 	signingSK, err := key_derivation.MnemonicAndPathToKey(seed, signingKeyPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("MnemonicAndPathToKey failed: %s, signingKeyPath: %s", err, signingKeyPath)
 	}
 
 	if len(eth1WithdrawalAddress) != 0 {
