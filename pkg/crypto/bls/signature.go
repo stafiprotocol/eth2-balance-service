@@ -3,7 +3,6 @@ package bls
 import (
 	"fmt"
 	"github.com/herumi/bls-eth-go-binary/bls"
-	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls/blst"
 )
 
 // Signature is a BLS signature.
@@ -12,32 +11,32 @@ type Signature struct {
 }
 
 // Verify a bls signature given a public key and a message.
-func (s *Signature) Verify(msg []byte, pubKey blst.PublicKey) bool {
-	return s.sig.VerifyByte(pubKey.(*PublicKey).key, msg)
+func (s *Signature) Verify(msg []byte, pubKey *PublicKey) bool {
+	return s.sig.VerifyByte(pubKey.key, msg)
 }
 
 // VerifyAggregate verifies each public key against its respective message.
 // Note: this is vulnerable to a rogue public-key attack.
-func (s *Signature) VerifyAggregate(msgs [][]byte, pubKeys []blst.PublicKey) bool {
+func (s *Signature) VerifyAggregate(msgs [][]byte, pubKeys []*PublicKey) bool {
 	if len(pubKeys) == 0 {
 		return false
 	}
 	keys := make([]bls.PublicKey, len(pubKeys))
 	for i, v := range pubKeys {
-		keys[i] = *v.(*PublicKey).key
+		keys[i] = *v.key
 	}
 	return s.sig.VerifyAggregateHashes(keys, msgs)
 }
 
 // VerifyAggregateCommon verifies each public key against a single message.
 // Note: this is vulnerable to a rogue public-key attack.
-func (s *Signature) VerifyAggregateCommon(msg []byte, pubKeys []blst.PublicKey) bool {
+func (s *Signature) VerifyAggregateCommon(msg []byte, pubKeys []*PublicKey) bool {
 	if len(pubKeys) == 0 {
 		return false
 	}
 	keys := make([]bls.PublicKey, len(pubKeys))
 	for i, v := range pubKeys {
-		keys[i] = *v.(*PublicKey).key
+		keys[i] = *v.key
 	}
 	return s.sig.FastAggregateVerify(keys, msg)
 }
@@ -48,7 +47,7 @@ func (s *Signature) Marshal() []byte {
 }
 
 // SignatureFromBytes creates a BLS signature from a byte slice.
-func SignatureFromBytes(data []byte) (blst.Signature, error) {
+func SignatureFromBytes(data []byte) (*Signature, error) {
 	var sig bls.Sign
 	if err := sig.Deserialize(data); err != nil {
 		return nil, fmt.Errorf("failed to deserialize signature: %v", err)
@@ -57,20 +56,20 @@ func SignatureFromBytes(data []byte) (blst.Signature, error) {
 }
 
 // SignatureFromSig creates a BLS signature from an existing signature.
-func SignatureFromSig(sig bls.Sign) (blst.Signature, error) {
+func SignatureFromSig(sig bls.Sign) (*Signature, error) {
 	return &Signature{sig: &sig}, nil
 }
 
 // AggregateSignatures aggregates signatures.
-func AggregateSignatures(sigs []blst.Signature) *Signature {
+func AggregateSignatures(sigs []*Signature) *Signature {
 	if len(sigs) == 0 {
 		return nil
 	}
 	aggSig := &bls.Sign{}
 	//#nosec G104
-	_ = aggSig.Deserialize(sigs[0].(*Signature).Marshal())
+	_ = aggSig.Deserialize(sigs[0].Marshal())
 	for _, sig := range sigs[1:] {
-		aggSig.Add(sig.(*Signature).sig)
+		aggSig.Add(sig.sig)
 	}
 	return &Signature{sig: aggSig}
 }

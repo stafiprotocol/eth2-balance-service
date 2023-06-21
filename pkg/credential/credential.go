@@ -10,7 +10,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/constants"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls"
-	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls/blst"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/key_derivation"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/keystore"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/ssz"
@@ -75,8 +74,8 @@ func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chai
 	}, nil
 }
 
-func (c *Credential) SigningPK() blst.PublicKey    { return c.SigningSk.PublicKey() }
-func (c *Credential) WithdrawalPK() blst.PublicKey { return c.WithdrawalSk.PublicKey() }
+func (c *Credential) SigningPK() *bls.PublicKey    { return c.SigningSk.PublicKey() }
+func (c *Credential) WithdrawalPK() *bls.PublicKey { return c.WithdrawalSk.PublicKey() }
 func (c *Credential) IsEmptyEth1WithdrawalAddress() bool {
 	return c.Eth1WithdrawalAddress == (common.Address{})
 }

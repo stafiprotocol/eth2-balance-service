@@ -9,19 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/herumi/bls-eth-go-binary/bls"
 	"github.com/pkg/errors"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/rsa"
 )
-
-func init() {
-	if err := bls.Init(bls.BLS12_381); err != nil {
-		panic(err)
-	}
-	if err := bls.SetETHmode(bls.EthModeDraft07); err != nil {
-		panic(err)
-	}
-}
 
 type IShare struct {
 	privateKey string
@@ -84,48 +75,47 @@ func CreateThreshold(skBytes []byte, operators []*Operator) (map[uint64]*IShare,
 	threshold := uint64(len(operators))
 
 	// master key Polynomial
-	msk := make([]bls.SecretKey, threshold)
-	mpk := make([]bls.PublicKey, threshold)
+	msk := make([]*bls.PrivateKey, threshold)
+	mpk := make([]*bls.PublicKey, threshold)
 
-	sk := &bls.SecretKey{}
-	if err := sk.Deserialize(skBytes); err != nil {
+	sk, err := bls.PrivateKeyFromBytes(skBytes)
+	if err != nil {
 		return nil, err
 	}
-	msk[0] = *sk
-	mpk[0] = *sk.GetPublicKey()
+	msk[0] = sk
+	mpk[0] = sk.PublicKey()
 
 	_F := (threshold - 1) / 3
 
 	// Receives list of operators IDs. len(operator IDs) := 3 * F + 1
 	// construct poly
 	for i := uint64(1); i < threshold-_F; i++ {
-		sk := bls.SecretKey{}
-		sk.SetByCSPRNG()
+		sk, err := bls.GeneratePrivateKey()
+		if err != nil {
+			return nil, err
+		}
 		msk[i] = sk
-		mpk[i] = *sk.GetPublicKey()
+		mpk[i] = sk.PublicKey()
 	}
 
 	// evaluate shares - starting from 1 because 0 is master key
 	shares := make(map[uint64]*IShare)
 	for i := uint64(1); i <= threshold; i++ {
 		blsID := bls.ID{}
-
 		// not equal to ts ?
 		operatorId := operators[i-1].Id
-
-		err := blsID.SetDecString(fmt.Sprintf("%d", operatorId))
+		err := blsID.SetDec(operatorId)
 		if err != nil {
 			return nil, err
 		}
 
-		sk := bls.SecretKey{}
-
+		sk := bls.EmptyPrivateKey()
 		err = sk.Set(msk, &blsID)
 		if err != nil {
 			return nil, err
 		}
 
-		pk := bls.PublicKey{}
+		pk := bls.EmptyPublicKey()
 		err = pk.Set(mpk, &blsID)
 		if err != nil {
 			return nil, err

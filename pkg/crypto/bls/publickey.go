@@ -3,7 +3,6 @@ package bls
 import (
 	"fmt"
 	"github.com/herumi/bls-eth-go-binary/bls"
-	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls/blst"
 	"sync"
 )
 
@@ -31,10 +30,16 @@ func PublicKeyFromBytes(pub []byte) (*PublicKey, error) {
 	}, nil
 }
 
+func EmptyPublicKey() *PublicKey {
+	return &PublicKey{
+		key: &bls.PublicKey{},
+	}
+}
+
 // Aggregate two public keys.  This updates the value of the existing key.
-func (k *PublicKey) Aggregate(other blst.PublicKey) {
+func (k *PublicKey) Aggregate(other *PublicKey) {
 	k.accessMu.Lock()
-	k.key.Add(other.(*PublicKey).key)
+	k.key.Add(other.key)
 	k.serialized = nil
 	k.accessMu.Unlock()
 }
@@ -53,7 +58,7 @@ func (k *PublicKey) Marshal() []byte {
 }
 
 // Copy creates a copy of the public key.
-func (k *PublicKey) Copy() blst.PublicKey {
+func (k *PublicKey) Copy() *PublicKey {
 	k.accessMu.Lock()
 
 	if k.serialized == nil {
@@ -76,4 +81,19 @@ func (k *PublicKey) Copy() blst.PublicKey {
 	k.accessMu.Unlock()
 
 	return key
+}
+
+func (p *PublicKey) Set(pkeys []*PublicKey, id *ID) error {
+	msk := make([]bls.PublicKey, len(pkeys))
+	for i, k := range pkeys {
+		if k != nil {
+			msk[i] = *k.key
+		}
+	}
+
+	return p.key.Set(msk, &id.Id)
+}
+
+func (p *PublicKey) SerializeToHexStr() string {
+	return p.key.SerializeToHexStr()
 }
