@@ -26,12 +26,6 @@ const (
 	Eth1AddressWithdrawal
 )
 
-func init() {
-	if err := bls.InitBLS(); err != nil {
-		panic(fmt.Sprintf("failed to init bls: %v", err))
-	}
-}
-
 type Credential struct {
 	SigningSk             *bls.PrivateKey
 	WithdrawalSk          *bls.PrivateKey

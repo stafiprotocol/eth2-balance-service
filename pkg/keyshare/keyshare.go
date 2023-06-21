@@ -14,6 +14,15 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/rsa"
 )
 
+func init() {
+	if err := bls.Init(bls.BLS12_381); err != nil {
+		panic(err)
+	}
+	if err := bls.SetETHmode(bls.EthModeDraft07); err != nil {
+		panic(err)
+	}
+}
+
 type IShare struct {
 	privateKey string
 	publicKey  string
@@ -235,7 +244,7 @@ func buildKeystoreShareRes(validatorPublicKey, version, ssvAmount string, operat
 	return keystoreShareRes
 }
 
-func KeystoreShareV2(validatorPublicKey, version, ssvAmount string, skBytes []byte, operators []*Operator) (*KeystoreShareRes, error) {
+func KeystoreShare(validatorPublicKey, version, ssvAmount string, skBytes []byte, operators []*Operator) (*KeystoreShareRes, error) {
 	keystoreShareInfos, err := EncryptShares(skBytes, operators)
 	if err != nil {
 		return nil, errors.Unwrap(err)
@@ -245,8 +254,8 @@ func KeystoreShareV2(validatorPublicKey, version, ssvAmount string, skBytes []by
 	return keystoreSharesRes, nil
 }
 
-func KeystoreShareV2ForJson(validatorPublicKey, version, ssvAmount string, skBytes []byte, operators []*Operator) (string, error) {
-	keystoreSharesRes, err := KeystoreShareV2(validatorPublicKey, version, ssvAmount, skBytes, operators)
+func KeystoreShareForJson(validatorPublicKey, version, ssvAmount string, skBytes []byte, operators []*Operator) (string, error) {
+	keystoreSharesRes, err := KeystoreShare(validatorPublicKey, version, ssvAmount, skBytes, operators)
 	if err != nil {
 		return "", errors.Unwrap(err)
 	}
