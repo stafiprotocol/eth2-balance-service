@@ -26,10 +26,10 @@ import (
 	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
 	withdraw "github.com/stafiprotocol/eth2-balance-service/bindings/Withdraw"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/beacon"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
-	"github.com/stafiprotocol/eth2-balance-service/shared"
-	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
 )
 
 type Task struct {
@@ -54,7 +54,7 @@ type Task struct {
 	dev bool
 
 	// need init on start()
-	connection           *shared.Connection
+	connection           *connection.Connection
 	db                   *db.WrapDb
 	withdrawCredientials string
 
@@ -68,7 +68,7 @@ type Task struct {
 	distributorContract     *distributor.Distributor
 	withdrawContract        *withdraw.Withdraw
 
-	arbitrumConn                    *shared.Connection
+	arbitrumConn                    *connection.Connection
 	arbitrumStakePortalRateAddress  common.Address
 	arbitrumStakePortalRateContract *stake_portal_rate.StakePortalRate
 
@@ -130,12 +130,12 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 
 func (task *Task) Start() error {
 	var err error
-	task.connection, err = shared.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.keyPair, task.gasLimit, task.maxGasPrice)
+	task.connection, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.keyPair, task.gasLimit, task.maxGasPrice)
 	if err != nil {
 		return err
 	}
 
-	task.arbitrumConn, err = shared.NewConnection(task.arbitrumEndpoint, "", task.keyPair, task.gasLimit, task.maxGasPrice)
+	task.arbitrumConn, err = connection.NewConnection(task.arbitrumEndpoint, "", task.keyPair, task.gasLimit, task.maxGasPrice)
 	if err != nil {
 		return err
 	}

@@ -11,8 +11,8 @@ import (
 	light_node "github.com/stafiprotocol/eth2-balance-service/bindings/LightNode"
 	super_node "github.com/stafiprotocol/eth2-balance-service/bindings/SuperNode"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/types"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
-	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 )
 
 const batchVoteLimit = 30

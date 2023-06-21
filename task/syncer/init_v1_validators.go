@@ -13,9 +13,9 @@ import (
 	staking_pool "github.com/stafiprotocol/eth2-balance-service/bindings/StakingPool"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/beacon"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/types"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
-	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
-	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 	"gorm.io/gorm"
 )
 

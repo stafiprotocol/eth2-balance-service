@@ -1,4 +1,4 @@
-package shared_test
+package connection_test
 
 import (
 	"context"
@@ -13,15 +13,15 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/sirupsen/logrus"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/beacon"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/beacon/client"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/types"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
-	"github.com/stafiprotocol/eth2-balance-service/shared"
-	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
-	"github.com/stafiprotocol/eth2-balance-service/shared/beacon/client"
-	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 )
 
 func TestCallOpts(t *testing.T) {
-	c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beaconcha-rpc2.stafi.io", nil, nil, nil)
+	c, err := connection.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beaconcha-rpc2.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestCallOpts(t *testing.T) {
 
 func TestBlockReward(t *testing.T) {
 	// c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beaconcha-rpc2.stafi.io", nil, nil, nil)
-	c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
+	c, err := connection.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +107,7 @@ func TestBlockDetail(t *testing.T) {
 
 	logrus.SetLevel(logrus.DebugLevel)
 	// c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
-	c, err := shared.NewConnection("https://mainnet.infura.io/v3/4d058381a4d64d31b00a4e15df3ddb94", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
+	c, err := connection.NewConnection("https://mainnet.infura.io/v3/4d058381a4d64d31b00a4e15df3ddb94", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -223,7 +223,7 @@ func TestBalance(t *testing.T) {
 	t.Log(tx.Logs)
 
 	return
-	c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
+	c, err := connection.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

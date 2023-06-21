@@ -1,7 +1,7 @@
 // Copyright 2020 Stafi Protocol
 // SPDX-License-Identifier: LGPL-3.0-only
 
-package shared
+package connection
 
 import (
 	"context"
@@ -20,9 +20,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
-	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
-	"github.com/stafiprotocol/eth2-balance-service/shared/beacon/client"
-	"github.com/stafiprotocol/eth2-balance-service/shared/types"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/beacon"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/beacon/client"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/types"
 	"golang.org/x/sync/errgroup"
 )
 

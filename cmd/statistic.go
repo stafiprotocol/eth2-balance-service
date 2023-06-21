@@ -25,9 +25,9 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
-	"github.com/stafiprotocol/eth2-balance-service/shared"
 	"gorm.io/gorm"
 )
 
@@ -107,7 +107,7 @@ func statisticCmd() *cobra.Command {
 				logrus.Errorf("dao autoMigrate err: %s", err)
 				return err
 			}
-			connection, err := shared.NewConnection(cfg.Eth1Endpoint, cfg.Eth2Endpoint, nil, nil, nil)
+			connection, err := connection.NewConnection(cfg.Eth1Endpoint, cfg.Eth2Endpoint, nil, nil, nil)
 			if err != nil {
 				return err
 			}

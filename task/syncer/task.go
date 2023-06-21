@@ -25,10 +25,10 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/dao"
 	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/beacon"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/db"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
-	"github.com/stafiprotocol/eth2-balance-service/shared"
-	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
 	"gorm.io/gorm"
 )
 
@@ -53,7 +53,7 @@ type Task struct {
 
 	// --- need init on start
 	db                         *db.WrapDb
-	connection                 *shared.Connection
+	connection                 *connection.Connection
 	depositContract            *deposit_contract.DepositContract
 	lightNodeContract          *light_node.LightNode
 	nodeDepositContract        *node_deposit.NodeDeposit
@@ -99,7 +99,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 
 func (task *Task) Start() error {
 	var err error
-	task.connection, err = shared.NewConnection(task.eth1Endpoint, task.eth2Endpoint, nil, nil, nil)
+	task.connection, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, nil, nil, nil)
 	if err != nil {
 		return err
 	}
