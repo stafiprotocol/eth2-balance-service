@@ -35,9 +35,11 @@ func NewRootCmd() *cobra.Command {
 
 	rootCmd.AddCommand(
 		genAccountCmd(),
+		importMnemonicCmd(),
 		startSyncerCmd(),
 		startApiCmd(),
 		startVoterCmd(),
+		startSsvCmd(),
 		syncMintEventCmd(),
 		statisticCmd(),
 		poolInfoCmd(),
