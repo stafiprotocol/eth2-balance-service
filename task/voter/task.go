@@ -8,8 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/prysmaticlabs/prysm/v3/beacon-chain/core/signing"
 	"github.com/prysmaticlabs/prysm/v3/config/params"
 	"github.com/shopspring/decimal"
@@ -340,80 +338,9 @@ func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
 }
 
 func (task *Task) waitTxOk(txHash common.Hash) (err error) {
-	return task.waitTxOkCommon(task.connection.Eth1Client(), txHash)
+	return utils.WaitTxOkCommon(task.connection.Eth1Client(), txHash)
 }
 
 func (task *Task) waitArbitrumTxOk(txHash common.Hash) (err error) {
-	return task.waitTxOkCommon(task.arbitrumConn.Eth1Client(), txHash)
-}
-
-func (task *Task) waitTxOkCommon(client *ethclient.Client, txHash common.Hash) (err error) {
-	defer func() {
-		if err != nil {
-			utils.ShutdownRequestChannel <- struct{}{}
-		}
-	}()
-
-	retry := 0
-	for {
-		if retry > utils.RetryLimit {
-			return fmt.Errorf("waitTx %s reach retry limit", txHash.String())
-		}
-		_, pending, err := client.TransactionByHash(context.Background(), txHash)
-		if err != nil {
-			logrus.WithFields(logrus.Fields{
-				"hash": txHash.String(),
-				"err":  err.Error(),
-			}).Warn("TransactionByHash")
-
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		} else {
-			if pending {
-				logrus.WithFields(logrus.Fields{
-					"hash":    txHash.String(),
-					"pending": pending,
-				}).Warn("TransactionByHash")
-
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			} else {
-				// check status
-				var receipt *types.Receipt
-				subRetry := 0
-				for {
-					if subRetry > utils.RetryLimit {
-						return fmt.Errorf("TransactionReceipt %s reach retry limit", txHash.String())
-					}
-
-					receipt, err = client.TransactionReceipt(context.Background(), txHash)
-					if err != nil {
-						logrus.WithFields(logrus.Fields{
-							"hash": txHash.String(),
-							"err":  err.Error(),
-						}).Warn("tx TransactionReceipt")
-
-						time.Sleep(utils.RetryInterval)
-						subRetry++
-						continue
-					}
-					break
-				}
-
-				if receipt.Status == 1 { //success
-					break
-				} else { //failed
-					return fmt.Errorf("tx %s failed", txHash.String())
-				}
-			}
-		}
-	}
-
-	logrus.WithFields(logrus.Fields{
-		"tx": txHash.String(),
-	}).Info("tx send ok")
-
-	return nil
+	return utils.WaitTxOkCommon(task.arbitrumConn.Eth1Client(), txHash)
 }

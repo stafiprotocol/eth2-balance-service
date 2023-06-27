@@ -1,8 +1,6 @@
 package task_voter
 
 import (
-	"bytes"
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -27,7 +25,7 @@ func (task *Task) initContract() error {
 	}
 	task.storageContract = storageContract
 
-	lightNodeAddress, err := task.getContractAddress(storageContract, "stafiLightNode")
+	lightNodeAddress, err := utils.GetContractAddress(storageContract, "stafiLightNode")
 	if err != nil {
 		return err
 	}
@@ -36,7 +34,7 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	superNodeAddress, err := task.getContractAddress(storageContract, "stafiSuperNode")
+	superNodeAddress, err := utils.GetContractAddress(storageContract, "stafiSuperNode")
 	if err != nil {
 		return err
 	}
@@ -45,7 +43,7 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	stafiDistributorAddress, err := task.getContractAddress(storageContract, "stafiDistributor")
+	stafiDistributorAddress, err := utils.GetContractAddress(storageContract, "stafiDistributor")
 	if err != nil {
 		return err
 	}
@@ -54,19 +52,19 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	stafiFeePoolAddress, err := task.getContractAddress(storageContract, "stafiFeePool")
+	stafiFeePoolAddress, err := utils.GetContractAddress(storageContract, "stafiFeePool")
 	if err != nil {
 		return err
 	}
 	task.feePoolAddress = stafiFeePoolAddress
 
-	stafiSuperNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiSuperNodeFeePool")
+	stafiSuperNodeFeePoolAddress, err := utils.GetContractAddress(storageContract, "stafiSuperNodeFeePool")
 	if err != nil {
 		return err
 	}
 	task.superNodeFeePoolAddress = stafiSuperNodeFeePoolAddress
 
-	networkBalancesAddress, err := task.getContractAddress(storageContract, "stafiNetworkBalances")
+	networkBalancesAddress, err := utils.GetContractAddress(storageContract, "stafiNetworkBalances")
 	if err != nil {
 		return err
 	}
@@ -75,7 +73,7 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	rethAddress, err := task.getContractAddress(storageContract, "rETHToken")
+	rethAddress, err := utils.GetContractAddress(storageContract, "rETHToken")
 	if err != nil {
 		return err
 	}
@@ -84,7 +82,7 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	userDepositAddress, err := task.getContractAddress(storageContract, "stafiUserDeposit")
+	userDepositAddress, err := utils.GetContractAddress(storageContract, "stafiUserDeposit")
 	if err != nil {
 		return err
 	}
@@ -93,7 +91,7 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	networkSettingsAddress, err := task.getContractAddress(storageContract, "stafiNetworkSettings")
+	networkSettingsAddress, err := utils.GetContractAddress(storageContract, "stafiNetworkSettings")
 	if err != nil {
 		return err
 	}
@@ -102,7 +100,7 @@ func (task *Task) initContract() error {
 		return err
 	}
 
-	withdrawAddress, err := task.getContractAddress(storageContract, "stafiWithdraw")
+	withdrawAddress, err := utils.GetContractAddress(storageContract, "stafiWithdraw")
 	if err != nil {
 		return err
 	}
@@ -118,17 +116,6 @@ func (task *Task) initContract() error {
 	}
 
 	return nil
-}
-
-func (task *Task) getContractAddress(storage *storage.Storage, name string) (common.Address, error) {
-	address, err := storage.GetAddress(task.connection.CallOpts(nil), utils.ContractStorageKey(name))
-	if err != nil {
-		return common.Address{}, err
-	}
-	if bytes.Equal(address.Bytes(), common.Address{}.Bytes()) {
-		return common.Address{}, fmt.Errorf("address empty")
-	}
-	return address, nil
 }
 
 // balance network related

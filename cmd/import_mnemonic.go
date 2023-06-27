@@ -32,7 +32,7 @@ func importMnemonicCmd() *cobra.Command {
 			}
 			logrus.SetLevel(logLevel)
 
-			return importMnemonic(keystorePath)
+			return importSeedFromMnemonic(keystorePath)
 		},
 	}
 	cmd.Flags().String(flagKeystorePath, defaultKeystorePath, "Keystore file path")
@@ -40,7 +40,7 @@ func importMnemonicCmd() *cobra.Command {
 	return cmd
 }
 
-func importMnemonic(keypath string) error {
+func importSeedFromMnemonic(keypath string) error {
 	var err error
 
 	mnemonicBts := keystore.GetPassword("Enter mnemonic:")
@@ -60,6 +60,8 @@ func importMnemonic(keypath string) error {
 		return fmt.Errorf("key for ssv already exist, please remove old file before import")
 	}
 
+	password := keystore.GetPassword("password for key:")
+
 	file, err := os.OpenFile(filepath.Clean(fp), os.O_EXCL|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
@@ -71,8 +73,6 @@ func importMnemonic(keypath string) error {
 			logrus.Error("generate keypair: could not close keystore file")
 		}
 	}()
-
-	password := keystore.GetPassword("password for key:")
 
 	err = encryptAndWriteToFile(file, seed, password)
 	if err != nil {
@@ -93,4 +93,31 @@ func encryptAndWriteToFile(file *os.File, seed []byte, password []byte) error {
 
 	_, err = file.Write(ciphertext)
 	return err
+}
+
+func loadSeed(keypath string) ([]byte, error) {
+	path := fmt.Sprintf("%s/ssv.key", keypath)
+	// Make sure key exists before prompting password
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, fmt.Errorf("key file not found: %s", path)
+	}
+
+	pswd := keystore.GetPassword(fmt.Sprintf("Enter password for key %s:", path))
+
+	return ReadFromFileAndDecrypt(path, pswd)
+}
+
+// ReadFromFileAndDecrypt reads ciphertext from a file and decrypts it using the password into a `crypto.PrivateKey`
+func ReadFromFileAndDecrypt(filename string, password []byte) ([]byte, error) {
+	fp, err := filepath.Abs(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadFile(filepath.Clean(fp))
+	if err != nil {
+		return nil, err
+	}
+
+	return keystore.Decrypt(data, password)
 }

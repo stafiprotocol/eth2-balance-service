@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/constants"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/credential"
@@ -15,7 +16,7 @@ func TestNewCredential(t *testing.T) {
 	mnemonicStr := "emotion problem need nice museum proud room sell field impact ankle poet child video luggage awful next trophy engine forest price average husband exotic"
 	seed := mnemonic.NewSeed(mnemonicStr, "")
 
-	credential, err := credential.NewCredential(seed, 0, big.NewInt(12e9), constants.GetChain(constants.ChainMAINNET), "0x27d64dd9172e4b59a444817d30f7af8228f174cc")
+	credential, err := credential.NewCredential(seed, 0, big.NewInt(12e9), constants.GetChain(constants.ChainMAINNET), common.HexToAddress("0x27d64dd9172e4b59a444817d30f7af8228f174cc"))
 	if err != nil {
 		t.Fatal(err)
 	}

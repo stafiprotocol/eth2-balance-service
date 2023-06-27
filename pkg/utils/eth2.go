@@ -1,21 +1,29 @@
 package utils
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"math/big"
 	"net/http"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
+	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/beacon"
 )
 
 // 1 deposited { 2 withdrawl match 3 staked 4 withdrawl unmatch } { 5 offboard 6 OffBoard can withdraw 7 OffBoard withdrawed } 8 waiting 9 active 10 exited 11 withdrawable 12 withdrawdone { 13 distributed }
 // 51 active+slash 52 exit+slash 53 withdrawable+slash 54 withdrawdone+slash 55 distributed+slash
 const (
+	ValidatorStatusUnInitial = uint8(0)
 	ValidatorStatusDeposited = uint8(1)
 
 	// lightnode + super node related
@@ -374,4 +382,86 @@ func DistributeSuperNodeFeeProposalNodeKey(sender common.Address, _dealedHeight,
 	proposalId := crypto.Keccak256Hash([]byte("distributeSuperNodeFee"), common.LeftPadBytes(_dealedHeight.Bytes(), 32), common.LeftPadBytes(_userAmount.Bytes(), 32),
 		common.LeftPadBytes(_nodeAmount.Bytes(), 32), common.LeftPadBytes(_platformAmount.Bytes(), 32))
 	return StafiDistributorProposalNodeKey(sender, proposalId)
+}
+
+func GetContractAddress(storage *storage.Storage, name string) (common.Address, error) {
+	address, err := storage.GetAddress(nil, ContractStorageKey(name))
+	if err != nil {
+		return common.Address{}, err
+	}
+	if bytes.Equal(address.Bytes(), common.Address{}.Bytes()) {
+		return common.Address{}, fmt.Errorf("address empty")
+	}
+	return address, nil
+}
+
+func WaitTxOkCommon(client *ethclient.Client, txHash common.Hash) (err error) {
+	defer func() {
+		if err != nil {
+			ShutdownRequestChannel <- struct{}{}
+		}
+	}()
+
+	retry := 0
+	for {
+		if retry > RetryLimit {
+			return fmt.Errorf("waitTx %s reach retry limit", txHash.String())
+		}
+		_, pending, err := client.TransactionByHash(context.Background(), txHash)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"hash": txHash.String(),
+				"err":  err.Error(),
+			}).Warn("TransactionByHash")
+
+			time.Sleep(RetryInterval)
+			retry++
+			continue
+		} else {
+			if pending {
+				logrus.WithFields(logrus.Fields{
+					"hash":    txHash.String(),
+					"pending": pending,
+				}).Warn("TransactionByHash")
+
+				time.Sleep(RetryInterval)
+				retry++
+				continue
+			} else {
+				// check status
+				var receipt *types.Receipt
+				subRetry := 0
+				for {
+					if subRetry > RetryLimit {
+						return fmt.Errorf("TransactionReceipt %s reach retry limit", txHash.String())
+					}
+
+					receipt, err = client.TransactionReceipt(context.Background(), txHash)
+					if err != nil {
+						logrus.WithFields(logrus.Fields{
+							"hash": txHash.String(),
+							"err":  err.Error(),
+						}).Warn("tx TransactionReceipt")
+
+						time.Sleep(RetryInterval)
+						subRetry++
+						continue
+					}
+					break
+				}
+
+				if receipt.Status == 1 { //success
+					break
+				} else { //failed
+					return fmt.Errorf("tx %s failed", txHash.String())
+				}
+			}
+		}
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"tx": txHash.String(),
+	}).Info("tx send ok")
+
+	return nil
 }

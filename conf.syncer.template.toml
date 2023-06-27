@@ -1,5 +1,5 @@
-eth1Endpoint = "https://rpc.zhejiang.ethpandaops.io"
-eth2Endpoint = "https://beacon-lighthouse-zhejiang.stafi.io"
+eth1Endpoint = ""
+eth2Endpoint = ""
 logFilePath = ""
 
 [contracts]

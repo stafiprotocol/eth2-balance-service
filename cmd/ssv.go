@@ -8,6 +8,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
+	"github.com/stafiprotocol/chainbridge/utils/keystore"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/config"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/log"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
@@ -48,7 +50,7 @@ func startSsvCmd() *cobra.Command {
   storageAddress:%s`,
 				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.Contracts.StorageContractAddress)
 
-			err = log.InitLogFile(cfg.LogFilePath + "/syncer")
+			err = log.InitLogFile(cfg.LogFilePath + "/ssv")
 			if err != nil {
 				return err
 			}
@@ -56,11 +58,27 @@ func startSsvCmd() *cobra.Command {
 			//interrupt signal
 			ctx := utils.ShutdownListener()
 
-			t, err := task_ssv.NewTask(cfg)
+			kpI, err := keystore.KeypairFromAddress(cfg.From, keystore.EthChain, cfg.KeystorePath, false)
 			if err != nil {
 				return err
 			}
-			logrus.Info("syncer task starting...")
+			kp, ok := kpI.(*secp256k1.Keypair)
+			if !ok {
+				return fmt.Errorf("keypair err")
+			}
+
+			// load seed from keystore
+			seed, err := loadSeed(cfg.KeystorePath)
+			if err != nil {
+				return err
+			}
+
+			// load account
+			t, err := task_ssv.NewTask(cfg, seed, kp)
+			if err != nil {
+				return err
+			}
+			logrus.Info("ssv task starting...")
 			err = t.Start()
 			if err != nil {
 				logrus.Errorf("task start err: %s", err)

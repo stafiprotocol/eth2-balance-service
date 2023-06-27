@@ -1,9 +1,10 @@
-eth1Endpoint = "https://rpc.zhejiang.ethpandaops.io"
-eth2Endpoint = "https://beacon-lighthouse-zhejiang.stafi.io"
+eth1Endpoint = ""
+eth2Endpoint = ""
 logFilePath = ""
+from = "0xB20e8393C07FC446D17277c80b8E3f82Cd857A50"
 gasLimit = "3000000"
 keystorePath = "./keys"
-maxGasPrice = "60000000000"                                  #wei
+maxGasPrice = "60000000000"                         #wei
 
 [contracts]
 storageContractAddress = "0x126d3C08Fb282d5417793B7677E3F7DA8347A384"

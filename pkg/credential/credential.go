@@ -38,7 +38,7 @@ type Credential struct {
 //
 // Set path as EIP-2334 format
 // https://eips.ethereum.org/EIPS/eip-2334
-func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chain, eth1WithdrawalAddress string) (*Credential, error) {
+func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chain, eth1WithdrawalAddress common.Address) (*Credential, error) {
 	purpose := 12381
 	coinType := 3600
 	account := strconv.Itoa(index)
@@ -48,14 +48,10 @@ func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chai
 
 	var withdrawalSK *bls.PrivateKey
 	var err error
-	if len(eth1WithdrawalAddress) == 0 {
+	if (eth1WithdrawalAddress == common.Address{}) {
 		withdrawalSK, err = key_derivation.MnemonicAndPathToKey(seed, withdrawalKeyPath)
 		if err != nil {
 			return nil, fmt.Errorf("MnemonicAndPathToKey failed: %s, withdrawalKeyPath: %s", err, withdrawalKeyPath)
-		}
-	} else {
-		if !common.IsHexAddress(eth1WithdrawalAddress) {
-			return nil, fmt.Errorf("eth1WithdrawalAddress illegal")
 		}
 	}
 
@@ -69,7 +65,7 @@ func NewCredential(seed []byte, index int, amount *big.Int, chain constants.Chai
 		WithdrawalSk:          withdrawalSK,
 		Amount:                amount,
 		Chain:                 chain,
-		Eth1WithdrawalAddress: common.HexToAddress(eth1WithdrawalAddress),
+		Eth1WithdrawalAddress: eth1WithdrawalAddress,
 		SigningKeyPath:        signingKeyPath,
 	}, nil
 }
