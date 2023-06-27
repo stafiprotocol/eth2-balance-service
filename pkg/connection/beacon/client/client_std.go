@@ -915,7 +915,7 @@ func (c *StandardHttpClient) getSyncCommittees(stateId string, epoch *uint64) (S
 func (c *StandardHttpClient) getRequest(requestPath string) ([]byte, int, error) {
 
 	// Send request
-	client := http.Client{Timeout: 60 * time.Second}
+	client := http.Client{Timeout: 120 * time.Second}
 
 	response, err := client.Get(fmt.Sprintf(RequestUrlFormat, c.providerAddress, requestPath))
 	if err != nil {
