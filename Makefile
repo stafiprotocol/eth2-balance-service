@@ -43,6 +43,8 @@ abi:
 	abigen --abi ./bindings/Withdraw/withdraw_abi.json --pkg withdraw --type Withdraw --out ./bindings/Withdraw/Withdraw.go
 	abigen --abi ./bindings/StafiEther/stafiether_abi.json --pkg stafi_ether --type StafiEther --out ./bindings/StafiEther/StafiEther.go
 	abigen --abi ./bindings/StakePortalRate/stakeportalrate_abi.json --pkg stake_portal_rate --type StakePortalRate --out ./bindings/StakePortalRate/StakePortalRate.go
+	abigen --abi ./bindings/SsvNetwork/ssvnetwork_abi.json --pkg ssv_network --type SsvNetwork --out ./bindings/SsvNetwork/SsvNetwork.go
+	abigen --abi ./bindings/SsvNetworkViews/ssvnetworkviews_abi.json --pkg ssv_network_views --type SsvNetworkViews --out ./bindings/SsvNetworkViews/SsvNetworkViews.go
 
 
 clean:

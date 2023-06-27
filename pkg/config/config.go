@@ -17,6 +17,8 @@ type Config struct {
 	ArbitrumEndpoint        string // url for arbitrum rpc endpoint
 	LogFilePath             string
 	From                    string // address of voter
+	SuperNodeAccount        string // ssv use
+	SsvAccount              string // ssv use
 	KeystorePath            string
 	GasLimit                string
 	MaxGasPrice             string
@@ -34,6 +36,8 @@ type Config struct {
 type Contracts struct {
 	StorageContractAddress         string
 	ArbitrumStakePortalRateAddress string
+	SsvNetworkAddress              string
+	SsvNetworkViewsAddress         string
 }
 
 type Db struct {

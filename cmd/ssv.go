@@ -47,8 +47,11 @@ func startSsvCmd() *cobra.Command {
   logLevel: %s
   eth1Endpoint: %s
   eth2Endpoint: %s
-  storageAddress:%s`,
-				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint, cfg.Contracts.StorageContractAddress)
+  storageAddress:%s
+  ssvNetworkAddress:%s
+  ssvNetworkViewsAddress:%s`,
+				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint,
+				cfg.Contracts.StorageContractAddress, cfg.Contracts.SsvNetworkAddress, cfg.Contracts.SsvNetworkViewsAddress)
 
 			err = log.InitLogFile(cfg.LogFilePath + "/ssv")
 			if err != nil {
@@ -58,13 +61,24 @@ func startSsvCmd() *cobra.Command {
 			//interrupt signal
 			ctx := utils.ShutdownListener()
 
-			kpI, err := keystore.KeypairFromAddress(cfg.From, keystore.EthChain, cfg.KeystorePath, false)
+			// load super node account
+			kpI, err := keystore.KeypairFromAddress(cfg.SuperNodeAccount, keystore.EthChain, cfg.KeystorePath, false)
 			if err != nil {
 				return err
 			}
 			kp, ok := kpI.(*secp256k1.Keypair)
 			if !ok {
-				return fmt.Errorf("keypair err")
+				return fmt.Errorf("super node keypair err")
+			}
+
+			// load ssv account
+			ssvkpI, err := keystore.KeypairFromAddress(cfg.SsvAccount, keystore.EthChain, cfg.KeystorePath, false)
+			if err != nil {
+				return err
+			}
+			ssvkp, ok := ssvkpI.(*secp256k1.Keypair)
+			if !ok {
+				return fmt.Errorf("ssv keypair err")
 			}
 
 			// load seed from keystore
@@ -73,8 +87,7 @@ func startSsvCmd() *cobra.Command {
 				return err
 			}
 
-			// load account
-			t, err := task_ssv.NewTask(cfg, seed, kp)
+			t, err := task_ssv.NewTask(cfg, seed, kp, ssvkp)
 			if err != nil {
 				return err
 			}

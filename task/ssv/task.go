@@ -12,6 +12,8 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
+	"github.com/stafiprotocol/eth2-balance-service/bindings/SsvNetwork"
+	"github.com/stafiprotocol/eth2-balance-service/bindings/SsvNetworkViews"
 	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
 	super_node "github.com/stafiprotocol/eth2-balance-service/bindings/SuperNode"
 	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
@@ -19,48 +21,63 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/connection"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/connection/beacon"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/constants"
-	"github.com/stafiprotocol/eth2-balance-service/pkg/credential"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
 // only support super node account now !!!
 // 0. find next key index and cache validator status on start
-// 1. check stakepool balance, deposit if match
+// 1. update validator status periodically
+// 2. check stakepool balance periodically, call stake/deposit if match
+// 3. register validator on ssv, if status match
 type Task struct {
-	taskTicker             int64
-	stop                   chan struct{}
-	eth1StartHeight        uint64
-	eth1Endpoint           string
-	eth2Endpoint           string
-	keyPair                *secp256k1.Keypair
-	gasLimit               *big.Int
-	maxGasPrice            *big.Int
-	storageContractAddress common.Address
-	seed                   []byte
+	taskTicker                     int64
+	stop                           chan struct{}
+	eth1StartHeight                uint64
+	eth1Endpoint                   string
+	eth2Endpoint                   string
+	superNodeKeyPair               *secp256k1.Keypair
+	ssvKeyPair                     *secp256k1.Keypair
+	gasLimit                       *big.Int
+	maxGasPrice                    *big.Int
+	storageContractAddress         common.Address
+	ssvNetworkContractAddress      common.Address
+	ssvNetworkViewsContractAddress common.Address
+	seed                           []byte
 
 	// --- need init on start
-	dev                  bool
-	chain                constants.Chain
-	connection           *connection.Connection
-	eth1WithdrawalAdress common.Address
-	superNodeContract    *super_node.SuperNode
-	userDepositContract  *user_deposit.UserDeposit
-	nextKeyIndex         int
-	validators           map[int]*Validator
+	dev                     bool
+	chain                   constants.Chain
+	superNodeConnection     *connection.Connection
+	ssvConnection           *connection.Connection
+	eth1WithdrawalAdress    common.Address
+	superNodeContract       *super_node.SuperNode
+	userDepositContract     *user_deposit.UserDeposit
+	ssvNetworkContract      *ssv_network.SsvNetwork
+	ssvNetworkViewsContract *ssv_network_views.SsvNetworkViews
+	nextKeyIndex            int
+	validators              map[int]*Validator
 
 	eth2Config beacon.Eth2Config
 }
 
 type Validator struct {
-	privateKey *bls.PrivateKey
-	status     uint8
-	keyIndex   int
+	privateKey    *bls.PrivateKey
+	keyIndex      int
+	status        uint8
+	registedOnSSV bool
+	removedOnSSV  bool
 }
 
-func NewTask(cfg *config.Config, seed []byte, keyPair *secp256k1.Keypair) (*Task, error) {
+func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp256k1.Keypair) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
-		return nil, fmt.Errorf("contracts address fmt err")
+		return nil, fmt.Errorf("storage contract address fmt err")
+	}
+	if !common.IsHexAddress(cfg.Contracts.SsvNetworkAddress) {
+		return nil, fmt.Errorf("ssvnetwork contract address fmt err")
+	}
+	if !common.IsHexAddress(cfg.Contracts.SsvNetworkViewsAddress) {
+		return nil, fmt.Errorf("ssvnetworkviews contract address fmt err")
 	}
 
 	gasLimitDeci, err := decimal.NewFromString(cfg.GasLimit)
@@ -80,17 +97,20 @@ func NewTask(cfg *config.Config, seed []byte, keyPair *secp256k1.Keypair) (*Task
 	}
 
 	s := &Task{
-		taskTicker:   15,
-		stop:         make(chan struct{}),
-		eth1Endpoint: cfg.Eth1Endpoint,
-		eth2Endpoint: cfg.Eth2Endpoint,
-		keyPair:      keyPair,
-		seed:         seed,
-		gasLimit:     gasLimitDeci.BigInt(),
-		maxGasPrice:  maxGasPriceDeci.BigInt(),
+		taskTicker:       15,
+		stop:             make(chan struct{}),
+		eth1Endpoint:     cfg.Eth1Endpoint,
+		eth2Endpoint:     cfg.Eth2Endpoint,
+		superNodeKeyPair: superNodeKeyPair,
+		ssvKeyPair:       ssvKeyPair,
+		seed:             seed,
+		gasLimit:         gasLimitDeci.BigInt(),
+		maxGasPrice:      maxGasPriceDeci.BigInt(),
 
-		eth1StartHeight:        utils.TheMergeBlockNumber,
-		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
+		eth1StartHeight:                utils.TheMergeBlockNumber,
+		storageContractAddress:         common.HexToAddress(cfg.Contracts.StorageContractAddress),
+		ssvNetworkContractAddress:      common.HexToAddress(cfg.Contracts.SsvNetworkAddress),
+		ssvNetworkViewsContractAddress: common.HexToAddress(cfg.Contracts.SsvNetworkViewsAddress),
 	}
 
 	return s, nil
@@ -98,15 +118,19 @@ func NewTask(cfg *config.Config, seed []byte, keyPair *secp256k1.Keypair) (*Task
 
 func (task *Task) Start() error {
 	var err error
-	task.connection, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, nil, nil, nil)
+	task.superNodeConnection, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.superNodeKeyPair, task.gasLimit, task.maxGasPrice)
 	if err != nil {
 		return err
 	}
-	chainId, err := task.connection.Eth1Client().ChainID(context.Background())
+	task.ssvConnection, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.ssvKeyPair, task.gasLimit, task.maxGasPrice)
 	if err != nil {
 		return err
 	}
-	task.eth2Config, err = task.connection.Eth2Client().GetEth2Config()
+	chainId, err := task.superNodeConnection.Eth1Client().ChainID(context.Background())
+	if err != nil {
+		return err
+	}
+	task.eth2Config, err = task.superNodeConnection.Eth2Client().GetEth2Config()
 	if err != nil {
 		return err
 	}
@@ -144,11 +168,10 @@ func (task *Task) Start() error {
 		return err
 	}
 
-	err = task.findNextKeyIndex()
+	err = task.initNextKeyIndex()
 	if err != nil {
 		return err
 	}
-
 	logrus.Infof("nextKeyIndex: %d", task.nextKeyIndex)
 
 	utils.SafeGoWithRestart(task.handler)
@@ -166,7 +189,7 @@ func (task *Task) copySeed() []byte {
 }
 
 func (task *Task) initContract() error {
-	storageContract, err := storage.NewStorage(task.storageContractAddress, task.connection.Eth1Client())
+	storageContract, err := storage.NewStorage(task.storageContractAddress, task.superNodeConnection.Eth1Client())
 	if err != nil {
 		return err
 	}
@@ -181,7 +204,7 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
-	task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connection.Eth1Client())
+	task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.superNodeConnection.Eth1Client())
 	if err != nil {
 		return err
 	}
@@ -190,45 +213,41 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
-	task.userDepositContract, err = user_deposit.NewUserDeposit(userDepositAddress, task.connection.Eth1Client())
+	task.userDepositContract, err = user_deposit.NewUserDeposit(userDepositAddress, task.superNodeConnection.Eth1Client())
 	if err != nil {
 		return err
 	}
+	task.ssvNetworkContract, err = ssv_network.NewSsvNetwork(task.ssvNetworkContractAddress, task.superNodeConnection.Eth1Client())
+	if err != nil {
+		return err
+	}
+	task.ssvNetworkViewsContract, err = ssv_network_views.NewSsvNetworkViews(task.ssvNetworkViewsContractAddress, task.superNodeConnection.Eth1Client())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (task *Task) findNextKeyIndex() error {
+func (task *Task) mustGetSuperNodePubkeyStatus(pubkey []byte) (uint8, error) {
 	retry := 0
+	var pubkeyStatus *big.Int
+	var err error
 	for {
 		if retry > utils.RetryLimit {
-			return fmt.Errorf("findNextKeyIndex reach retry limit")
+			return 0, fmt.Errorf("updateValStatus reach retry limit")
 		}
-		credential, err := credential.NewCredential(task.copySeed(), task.nextKeyIndex, nil, constants.Chain{}, task.eth1WithdrawalAdress)
-		if err != nil {
-			return err
-		}
-		pubkey := credential.SigningPK().Marshal()
-		pubkeyStatus, err := task.superNodeContract.GetSuperNodePubkeyStatus(nil, pubkey)
+		pubkeyStatus, err = task.superNodeContract.GetSuperNodePubkeyStatus(nil, pubkey)
 		if err != nil {
 			logrus.Warnf("GetSuperNodePubkeyStatus err: %s", err.Error())
 			time.Sleep(utils.RetryInterval)
 			retry++
 			continue
 		}
-
-		if pubkeyStatus.Uint64() == 0 {
-			break
-		}
-
-		task.validators[task.nextKeyIndex] = &Validator{
-			privateKey: credential.SigningSk,
-			status:     uint8(pubkeyStatus.Uint64()),
-			keyIndex:   task.nextKeyIndex,
-		}
-
-		task.nextKeyIndex++
+		break
 	}
-	return nil
+
+	return uint8(pubkeyStatus.Uint64()), nil
 }
 
 func (task *Task) handler() {
@@ -247,8 +266,28 @@ func (task *Task) handler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
+			logrus.Debug("checkAnddRepairNexKeyIndex start -----------")
+			err := task.checkAnddRepairNexKeyIndex()
+			if err != nil {
+				logrus.Warnf("checkAnddRepairNexKeyIndex err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("checkAnddRepairNexKeyIndex end -----------")
+
+			logrus.Debug("updateValStatus start -----------")
+			err = task.updateValStatus()
+			if err != nil {
+				logrus.Warnf("updateValStatus err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("updateValStatus end -----------")
+
 			logrus.Debug("checkAndStake start -----------")
-			err := task.checkAndStake()
+			err = task.checkAndStake()
 			if err != nil {
 				logrus.Warnf("checkAndStake err %s", err)
 				time.Sleep(utils.RetryInterval)
@@ -266,6 +305,16 @@ func (task *Task) handler() {
 				continue
 			}
 			logrus.Debug("checkAndDeposit end -----------")
+
+			logrus.Debug("checkAndRegisterOnSSV start -----------")
+			err = task.checkAndRegisterOnSSV()
+			if err != nil {
+				logrus.Warnf("checkAndRegisterOnSSV err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("checkAndRegisterOnSSV end -----------")
 		}
 	}
 }

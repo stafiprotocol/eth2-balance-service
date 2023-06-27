@@ -12,6 +12,7 @@ import (
 
 var minAmountNeedStake = decimal.NewFromBigInt(big.NewInt(31), 18)
 var minAmountNeedDeposit = decimal.NewFromBigInt(big.NewInt(32), 18)
+
 var superNodeDepositAmount = decimal.NewFromBigInt(big.NewInt(1), 18)
 var superNodeStakeAmount = decimal.NewFromBigInt(big.NewInt(31), 18)
 
@@ -25,11 +26,11 @@ func (task *Task) checkAndStake() error {
 		return nil
 	}
 
-	// validators need stake
+	// select validators need stake
 	validatorsNeedStake := make([]*Validator, 0)
 	for i := 0; i < len(task.validators); i++ {
 		val := task.validators[i]
-		if val.status != utils.ValidatorStatusUnInitial {
+		if val.status != utils.ValidatorStatusWithdrawMatch {
 			continue
 		}
 
@@ -38,14 +39,15 @@ func (task *Task) checkAndStake() error {
 		}
 
 		validatorsNeedStake = append(validatorsNeedStake, val)
-		poolBalanceDeci = poolBalanceDeci.Sub(minAmountNeedStake)
+		poolBalanceDeci = poolBalanceDeci.Sub(superNodeStakeAmount)
 	}
 
+	// build payload
 	validatorPubkeys := make([][]byte, len(validatorsNeedStake))
 	sigs := make([][]byte, len(validatorsNeedStake))
 	dataRoots := make([][32]byte, len(validatorsNeedStake))
 	for i, val := range validatorsNeedStake {
-		credential, err := credential.NewCredential(task.seed, val.keyIndex, superNodeDepositAmount.BigInt(), task.chain, task.eth1WithdrawalAdress)
+		credential, err := credential.NewCredential(task.seed, val.keyIndex, superNodeStakeAmount.BigInt(), task.chain, task.eth1WithdrawalAdress)
 		if err != nil {
 			return err
 		}
@@ -70,18 +72,19 @@ func (task *Task) checkAndStake() error {
 		dataRoots[i] = [32]byte(dataRootBts)
 	}
 
-	err = task.connection.LockAndUpdateTxOpts()
+	// send tx
+	err = task.superNodeConnection.LockAndUpdateTxOpts()
 	if err != nil {
 		return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 	}
-	defer task.connection.UnlockTxOpts()
+	defer task.superNodeConnection.UnlockTxOpts()
 
-	stakeTx, err := task.superNodeContract.Stake(task.connection.TxOpts(), validatorPubkeys, sigs, dataRoots)
+	stakeTx, err := task.superNodeContract.Stake(task.superNodeConnection.TxOpts(), validatorPubkeys, sigs, dataRoots)
 	if err != nil {
 		return err
 	}
 
-	err = utils.WaitTxOkCommon(task.connection.Eth1Client(), stakeTx.Hash())
+	err = utils.WaitTxOkCommon(task.superNodeConnection.Eth1Client(), stakeTx.Hash())
 	if err != nil {
 		return err
 	}

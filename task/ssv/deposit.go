@@ -25,6 +25,7 @@ func (task *Task) checkAndDeposit() error {
 	sigs := make([][]byte, depositLen)
 	dataRoots := make([][32]byte, depositLen)
 	preKeyIndex := task.nextKeyIndex
+
 	defer func() {
 		if err := recover(); err != nil {
 			task.nextKeyIndex = preKeyIndex
@@ -40,7 +41,16 @@ func (task *Task) checkAndDeposit() error {
 			return err
 		}
 
-		validatorPubkeys[i] = credential.SigningSk.PublicKey().Marshal()
+		pubkeyBts := credential.SigningSk.PublicKey().Marshal()
+		pubkeyStatus, err := task.mustGetSuperNodePubkeyStatus(pubkeyBts)
+		if err != nil {
+			return fmt.Errorf("mustGetSuperNodePubkeyStatus err: %s", err.Error())
+		}
+		if pubkeyStatus != utils.ValidatorStatusUnInitial {
+			return fmt.Errorf("pubkey %s at index %d already on chain", hex.EncodeToString(pubkeyBts), task.nextKeyIndex)
+		}
+
+		validatorPubkeys[i] = pubkeyBts
 		depositData, err := credential.SigningDepositData()
 		if err != nil {
 			return err
@@ -68,20 +78,30 @@ func (task *Task) checkAndDeposit() error {
 		task.nextKeyIndex++
 	}
 
-	err = task.connection.LockAndUpdateTxOpts()
+	err = task.superNodeConnection.LockAndUpdateTxOpts()
 	if err != nil {
 		return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 	}
-	defer task.connection.UnlockTxOpts()
+	defer task.superNodeConnection.UnlockTxOpts()
 
-	stakeTx, err := task.superNodeContract.Deposit(task.connection.TxOpts(), validatorPubkeys, sigs, dataRoots)
+	stakeTx, err := task.superNodeContract.Deposit(task.superNodeConnection.TxOpts(), validatorPubkeys, sigs, dataRoots)
 	if err != nil {
 		return err
 	}
 
-	err = utils.WaitTxOkCommon(task.connection.Eth1Client(), stakeTx.Hash())
+	err = utils.WaitTxOkCommon(task.superNodeConnection.Eth1Client(), stakeTx.Hash())
 	if err != nil {
 		return err
+	}
+
+	for _, pubkey := range validatorPubkeys {
+		status, err := task.mustGetSuperNodePubkeyStatus(pubkey)
+		if err != nil {
+			return fmt.Errorf("mustGetSuperNodePubkeyStatus err: %s", err.Error())
+		}
+		if status == utils.ValidatorStatusUnInitial {
+			return fmt.Errorf("validator %s not exist on chain", hex.EncodeToString(pubkey))
+		}
 	}
 
 	return nil
