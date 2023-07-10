@@ -128,6 +128,11 @@ func (task *Task) Start() error {
 		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.SepoliaConfig().GenesisForkVersion) {
 			return fmt.Errorf("endpoint network not match")
 		}
+	case 5: // goerli
+		task.dev = true
+		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.PraterConfig().GenesisForkVersion) {
+			return fmt.Errorf("endpoint network not match")
+		}
 
 	default:
 		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
