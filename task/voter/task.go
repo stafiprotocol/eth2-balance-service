@@ -177,6 +177,17 @@ func (task *Task) Start() error {
 		}
 		task.domain = domain
 		task.dev = true
+	case 5: // goerli
+		domain, err := signing.ComputeDomain(
+			params.PraterConfig().DomainDeposit,
+			params.PraterConfig().GenesisForkVersion,
+			params.PraterConfig().ZeroHash[:],
+		)
+		if err != nil {
+			return err
+		}
+		task.domain = domain
+		task.dev = true
 	default:
 		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
 	}
