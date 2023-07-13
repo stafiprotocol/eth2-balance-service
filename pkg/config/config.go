@@ -16,9 +16,11 @@ type Config struct {
 	Eth2Endpoint            string // url for eth2 rpc endpoint
 	ArbitrumEndpoint        string // url for arbitrum rpc endpoint
 	LogFilePath             string
-	From                    string // address of voter
-	SuperNodeAccount        string // ssv use
-	SsvAccount              string // ssv use
+	From                    string   // address of voter
+	SuperNodeAccount        string   // ssv use
+	SsvAccount              string   // ssv use
+	Operators               []uint64 // ssv use
+	ClusterInitSsvAmount    string   //ssv use
 	KeystorePath            string
 	GasLimit                string
 	MaxGasPrice             string

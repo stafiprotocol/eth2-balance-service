@@ -34,7 +34,7 @@ func (task *Task) checkAnddRepairNexKeyIndex() error {
 			continue
 		}
 
-		if pubkeyStatus.Uint64() == 0 {
+		if uint8(pubkeyStatus.Uint64()) == utils.ValidatorStatusUnInitial {
 			break
 		}
 
