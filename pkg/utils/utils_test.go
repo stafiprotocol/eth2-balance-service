@@ -417,3 +417,20 @@ func TestGetOperatorDetail(t *testing.T) {
 
 	t.Logf("detail %+v", detail)
 }
+func TestGetGas(t *testing.T) {
+	base, err := utils.GetGaspriceFromBeacon()
+	if err != nil {
+		t.Log(err)
+	}
+	t.Log(base)
+	client, err := ethclient.Dial("https://mainnet-rpc.wetez.io/eth/v1/601083a01bf2f40729c5f75e62042208")
+	if err != nil {
+		t.Fatal(err)
+	}
+	gasTip, err := client.SuggestGasTipCap(context.Background())
+	if err != nil {
+		t.Log(err)
+	}
+
+	t.Log(gasTip)
+}
