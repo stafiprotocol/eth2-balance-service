@@ -1,6 +1,7 @@
 package task_syncer
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -130,6 +131,20 @@ func (task *Task) getEthPrice() (string, error) {
 	return "", fmt.Errorf("no eth price")
 }
 
-func (task *Task) getGasPrice() (base uint64, priority uint64, err error) {
-	return utils.GetGaspriceFromEthgasstation()
+func (task *Task) getGasPrice() (uint64, uint64, error) {
+	priorityFee, err := task.connection.Eth1Client().SuggestGasTipCap(context.Background())
+	if err != nil {
+		return 0, 0, err
+	}
+
+	priorityFeeDeci := decimal.NewFromBigInt(priorityFee, 0).Div(utils.GweiDeci)
+
+	baseFee, err := utils.GetGaspriceFromBeacon()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	baseFeeDeci := decimal.NewFromInt(int64(baseFee)).Div(utils.GweiDeci)
+
+	return baseFeeDeci.Ceil().BigInt().Uint64(), priorityFeeDeci.Ceil().BigInt().Uint64(), nil
 }

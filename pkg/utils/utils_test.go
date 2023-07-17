@@ -408,3 +408,21 @@ func TestStorage(t *testing.T) {
 
 // 0x04df80 319360
 // 0x039fc6d02bbbc0 1020101175000000
+
+func TestGetGas(t *testing.T) {
+	base, err := utils.GetGaspriceFromBeacon()
+	if err != nil {
+		t.Log(err)
+	}
+	t.Log(base)
+	client, err := ethclient.Dial("https://mainnet-rpc.wetez.io/eth/v1/601083a01bf2f40729c5f75e62042208")
+	if err != nil {
+		t.Fatal(err)
+	}
+	gasTip, err := client.SuggestGasTipCap(context.Background())
+	if err != nil {
+		t.Log(err)
+	}
+
+	t.Log(gasTip)
+}

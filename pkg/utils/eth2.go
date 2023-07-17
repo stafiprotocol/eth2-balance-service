@@ -202,7 +202,6 @@ func GetGaspriceFromEthgasstation() (base, priority uint64, err error) {
 		return 0, 0, err
 	}
 	return uint64(resGasPrice.BaseFee), uint64(resGasPrice.PriorityFee.Fast), nil
-
 }
 
 type ResGasPrice struct {
@@ -220,6 +219,45 @@ type ResGasPrice struct {
 		Instant  int `json:"instant"`
 		Standard int `json:"standard"`
 	} `json:"priorityFee"`
+}
+
+func GetGaspriceFromBeacon() (base uint64, err error) {
+	rsp, err := http.Get("https://beaconcha.in/api/v1/execution/gasnow")
+	if err != nil {
+		return 0, err
+	}
+	defer rsp.Body.Close()
+
+	if rsp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("status err %d", rsp.StatusCode)
+	}
+
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	if err != nil {
+		return 0, err
+	}
+	if len(bodyBytes) == 0 {
+		return 0, fmt.Errorf("bodyBytes zero err")
+	}
+	resGasPrice := ResGasPriceFromBeacon{}
+	err = json.Unmarshal(bodyBytes, &resGasPrice)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint64(resGasPrice.Data.Standard), nil
+}
+
+type ResGasPriceFromBeacon struct {
+	Code int `json:"code"`
+	Data struct {
+		Rapid     int64   `json:"rapid"`
+		Fast      int64   `json:"fast"`
+		Standard  int64   `json:"standard"`
+		Slow      int64   `json:"slow"`
+		Timestamp int64   `json:"timestamp"`
+		PriceUSD  float64 `json:"priceUSD"`
+	} `json:"data"`
 }
 
 // statistic use
