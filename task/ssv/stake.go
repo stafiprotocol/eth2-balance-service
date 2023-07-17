@@ -3,18 +3,11 @@ package task_ssv
 import (
 	"encoding/hex"
 	"fmt"
-	"math/big"
 
 	"github.com/shopspring/decimal"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/credential"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
-
-var minAmountNeedStake = decimal.NewFromBigInt(big.NewInt(31), 18)
-var minAmountNeedDeposit = decimal.NewFromBigInt(big.NewInt(32), 18)
-
-var superNodeDepositAmount = decimal.NewFromBigInt(big.NewInt(1), 18)
-var superNodeStakeAmount = decimal.NewFromBigInt(big.NewInt(31), 18)
 
 func (task *Task) checkAndStake() error {
 	poolBalance, err := task.userDepositContract.GetBalance(nil)
@@ -35,17 +28,21 @@ func (task *Task) checkAndStake() error {
 		}
 
 		if poolBalanceDeci.LessThan(minAmountNeedStake) {
-			continue
+			break
 		}
 
 		validatorsNeedStake = append(validatorsNeedStake, val)
 		poolBalanceDeci = poolBalanceDeci.Sub(superNodeStakeAmount)
 	}
+	lengthOfValidatorsNeedStake := len(validatorsNeedStake)
+	if lengthOfValidatorsNeedStake == 0 {
+		return nil
+	}
 
 	// build payload
-	validatorPubkeys := make([][]byte, len(validatorsNeedStake))
-	sigs := make([][]byte, len(validatorsNeedStake))
-	dataRoots := make([][32]byte, len(validatorsNeedStake))
+	validatorPubkeys := make([][]byte, lengthOfValidatorsNeedStake)
+	sigs := make([][]byte, lengthOfValidatorsNeedStake)
+	dataRoots := make([][32]byte, lengthOfValidatorsNeedStake)
 	for i, val := range validatorsNeedStake {
 		credential, err := credential.NewCredential(task.seed, val.keyIndex, superNodeStakeAmount.BigInt(), task.chain, task.eth1WithdrawalAdress)
 		if err != nil {
@@ -73,18 +70,18 @@ func (task *Task) checkAndStake() error {
 	}
 
 	// send tx
-	err = task.superNodeConnection.LockAndUpdateTxOpts()
+	err = task.connectionOfSuperNodeAccount.LockAndUpdateTxOpts()
 	if err != nil {
 		return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 	}
-	defer task.superNodeConnection.UnlockTxOpts()
+	defer task.connectionOfSuperNodeAccount.UnlockTxOpts()
 
-	stakeTx, err := task.superNodeContract.Stake(task.superNodeConnection.TxOpts(), validatorPubkeys, sigs, dataRoots)
+	stakeTx, err := task.superNodeContract.Stake(task.connectionOfSuperNodeAccount.TxOpts(), validatorPubkeys, sigs, dataRoots)
 	if err != nil {
 		return err
 	}
 
-	err = utils.WaitTxOkCommon(task.superNodeConnection.Eth1Client(), stakeTx.Hash())
+	err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), stakeTx.Hash())
 	if err != nil {
 		return err
 	}

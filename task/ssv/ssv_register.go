@@ -20,9 +20,6 @@ func (task *Task) checkAndRegisterOnSSV() error {
 		if val.status != utils.ValidatorStatusStaked {
 			continue
 		}
-		if val.registedOnSSV {
-			continue
-		}
 
 		// check status on ssv
 		active, err := task.ssvNetworkViewsContract.GetValidator(nil, task.ssvKeyPair.CommonAddress(), val.privateKey.PublicKey().Marshal())
@@ -54,16 +51,22 @@ func (task *Task) checkAndRegisterOnSSV() error {
 		}
 
 		// send tx
-		err = task.ssvConnection.LockAndUpdateTxOpts()
+		err = task.connectionOfSsvAccount.LockAndUpdateTxOpts()
 		if err != nil {
 			return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 		}
-		defer task.ssvConnection.UnlockTxOpts()
+		defer task.connectionOfSsvAccount.UnlockTxOpts()
 
-		task.ssvNetworkContract.RegisterValidator(task.ssvConnection.TxOpts(), val.privateKey.PublicKey().Marshal(), operatorIds, shares, ssvAmount, ssv_network.ISSVNetworkCoreCluster(*task.latestCluster))
+		registerTx, err := task.ssvNetworkContract.RegisterValidator(task.connectionOfSsvAccount.TxOpts(), val.privateKey.PublicKey().Marshal(), operatorIds, shares, ssvAmount, ssv_network.ISSVNetworkCoreCluster(*task.latestCluster))
+		if err != nil {
+			return err
+		}
+		err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), registerTx.Hash())
+		if err != nil {
+			return err
+		}
 
-		val.registedOnSSV = true
-		task.validators[task.nextKeyIndex] = val
+		val.status = valStatusRegistedOnSsv
 	}
 
 	return nil

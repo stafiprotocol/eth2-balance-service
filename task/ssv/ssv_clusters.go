@@ -14,7 +14,7 @@ const (
 )
 
 func (task *Task) updateLatestClusters() error {
-	latestBlockNumber, err := task.superNodeConnection.Eth1LatestBlock()
+	latestBlockNumber, err := task.connectionOfSuperNodeAccount.Eth1LatestBlock()
 	if err != nil {
 		return err
 	}
@@ -30,21 +30,20 @@ func (task *Task) updateLatestClusters() error {
 
 	start := uint64(task.dealedEth1Block + 1)
 	end := latestBlockNumber
-
 	maxBlock := uint64(0)
+
+	// 'ClusterDeposited',
+	// 'ClusterWithdrawn',
+	// 'ValidatorRemoved',
+	// 'ValidatorAdded',
+	// 'ClusterLiquidated',
+	// 'ClusterReactivated',
 	for i := start; i <= end; i += fetchEventBlockLimit {
 		subStart := i
 		subEnd := i + fetchEventBlockLimit - 1
 		if end < i+fetchEventBlockLimit {
 			subEnd = end
 		}
-
-		// 'ClusterDeposited',
-		// 'ClusterWithdrawn',
-		// 'ValidatorRemoved',
-		// 'ValidatorAdded',
-		// 'ClusterLiquidated',
-		// 'ClusterReactivated',
 
 		clusterDepositedIter, err := task.ssvClustersContract.FilterClusterDeposited(&bind.FilterOpts{
 			Start:   start,
@@ -143,6 +142,7 @@ func (task *Task) updateLatestClusters() error {
 		}
 
 		task.dealedEth1Block = subEnd
+
 		logrus.WithFields(logrus.Fields{
 			"start": subStart,
 			"end":   subEnd,

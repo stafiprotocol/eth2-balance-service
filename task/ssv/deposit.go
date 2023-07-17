@@ -24,11 +24,11 @@ func (task *Task) checkAndDeposit() error {
 	validatorPubkeys := make([][]byte, depositLen)
 	sigs := make([][]byte, depositLen)
 	dataRoots := make([][32]byte, depositLen)
-	preKeyIndex := task.nextKeyIndex
+	oldKeyIndex := task.nextKeyIndex
 
 	defer func() {
 		if err := recover(); err != nil {
-			task.nextKeyIndex = preKeyIndex
+			task.nextKeyIndex = oldKeyIndex
 			for i := task.nextKeyIndex; i < task.nextKeyIndex+int(depositLen); i++ {
 				delete(task.validators, i)
 			}
@@ -75,21 +75,22 @@ func (task *Task) checkAndDeposit() error {
 			keyIndex:   task.nextKeyIndex,
 		}
 
+		// increase nextKeyIndex
 		task.nextKeyIndex++
 	}
 
-	err = task.superNodeConnection.LockAndUpdateTxOpts()
+	err = task.connectionOfSuperNodeAccount.LockAndUpdateTxOpts()
 	if err != nil {
 		return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 	}
-	defer task.superNodeConnection.UnlockTxOpts()
+	defer task.connectionOfSuperNodeAccount.UnlockTxOpts()
 
-	stakeTx, err := task.superNodeContract.Deposit(task.superNodeConnection.TxOpts(), validatorPubkeys, sigs, dataRoots)
+	stakeTx, err := task.superNodeContract.Deposit(task.connectionOfSuperNodeAccount.TxOpts(), validatorPubkeys, sigs, dataRoots)
 	if err != nil {
 		return err
 	}
 
-	err = utils.WaitTxOkCommon(task.superNodeConnection.Eth1Client(), stakeTx.Hash())
+	err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), stakeTx.Hash())
 	if err != nil {
 		return err
 	}

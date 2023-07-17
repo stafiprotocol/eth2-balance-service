@@ -28,11 +28,20 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
+var (
+	minAmountNeedStake   = decimal.NewFromBigInt(big.NewInt(31), 18)
+	minAmountNeedDeposit = decimal.NewFromBigInt(big.NewInt(32), 18)
+
+	superNodeDepositAmount = decimal.NewFromBigInt(big.NewInt(1), 18)
+	superNodeStakeAmount   = decimal.NewFromBigInt(big.NewInt(31), 18)
+)
+
 // only support super node account now !!!
 // 0. find next key index and cache validator status on start
 // 1. update validator status periodically
 // 2. check stakepool balance periodically, call stake/deposit if match
-// 3. register validator on ssv, if status match
+// 3. register validator on ssv, if status is staked on eth
+// 3. register validator on ssv, if status is exited on eth
 type Task struct {
 	taskTicker                     int64
 	stop                           chan struct{}
@@ -50,19 +59,20 @@ type Task struct {
 	seed                           []byte
 
 	// --- need init on start
-	dev                     bool
-	chain                   constants.Chain
-	superNodeConnection     *connection.Connection
-	ssvConnection           *connection.Connection
-	eth1WithdrawalAdress    common.Address
-	superNodeContract       *super_node.SuperNode
-	userDepositContract     *user_deposit.UserDeposit
-	ssvNetworkContract      *ssv_network.SsvNetwork
-	ssvNetworkViewsContract *ssv_network_views.SsvNetworkViews
-	ssvClustersContract     *ssv_clusters.SsvClusters
-	nextKeyIndex            int
-	dealedEth1Block         uint64
-	validators              map[int]*Validator
+	dev                          bool
+	ssvApiNetwork                string
+	chain                        constants.Chain
+	connectionOfSuperNodeAccount *connection.Connection
+	connectionOfSsvAccount       *connection.Connection
+	eth1WithdrawalAdress         common.Address
+	superNodeContract            *super_node.SuperNode
+	userDepositContract          *user_deposit.UserDeposit
+	ssvNetworkContract           *ssv_network.SsvNetwork
+	ssvNetworkViewsContract      *ssv_network_views.SsvNetworkViews
+	ssvClustersContract          *ssv_clusters.SsvClusters
+	nextKeyIndex                 int
+	dealedEth1Block              uint64
+	validators                   map[int]*Validator
 
 	latestCluster *ssv_clusters.ISSVNetworkCoreCluster
 
@@ -72,12 +82,25 @@ type Task struct {
 }
 
 type Validator struct {
-	privateKey    *bls.PrivateKey
-	keyIndex      int
-	status        uint8
-	registedOnSSV bool
-	removedOnSSV  bool
+	privateKey *bls.PrivateKey
+	keyIndex   int
+	status     uint8 // status: 0 uninitiated 1 deposited 2 staked 3 registed on ssv 4 exited on eth 5 removed on ssv
 }
+
+const (
+	valStatusUnInitiated = uint8(0)
+	valStatusDeposited   = uint8(1)
+	valStatusMatch       = uint8(2)
+	valStatusUnmatch     = uint8(3)
+	valStatusStaked      = uint8(4)
+
+	valStatusRegistedOnSsv = uint8(5)
+
+	valStatusActiveOnBeacon = uint8(6)
+	valStatusExitedOnBeacon = uint8(7)
+
+	valStatusRemovedOnSsv = uint8(8)
+)
 
 func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp256k1.Keypair) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
@@ -122,6 +145,11 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		return cfg.Operators[i] < cfg.Operators[j]
 	})
 
+	operaters := make([]*keyshare.Operator, len(cfg.Operators))
+	for i := 0; i < len(cfg.Operators); i++ {
+		operaters[i] = &keyshare.Operator{Id: int(cfg.Operators[i])}
+	}
+
 	s := &Task{
 		taskTicker:           15,
 		stop:                 make(chan struct{}),
@@ -139,6 +167,8 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		ssvNetworkContractAddress:      common.HexToAddress(cfg.Contracts.SsvNetworkAddress),
 		ssvNetworkViewsContractAddress: common.HexToAddress(cfg.Contracts.SsvNetworkViewsAddress),
 
+		operators: operaters,
+
 		latestCluster: &ssv_clusters.ISSVNetworkCoreCluster{
 			ValidatorCount:  0,
 			NetworkFeeIndex: 0,
@@ -153,53 +183,49 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 
 func (task *Task) Start() error {
 	var err error
-	task.superNodeConnection, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.superNodeKeyPair, task.gasLimit, task.maxGasPrice)
+	task.connectionOfSuperNodeAccount, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.superNodeKeyPair, task.gasLimit, task.maxGasPrice)
 	if err != nil {
 		return err
 	}
-	task.ssvConnection, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.ssvKeyPair, task.gasLimit, task.maxGasPrice)
+	task.connectionOfSsvAccount, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.ssvKeyPair, task.gasLimit, task.maxGasPrice)
 	if err != nil {
 		return err
 	}
-	chainId, err := task.superNodeConnection.Eth1Client().ChainID(context.Background())
+	chainId, err := task.connectionOfSuperNodeAccount.Eth1Client().ChainID(context.Background())
 	if err != nil {
 		return err
 	}
-	task.eth2Config, err = task.superNodeConnection.Eth2Client().GetEth2Config()
+	task.eth2Config, err = task.connectionOfSuperNodeAccount.Eth2Client().GetEth2Config()
 	if err != nil {
 		return err
 	}
 
 	switch chainId.Uint64() {
-	case 1:
+	case 1: //mainnet
 		task.dev = false
 		task.chain = constants.GetChain(constants.ChainMAINNET)
 		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.MainnetConfig().GenesisForkVersion) {
 			return fmt.Errorf("endpoint network not match")
 		}
-		task.dealedEth1Block = 10000000
+		task.dealedEth1Block = 17705353
+		task.ssvApiNetwork = "mainnet"
 
-	case 1337803: //zhejiang
-		task.dev = true
-		task.chain = constants.GetChain(constants.ChainZHEJIANG)
-		if !bytes.Equal(task.eth2Config.GenesisForkVersion, []byte{0x00, 0x00, 0x00, 0x69}) {
-			return fmt.Errorf("endpoint network not match")
-		}
-		task.dealedEth1Block = 1000
 	case 11155111: // sepolia
 		task.dev = true
 		task.chain = constants.GetChain(constants.ChainSEPOLIA)
 		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.SepoliaConfig().GenesisForkVersion) {
 			return fmt.Errorf("endpoint network not match")
 		}
-		task.dealedEth1Block = 1000000
+		task.dealedEth1Block = 9354882
+		task.ssvApiNetwork = "prater"
 	case 5: // goerli
 		task.dev = true
 		task.chain = constants.GetChain(constants.ChainGOERLI)
 		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.PraterConfig().GenesisForkVersion) {
 			return fmt.Errorf("endpoint network not match")
 		}
-		task.dealedEth1Block = 1000000
+		task.dealedEth1Block = 9354882
+		task.ssvApiNetwork = "prater"
 
 	default:
 		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
@@ -219,7 +245,21 @@ func (task *Task) Start() error {
 	}
 	logrus.Infof("nextKeyIndex: %d", task.nextKeyIndex)
 
-	utils.SafeGoWithRestart(task.handler)
+	// init operators
+	for _, op := range task.operators {
+		operatorDetail, err := utils.GetOperatorDetail(task.ssvApiNetwork, op.Id)
+		if err != nil {
+			return err
+		}
+		op.PublicKey = operatorDetail.PublicKey
+		feeDeci, err := decimal.NewFromString(operatorDetail.Fee)
+		if err != nil {
+			return err
+		}
+		op.Fee = feeDeci.BigInt().Uint64()
+	}
+
+	utils.SafeGo(task.handler)
 	return nil
 }
 
@@ -234,7 +274,7 @@ func (task *Task) copySeed() []byte {
 }
 
 func (task *Task) initContract() error {
-	storageContract, err := storage.NewStorage(task.storageContractAddress, task.superNodeConnection.Eth1Client())
+	storageContract, err := storage.NewStorage(task.storageContractAddress, task.connectionOfSuperNodeAccount.Eth1Client())
 	if err != nil {
 		return err
 	}
@@ -249,7 +289,7 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
-	task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.superNodeConnection.Eth1Client())
+	task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connectionOfSuperNodeAccount.Eth1Client())
 	if err != nil {
 		return err
 	}
@@ -258,19 +298,19 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
-	task.userDepositContract, err = user_deposit.NewUserDeposit(userDepositAddress, task.superNodeConnection.Eth1Client())
+	task.userDepositContract, err = user_deposit.NewUserDeposit(userDepositAddress, task.connectionOfSuperNodeAccount.Eth1Client())
 	if err != nil {
 		return err
 	}
-	task.ssvNetworkContract, err = ssv_network.NewSsvNetwork(task.ssvNetworkContractAddress, task.superNodeConnection.Eth1Client())
+	task.ssvNetworkContract, err = ssv_network.NewSsvNetwork(task.ssvNetworkContractAddress, task.connectionOfSuperNodeAccount.Eth1Client())
 	if err != nil {
 		return err
 	}
-	task.ssvNetworkViewsContract, err = ssv_network_views.NewSsvNetworkViews(task.ssvNetworkViewsContractAddress, task.superNodeConnection.Eth1Client())
+	task.ssvNetworkViewsContract, err = ssv_network_views.NewSsvNetworkViews(task.ssvNetworkViewsContractAddress, task.connectionOfSuperNodeAccount.Eth1Client())
 	if err != nil {
 		return err
 	}
-	task.ssvClustersContract, err = ssv_clusters.NewSsvClusters(task.ssvNetworkContractAddress, task.superNodeConnection.Eth1Client())
+	task.ssvClustersContract, err = ssv_clusters.NewSsvClusters(task.ssvNetworkContractAddress, task.connectionOfSuperNodeAccount.Eth1Client())
 	if err != nil {
 		return err
 	}
@@ -374,6 +414,26 @@ func (task *Task) handler() {
 				continue
 			}
 			logrus.Debug("checkAndRegisterOnSSV end -----------")
+
+			logrus.Debug("updateLatestClusters start -----------")
+			err = task.updateLatestClusters()
+			if err != nil {
+				logrus.Warnf("updateLatestClusters err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("updateLatestClusters end -----------")
+
+			logrus.Debug("checkAndRemoveOnSSV start -----------")
+			err = task.checkAndRemoveOnSSV()
+			if err != nil {
+				logrus.Warnf("checkAndRemoveOnSSV err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("checkAndRemoveOnSSV end -----------")
 		}
 	}
 }

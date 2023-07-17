@@ -12,18 +12,38 @@ func (task *Task) updateValStatus() error {
 		if !exist {
 			return fmt.Errorf("validator at index %d not exist", i)
 		}
-		if val.status == utils.ValidatorStatusStaked {
+		if val.status == valStatusRemovedOnSsv {
 			continue
 		}
-		pubkeyStatus, err := task.mustGetSuperNodePubkeyStatus(val.privateKey.PublicKey().Marshal())
-		if err != nil {
-			return fmt.Errorf("mustGetSuperNodePubkeyStatus err: %s", err.Error())
-		}
-		if pubkeyStatus == utils.ValidatorStatusUnInitial {
-			return fmt.Errorf("validator %s at index %d not exist on chain", val.privateKey.PublicKey().SerializeToHexStr(), i)
+
+		// status on execution
+		if val.status < valStatusStaked {
+			pubkeyStatus, err := task.mustGetSuperNodePubkeyStatus(val.privateKey.PublicKey().Marshal())
+			if err != nil {
+				return fmt.Errorf("mustGetSuperNodePubkeyStatus err: %s", err.Error())
+			}
+
+			switch pubkeyStatus {
+			case utils.ValidatorStatusUnInitial:
+				return fmt.Errorf("validator %s at index %d not exist on chain", val.privateKey.PublicKey().SerializeToHexStr(), i)
+			case utils.ValidatorStatusDeposited:
+				val.status = valStatusDeposited
+			case utils.ValidatorStatusWithdrawMatch:
+				val.status = valStatusMatch
+			case utils.ValidatorStatusWithdrawUnmatch:
+				val.status = valStatusUnmatch
+			case utils.ValidatorStatusStaked:
+				val.status = valStatusStaked
+			default:
+				return fmt.Errorf("validator %s at index %d unknown status %d", val.privateKey.PublicKey().SerializeToHexStr(), i, pubkeyStatus)
+			}
 		}
 
-		val.status = pubkeyStatus
+		// status on beacon
+		if val.status == valStatusStaked {
+			
+		}
+
 		task.validators[task.nextKeyIndex] = val
 	}
 	return nil

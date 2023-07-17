@@ -408,3 +408,12 @@ func TestStorage(t *testing.T) {
 
 // 0x04df80 319360
 // 0x039fc6d02bbbc0 1020101175000000
+
+func TestGetOperatorDetail(t *testing.T) {
+	detail, err := utils.GetOperatorDetail("prater", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("detail %+v", detail)
+}
