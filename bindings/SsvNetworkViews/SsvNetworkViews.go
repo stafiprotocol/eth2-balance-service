@@ -39,7 +39,7 @@ type ISSVNetworkCoreCluster struct {
 
 // SsvNetworkViewsMetaData contains all meta data concerning the SsvNetworkViews contract.
 var SsvNetworkViewsMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"ApprovalNotWithinTimeframe\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"CallerNotOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"CallerNotWhitelisted\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterAlreadyEnabled\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterDoesNotExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterIsLiquidated\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterNotLiquidatable\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ExceedValidatorLimit\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeExceedsIncreaseLimit\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeIncreaseNotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeTooLow\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"IncorrectClusterState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"IncorrectValidatorState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InsufficientBalance\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidOperatorIdsLength\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidPublicKeyLength\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"MaxValueExceeded\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NewBlockPeriodIsBelowMinimum\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NoFeeDeclared\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotAuthorized\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorsListNotUnique\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SameFeeChangeNotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TargetModuleDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TokenTransferFailed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UnsortedOperatorsList\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ValidatorAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ValidatorDoesNotExist\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"previousAdmin\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newAdmin\",\"type\":\"address\"}],\"name\":\"AdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"beacon\",\"type\":\"address\"}],\"name\":\"BeaconUpgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferStarted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"getBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"getBurnRate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getLiquidationThresholdPeriod\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinimumLiquidationCollateral\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNetworkEarnings\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNetworkFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"getOperatorById\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"getOperatorDeclaredFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"id\",\"type\":\"uint64\"}],\"name\":\"getOperatorEarnings\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"getOperatorFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getOperatorFeeIncreaseLimit\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorMaxFeeIncrease\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getOperatorFeePeriods\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"declareOperatorFeePeriod\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"executeOperatorFeePeriod\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"name\":\"getValidator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getValidatorsPerOperatorLimit\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getVersion\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"version\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractISSVViews\",\"name\":\"ssvNetwork_\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"isLiquidatable\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"isLiquidated\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pendingOwner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proxiableUUID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ssvNetwork\",\"outputs\":[{\"internalType\":\"contractISSVViews\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"}],\"name\":\"upgradeTo\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"upgradeToAndCall\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"ApprovalNotWithinTimeframe\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"CallerNotOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"CallerNotWhitelisted\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterAlreadyEnabled\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterDoesNotExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterIsLiquidated\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterNotLiquidatable\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ExceedValidatorLimit\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeExceedsIncreaseLimit\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeIncreaseNotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeTooLow\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"IncorrectClusterState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"IncorrectValidatorState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InsufficientBalance\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidOperatorIdsLength\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidPublicKeyLength\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"MaxValueExceeded\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NewBlockPeriodIsBelowMinimum\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NoFeeDeclared\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotAuthorized\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorsListNotUnique\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SameFeeChangeNotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TargetModuleDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TokenTransferFailed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UnsortedOperatorsList\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ValidatorAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ValidatorDoesNotExist\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"previousAdmin\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newAdmin\",\"type\":\"address\"}],\"name\":\"AdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"beacon\",\"type\":\"address\"}],\"name\":\"BeaconUpgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferStarted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"clusterOwner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"getBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"clusterOwner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"getBurnRate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getLiquidationThresholdPeriod\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinimumLiquidationCollateral\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNetworkEarnings\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getNetworkFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"getOperatorById\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"getOperatorDeclaredFee\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"id\",\"type\":\"uint64\"}],\"name\":\"getOperatorEarnings\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"getOperatorFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getOperatorFeeIncreaseLimit\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorMaxFeeIncrease\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getOperatorFeePeriods\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"declareOperatorFeePeriod\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"executeOperatorFeePeriod\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"clusterOwner\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"name\":\"getValidator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getValidatorsPerOperatorLimit\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getVersion\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"version\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractISSVViews\",\"name\":\"ssvNetwork_\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"clusterOwner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"isLiquidatable\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"clusterOwner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"isLiquidated\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pendingOwner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proxiableUUID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ssvNetwork\",\"outputs\":[{\"internalType\":\"contractISSVViews\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"}],\"name\":\"upgradeTo\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"upgradeToAndCall\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"}]",
 }
 
 // SsvNetworkViewsABI is the input ABI used to generate the binding from.
@@ -190,10 +190,10 @@ func (_SsvNetworkViews *SsvNetworkViewsTransactorRaw) Transact(opts *bind.Transa
 
 // GetBalance is a free data retrieval call binding the contract method 0xeb8ecfa7.
 //
-// Solidity: function getBalance(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
-func (_SsvNetworkViews *SsvNetworkViewsCaller) GetBalance(opts *bind.CallOpts, owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
+// Solidity: function getBalance(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
+func (_SsvNetworkViews *SsvNetworkViewsCaller) GetBalance(opts *bind.CallOpts, clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
 	var out []interface{}
-	err := _SsvNetworkViews.contract.Call(opts, &out, "getBalance", owner, operatorIds, cluster)
+	err := _SsvNetworkViews.contract.Call(opts, &out, "getBalance", clusterOwner, operatorIds, cluster)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -207,24 +207,24 @@ func (_SsvNetworkViews *SsvNetworkViewsCaller) GetBalance(opts *bind.CallOpts, o
 
 // GetBalance is a free data retrieval call binding the contract method 0xeb8ecfa7.
 //
-// Solidity: function getBalance(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
-func (_SsvNetworkViews *SsvNetworkViewsSession) GetBalance(owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
-	return _SsvNetworkViews.Contract.GetBalance(&_SsvNetworkViews.CallOpts, owner, operatorIds, cluster)
+// Solidity: function getBalance(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
+func (_SsvNetworkViews *SsvNetworkViewsSession) GetBalance(clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
+	return _SsvNetworkViews.Contract.GetBalance(&_SsvNetworkViews.CallOpts, clusterOwner, operatorIds, cluster)
 }
 
 // GetBalance is a free data retrieval call binding the contract method 0xeb8ecfa7.
 //
-// Solidity: function getBalance(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
-func (_SsvNetworkViews *SsvNetworkViewsCallerSession) GetBalance(owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
-	return _SsvNetworkViews.Contract.GetBalance(&_SsvNetworkViews.CallOpts, owner, operatorIds, cluster)
+// Solidity: function getBalance(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
+func (_SsvNetworkViews *SsvNetworkViewsCallerSession) GetBalance(clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
+	return _SsvNetworkViews.Contract.GetBalance(&_SsvNetworkViews.CallOpts, clusterOwner, operatorIds, cluster)
 }
 
 // GetBurnRate is a free data retrieval call binding the contract method 0xca162e5e.
 //
-// Solidity: function getBurnRate(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
-func (_SsvNetworkViews *SsvNetworkViewsCaller) GetBurnRate(opts *bind.CallOpts, owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
+// Solidity: function getBurnRate(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
+func (_SsvNetworkViews *SsvNetworkViewsCaller) GetBurnRate(opts *bind.CallOpts, clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
 	var out []interface{}
-	err := _SsvNetworkViews.contract.Call(opts, &out, "getBurnRate", owner, operatorIds, cluster)
+	err := _SsvNetworkViews.contract.Call(opts, &out, "getBurnRate", clusterOwner, operatorIds, cluster)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -238,16 +238,16 @@ func (_SsvNetworkViews *SsvNetworkViewsCaller) GetBurnRate(opts *bind.CallOpts, 
 
 // GetBurnRate is a free data retrieval call binding the contract method 0xca162e5e.
 //
-// Solidity: function getBurnRate(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
-func (_SsvNetworkViews *SsvNetworkViewsSession) GetBurnRate(owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
-	return _SsvNetworkViews.Contract.GetBurnRate(&_SsvNetworkViews.CallOpts, owner, operatorIds, cluster)
+// Solidity: function getBurnRate(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
+func (_SsvNetworkViews *SsvNetworkViewsSession) GetBurnRate(clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
+	return _SsvNetworkViews.Contract.GetBurnRate(&_SsvNetworkViews.CallOpts, clusterOwner, operatorIds, cluster)
 }
 
 // GetBurnRate is a free data retrieval call binding the contract method 0xca162e5e.
 //
-// Solidity: function getBurnRate(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
-func (_SsvNetworkViews *SsvNetworkViewsCallerSession) GetBurnRate(owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
-	return _SsvNetworkViews.Contract.GetBurnRate(&_SsvNetworkViews.CallOpts, owner, operatorIds, cluster)
+// Solidity: function getBurnRate(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(uint256)
+func (_SsvNetworkViews *SsvNetworkViewsCallerSession) GetBurnRate(clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*big.Int, error) {
+	return _SsvNetworkViews.Contract.GetBurnRate(&_SsvNetworkViews.CallOpts, clusterOwner, operatorIds, cluster)
 }
 
 // GetLiquidationThresholdPeriod is a free data retrieval call binding the contract method 0x9040f7c3.
@@ -412,34 +412,35 @@ func (_SsvNetworkViews *SsvNetworkViewsCallerSession) GetOperatorById(operatorId
 
 // GetOperatorDeclaredFee is a free data retrieval call binding the contract method 0x03b3d436.
 //
-// Solidity: function getOperatorDeclaredFee(uint64 operatorId) view returns(uint256, uint64, uint64)
-func (_SsvNetworkViews *SsvNetworkViewsCaller) GetOperatorDeclaredFee(opts *bind.CallOpts, operatorId uint64) (*big.Int, uint64, uint64, error) {
+// Solidity: function getOperatorDeclaredFee(uint64 operatorId) view returns(bool, uint256, uint64, uint64)
+func (_SsvNetworkViews *SsvNetworkViewsCaller) GetOperatorDeclaredFee(opts *bind.CallOpts, operatorId uint64) (bool, *big.Int, uint64, uint64, error) {
 	var out []interface{}
 	err := _SsvNetworkViews.contract.Call(opts, &out, "getOperatorDeclaredFee", operatorId)
 
 	if err != nil {
-		return *new(*big.Int), *new(uint64), *new(uint64), err
+		return *new(bool), *new(*big.Int), *new(uint64), *new(uint64), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-	out1 := *abi.ConvertType(out[1], new(uint64)).(*uint64)
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+	out1 := *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
 	out2 := *abi.ConvertType(out[2], new(uint64)).(*uint64)
+	out3 := *abi.ConvertType(out[3], new(uint64)).(*uint64)
 
-	return out0, out1, out2, err
+	return out0, out1, out2, out3, err
 
 }
 
 // GetOperatorDeclaredFee is a free data retrieval call binding the contract method 0x03b3d436.
 //
-// Solidity: function getOperatorDeclaredFee(uint64 operatorId) view returns(uint256, uint64, uint64)
-func (_SsvNetworkViews *SsvNetworkViewsSession) GetOperatorDeclaredFee(operatorId uint64) (*big.Int, uint64, uint64, error) {
+// Solidity: function getOperatorDeclaredFee(uint64 operatorId) view returns(bool, uint256, uint64, uint64)
+func (_SsvNetworkViews *SsvNetworkViewsSession) GetOperatorDeclaredFee(operatorId uint64) (bool, *big.Int, uint64, uint64, error) {
 	return _SsvNetworkViews.Contract.GetOperatorDeclaredFee(&_SsvNetworkViews.CallOpts, operatorId)
 }
 
 // GetOperatorDeclaredFee is a free data retrieval call binding the contract method 0x03b3d436.
 //
-// Solidity: function getOperatorDeclaredFee(uint64 operatorId) view returns(uint256, uint64, uint64)
-func (_SsvNetworkViews *SsvNetworkViewsCallerSession) GetOperatorDeclaredFee(operatorId uint64) (*big.Int, uint64, uint64, error) {
+// Solidity: function getOperatorDeclaredFee(uint64 operatorId) view returns(bool, uint256, uint64, uint64)
+func (_SsvNetworkViews *SsvNetworkViewsCallerSession) GetOperatorDeclaredFee(operatorId uint64) (bool, *big.Int, uint64, uint64, error) {
 	return _SsvNetworkViews.Contract.GetOperatorDeclaredFee(&_SsvNetworkViews.CallOpts, operatorId)
 }
 
@@ -583,10 +584,10 @@ func (_SsvNetworkViews *SsvNetworkViewsCallerSession) GetOperatorFeePeriods() (s
 
 // GetValidator is a free data retrieval call binding the contract method 0x3e2ec160.
 //
-// Solidity: function getValidator(address owner, bytes publicKey) view returns(bool active)
-func (_SsvNetworkViews *SsvNetworkViewsCaller) GetValidator(opts *bind.CallOpts, owner common.Address, publicKey []byte) (bool, error) {
+// Solidity: function getValidator(address clusterOwner, bytes publicKey) view returns(bool active)
+func (_SsvNetworkViews *SsvNetworkViewsCaller) GetValidator(opts *bind.CallOpts, clusterOwner common.Address, publicKey []byte) (bool, error) {
 	var out []interface{}
-	err := _SsvNetworkViews.contract.Call(opts, &out, "getValidator", owner, publicKey)
+	err := _SsvNetworkViews.contract.Call(opts, &out, "getValidator", clusterOwner, publicKey)
 
 	if err != nil {
 		return *new(bool), err
@@ -600,16 +601,16 @@ func (_SsvNetworkViews *SsvNetworkViewsCaller) GetValidator(opts *bind.CallOpts,
 
 // GetValidator is a free data retrieval call binding the contract method 0x3e2ec160.
 //
-// Solidity: function getValidator(address owner, bytes publicKey) view returns(bool active)
-func (_SsvNetworkViews *SsvNetworkViewsSession) GetValidator(owner common.Address, publicKey []byte) (bool, error) {
-	return _SsvNetworkViews.Contract.GetValidator(&_SsvNetworkViews.CallOpts, owner, publicKey)
+// Solidity: function getValidator(address clusterOwner, bytes publicKey) view returns(bool active)
+func (_SsvNetworkViews *SsvNetworkViewsSession) GetValidator(clusterOwner common.Address, publicKey []byte) (bool, error) {
+	return _SsvNetworkViews.Contract.GetValidator(&_SsvNetworkViews.CallOpts, clusterOwner, publicKey)
 }
 
 // GetValidator is a free data retrieval call binding the contract method 0x3e2ec160.
 //
-// Solidity: function getValidator(address owner, bytes publicKey) view returns(bool active)
-func (_SsvNetworkViews *SsvNetworkViewsCallerSession) GetValidator(owner common.Address, publicKey []byte) (bool, error) {
-	return _SsvNetworkViews.Contract.GetValidator(&_SsvNetworkViews.CallOpts, owner, publicKey)
+// Solidity: function getValidator(address clusterOwner, bytes publicKey) view returns(bool active)
+func (_SsvNetworkViews *SsvNetworkViewsCallerSession) GetValidator(clusterOwner common.Address, publicKey []byte) (bool, error) {
+	return _SsvNetworkViews.Contract.GetValidator(&_SsvNetworkViews.CallOpts, clusterOwner, publicKey)
 }
 
 // GetValidatorsPerOperatorLimit is a free data retrieval call binding the contract method 0x14cb9d7b.
@@ -676,10 +677,10 @@ func (_SsvNetworkViews *SsvNetworkViewsCallerSession) GetVersion() (string, erro
 
 // IsLiquidatable is a free data retrieval call binding the contract method 0x16cff008.
 //
-// Solidity: function isLiquidatable(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
-func (_SsvNetworkViews *SsvNetworkViewsCaller) IsLiquidatable(opts *bind.CallOpts, owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
+// Solidity: function isLiquidatable(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
+func (_SsvNetworkViews *SsvNetworkViewsCaller) IsLiquidatable(opts *bind.CallOpts, clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
 	var out []interface{}
-	err := _SsvNetworkViews.contract.Call(opts, &out, "isLiquidatable", owner, operatorIds, cluster)
+	err := _SsvNetworkViews.contract.Call(opts, &out, "isLiquidatable", clusterOwner, operatorIds, cluster)
 
 	if err != nil {
 		return *new(bool), err
@@ -693,24 +694,24 @@ func (_SsvNetworkViews *SsvNetworkViewsCaller) IsLiquidatable(opts *bind.CallOpt
 
 // IsLiquidatable is a free data retrieval call binding the contract method 0x16cff008.
 //
-// Solidity: function isLiquidatable(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
-func (_SsvNetworkViews *SsvNetworkViewsSession) IsLiquidatable(owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
-	return _SsvNetworkViews.Contract.IsLiquidatable(&_SsvNetworkViews.CallOpts, owner, operatorIds, cluster)
+// Solidity: function isLiquidatable(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
+func (_SsvNetworkViews *SsvNetworkViewsSession) IsLiquidatable(clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
+	return _SsvNetworkViews.Contract.IsLiquidatable(&_SsvNetworkViews.CallOpts, clusterOwner, operatorIds, cluster)
 }
 
 // IsLiquidatable is a free data retrieval call binding the contract method 0x16cff008.
 //
-// Solidity: function isLiquidatable(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
-func (_SsvNetworkViews *SsvNetworkViewsCallerSession) IsLiquidatable(owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
-	return _SsvNetworkViews.Contract.IsLiquidatable(&_SsvNetworkViews.CallOpts, owner, operatorIds, cluster)
+// Solidity: function isLiquidatable(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
+func (_SsvNetworkViews *SsvNetworkViewsCallerSession) IsLiquidatable(clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
+	return _SsvNetworkViews.Contract.IsLiquidatable(&_SsvNetworkViews.CallOpts, clusterOwner, operatorIds, cluster)
 }
 
 // IsLiquidated is a free data retrieval call binding the contract method 0xa694695b.
 //
-// Solidity: function isLiquidated(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
-func (_SsvNetworkViews *SsvNetworkViewsCaller) IsLiquidated(opts *bind.CallOpts, owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
+// Solidity: function isLiquidated(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
+func (_SsvNetworkViews *SsvNetworkViewsCaller) IsLiquidated(opts *bind.CallOpts, clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
 	var out []interface{}
-	err := _SsvNetworkViews.contract.Call(opts, &out, "isLiquidated", owner, operatorIds, cluster)
+	err := _SsvNetworkViews.contract.Call(opts, &out, "isLiquidated", clusterOwner, operatorIds, cluster)
 
 	if err != nil {
 		return *new(bool), err
@@ -724,16 +725,16 @@ func (_SsvNetworkViews *SsvNetworkViewsCaller) IsLiquidated(opts *bind.CallOpts,
 
 // IsLiquidated is a free data retrieval call binding the contract method 0xa694695b.
 //
-// Solidity: function isLiquidated(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
-func (_SsvNetworkViews *SsvNetworkViewsSession) IsLiquidated(owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
-	return _SsvNetworkViews.Contract.IsLiquidated(&_SsvNetworkViews.CallOpts, owner, operatorIds, cluster)
+// Solidity: function isLiquidated(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
+func (_SsvNetworkViews *SsvNetworkViewsSession) IsLiquidated(clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
+	return _SsvNetworkViews.Contract.IsLiquidated(&_SsvNetworkViews.CallOpts, clusterOwner, operatorIds, cluster)
 }
 
 // IsLiquidated is a free data retrieval call binding the contract method 0xa694695b.
 //
-// Solidity: function isLiquidated(address owner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
-func (_SsvNetworkViews *SsvNetworkViewsCallerSession) IsLiquidated(owner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
-	return _SsvNetworkViews.Contract.IsLiquidated(&_SsvNetworkViews.CallOpts, owner, operatorIds, cluster)
+// Solidity: function isLiquidated(address clusterOwner, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) view returns(bool)
+func (_SsvNetworkViews *SsvNetworkViewsCallerSession) IsLiquidated(clusterOwner common.Address, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (bool, error) {
+	return _SsvNetworkViews.Contract.IsLiquidated(&_SsvNetworkViews.CallOpts, clusterOwner, operatorIds, cluster)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.

@@ -5,16 +5,21 @@ import (
 	"fmt"
 
 	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/credential"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
-func (task *Task) checkAndDeposit() error {
+func (task *Task) checkAndDeposit() (retErr error) {
 	poolBalance, err := task.userDepositContract.GetBalance(nil)
 	if err != nil {
 		return err
 	}
 	poolBalanceDeci := decimal.NewFromBigInt(poolBalance, 0)
+	logrus.WithFields(logrus.Fields{
+		"balance": poolBalanceDeci.String(),
+	}).Debug("deposit-poolBalance")
+
 	if poolBalanceDeci.LessThan(minAmountNeedDeposit) {
 		return nil
 	}
@@ -26,8 +31,13 @@ func (task *Task) checkAndDeposit() error {
 	dataRoots := make([][32]byte, depositLen)
 	oldKeyIndex := task.nextKeyIndex
 
+	logrus.WithFields(logrus.Fields{
+		"depositLen":   depositLen,
+		"nextKeyIndex": task.nextKeyIndex,
+	}).Debug("deposit-info")
+
 	defer func() {
-		if err := recover(); err != nil {
+		if retErr != nil {
 			task.nextKeyIndex = oldKeyIndex
 			for i := task.nextKeyIndex; i < task.nextKeyIndex+int(depositLen); i++ {
 				delete(task.validators, i)
@@ -36,7 +46,7 @@ func (task *Task) checkAndDeposit() error {
 	}()
 
 	for i := 0; i < int(depositLen); i++ {
-		credential, err := credential.NewCredential(task.seed, task.nextKeyIndex, superNodeDepositAmount.BigInt(), task.chain, task.eth1WithdrawalAdress)
+		credential, err := credential.NewCredential(task.seed, task.nextKeyIndex, superNodeDepositAmount.Div(utils.GweiDeci).BigInt(), task.chain, task.eth1WithdrawalAdress)
 		if err != nil {
 			return err
 		}
@@ -75,8 +85,21 @@ func (task *Task) checkAndDeposit() error {
 			keyIndex:   task.nextKeyIndex,
 		}
 
+		logrus.WithFields(logrus.Fields{
+			"keyIndex":            task.nextKeyIndex,
+			"pubkey":              hex.EncodeToString(pubkeyBts),
+			"dataRoot":            depositData.DepositDataRoot,
+			"messageRoot":         depositData.DepositMessageRoot,
+			"sig":                 depositData.Signature,
+			"withdrawCredentials": depositData.WithdrawalCredentials,
+			"amount":              depositData.Amount,
+			"forkVersion":         depositData.ForkVersion,
+			"networkName":         depositData.NetworkName,
+		}).Debug("deposit-params")
+
 		// increase nextKeyIndex
 		task.nextKeyIndex++
+
 	}
 
 	err = task.connectionOfSuperNodeAccount.LockAndUpdateTxOpts()
@@ -85,12 +108,19 @@ func (task *Task) checkAndDeposit() error {
 	}
 	defer task.connectionOfSuperNodeAccount.UnlockTxOpts()
 
-	stakeTx, err := task.superNodeContract.Deposit(task.connectionOfSuperNodeAccount.TxOpts(), validatorPubkeys, sigs, dataRoots)
+	depositTx, err := task.superNodeContract.Deposit(task.connectionOfSuperNodeAccount.TxOpts(), validatorPubkeys, sigs, dataRoots)
 	if err != nil {
 		return err
 	}
 
-	err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), stakeTx.Hash())
+	logrus.WithFields(logrus.Fields{
+		"txHash":           depositTx.Hash(),
+		"validatorPubkeys": validatorPubkeys,
+		"sigs":             sigs,
+		"dataRoots":        dataRoots,
+	}).Debug("deposit-tx")
+
+	err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), depositTx.Hash())
 	if err != nil {
 		return err
 	}

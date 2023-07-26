@@ -1,6 +1,7 @@
 package task_ssv
 
 import (
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -43,6 +44,12 @@ func (task *Task) checkAnddRepairNexKeyIndex() error {
 			status:     uint8(pubkeyStatus.Uint64()),
 			keyIndex:   task.nextKeyIndex,
 		}
+
+		logrus.WithFields(logrus.Fields{
+			"keyIndex": task.nextKeyIndex,
+			"pubkey":   hex.EncodeToString(pubkey),
+			"status":   pubkeyStatus.Uint64(),
+		}).Debug("validator key info")
 
 		task.nextKeyIndex++
 	}

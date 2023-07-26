@@ -256,7 +256,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "owner",
+                "name": "clusterOwner",
                 "type": "address"
             },
             {
@@ -312,7 +312,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "owner",
+                "name": "clusterOwner",
                 "type": "address"
             },
             {
@@ -471,6 +471,11 @@
         "name": "getOperatorDeclaredFee",
         "outputs": [
             {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            },
+            {
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
@@ -562,7 +567,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "owner",
+                "name": "clusterOwner",
                 "type": "address"
             },
             {
@@ -625,7 +630,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "owner",
+                "name": "clusterOwner",
                 "type": "address"
             },
             {
@@ -681,7 +686,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "owner",
+                "name": "clusterOwner",
                 "type": "address"
             },
             {

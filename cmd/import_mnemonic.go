@@ -9,11 +9,14 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stafiprotocol/chainbridge/utils/keystore"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/mnemonic"
+	"github.com/tyler-smith/go-bip39"
 )
+
+const ssvValidatorKeyFileName = "ssv_validator.key"
 
 func importMnemonicCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "import-mnemonic",
+		Use:   "import-val-mnemonic",
 		Args:  cobra.ExactArgs(0),
 		Short: "Import mnemonic for ssv",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -44,9 +47,13 @@ func importSeedFromMnemonic(keypath string) error {
 	var err error
 
 	mnemonicBts := keystore.GetPassword("Enter mnemonic:")
-	seed := mnemonic.NewSeed(string(mnemonicBts), "")
+	mnemonicStr := string(mnemonicBts)
+	if !bip39.IsMnemonicValid(mnemonicStr) {
+		return fmt.Errorf("not valid mnemonic")
+	}
+	seed := mnemonic.NewSeed(mnemonicStr, "")
 
-	fp, err := filepath.Abs(keypath + "/ssv" + ".key")
+	fp, err := filepath.Abs(keypath + "/" + ssvValidatorKeyFileName)
 	if err != nil {
 		return fmt.Errorf("invalid filepath: %s", err)
 	}
@@ -96,7 +103,7 @@ func encryptAndWriteToFile(file *os.File, seed []byte, password []byte) error {
 }
 
 func loadSeed(keypath string) ([]byte, error) {
-	path := fmt.Sprintf("%s/ssv.key", keypath)
+	path := fmt.Sprintf("%s/%s", keypath, ssvValidatorKeyFileName)
 	// Make sure key exists before prompting password
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, fmt.Errorf("key file not found: %s", path)

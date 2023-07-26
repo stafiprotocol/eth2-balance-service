@@ -1,7 +1,7 @@
 package task_ssv
 
 import (
-	"bytes"
+	// "bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/prysmaticlabs/prysm/v3/config/params"
+	// "github.com/prysmaticlabs/prysm/v3/config/params"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
@@ -138,7 +138,7 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 	}
 
 	if len(cfg.Operators) == 1 || len(cfg.Operators)%3 != 1 {
-		return nil, fmt.Errorf("operators lenght not match")
+		return nil, fmt.Errorf("operators length not match")
 	}
 
 	sort.Slice(cfg.Operators, func(i, j int) bool {
@@ -169,6 +169,8 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 
 		operators: operaters,
 
+		validators: map[int]*Validator{},
+
 		latestCluster: &ssv_clusters.ISSVNetworkCoreCluster{
 			ValidatorCount:  0,
 			NetworkFeeIndex: 0,
@@ -195,35 +197,36 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
-	task.eth2Config, err = task.connectionOfSuperNodeAccount.Eth2Client().GetEth2Config()
-	if err != nil {
-		return err
-	}
+
+	// task.eth2Config, err = task.connectionOfSuperNodeAccount.Eth2Client().GetEth2Config()
+	// if err != nil {
+	// 	return err
+	// }
 
 	switch chainId.Uint64() {
 	case 1: //mainnet
 		task.dev = false
 		task.chain = constants.GetChain(constants.ChainMAINNET)
-		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.MainnetConfig().GenesisForkVersion) {
-			return fmt.Errorf("endpoint network not match")
-		}
+		// if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.MainnetConfig().GenesisForkVersion) {
+		// 	return fmt.Errorf("endpoint network not match")
+		// }
 		task.dealedEth1Block = 17705353
 		task.ssvApiNetwork = "mainnet"
 
 	case 11155111: // sepolia
 		task.dev = true
 		task.chain = constants.GetChain(constants.ChainSEPOLIA)
-		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.SepoliaConfig().GenesisForkVersion) {
-			return fmt.Errorf("endpoint network not match")
-		}
+		// if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.SepoliaConfig().GenesisForkVersion) {
+		// 	return fmt.Errorf("endpoint network not match")
+		// }
 		task.dealedEth1Block = 9354882
 		task.ssvApiNetwork = "prater"
 	case 5: // goerli
 		task.dev = true
 		task.chain = constants.GetChain(constants.ChainGOERLI)
-		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.PraterConfig().GenesisForkVersion) {
-			return fmt.Errorf("endpoint network not match")
-		}
+		// if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.PraterConfig().GenesisForkVersion) {
+		// 	return fmt.Errorf("endpoint network not match")
+		// }
 		task.dealedEth1Block = 9354882
 		task.ssvApiNetwork = "prater"
 
@@ -284,6 +287,8 @@ func (task *Task) initContract() error {
 	}
 
 	task.eth1WithdrawalAdress = stafiWithdrawAddress
+
+	logrus.Debugf("stafiWithdraw address: %s", task.eth1WithdrawalAdress.String())
 
 	superNodeAddress, err := utils.GetContractAddress(storageContract, "stafiSuperNode")
 	if err != nil {

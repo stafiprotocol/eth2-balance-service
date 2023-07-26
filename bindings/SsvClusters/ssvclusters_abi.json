@@ -490,7 +490,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "owner",
+                "name": "clusterOwner",
                 "type": "address"
             },
             {
@@ -545,7 +545,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "owner",
+                "name": "clusterOwner",
                 "type": "address"
             },
             {

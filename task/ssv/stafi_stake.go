@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/credential"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
@@ -15,6 +16,11 @@ func (task *Task) checkAndStake() error {
 		return err
 	}
 	poolBalanceDeci := decimal.NewFromBigInt(poolBalance, 0)
+
+	logrus.WithFields(logrus.Fields{
+		"balance": poolBalanceDeci.String(),
+	}).Debug("stake-poolBalance")
+
 	if poolBalanceDeci.LessThan(minAmountNeedStake) {
 		return nil
 	}
@@ -35,6 +41,11 @@ func (task *Task) checkAndStake() error {
 		poolBalanceDeci = poolBalanceDeci.Sub(superNodeStakeAmount)
 	}
 	lengthOfValidatorsNeedStake := len(validatorsNeedStake)
+
+	logrus.WithFields(logrus.Fields{
+		"stakeLen": lengthOfValidatorsNeedStake,
+	}).Debug("stake-info")
+
 	if lengthOfValidatorsNeedStake == 0 {
 		return nil
 	}
@@ -44,7 +55,7 @@ func (task *Task) checkAndStake() error {
 	sigs := make([][]byte, lengthOfValidatorsNeedStake)
 	dataRoots := make([][32]byte, lengthOfValidatorsNeedStake)
 	for i, val := range validatorsNeedStake {
-		credential, err := credential.NewCredential(task.seed, val.keyIndex, superNodeStakeAmount.BigInt(), task.chain, task.eth1WithdrawalAdress)
+		credential, err := credential.NewCredential(task.seed, val.keyIndex, superNodeStakeAmount.Div(utils.GweiDeci).BigInt(), task.chain, task.eth1WithdrawalAdress)
 		if err != nil {
 			return err
 		}
@@ -80,6 +91,12 @@ func (task *Task) checkAndStake() error {
 	if err != nil {
 		return err
 	}
+	logrus.WithFields(logrus.Fields{
+		"txHash":           stakeTx.Hash(),
+		"validatorPubkeys": validatorPubkeys,
+		"sigs":             sigs,
+		"dataRoots":        dataRoots,
+	}).Debug("stake-tx")
 
 	err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), stakeTx.Hash())
 	if err != nil {

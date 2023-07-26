@@ -49,9 +49,11 @@ func startSsvCmd() *cobra.Command {
   eth2Endpoint: %s
   storageAddress:%s
   ssvNetworkAddress:%s
-  ssvNetworkViewsAddress:%s`,
+  ssvNetworkViewsAddress:%s
+  operators:%v`,
 				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint,
-				cfg.Contracts.StorageContractAddress, cfg.Contracts.SsvNetworkAddress, cfg.Contracts.SsvNetworkViewsAddress)
+				cfg.Contracts.StorageContractAddress, cfg.Contracts.SsvNetworkAddress, cfg.Contracts.SsvNetworkViewsAddress,
+				cfg.Operators)
 
 			err = log.InitLogFile(cfg.LogFilePath + "/ssv")
 			if err != nil {

@@ -41,7 +41,7 @@ func (task *Task) updateValStatus() error {
 
 		// status on beacon
 		if val.status == valStatusStaked {
-			
+
 		}
 
 		task.validators[task.nextKeyIndex] = val
