@@ -2,6 +2,9 @@ package task_ssv
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/pkg/errors"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
@@ -16,7 +19,7 @@ func (task *Task) updateValStatus() error {
 			continue
 		}
 
-		// status on execution
+		// status on stafi contract
 		if val.status < valStatusStaked {
 			pubkeyStatus, err := task.mustGetSuperNodePubkeyStatus(val.privateKey.PublicKey().Marshal())
 			if err != nil {
@@ -39,9 +42,20 @@ func (task *Task) updateValStatus() error {
 			}
 		}
 
-		// status on beacon
+		// status on ssv contract
 		if val.status == valStatusStaked {
-
+			active, err := task.ssvNetworkViewsContract.GetValidator(nil, task.ssvKeyPair.CommonAddress(), val.privateKey.PublicKey().Marshal())
+			if err != nil {
+				// remove when new SSVViews contract is deployed
+				if strings.Contains(err.Error(), "execution reverted") {
+					active = false
+				} else {
+					return errors.Wrap(err, "ssvNetworkViewsContract.GetValidator failed")
+				}
+			}
+			if active {
+				val.status = valStatusRegistedOnSsv
+			}
 		}
 
 		task.validators[task.nextKeyIndex] = val

@@ -2,7 +2,9 @@ package task_ssv
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/pkg/errors"
 	ssv_network "github.com/stafiprotocol/eth2-balance-service/bindings/SsvNetwork"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
@@ -15,6 +17,7 @@ func (task *Task) checkAndRemoveOnSSV() error {
 		if !exist {
 			return fmt.Errorf("validator at index %d not exist", i)
 		}
+
 		if val.status != utils.ValidatorStatusExited {
 			continue
 		}
@@ -22,10 +25,16 @@ func (task *Task) checkAndRemoveOnSSV() error {
 		// check status on ssv
 		active, err := task.ssvNetworkViewsContract.GetValidator(nil, task.ssvKeyPair.CommonAddress(), val.privateKey.PublicKey().Marshal())
 		if err != nil {
-			return err
+			// remove when new SSVViews contract is deployed
+			if strings.Contains(err.Error(), "execution reverted") {
+				active = false
+			} else {
+				return errors.Wrap(err, "ssvNetworkViewsContract.GetValidator failed")
+			}
 		}
-		if active {
-			return fmt.Errorf("validator %s at index %d is active on ssv", val.privateKey.PublicKey().SerializeToHexStr(), val.keyIndex)
+
+		if !active {
+			return fmt.Errorf("validator %s at index %d is not active on ssv", val.privateKey.PublicKey().SerializeToHexStr(), val.keyIndex)
 		}
 
 		operatorIds := make([]uint64, 0)
@@ -49,7 +58,6 @@ func (task *Task) checkAndRemoveOnSSV() error {
 		if err != nil {
 			return err
 		}
-		val.status = valStatusRemovedOnSsv
 	}
 
 	return nil

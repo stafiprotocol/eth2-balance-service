@@ -95,7 +95,7 @@ func (task *Task) checkAndDeposit() (retErr error) {
 			"amount":              depositData.Amount,
 			"forkVersion":         depositData.ForkVersion,
 			"networkName":         depositData.NetworkName,
-		}).Debug("deposit-params")
+		}).Info("deposit-params")
 
 		// increase nextKeyIndex
 		task.nextKeyIndex++
@@ -118,7 +118,7 @@ func (task *Task) checkAndDeposit() (retErr error) {
 		"validatorPubkeys": validatorPubkeys,
 		"sigs":             sigs,
 		"dataRoots":        dataRoots,
-	}).Debug("deposit-tx")
+	}).Info("deposit-tx")
 
 	err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), depositTx.Hash())
 	if err != nil {

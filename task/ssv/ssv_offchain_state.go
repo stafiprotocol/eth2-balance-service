@@ -2,6 +2,7 @@ package task_ssv
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -9,11 +10,12 @@ import (
 )
 
 const (
+	// todo: automatically detect event fetch limit from target rpc
 	fetchEventBlockLimit      = uint64(4900)
 	fetchEth1WaitBlockNumbers = uint64(5)
 )
 
-func (task *Task) updateLatestClusters() error {
+func (task *Task) updateOffchainState() error {
 	latestBlockNumber, err := task.connectionOfSuperNodeAccount.Eth1LatestBlock()
 	if err != nil {
 		return err
@@ -32,6 +34,10 @@ func (task *Task) updateLatestClusters() error {
 	end := latestBlockNumber
 	maxBlock := uint64(0)
 
+	increaseNonce := func() {
+		task.latestRegistrationNonce = new(big.Int).Add(task.latestRegistrationNonce, big.NewInt(1))
+	}
+
 	// 'ClusterDeposited',
 	// 'ClusterWithdrawn',
 	// 'ValidatorRemoved',
@@ -46,8 +52,8 @@ func (task *Task) updateLatestClusters() error {
 		}
 
 		clusterDepositedIter, err := task.ssvClustersContract.FilterClusterDeposited(&bind.FilterOpts{
-			Start:   start,
-			End:     &end,
+			Start:   subStart,
+			End:     &subEnd,
 			Context: context.Background(),
 		}, []common.Address{task.ssvKeyPair.CommonAddress()})
 
@@ -55,6 +61,7 @@ func (task *Task) updateLatestClusters() error {
 			return err
 		}
 		for clusterDepositedIter.Next() {
+			increaseNonce()
 			if clusterDepositedIter.Event.Raw.BlockNumber > maxBlock {
 				task.latestCluster = &clusterDepositedIter.Event.Cluster
 				maxBlock = clusterDepositedIter.Event.Raw.BlockNumber
@@ -62,8 +69,8 @@ func (task *Task) updateLatestClusters() error {
 		}
 
 		clusterWithdrawnIter, err := task.ssvClustersContract.FilterClusterWithdrawn(&bind.FilterOpts{
-			Start:   start,
-			End:     &end,
+			Start:   subStart,
+			End:     &subEnd,
 			Context: context.Background(),
 		}, []common.Address{task.ssvKeyPair.CommonAddress()})
 
@@ -71,6 +78,7 @@ func (task *Task) updateLatestClusters() error {
 			return err
 		}
 		for clusterWithdrawnIter.Next() {
+			increaseNonce()
 			if clusterWithdrawnIter.Event.Raw.BlockNumber > maxBlock {
 				task.latestCluster = &clusterWithdrawnIter.Event.Cluster
 				maxBlock = clusterWithdrawnIter.Event.Raw.BlockNumber
@@ -78,8 +86,8 @@ func (task *Task) updateLatestClusters() error {
 		}
 
 		validatorRemovedIter, err := task.ssvClustersContract.FilterValidatorRemoved(&bind.FilterOpts{
-			Start:   start,
-			End:     &end,
+			Start:   subStart,
+			End:     &subEnd,
 			Context: context.Background(),
 		}, []common.Address{task.ssvKeyPair.CommonAddress()})
 
@@ -87,6 +95,7 @@ func (task *Task) updateLatestClusters() error {
 			return err
 		}
 		for validatorRemovedIter.Next() {
+			increaseNonce()
 			if validatorRemovedIter.Event.Raw.BlockNumber > maxBlock {
 				task.latestCluster = &validatorRemovedIter.Event.Cluster
 				maxBlock = validatorRemovedIter.Event.Raw.BlockNumber
@@ -94,8 +103,8 @@ func (task *Task) updateLatestClusters() error {
 		}
 
 		validatorAdddedIter, err := task.ssvClustersContract.FilterValidatorAdded(&bind.FilterOpts{
-			Start:   start,
-			End:     &end,
+			Start:   subStart,
+			End:     &subEnd,
 			Context: context.Background(),
 		}, []common.Address{task.ssvKeyPair.CommonAddress()})
 
@@ -103,6 +112,7 @@ func (task *Task) updateLatestClusters() error {
 			return err
 		}
 		for validatorAdddedIter.Next() {
+			increaseNonce()
 			if validatorAdddedIter.Event.Raw.BlockNumber > maxBlock {
 				task.latestCluster = &validatorAdddedIter.Event.Cluster
 				maxBlock = validatorAdddedIter.Event.Raw.BlockNumber
@@ -110,8 +120,8 @@ func (task *Task) updateLatestClusters() error {
 		}
 
 		clusterLiquidatedIter, err := task.ssvClustersContract.FilterClusterLiquidated(&bind.FilterOpts{
-			Start:   start,
-			End:     &end,
+			Start:   subStart,
+			End:     &subEnd,
 			Context: context.Background(),
 		}, []common.Address{task.ssvKeyPair.CommonAddress()})
 
@@ -119,6 +129,7 @@ func (task *Task) updateLatestClusters() error {
 			return err
 		}
 		for clusterLiquidatedIter.Next() {
+			increaseNonce()
 			if clusterLiquidatedIter.Event.Raw.BlockNumber > maxBlock {
 				task.latestCluster = &clusterLiquidatedIter.Event.Cluster
 				maxBlock = clusterLiquidatedIter.Event.Raw.BlockNumber
@@ -126,8 +137,8 @@ func (task *Task) updateLatestClusters() error {
 		}
 
 		clusterReactivatedIter, err := task.ssvClustersContract.FilterClusterReactivated(&bind.FilterOpts{
-			Start:   start,
-			End:     &end,
+			Start:   subStart,
+			End:     &subEnd,
 			Context: context.Background(),
 		}, []common.Address{task.ssvKeyPair.CommonAddress()})
 
@@ -135,6 +146,7 @@ func (task *Task) updateLatestClusters() error {
 			return err
 		}
 		for clusterReactivatedIter.Next() {
+			increaseNonce()
 			if clusterReactivatedIter.Event.Raw.BlockNumber > maxBlock {
 				task.latestCluster = &clusterReactivatedIter.Event.Cluster
 				maxBlock = clusterReactivatedIter.Event.Raw.BlockNumber

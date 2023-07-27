@@ -46,9 +46,9 @@ func (task *Task) checkAnddRepairNexKeyIndex() error {
 		}
 
 		logrus.WithFields(logrus.Fields{
-			"keyIndex": task.nextKeyIndex,
-			"pubkey":   hex.EncodeToString(pubkey),
-			"status":   pubkeyStatus.Uint64(),
+			"keyIndex":              task.nextKeyIndex,
+			"pubkey":                hex.EncodeToString(pubkey),
+			"statusOnStafiContract": pubkeyStatus.Uint64(),
 		}).Debug("validator key info")
 
 		task.nextKeyIndex++

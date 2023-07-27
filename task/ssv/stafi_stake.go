@@ -96,7 +96,7 @@ func (task *Task) checkAndStake() error {
 		"validatorPubkeys": validatorPubkeys,
 		"sigs":             sigs,
 		"dataRoots":        dataRoots,
-	}).Debug("stake-tx")
+	}).Info("stake-tx")
 
 	err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), stakeTx.Hash())
 	if err != nil {

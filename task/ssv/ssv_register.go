@@ -1,9 +1,14 @@
 package task_ssv
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"strings"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	ssv_network "github.com/stafiprotocol/eth2-balance-service/bindings/SsvNetwork"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/keyshare"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
@@ -17,14 +22,26 @@ func (task *Task) checkAndRegisterOnSSV() error {
 		if !exist {
 			return fmt.Errorf("validator at index %d not exist", i)
 		}
-		if val.status != utils.ValidatorStatusStaked {
+
+		logrus.WithFields(logrus.Fields{
+			"keyIndex": i,
+			"pubkey":   hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
+			"status":   val.status,
+		}).Debug("register-val")
+
+		if val.status != valStatusStaked {
 			continue
 		}
 
 		// check status on ssv
 		active, err := task.ssvNetworkViewsContract.GetValidator(nil, task.ssvKeyPair.CommonAddress(), val.privateKey.PublicKey().Marshal())
 		if err != nil {
-			return err
+			// remove when new SSVViews contract is deployed
+			if strings.Contains(err.Error(), "execution reverted") {
+				active = false
+			} else {
+				return errors.Wrap(err, "ssvNetworkViewsContract.GetValidator failed")
+			}
 		}
 		if active {
 			return fmt.Errorf("validator %s at index %d is active on ssv", val.privateKey.PublicKey().SerializeToHexStr(), val.keyIndex)
@@ -36,18 +53,25 @@ func (task *Task) checkAndRegisterOnSSV() error {
 			return err
 		}
 
+		// build payload
 		operatorIds := make([]uint64, 0)
 		shares := make([]byte, 0)
+		pubkeys := make([]byte, 0)
 		ssvAmount := task.clusterInitSsvAmount
-
 		for i, op := range task.operators {
 			operatorIds = append(operatorIds, uint64(op.Id))
-			shareBts, err := hex.DecodeString(encryptShares[i].EncryptedKey)
+
+			shareBts, err := base64.StdEncoding.DecodeString(encryptShares[i].EncryptedKey)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "EncryptedKey decode failed")
 			}
-			// todo check packed bytes
 			shares = append(shares, shareBts...)
+
+			pubkeyBts, err := hexutil.Decode(encryptShares[i].PublicKey)
+			if err != nil {
+				return errors.Wrap(err, "publickey decode failed")
+			}
+			pubkeys = append(pubkeys, pubkeyBts...)
 		}
 
 		// send tx
@@ -59,14 +83,21 @@ func (task *Task) checkAndRegisterOnSSV() error {
 
 		registerTx, err := task.ssvNetworkContract.RegisterValidator(task.connectionOfSsvAccount.TxOpts(), val.privateKey.PublicKey().Marshal(), operatorIds, shares, ssvAmount, ssv_network.ISSVNetworkCoreCluster(*task.latestCluster))
 		if err != nil {
-			return err
+			return errors.Wrap(err, "ssvNetworkContract.RegisterValidator failed")
 		}
+
+		logrus.WithFields(logrus.Fields{
+			"txHash":      registerTx.Hash(),
+			"operaterIds": operatorIds,
+			"shares":      shares,
+			"pubkey":      hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
+			"ssvAmount":   ssvAmount.String(),
+		}).Info("register-tx")
+
 		err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), registerTx.Hash())
 		if err != nil {
 			return err
 		}
-
-		val.status = valStatusRegistedOnSsv
 	}
 
 	return nil

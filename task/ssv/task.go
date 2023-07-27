@@ -74,11 +74,13 @@ type Task struct {
 	dealedEth1Block              uint64
 	validators                   map[int]*Validator
 
-	latestCluster *ssv_clusters.ISSVNetworkCoreCluster
-
 	operators []*keyshare.Operator
 
 	eth2Config beacon.Eth2Config
+
+	// offchain state
+	latestCluster           *ssv_clusters.ISSVNetworkCoreCluster
+	latestRegistrationNonce *big.Int
 }
 
 type Validator struct {
@@ -178,6 +180,7 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 			Active:          true,
 			Balance:         big.NewInt(0),
 		},
+		latestRegistrationNonce: big.NewInt(0),
 	}
 
 	return s, nil
@@ -400,15 +403,15 @@ func (task *Task) handler() {
 			}
 			logrus.Debug("checkAndDeposit end -----------")
 
-			logrus.Debug("updateLatestClusters start -----------")
-			err = task.updateLatestClusters()
+			logrus.Debug("updateOffchainState start -----------")
+			err = task.updateOffchainState()
 			if err != nil {
-				logrus.Warnf("updateLatestClusters err %s", err)
+				logrus.Warnf("updateOffchainState err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("updateLatestClusters end -----------")
+			logrus.Debug("updateOffchainState end -----------")
 
 			logrus.Debug("checkAndRegisterOnSSV start -----------")
 			err = task.checkAndRegisterOnSSV()
@@ -420,15 +423,15 @@ func (task *Task) handler() {
 			}
 			logrus.Debug("checkAndRegisterOnSSV end -----------")
 
-			logrus.Debug("updateLatestClusters start -----------")
-			err = task.updateLatestClusters()
+			logrus.Debug("updateOffchainState start -----------")
+			err = task.updateOffchainState()
 			if err != nil {
-				logrus.Warnf("updateLatestClusters err %s", err)
+				logrus.Warnf("updateOffchainState err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("updateLatestClusters end -----------")
+			logrus.Debug("updateOffchainState end -----------")
 
 			logrus.Debug("checkAndRemoveOnSSV start -----------")
 			err = task.checkAndRemoveOnSSV()
