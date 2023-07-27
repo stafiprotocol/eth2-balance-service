@@ -11,12 +11,12 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
 
-func (task *Task) initNextKeyIndex() error {
+func (task *Task) initValNextKeyIndex() error {
 	task.nextKeyIndex = 0
-	return task.checkAnddRepairNexKeyIndex()
+	return task.checkAndRepairValNexKeyIndex()
 }
 
-func (task *Task) checkAnddRepairNexKeyIndex() error {
+func (task *Task) checkAndRepairValNexKeyIndex() error {
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {

@@ -40,6 +40,7 @@ type Contracts struct {
 	ArbitrumStakePortalRateAddress string
 	SsvNetworkAddress              string
 	SsvNetworkViewsAddress         string
+	SsvTokenAddress                string
 }
 
 type Db struct {

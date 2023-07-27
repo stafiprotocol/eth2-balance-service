@@ -13,6 +13,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
+	"github.com/stafiprotocol/eth2-balance-service/bindings/Erc20"
 	"github.com/stafiprotocol/eth2-balance-service/bindings/SsvClusters"
 	"github.com/stafiprotocol/eth2-balance-service/bindings/SsvNetwork"
 	"github.com/stafiprotocol/eth2-balance-service/bindings/SsvNetworkViews"
@@ -56,6 +57,7 @@ type Task struct {
 	storageContractAddress         common.Address
 	ssvNetworkContractAddress      common.Address
 	ssvNetworkViewsContractAddress common.Address
+	ssvTokenContractAddress        common.Address
 	seed                           []byte
 
 	// --- need init on start
@@ -70,6 +72,7 @@ type Task struct {
 	ssvNetworkContract           *ssv_network.SsvNetwork
 	ssvNetworkViewsContract      *ssv_network_views.SsvNetworkViews
 	ssvClustersContract          *ssv_clusters.SsvClusters
+	ssvTokenContract             *erc20.Erc20
 	nextKeyIndex                 int
 	dealedEth1Block              uint64
 	validators                   map[int]*Validator
@@ -80,7 +83,7 @@ type Task struct {
 
 	// offchain state
 	latestCluster           *ssv_clusters.ISSVNetworkCoreCluster
-	latestRegistrationNonce *big.Int
+	latestRegistrationNonce uint64
 }
 
 type Validator struct {
@@ -113,6 +116,9 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 	}
 	if !common.IsHexAddress(cfg.Contracts.SsvNetworkViewsAddress) {
 		return nil, fmt.Errorf("ssvnetworkviews contract address fmt err")
+	}
+	if !common.IsHexAddress(cfg.Contracts.SsvTokenAddress) {
+		return nil, fmt.Errorf("SsvTokenAddress contract address fmt err")
 	}
 
 	gasLimitDeci, err := decimal.NewFromString(cfg.GasLimit)
@@ -168,6 +174,7 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		storageContractAddress:         common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		ssvNetworkContractAddress:      common.HexToAddress(cfg.Contracts.SsvNetworkAddress),
 		ssvNetworkViewsContractAddress: common.HexToAddress(cfg.Contracts.SsvNetworkViewsAddress),
+		ssvTokenContractAddress:        common.HexToAddress(cfg.Contracts.SsvTokenAddress),
 
 		operators: operaters,
 
@@ -180,7 +187,7 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 			Active:          true,
 			Balance:         big.NewInt(0),
 		},
-		latestRegistrationNonce: big.NewInt(0),
+		latestRegistrationNonce: 0,
 	}
 
 	return s, nil
@@ -230,7 +237,7 @@ func (task *Task) Start() error {
 		// if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.PraterConfig().GenesisForkVersion) {
 		// 	return fmt.Errorf("endpoint network not match")
 		// }
-		task.dealedEth1Block = 9354882
+		task.dealedEth1Block = 9403883
 		task.ssvApiNetwork = "prater"
 
 	default:
@@ -245,7 +252,7 @@ func (task *Task) Start() error {
 		return err
 	}
 
-	err = task.initNextKeyIndex()
+	err = task.initValNextKeyIndex()
 	if err != nil {
 		return err
 	}
@@ -322,7 +329,10 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
-
+	task.ssvTokenContract, err = erc20.NewErc20(task.ssvTokenContractAddress, task.connectionOfSuperNodeAccount.Eth1Client())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -363,15 +373,15 @@ func (task *Task) handler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
-			logrus.Debug("checkAnddRepairNexKeyIndex start -----------")
-			err := task.checkAnddRepairNexKeyIndex()
+			logrus.Debug("checkAndRepairValNexKeyIndex start -----------")
+			err := task.checkAndRepairValNexKeyIndex()
 			if err != nil {
-				logrus.Warnf("checkAnddRepairNexKeyIndex err %s", err)
+				logrus.Warnf("checkAndRepairValNe err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("checkAnddRepairNexKeyIndex end -----------")
+			logrus.Debug("checkAndRepairValNe end -----------")
 
 			logrus.Debug("updateValStatus start -----------")
 			err = task.updateValStatus()
@@ -402,6 +412,26 @@ func (task *Task) handler() {
 				continue
 			}
 			logrus.Debug("checkAndDeposit end -----------")
+
+			logrus.Debug("updateOffchainState start -----------")
+			err = task.updateOffchainState()
+			if err != nil {
+				logrus.Warnf("updateOffchainState err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("updateOffchainState end -----------")
+
+			logrus.Debug("checkAndReactiveOnSSV start -----------")
+			err = task.checkAndReactiveOnSSV()
+			if err != nil {
+				logrus.Warnf("checkAndReactiveOnSSV err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("checkAndReactiveOnSSV end -----------")
 
 			logrus.Debug("updateOffchainState start -----------")
 			err = task.updateOffchainState()

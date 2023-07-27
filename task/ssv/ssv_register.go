@@ -7,9 +7,12 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	ssv_network "github.com/stafiprotocol/eth2-balance-service/bindings/SsvNetwork"
+	ssv_network_views "github.com/stafiprotocol/eth2-balance-service/bindings/SsvNetworkViews"
+	"github.com/stafiprotocol/eth2-balance-service/pkg/crypto/bls"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/keyshare"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 )
@@ -74,22 +77,77 @@ func (task *Task) checkAndRegisterOnSSV() error {
 			pubkeys = append(pubkeys, pubkeyBts...)
 		}
 
-		// send tx
+		// sign with val private key
+		data := fmt.Sprintf("%s:%d", task.connectionOfSsvAccount.TxOpts().From.String(), task.latestRegistrationNonce)
+		hash := crypto.Keccak256([]byte(data))
+		valPrivateKey, err := bls.PrivateKeyFromBytes(val.privateKey.Marshal())
+		if err != nil {
+			return err
+		}
+		sigs := valPrivateKey.Sign(hash).Marshal()
+
+		// build shareData
+		shareData := append(sigs, pubkeys...)
+		shareData = append(shareData, shares...)
+
+		// check cluster state
+		isLiquidated, err := task.ssvNetworkViewsContract.IsLiquidated(nil, task.connectionOfSsvAccount.TxOpts().From, operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*task.latestCluster))
+		if err != nil {
+			return errors.Wrap(err, "ssvNetworkViewsContract.IsLiquidated failed")
+		}
+		if isLiquidated {
+			logrus.WithFields(logrus.Fields{
+				"operators": operatorIds,
+			}).Warn("cluster is liquidated")
+			return nil
+		}
+
+		// check ssv allowance
+		allowance, err := task.ssvTokenContract.Allowance(nil, task.connectionOfSsvAccount.TxOpts().From, task.ssvNetworkViewsContractAddress)
+		if err != nil {
+			return err
+		}
+
+		if allowance.Cmp(task.clusterInitSsvAmount) < 0 {
+			err = task.connectionOfSsvAccount.LockAndUpdateTxOpts()
+			if err != nil {
+				return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
+			}
+			approveTx, err := task.ssvTokenContract.Approve(task.connectionOfSsvAccount.TxOpts(), task.ssvNetworkContractAddress, ssvAmount)
+			if err != nil {
+				task.connectionOfSsvAccount.UnlockTxOpts()
+				return err
+			}
+			task.connectionOfSsvAccount.UnlockTxOpts()
+
+			logrus.WithFields(logrus.Fields{
+				"txHash":        approveTx.Hash(),
+				"approveAmount": ssvAmount.String(),
+			}).Info("approve-tx")
+
+			err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), approveTx.Hash())
+			if err != nil {
+				return err
+			}
+		}
+
+		// send register tx
 		err = task.connectionOfSsvAccount.LockAndUpdateTxOpts()
 		if err != nil {
 			return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 		}
-		defer task.connectionOfSsvAccount.UnlockTxOpts()
 
-		registerTx, err := task.ssvNetworkContract.RegisterValidator(task.connectionOfSsvAccount.TxOpts(), val.privateKey.PublicKey().Marshal(), operatorIds, shares, ssvAmount, ssv_network.ISSVNetworkCoreCluster(*task.latestCluster))
+		registerTx, err := task.ssvNetworkContract.RegisterValidator(task.connectionOfSsvAccount.TxOpts(), val.privateKey.PublicKey().Marshal(), operatorIds, shareData, ssvAmount, ssv_network.ISSVNetworkCoreCluster(*task.latestCluster))
 		if err != nil {
+			task.connectionOfSsvAccount.UnlockTxOpts()
 			return errors.Wrap(err, "ssvNetworkContract.RegisterValidator failed")
 		}
+		task.connectionOfSsvAccount.UnlockTxOpts()
 
 		logrus.WithFields(logrus.Fields{
 			"txHash":      registerTx.Hash(),
+			"nonce":       task.latestRegistrationNonce,
 			"operaterIds": operatorIds,
-			"shares":      shares,
 			"pubkey":      hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
 			"ssvAmount":   ssvAmount.String(),
 		}).Info("register-tx")
