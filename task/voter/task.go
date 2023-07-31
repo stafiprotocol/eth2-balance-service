@@ -20,7 +20,6 @@ import (
 	network_balances "github.com/stafiprotocol/eth2-balance-service/bindings/NetworkBalances"
 	reth "github.com/stafiprotocol/eth2-balance-service/bindings/Reth"
 	"github.com/stafiprotocol/eth2-balance-service/bindings/Settings"
-	stake_portal_rate "github.com/stafiprotocol/eth2-balance-service/bindings/StakePortalRate"
 	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
 	super_node "github.com/stafiprotocol/eth2-balance-service/bindings/SuperNode"
 	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
@@ -37,7 +36,6 @@ type Task struct {
 	stop                    chan struct{}
 	eth1Endpoint            string
 	eth2Endpoint            string
-	arbitrumEndpoint        string
 	keyPair                 *secp256k1.Keypair
 	gasLimit                *big.Int
 	maxGasPrice             *big.Int
@@ -67,10 +65,6 @@ type Task struct {
 	rethContract            *reth.Reth
 	distributorContract     *distributor.Distributor
 	withdrawContract        *withdraw.Withdraw
-
-	arbitrumConn                    *shared.Connection
-	arbitrumStakePortalRateAddress  common.Address
-	arbitrumStakePortalRateContract *stake_portal_rate.StakePortalRate
 
 	feePoolAddress          common.Address
 	superNodeFeePoolAddress common.Address
@@ -102,17 +96,15 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 	}
 
 	s := &Task{
-		taskTicker:                     15,
-		stop:                           make(chan struct{}),
-		db:                             dao,
-		keyPair:                        keyPair,
-		eth1Endpoint:                   cfg.Eth1Endpoint,
-		eth2Endpoint:                   cfg.Eth2Endpoint,
-		arbitrumEndpoint:               cfg.ArbitrumEndpoint,
-		gasLimit:                       gasLimitDeci.BigInt(),
-		maxGasPrice:                    maxGasPriceDeci.BigInt(),
-		storageContractAddress:         common.HexToAddress(cfg.Contracts.StorageContractAddress),
-		arbitrumStakePortalRateAddress: common.HexToAddress(cfg.Contracts.ArbitrumStakePortalRateAddress),
+		taskTicker:             15,
+		stop:                   make(chan struct{}),
+		db:                     dao,
+		keyPair:                keyPair,
+		eth1Endpoint:           cfg.Eth1Endpoint,
+		eth2Endpoint:           cfg.Eth2Endpoint,
+		gasLimit:               gasLimitDeci.BigInt(),
+		maxGasPrice:            maxGasPriceDeci.BigInt(),
+		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
 
 		rewardEpochInterval:     utils.RewardEpochInterval,     // 75 epoch 8h
 		distributeEpochInterval: utils.RewardEpochInterval * 3, // 225 epoch 24h
@@ -131,11 +123,6 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 func (task *Task) Start() error {
 	var err error
 	task.connection, err = shared.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.keyPair, task.gasLimit, task.maxGasPrice)
-	if err != nil {
-		return err
-	}
-
-	task.arbitrumConn, err = shared.NewConnection(task.arbitrumEndpoint, "", task.keyPair, task.gasLimit, task.maxGasPrice)
 	if err != nil {
 		return err
 	}
@@ -279,17 +266,6 @@ func (task *Task) voteHandler() {
 
 			logrus.Debug("voteRate end -----------\n")
 
-			logrus.Debug("syncRate start -----------")
-			err = task.syncRate()
-			if err != nil {
-				logrus.Warnf("syncRate err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			}
-
-			logrus.Debug("syncRate end -----------\n")
-
 			logrus.Debug("setMerkleTree start -----------")
 			err = task.setMerkleTree()
 			if err != nil {
@@ -352,10 +328,6 @@ func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
 
 func (task *Task) waitTxOk(txHash common.Hash) (err error) {
 	return task.waitTxOkCommon(task.connection.Eth1Client(), txHash)
-}
-
-func (task *Task) waitArbitrumTxOk(txHash common.Hash) (err error) {
-	return task.waitTxOkCommon(task.arbitrumConn.Eth1Client(), txHash)
 }
 
 func (task *Task) waitTxOkCommon(client *ethclient.Client, txHash common.Hash) (err error) {

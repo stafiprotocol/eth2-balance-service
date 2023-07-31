@@ -11,7 +11,6 @@ import (
 	network_balances "github.com/stafiprotocol/eth2-balance-service/bindings/NetworkBalances"
 	reth "github.com/stafiprotocol/eth2-balance-service/bindings/Reth"
 	"github.com/stafiprotocol/eth2-balance-service/bindings/Settings"
-	stake_portal_rate "github.com/stafiprotocol/eth2-balance-service/bindings/StakePortalRate"
 	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
 	super_node "github.com/stafiprotocol/eth2-balance-service/bindings/SuperNode"
 	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
@@ -107,12 +106,6 @@ func (task *Task) initContract() error {
 		return err
 	}
 	task.withdrawContract, err = withdraw.NewWithdraw(withdrawAddress, task.connection.Eth1Client())
-	if err != nil {
-		return err
-	}
-
-	//arbitrum
-	task.arbitrumStakePortalRateContract, err = stake_portal_rate.NewStakePortalRate(task.arbitrumStakePortalRateAddress, task.arbitrumConn.Eth1Client())
 	if err != nil {
 		return err
 	}
