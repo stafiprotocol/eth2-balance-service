@@ -302,6 +302,7 @@ func (task *Task) voteHandler() {
 
 func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
 	eth2ValidatorBalanceSyncerStartSlot := utils.StartSlotOfEpoch(task.eth2Config, epoch)
+	logrus.Debugf("getEpochStartBlocknumber: %d, epoch: %d ", eth2ValidatorBalanceSyncerStartSlot, epoch)
 
 	retry := 0
 	for {
@@ -309,7 +310,6 @@ func (task Task) getEpochStartBlocknumber(epoch uint64) (uint64, error) {
 			return 0, fmt.Errorf("targetBeaconBlock.executionBlockNumber zero err")
 		}
 
-		logrus.Info("getBeaconBlock: ", eth2ValidatorBalanceSyncerStartSlot)
 		targetBeaconBlock, exist, err := task.connection.GetBeaconBlock(eth2ValidatorBalanceSyncerStartSlot)
 		if err != nil {
 			return 0, err

@@ -47,11 +47,12 @@ func TestCallOpts(t *testing.T) {
 	}
 	t.Log(gasPrice.String(), gasTip.String())
 
-	beaconBlock, exist, err := c.GetBeaconBlock(7034889)
+	// beaconBlock, exist, err := c.GetBeaconBlock(7034400)
+	beaconBlock, exist, err := c.GetBeaconBlock(7025024)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(beaconBlock.FeeRecipient, exist)
+	t.Log(beaconBlock.FeeRecipient, exist,beaconBlock.ExecutionBlockNumber)
 
 }
 
