@@ -21,7 +21,7 @@ import (
 )
 
 func TestCallOpts(t *testing.T) {
-	c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beaconcha-rpc2.stafi.io", nil, nil, nil)
+	c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func TestCallOpts(t *testing.T) {
 	}
 	t.Log(gasPrice.String(), gasTip.String())
 
-	beaconBlock, exist, err := c.GetBeaconBlock(5145404)
+	beaconBlock, exist, err := c.GetBeaconBlock(7034889)
 	if err != nil {
 		t.Fatal(err)
 	}
