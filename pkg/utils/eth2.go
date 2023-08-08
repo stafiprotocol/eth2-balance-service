@@ -95,8 +95,8 @@ const (
 	RewardEpochInterval = uint64(75)
 	SlashStartEpoch     = uint64(180000)
 	//dev
-	DevTheMergeEpoch       = uint64(4400)
-	DevTheMergeBlockNumber = uint64(133654)
+	DevTheMergeEpoch       = uint64(188700)
+	DevTheMergeBlockNumber = uint64(9320696)
 	DevRewardV1EndEpoch    = uint64(75)
 
 	StandardEffectiveBalance            = uint64(32e9) //gwei

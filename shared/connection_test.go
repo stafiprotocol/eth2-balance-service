@@ -21,7 +21,8 @@ import (
 )
 
 func TestCallOpts(t *testing.T) {
-	c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
+	c, err := shared.NewConnection("https://mainnet-rpc.wetez.io/eth/v1/601083a01bf2f40729c5f75e62042208", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
+	// c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,12 +49,18 @@ func TestCallOpts(t *testing.T) {
 	t.Log(gasPrice.String(), gasTip.String())
 
 	// beaconBlock, exist, err := c.GetBeaconBlock(7034400)
-	beaconBlock, exist, err := c.GetBeaconBlock(7025024)
+	// beaconBlock, exist, err := c.GetBeaconBlock(7025024)
+	// beaconBlock, exist, err := c.GetBeaconBlock(17839369)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// t.Log(beaconBlock.FeeRecipient, exist,beaconBlock.ExecutionBlockNumber)
+
+	r, err := c.GetELRewardForBlock(17839368)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(beaconBlock.FeeRecipient, exist,beaconBlock.ExecutionBlockNumber)
-
+	t.Log(r)
 }
 
 func TestBlockReward(t *testing.T) {
