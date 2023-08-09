@@ -947,7 +947,7 @@ func (c *StandardHttpClient) postRequest(requestPath string, requestBody interfa
 	requestBodyReader := bytes.NewReader(requestBodyBytes)
 
 	// Send request
-	client := http.Client{Timeout: 60 * time.Second}
+	client := http.Client{Timeout: 90 * time.Second}
 	response, err := client.Post(fmt.Sprintf(RequestUrlFormat, c.providerAddress, requestPath), RequestContentType, requestBodyReader)
 	if err != nil {
 		return []byte{}, 0, err
