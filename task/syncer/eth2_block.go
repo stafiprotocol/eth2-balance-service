@@ -82,50 +82,52 @@ func (task *Task) syncEth2BlockInfo() error {
 			})
 		}
 
-		// sync slash of type 4 (sync committee miss)
-		// sync slash of type 5 (attester miss)
-		g.Go(func() error {
-			validatorList, err := dao_node.GetAllValidatorList(task.db)
-			if err != nil {
-				return err
-			}
-			valIndexes := make([]uint64, 0)
-			for _, val := range validatorList {
-				// skip not active vals at target epoch
-				if val.ValidatorIndex == 0 ||
-					val.ActiveEpoch == 0 ||
-					val.ActiveEpoch > willUseEpoch ||
-					val.ExitEpoch >= willUseEpoch {
-					continue
+		if !task.dev {
+			// sync slash of type 4 (sync committee miss)
+			// sync slash of type 5 (attester miss)
+			g.Go(func() error {
+				validatorList, err := dao_node.GetAllValidatorList(task.db)
+				if err != nil {
+					return err
+				}
+				valIndexes := make([]uint64, 0)
+				for _, val := range validatorList {
+					// skip not active vals at target epoch
+					if val.ValidatorIndex == 0 ||
+						val.ActiveEpoch == 0 ||
+						val.ActiveEpoch > willUseEpoch ||
+						val.ExitEpoch >= willUseEpoch {
+						continue
+					}
+
+					valIndexes = append(valIndexes, val.ValidatorIndex)
 				}
 
-				valIndexes = append(valIndexes, val.ValidatorIndex)
-			}
+				rewardsMap, err := task.connection.GetRewardsForEpochWithValidators(willUseEpoch, valIndexes)
+				if err != nil {
+					return err
+				}
 
-			rewardsMap, err := task.connection.GetRewardsForEpochWithValidators(willUseEpoch, valIndexes)
-			if err != nil {
-				return err
-			}
+				for valIndex, reward := range rewardsMap {
+					attesterPenalty := reward.AttestationSourcePenalty + reward.AttestationTargetPenalty
+					if attesterPenalty > 0 {
+						err := task.saveAttesterMissEvent(willUseEpoch, valIndex, attesterPenalty)
+						if err != nil {
+							return err
+						}
+					}
 
-			for valIndex, reward := range rewardsMap {
-				attesterPenalty := reward.AttestationSourcePenalty + reward.AttestationTargetPenalty
-				if attesterPenalty > 0 {
-					err := task.saveAttesterMissEvent(willUseEpoch, valIndex, attesterPenalty)
-					if err != nil {
-						return err
+					if reward.SyncCommitteePenalty > 0 {
+						err := task.saveSyncMissEvent(willUseEpoch, valIndex, reward.SyncCommitteePenalty)
+						if err != nil {
+							return err
+						}
 					}
 				}
 
-				if reward.SyncCommitteePenalty > 0 {
-					err := task.saveSyncMissEvent(willUseEpoch, valIndex, reward.SyncCommitteePenalty)
-					if err != nil {
-						return err
-					}
-				}
-			}
-
-			return nil
-		})
+				return nil
+			})
+		}
 
 		err = g.Wait()
 		if err != nil {
