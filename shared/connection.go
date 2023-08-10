@@ -445,7 +445,7 @@ func (c *Connection) GetRewardsForEpochWithValidators(epoch uint64, valIndexs []
 	endSlot := startSlot + slotsPerEpoch - 1
 
 	g := new(errgroup.Group)
-	g.SetLimit(16)
+	g.SetLimit(8)
 
 	slotsToProposerIndex := make(map[uint64]uint64)
 	for _, pa := range proposerAssignments.Data {
