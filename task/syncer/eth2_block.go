@@ -176,8 +176,10 @@ func (task *Task) syncBlockInfoAndSlashEvent(epoch, slot, proposer uint64, syncC
 		return nil
 	}
 
-	if beaconBlock.ProposerIndex != proposer {
-		return fmt.Errorf("beaconBlock.ProposerIndex %d not euqal proposer %d", beaconBlock.ProposerIndex, proposer)
+	if !task.dev {
+		if beaconBlock.ProposerIndex != proposer {
+			return fmt.Errorf("beaconBlock.ProposerIndex %d not euqal proposer %d", beaconBlock.ProposerIndex, proposer)
+		}
 	}
 
 	// save withdrawals of nodes in our pool
