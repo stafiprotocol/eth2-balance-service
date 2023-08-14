@@ -334,6 +334,7 @@ func (task *Task) waitTxOk(txHash common.Hash) (err error) {
 func (task *Task) waitTxOkCommon(client *ethclient.Client, txHash common.Hash) (err error) {
 	defer func() {
 		if err != nil {
+			logrus.Errorf("find err: %s, will shutdown.", err.Error())
 			utils.ShutdownRequestChannel <- struct{}{}
 		}
 	}()

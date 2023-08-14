@@ -49,9 +49,12 @@ func (task *Task) syncEth2BlockInfo() error {
 		startSlot := utils.StartSlotOfEpoch(task.eth2Config, willUseEpoch)
 		endSlot := startSlot + task.eth2Config.SlotsPerEpoch - 1
 
-		proposerDuties, err := task.connection.GetValidatorProposerDuties(willUseEpoch)
-		if err != nil {
-			return err
+		proposerDuties := make(map[uint64]uint64)
+		if !task.dev { // skip on dev
+			proposerDuties, err = task.connection.GetValidatorProposerDuties(willUseEpoch)
+			if err != nil {
+				return err
+			}
 		}
 		syncCommittees, err := task.connection.GetSyncCommitteesForEpoch(willUseEpoch)
 		if err != nil {
@@ -76,7 +79,11 @@ func (task *Task) syncEth2BlockInfo() error {
 			g.Go(func() error {
 				proposer, ok := proposerDuties[slot]
 				if !ok {
-					return fmt.Errorf("slot %d proposerDuties not exit", slot)
+					if task.dev {
+						proposer = uint64(111) //use fake proposer for dev
+					} else {
+						return fmt.Errorf("slot %d proposerDuties not exit", slot)
+					}
 				}
 				return task.syncBlockInfoAndSlashEvent(willUseEpoch, slot, proposer, syncCommittees)
 			})
