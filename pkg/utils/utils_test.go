@@ -410,19 +410,36 @@ func TestStorage(t *testing.T) {
 // 0x039fc6d02bbbc0 1020101175000000
 
 func TestGetGas(t *testing.T) {
-	base, err := utils.GetGaspriceFromBeacon()
-	if err != nil {
-		t.Log(err)
-	}
-	t.Log(base)
-	client, err := ethclient.Dial("https://mainnet-rpc.wetez.io/eth/v1/601083a01bf2f40729c5f75e62042208")
+	// base, err := utils.GetGaspriceFromBeacon()
+	// if err != nil {
+	// 	t.Log(err)
+	// }
+	// t.Log(base)
+	// client, err := ethclient.Dial("https://mainnet-rpc.wetez.io/eth/v1/601083a01bf2f40729c5f75e62042208")
+	client, err := ethclient.Dial("https://goerli-rpc.stafi.io")
+	// client, err := ethclient.Dial("https://ethereum-goerli.publicnode.com")
+	// client, err := ethclient.Dial("https://goerli.infura.io/v3/b3611f564322439ab2491e04ddd55b39")
 	if err != nil {
 		t.Fatal(err)
 	}
-	gasTip, err := client.SuggestGasTipCap(context.Background())
+	withdrawPoolContract, err := withdraw.NewWithdraw(common.HexToAddress("0xE773dbe9d073dBEfdC147fbdCCB06dBD4f5AAF54"), client)
 	if err != nil {
-		t.Log(err)
+		t.Fatal(err)
 	}
 
-	t.Log(gasTip)
+	balance, err := client.BalanceAt(context.Background(), common.HexToAddress("0xE773dbe9d073dBEfdC147fbdCCB06dBD4f5AAF54"), big.NewInt(9516786))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(balance)
+
+	index, err := withdrawPoolContract.MaxClaimableWithdrawIndex(&bind.CallOpts{
+		BlockNumber: big.NewInt(9516886),
+		Context:     context.Background(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(index)
+
 }

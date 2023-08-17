@@ -150,7 +150,7 @@ func (task *Task) notifyValidatorExit() error {
 	// final total missing amount
 	finalTotalMissingAmountDeci := newTotalMissingAmountDeci.Sub(totalPendingAmountDeci)
 
-	selectVals, err := task.selectValidatorsForExit(finalTotalMissingAmountDeci, targetEpoch)
+	selectVals, err := task.mustSelectValidatorsForExit(finalTotalMissingAmountDeci, targetEpoch)
 	if err != nil {
 		return errors.Wrap(err, "selectValidatorsForExit failed")
 	}
@@ -217,8 +217,21 @@ func (task *Task) sendNotifyExitTx(preCycle, startCycle uint64, selectVal []*big
 	return task.waitTxOk(tx.Hash())
 }
 
+func (task *Task) mustSelectValidatorsForExit(totalMissingAmount decimal.Decimal, targetEpoch uint64) ([]*big.Int, error) {
+	selectedVal, err := task.selectValidatorsForExit(totalMissingAmount, targetEpoch, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(selectedVal) != 0 {
+		return selectedVal, nil
+	}
+
+	return task.selectValidatorsForExit(totalMissingAmount, targetEpoch, true)
+}
+
 // select validators to exit
-func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, targetEpoch uint64) ([]*big.Int, error) {
+func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, targetEpoch uint64, mustSelect bool) ([]*big.Int, error) {
 	notExitValidatorList, err := dao_node.GetValidatorListActiveAndNotExit(task.db)
 	if err != nil {
 		return nil, err
@@ -229,36 +242,38 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 	superValidtors := make([]*dao_node.Validator, 0)
 	solo12Validtors := make([]*dao_node.Validator, 0)
 	for _, val := range notExitValidatorList {
-		// sip if actived less than 2 months
-		if val.ActiveEpoch+60*225 > targetEpoch {
-			continue
-		}
-		uptime, err := dao_node.GetEjectorUptime(task.db, val.ValidatorIndex)
-		if err != nil {
-			if err != gorm.ErrRecordNotFound {
-				return nil, err
+		if !mustSelect {
+			// sip if actived less than 2 months
+			if val.ActiveEpoch+60*225 > targetEpoch {
+				continue
+			}
+			uptime, err := dao_node.GetEjectorUptime(task.db, val.ValidatorIndex)
+			if err != nil {
+				if err != gorm.ErrRecordNotFound {
+					return nil, err
+				} else {
+					// skip if no uptime
+					continue
+				}
 			} else {
-				// skip if no uptime
-				continue
+				// skip if no uptime within one day
+				if uptime.UploadTimestamp < uint64(time.Now().Unix()-24*60*60) {
+					continue
+				}
 			}
-		} else {
-			// skip if no uptime within one day
-			if uptime.UploadTimestamp < uint64(time.Now().Unix()-24*60*60) {
-				continue
-			}
-		}
 
-		switch val.NodeDepositAmount {
-		case utils.NodeDepositAmount0:
-			superValidtors = append(superValidtors, val)
-		case utils.NodeDepositAmount4:
-			solo4Validtors = append(solo4Validtors, val)
-		case utils.NodeDepositAmount8:
-			solo8Validtors = append(solo8Validtors, val)
-		case utils.NodeDepositAmount12:
-			solo12Validtors = append(solo12Validtors, val)
-		default:
-			return nil, fmt.Errorf("unknown nodeposit amount: %d", val.NodeDepositAmount)
+			switch val.NodeDepositAmount {
+			case utils.NodeDepositAmount0:
+				superValidtors = append(superValidtors, val)
+			case utils.NodeDepositAmount4:
+				solo4Validtors = append(solo4Validtors, val)
+			case utils.NodeDepositAmount8:
+				solo8Validtors = append(solo8Validtors, val)
+			case utils.NodeDepositAmount12:
+				solo12Validtors = append(solo12Validtors, val)
+			default:
+				return nil, fmt.Errorf("unknown nodeposit amount: %d", val.NodeDepositAmount)
+			}
 		}
 	}
 
@@ -324,9 +339,11 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 	selectVal := make([]*big.Int, 0)
 	totalExitAmountDeci := decimal.Zero
 	for _, val := range valQuene {
-		if (val.NodeType == utils.NodeTypeCommon || val.NodeType == utils.NodeTypeLight) &&
-			nodeExitNumberWithinSeconds[val.NodeAddress] >= 2 {
-			continue
+		if !mustSelect {
+			if (val.NodeType == utils.NodeTypeCommon || val.NodeType == utils.NodeTypeLight) &&
+				nodeExitNumberWithinSeconds[val.NodeAddress] >= 2 {
+				continue
+			}
 		}
 
 		userAmountDeci := decimal.NewFromInt(int64(utils.StandardEffectiveBalance) - int64(val.NodeDepositAmount)).Mul(utils.GweiDeci)
