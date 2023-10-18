@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	deposit_contract "github.com/stafiprotocol/eth2-balance-service/bindings/DepositContract"
 	distributor "github.com/stafiprotocol/eth2-balance-service/bindings/Distributor"
+	fee_pool "github.com/stafiprotocol/eth2-balance-service/bindings/FeePool"
 	light_node "github.com/stafiprotocol/eth2-balance-service/bindings/LightNode"
 	network_balances "github.com/stafiprotocol/eth2-balance-service/bindings/NetworkBalances"
 	node_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/NodeDeposit"
@@ -20,6 +21,7 @@ import (
 	staking_pool_manager "github.com/stafiprotocol/eth2-balance-service/bindings/StakingPoolManager"
 	storage "github.com/stafiprotocol/eth2-balance-service/bindings/Storage"
 	super_node "github.com/stafiprotocol/eth2-balance-service/bindings/SuperNode"
+	super_node_fee_pool "github.com/stafiprotocol/eth2-balance-service/bindings/SuperNodeFeePool"
 	user_deposit "github.com/stafiprotocol/eth2-balance-service/bindings/UserDeposit"
 	withdraw "github.com/stafiprotocol/eth2-balance-service/bindings/Withdraw"
 	"github.com/stafiprotocol/eth2-balance-service/dao"
@@ -65,6 +67,8 @@ type Task struct {
 	distributorContract        *distributor.Distributor
 	storageContract            *storage.Storage
 	stakingPoolManagerContract *staking_pool_manager.StakingPoolManger
+	lightNodeFeePoolContract   *fee_pool.FeePool
+	superNodeFeePoolContract   *super_node_fee_pool.SuperNodeFeePool
 
 	lightNodeFeePoolAddress common.Address
 	superNodeFeePoolAddress common.Address
@@ -217,12 +221,20 @@ func (task *Task) initContract() error {
 		return err
 	}
 	task.superNodeFeePoolAddress = superNodeFeePoolAddress
+	task.superNodeFeePoolContract, err = super_node_fee_pool.NewSuperNodeFeePool(task.superNodeFeePoolAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
 
 	lightNodeFeePoolAddress, err := task.getContractAddress(storageContract, "stafiFeePool")
 	if err != nil {
 		return err
 	}
 	task.lightNodeFeePoolAddress = lightNodeFeePoolAddress
+	task.lightNodeFeePoolContract, err = fee_pool.NewFeePool(task.lightNodeFeePoolAddress, task.connection.Eth1Client())
+	if err != nil {
+		return err
+	}
 
 	withdrawAddress, err := task.getContractAddress(storageContract, "stafiWithdraw")
 	if err != nil {

@@ -1,12 +1,12 @@
 package task_syncer
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math/big"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -421,30 +421,76 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 
 	proposedBlock.FeeRecipient = beaconBlock.FeeRecipient.String()
 	proposedBlock.FeeAmount = decimal.NewFromBigInt(totalFee, 0).StringFixed(0)
+
+	// find should slash through balances
 	shouldSlash := false
+	preBlockNumber := big.NewInt(int64(beaconBlock.ExecutionBlockNumber - 1))
+	curBlockNumber := big.NewInt(int64(beaconBlock.ExecutionBlockNumber))
+	lightNodePreBalance, err := task.connection.Eth1Client().BalanceAt(context.Background(), task.lightNodeFeePoolAddress, preBlockNumber)
+	if err != nil {
+		return err
+	}
+	superNodePreBalance, err := task.connection.Eth1Client().BalanceAt(context.Background(), task.superNodeFeePoolAddress, preBlockNumber)
+	if err != nil {
+		return err
+	}
+	lightNodeCurBalance, err := task.connection.Eth1Client().BalanceAt(context.Background(), task.lightNodeFeePoolAddress, curBlockNumber)
+	if err != nil {
+		return err
+	}
+	superNodeCurBalance, err := task.connection.Eth1Client().BalanceAt(context.Background(), task.superNodeFeePoolAddress, curBlockNumber)
+	if err != nil {
+		return err
+	}
+
+	decreaseAmount := big.NewInt(0)
+	curBlockNumberUint := curBlockNumber.Uint64()
+	lightNodeIter, err := task.lightNodeFeePoolContract.FilterEtherWithdrawn(&bind.FilterOpts{
+		Start:   curBlockNumberUint,
+		End:     &curBlockNumberUint,
+		Context: context.Background(),
+	}, nil, nil)
+	if err != nil {
+		return err
+	}
+	for lightNodeIter.Next() {
+		decreaseAmount = new(big.Int).Add(decreaseAmount, lightNodeIter.Event.Amount)
+	}
+
+	superNodeIter, err := task.superNodeFeePoolContract.FilterEtherWithdrawn(&bind.FilterOpts{
+		Start:   curBlockNumberUint,
+		End:     &curBlockNumberUint,
+		Context: context.Background(),
+	}, nil, nil)
+	if err != nil {
+		return err
+	}
+	for superNodeIter.Next() {
+		decreaseAmount = new(big.Int).Add(decreaseAmount, superNodeIter.Event.Amount)
+	}
+
+	totalCurBalance := new(big.Int).Add(lightNodeCurBalance, superNodeCurBalance)
+	totalPreBalance := new(big.Int).Add(lightNodePreBalance, superNodePreBalance)
+
+	totalPreBalanceAddDecrease := new(big.Int).Add(totalPreBalance, decreaseAmount)
+
 	switch {
-	case bytes.EqualFold(beaconBlock.FeeRecipient[:], task.lightNodeFeePoolAddress[:]):
-	case bytes.EqualFold(beaconBlock.FeeRecipient[:], task.superNodeFeePoolAddress[:]):
-	default:
-		// maybe mev
+	case totalCurBalance.Cmp(totalPreBalanceAddDecrease) == 0:
 		shouldSlash = true
-		block, err := task.connection.Eth1Client().BlockByNumber(context.Background(), big.NewInt(int64(beaconBlock.ExecutionBlockNumber)))
-		if err != nil {
-			return err
-		}
-		for _, tx := range block.Transactions() {
-			if tx.To() != nil {
-				if bytes.EqualFold(tx.To()[:], task.lightNodeFeePoolAddress[:]) ||
-					bytes.EqualFold(tx.To()[:], task.superNodeFeePoolAddress[:]) {
-
-					proposedBlock.FeeRecipient = tx.To().String()
-					proposedBlock.FeeAmount = decimal.NewFromBigInt(tx.Value(), 0).StringFixed(0)
-
-					shouldSlash = false
-					break
-				}
+	case totalCurBalance.Cmp(totalPreBalanceAddDecrease) < 0:
+		return fmt.Errorf("should not happend here: cur: %s, pre:%s, block: %d", totalCurBalance.String(), totalPreBalanceAddDecrease.String(), curBlockNumberUint)
+	case totalCurBalance.Cmp(totalPreBalanceAddDecrease) > 0:
+		shouldSlash = false
+		proposedBlock.FeeAmount = decimal.NewFromBigInt(new(big.Int).Sub(totalCurBalance, totalPreBalanceAddDecrease), 0).StringFixed(0)
+		if proposedBlock.FeeRecipient != task.superNodeFeePoolAddress.String() && proposedBlock.FeeRecipient != task.lightNodeFeePoolAddress.String() {
+			if validator.NodeType == utils.NodeTypeTrust || validator.NodeType == utils.NodeTypeSuper {
+				proposedBlock.FeeRecipient = task.superNodeFeePoolAddress.String()
+			} else {
+				proposedBlock.FeeRecipient = task.lightNodeFeePoolAddress.String()
 			}
 		}
+	default:
+		return fmt.Errorf("should not happend here")
 	}
 
 	err = dao_node.UpOrInProposedBlock(task.db, proposedBlock)

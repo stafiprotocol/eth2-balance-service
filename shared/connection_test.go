@@ -2,22 +2,19 @@ package shared_test
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"sort"
-	"strings"
 	"testing"
 
-	// "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/sirupsen/logrus"
+	super_node_fee_pool "github.com/stafiprotocol/eth2-balance-service/bindings/SuperNodeFeePool"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
 	"github.com/stafiprotocol/eth2-balance-service/shared"
 	"github.com/stafiprotocol/eth2-balance-service/shared/beacon"
-	"github.com/stafiprotocol/eth2-balance-service/shared/beacon/client"
-	"github.com/stafiprotocol/eth2-balance-service/shared/types"
 )
 
 func TestCallOpts(t *testing.T) {
@@ -26,6 +23,13 @@ func TestCallOpts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	r, err := c.GetELRewardForBlock(18233872)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(r)
+	return
 
 	oldopts := c.CallOpts(nil)
 	t.Log(oldopts)
@@ -56,11 +60,6 @@ func TestCallOpts(t *testing.T) {
 	// }
 	// t.Log(beaconBlock.FeeRecipient, exist,beaconBlock.ExecutionBlockNumber)
 
-	r, err := c.GetELRewardForBlock(17839368)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(r)
 }
 
 func TestBlockReward(t *testing.T) {
@@ -115,27 +114,45 @@ func TestBlockDetail(t *testing.T) {
 
 	logrus.SetLevel(logrus.DebugLevel)
 	// c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
-	c, err := shared.NewConnection("https://mainnet.infura.io/v3/4d058381a4d64d31b00a4e15df3ddb94", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
+	c, err := shared.NewConnection("https://rpc.ankr.com/eth", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	r, err := c.Eth2Client().SyncCommitteeRewards(6190497)
+
+	receipt, err := c.Eth1Client().TransactionReceipt(context.Background(), common.HexToHash("0xfa8a0554fed30627bdd4df5de7f08584c2060da91f519b27f6d84752a0023d0b"))
 	if err != nil {
-		if err != nil {
-			switch {
-			case strings.Contains(err.Error(), client.ErrBlockNotFound.Error()):
-				// block not exit, should return
-				t.Log("not exit")
-			case strings.Contains(err.Error(), client.ErrSlotPreSyncCommittees.Error()):
-				// skip err
-				t.Log("skip")
-			default:
-				t.Log(err)
-			}
-		}
 		t.Fatal(err)
 	}
-	t.Log(r)
+	t.Logf("%+v", receipt)
+
+	balance, err := c.Eth1Client().BalanceAt(context.Background(), common.HexToAddress("0x6fb2aa2443564d9430b9483b1a5eea13a522df45"), big.NewInt(18310350-1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%+v", balance)
+	balance2, err := c.Eth1Client().BalanceAt(context.Background(), common.HexToAddress("0x6fb2aa2443564d9430b9483b1a5eea13a522df45"), big.NewInt(18310350))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(balance2, new(big.Int).Sub(balance2, balance))
+
+	superNodeFeePoolContract, err := super_node_fee_pool.NewSuperNodeFeePool(common.HexToAddress("0xdC5a28885A1800b1435982954Ee9b51d2A8D3BF0"), c.Eth1Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	curBlockNumberUint := uint64(18370025)
+	superNodeIter, err := superNodeFeePoolContract.FilterEtherWithdrawn(&bind.FilterOpts{
+		Start:   curBlockNumberUint,
+		End:     &curBlockNumberUint,
+		Context: context.Background(),
+	}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for superNodeIter.Next() {
+		t.Log(superNodeIter.Event.Amount)
+	}
+
 	return
 
 	// beaconBlock, _, err := c.Eth2Client().GetBeaconBlock(5668634)
@@ -171,47 +188,6 @@ func TestBlockDetail(t *testing.T) {
 		t.Logf("%+v", rewards[val])
 	}
 	return
-
-	balance, err := c.Eth2Client().Balance(77999, 61730)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(balance)
-	return
-
-	head, err := c.Eth2BeaconHead()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	pubkey, _ := types.HexToValidatorPubkey("93ce5068db907b2e5055dbb7805a3a3d7c56c9e82d010e864403e10a61235db4795949f01302dc2ad2b6225963599ed5")
-	status, err := c.Eth2Client().GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
-		Epoch: new(uint64),
-		Slot:  &head.Slot,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(hex.EncodeToString(status.WithdrawalCredentials.Bytes()))
-	eth1Block, err := c.Eth1Client().BlockByNumber(context.Background(), big.NewInt(190767))
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, w := range eth1Block.Withdrawals() {
-		t.Logf("%+v", w)
-
-	}
-
-	beaconBlock, _, err := c.Eth2Client().GetBeaconBlock(199214)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("%+v", beaconBlock.Withdrawals)
-	config, err := c.Eth2Client().GetEth2Config()
-	timestamp := utils.StartTimestampOfEpoch(config, 10383)
-	t.Log(timestamp)
-
 }
 
 func TestBalance(t *testing.T) {
