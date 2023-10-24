@@ -114,10 +114,26 @@ func TestBlockDetail(t *testing.T) {
 
 	logrus.SetLevel(logrus.DebugLevel)
 	// c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
-	c, err := shared.NewConnection("https://rpc.ankr.com/eth", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
+	// c, err := shared.NewConnection("https://rpc.ankr.com/eth", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
+	c, err := shared.NewConnection("https://mainnet-rpc.wetez.io/eth/v1/601083a01bf2f40729c5f75e62042208", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	for i := uint64(7603808); i < 7603808+32; i++ {
+
+		b, _, err := c.GetBeaconBlock(i)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(b.ExecutionBlockNumber)
+
+		_, err = c.Eth1Client().BalanceAt(context.Background(), common.HexToAddress("0x6fb2aa2443564d9430b9483b1a5eea13a522df45"), big.NewInt(int64(b.ExecutionBlockNumber)))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	return
 
 	receipt, err := c.Eth1Client().TransactionReceipt(context.Background(), common.HexToHash("0xfa8a0554fed30627bdd4df5de7f08584c2060da91f519b27f6d84752a0023d0b"))
 	if err != nil {

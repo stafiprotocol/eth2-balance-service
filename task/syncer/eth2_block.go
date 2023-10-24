@@ -428,19 +428,19 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 	curBlockNumber := big.NewInt(int64(beaconBlock.ExecutionBlockNumber))
 	lightNodePreBalance, err := task.connection.Eth1Client().BalanceAt(context.Background(), task.lightNodeFeePoolAddress, preBlockNumber)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Eth1Client().BalanceAt: %d", preBlockNumber)
 	}
 	superNodePreBalance, err := task.connection.Eth1Client().BalanceAt(context.Background(), task.superNodeFeePoolAddress, preBlockNumber)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Eth1Client().BalanceAt: %d", preBlockNumber)
 	}
 	lightNodeCurBalance, err := task.connection.Eth1Client().BalanceAt(context.Background(), task.lightNodeFeePoolAddress, curBlockNumber)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Eth1Client().BalanceAt: %d", curBlockNumber)
 	}
 	superNodeCurBalance, err := task.connection.Eth1Client().BalanceAt(context.Background(), task.superNodeFeePoolAddress, curBlockNumber)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Eth1Client().BalanceAt: %d", curBlockNumber)
 	}
 
 	decreaseAmount := big.NewInt(0)
@@ -451,7 +451,7 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 		Context: context.Background(),
 	}, nil, nil)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "lightNodeFeePoolContract.FilterEtherWithdrawn, block: %d", curBlockNumberUint)
 	}
 	for lightNodeIter.Next() {
 		decreaseAmount = new(big.Int).Add(decreaseAmount, lightNodeIter.Event.Amount)
@@ -463,7 +463,7 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 		Context: context.Background(),
 	}, nil, nil)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "superNodeFeePoolContract.FilterEtherWithdrawn, block: %d", curBlockNumberUint)
 	}
 	for superNodeIter.Next() {
 		decreaseAmount = new(big.Int).Add(decreaseAmount, superNodeIter.Event.Amount)
