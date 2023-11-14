@@ -134,6 +134,10 @@ func (task *Task) NodeVotedDistributeWithdrawals(storage *storage.Storage, sende
 	return storage.GetBool(task.connection.CallOpts(nil), utils.DistributeWithdrawalsProposalNodeKey(sender, _dealedHeight, _userAmount, _nodeAmount, _platformAmount, _maxClaimableWithdrawIndex))
 }
 
+func (task *Task) NodeVotedSetPlatformTotalAmount(storage *storage.Storage, sender common.Address, _dealedEpoch, _platformAmount *big.Int) (bool, error) {
+	return storage.GetBool(task.connection.CallOpts(nil), utils.SetPlatformTotalAmountProposalNodeKey(sender, _dealedEpoch, _platformAmount))
+}
+
 // distributor related
 func (task *Task) NodeVotedDistributeFeePool(storage *storage.Storage, sender common.Address, _dealedHeight, _userAmount, _nodeAmount, _platformAmount *big.Int) (bool, error) {
 	return storage.GetBool(task.connection.CallOpts(nil), utils.DistributeFeeProposalNodeKey(sender, _dealedHeight, _userAmount, _nodeAmount, _platformAmount))

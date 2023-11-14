@@ -286,6 +286,16 @@ func (task *Task) voteHandler() {
 			}
 			logrus.Debug("distributeSlash end -----------\n")
 
+			logrus.Debug("setPlatformTotalAmount start -----------")
+			err = task.setPlatformTotalAmount()
+			if err != nil {
+				logrus.Warnf("setPlatformTotalAmount err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+			logrus.Debug("setPlatformTotalAmount end -----------\n")
+
 			logrus.Debug("notifyValidatorExit start -----------")
 			err = task.notifyValidatorExit()
 			if err != nil {

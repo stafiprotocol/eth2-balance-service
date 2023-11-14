@@ -30,7 +30,7 @@ var (
 
 // DistributorMetaData contains all meta data concerning the Distributor contract.
 var DistributorMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"claimableReward\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"claimableDeposit\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"enumClaimType\",\"name\":\"claimType\",\"type\":\"uint8\"}],\"name\":\"Claimed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedHeight\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"userAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"nodeAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"platformAmount\",\"type\":\"uint256\"}],\"name\":\"DistributeFee\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedHeight\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"slashAmount\",\"type\":\"uint256\"}],\"name\":\"DistributeSlash\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedHeight\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"userAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"nodeAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"platformAmount\",\"type\":\"uint256\"}],\"name\":\"DistributeSuperNodeFee\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"}],\"name\":\"ProposalExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedEpoch\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"SetMerkleRoot\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"voter\",\"type\":\"address\"}],\"name\":\"VoteProposal\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_totalRewardAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_totalExitDepositAmount\",\"type\":\"uint256\"},{\"internalType\":\"bytes32[]\",\"name\":\"_merkleProof\",\"type\":\"bytes32[]\"},{\"internalType\":\"enumClaimType\",\"name\":\"_claimType\",\"type\":\"uint8\"}],\"name\":\"claim\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_userAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_nodeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_platformAmount\",\"type\":\"uint256\"}],\"name\":\"distributeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"distributeSlashAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_userAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_nodeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_platformAmount\",\"type\":\"uint256\"}],\"name\":\"distributeSuperNodeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"distributeWithdrawals\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCurrentNodeDepositAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDistributeFeeDealedHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDistributeSlashDealedHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDistributeSuperNodeFeeDealedHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMerkleDealedEpoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMerkleRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"getTotalClaimedDeposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"getTotalClaimedReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"receiveEtherWithdrawal\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedEpoch\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"setMerkleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"updateMerkleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stafiStorageAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"claimableReward\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"claimableDeposit\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"enumClaimType\",\"name\":\"claimType\",\"type\":\"uint8\"}],\"name\":\"Claimed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedHeight\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"userAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"nodeAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"platformAmount\",\"type\":\"uint256\"}],\"name\":\"DistributeFee\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedHeight\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"slashAmount\",\"type\":\"uint256\"}],\"name\":\"DistributeSlash\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedHeight\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"userAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"nodeAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"platformAmount\",\"type\":\"uint256\"}],\"name\":\"DistributeSuperNodeFee\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"}],\"name\":\"ProposalExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedEpoch\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"SetMerkleRoot\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dealedEpoch\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"totalAmount\",\"type\":\"uint256\"}],\"name\":\"SetPlatformTotalAmount\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"proposalId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"voter\",\"type\":\"address\"}],\"name\":\"VoteProposal\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_totalRewardAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_totalExitDepositAmount\",\"type\":\"uint256\"},{\"internalType\":\"bytes32[]\",\"name\":\"_merkleProof\",\"type\":\"bytes32[]\"},{\"internalType\":\"enumClaimType\",\"name\":\"_claimType\",\"type\":\"uint8\"}],\"name\":\"claim\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_receiver\",\"type\":\"address\"}],\"name\":\"claimPlatformFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_userAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_nodeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_platformAmount\",\"type\":\"uint256\"}],\"name\":\"distributeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"distributeSlashAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedHeight\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_userAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_nodeAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_platformAmount\",\"type\":\"uint256\"}],\"name\":\"distributeSuperNodeFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"distributeWithdrawals\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCurrentNodeDepositAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDistributeFeeDealedHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDistributeSlashDealedHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDistributeSuperNodeFeeDealedHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMerkleDealedEpoch\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMerkleRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getPlatformTotalAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getPlatformTotalClaimedAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"getTotalClaimedDeposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"getTotalClaimedReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"receiveEtherWithdrawal\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedEpoch\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"setMerkleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_dealedEpoch\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_totalAmount\",\"type\":\"uint256\"}],\"name\":\"setPlatformTotalAmount\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"updateMerkleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}]",
 }
 
 // DistributorABI is the input ABI used to generate the binding from.
@@ -365,6 +365,68 @@ func (_Distributor *DistributorCallerSession) GetMerkleRoot() ([32]byte, error) 
 	return _Distributor.Contract.GetMerkleRoot(&_Distributor.CallOpts)
 }
 
+// GetPlatformTotalAmount is a free data retrieval call binding the contract method 0x9c9592b5.
+//
+// Solidity: function getPlatformTotalAmount() view returns(uint256)
+func (_Distributor *DistributorCaller) GetPlatformTotalAmount(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Distributor.contract.Call(opts, &out, "getPlatformTotalAmount")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetPlatformTotalAmount is a free data retrieval call binding the contract method 0x9c9592b5.
+//
+// Solidity: function getPlatformTotalAmount() view returns(uint256)
+func (_Distributor *DistributorSession) GetPlatformTotalAmount() (*big.Int, error) {
+	return _Distributor.Contract.GetPlatformTotalAmount(&_Distributor.CallOpts)
+}
+
+// GetPlatformTotalAmount is a free data retrieval call binding the contract method 0x9c9592b5.
+//
+// Solidity: function getPlatformTotalAmount() view returns(uint256)
+func (_Distributor *DistributorCallerSession) GetPlatformTotalAmount() (*big.Int, error) {
+	return _Distributor.Contract.GetPlatformTotalAmount(&_Distributor.CallOpts)
+}
+
+// GetPlatformTotalClaimedAmount is a free data retrieval call binding the contract method 0x22ebf326.
+//
+// Solidity: function getPlatformTotalClaimedAmount() view returns(uint256)
+func (_Distributor *DistributorCaller) GetPlatformTotalClaimedAmount(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _Distributor.contract.Call(opts, &out, "getPlatformTotalClaimedAmount")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetPlatformTotalClaimedAmount is a free data retrieval call binding the contract method 0x22ebf326.
+//
+// Solidity: function getPlatformTotalClaimedAmount() view returns(uint256)
+func (_Distributor *DistributorSession) GetPlatformTotalClaimedAmount() (*big.Int, error) {
+	return _Distributor.Contract.GetPlatformTotalClaimedAmount(&_Distributor.CallOpts)
+}
+
+// GetPlatformTotalClaimedAmount is a free data retrieval call binding the contract method 0x22ebf326.
+//
+// Solidity: function getPlatformTotalClaimedAmount() view returns(uint256)
+func (_Distributor *DistributorCallerSession) GetPlatformTotalClaimedAmount() (*big.Int, error) {
+	return _Distributor.Contract.GetPlatformTotalClaimedAmount(&_Distributor.CallOpts)
+}
+
 // GetTotalClaimedDeposit is a free data retrieval call binding the contract method 0x1a94fbdf.
 //
 // Solidity: function getTotalClaimedDeposit(address _account) view returns(uint256)
@@ -477,6 +539,27 @@ func (_Distributor *DistributorSession) Claim(_index *big.Int, _account common.A
 // Solidity: function claim(uint256 _index, address _account, uint256 _totalRewardAmount, uint256 _totalExitDepositAmount, bytes32[] _merkleProof, uint8 _claimType) returns()
 func (_Distributor *DistributorTransactorSession) Claim(_index *big.Int, _account common.Address, _totalRewardAmount *big.Int, _totalExitDepositAmount *big.Int, _merkleProof [][32]byte, _claimType uint8) (*types.Transaction, error) {
 	return _Distributor.Contract.Claim(&_Distributor.TransactOpts, _index, _account, _totalRewardAmount, _totalExitDepositAmount, _merkleProof, _claimType)
+}
+
+// ClaimPlatformFee is a paid mutator transaction binding the contract method 0x9907672a.
+//
+// Solidity: function claimPlatformFee(address _receiver) returns()
+func (_Distributor *DistributorTransactor) ClaimPlatformFee(opts *bind.TransactOpts, _receiver common.Address) (*types.Transaction, error) {
+	return _Distributor.contract.Transact(opts, "claimPlatformFee", _receiver)
+}
+
+// ClaimPlatformFee is a paid mutator transaction binding the contract method 0x9907672a.
+//
+// Solidity: function claimPlatformFee(address _receiver) returns()
+func (_Distributor *DistributorSession) ClaimPlatformFee(_receiver common.Address) (*types.Transaction, error) {
+	return _Distributor.Contract.ClaimPlatformFee(&_Distributor.TransactOpts, _receiver)
+}
+
+// ClaimPlatformFee is a paid mutator transaction binding the contract method 0x9907672a.
+//
+// Solidity: function claimPlatformFee(address _receiver) returns()
+func (_Distributor *DistributorTransactorSession) ClaimPlatformFee(_receiver common.Address) (*types.Transaction, error) {
+	return _Distributor.Contract.ClaimPlatformFee(&_Distributor.TransactOpts, _receiver)
 }
 
 // DistributeFee is a paid mutator transaction binding the contract method 0x897a980c.
@@ -603,6 +686,27 @@ func (_Distributor *DistributorSession) SetMerkleRoot(_dealedEpoch *big.Int, _me
 // Solidity: function setMerkleRoot(uint256 _dealedEpoch, bytes32 _merkleRoot) returns()
 func (_Distributor *DistributorTransactorSession) SetMerkleRoot(_dealedEpoch *big.Int, _merkleRoot [32]byte) (*types.Transaction, error) {
 	return _Distributor.Contract.SetMerkleRoot(&_Distributor.TransactOpts, _dealedEpoch, _merkleRoot)
+}
+
+// SetPlatformTotalAmount is a paid mutator transaction binding the contract method 0x828bb226.
+//
+// Solidity: function setPlatformTotalAmount(uint256 _dealedEpoch, uint256 _totalAmount) returns()
+func (_Distributor *DistributorTransactor) SetPlatformTotalAmount(opts *bind.TransactOpts, _dealedEpoch *big.Int, _totalAmount *big.Int) (*types.Transaction, error) {
+	return _Distributor.contract.Transact(opts, "setPlatformTotalAmount", _dealedEpoch, _totalAmount)
+}
+
+// SetPlatformTotalAmount is a paid mutator transaction binding the contract method 0x828bb226.
+//
+// Solidity: function setPlatformTotalAmount(uint256 _dealedEpoch, uint256 _totalAmount) returns()
+func (_Distributor *DistributorSession) SetPlatformTotalAmount(_dealedEpoch *big.Int, _totalAmount *big.Int) (*types.Transaction, error) {
+	return _Distributor.Contract.SetPlatformTotalAmount(&_Distributor.TransactOpts, _dealedEpoch, _totalAmount)
+}
+
+// SetPlatformTotalAmount is a paid mutator transaction binding the contract method 0x828bb226.
+//
+// Solidity: function setPlatformTotalAmount(uint256 _dealedEpoch, uint256 _totalAmount) returns()
+func (_Distributor *DistributorTransactorSession) SetPlatformTotalAmount(_dealedEpoch *big.Int, _totalAmount *big.Int) (*types.Transaction, error) {
+	return _Distributor.Contract.SetPlatformTotalAmount(&_Distributor.TransactOpts, _dealedEpoch, _totalAmount)
 }
 
 // UpdateMerkleRoot is a paid mutator transaction binding the contract method 0x4783f0ef.
@@ -1467,6 +1571,141 @@ func (_Distributor *DistributorFilterer) WatchSetMerkleRoot(opts *bind.WatchOpts
 func (_Distributor *DistributorFilterer) ParseSetMerkleRoot(log types.Log) (*DistributorSetMerkleRoot, error) {
 	event := new(DistributorSetMerkleRoot)
 	if err := _Distributor.contract.UnpackLog(event, "SetMerkleRoot", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// DistributorSetPlatformTotalAmountIterator is returned from FilterSetPlatformTotalAmount and is used to iterate over the raw logs and unpacked data for SetPlatformTotalAmount events raised by the Distributor contract.
+type DistributorSetPlatformTotalAmountIterator struct {
+	Event *DistributorSetPlatformTotalAmount // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DistributorSetPlatformTotalAmountIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DistributorSetPlatformTotalAmount)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DistributorSetPlatformTotalAmount)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DistributorSetPlatformTotalAmountIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DistributorSetPlatformTotalAmountIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DistributorSetPlatformTotalAmount represents a SetPlatformTotalAmount event raised by the Distributor contract.
+type DistributorSetPlatformTotalAmount struct {
+	DealedEpoch *big.Int
+	TotalAmount *big.Int
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterSetPlatformTotalAmount is a free log retrieval operation binding the contract event 0x80e6f836d38a6e36038f84a2fd7959cf8b24a756c66ef47152a131a5cd6178c7.
+//
+// Solidity: event SetPlatformTotalAmount(uint256 dealedEpoch, uint256 totalAmount)
+func (_Distributor *DistributorFilterer) FilterSetPlatformTotalAmount(opts *bind.FilterOpts) (*DistributorSetPlatformTotalAmountIterator, error) {
+
+	logs, sub, err := _Distributor.contract.FilterLogs(opts, "SetPlatformTotalAmount")
+	if err != nil {
+		return nil, err
+	}
+	return &DistributorSetPlatformTotalAmountIterator{contract: _Distributor.contract, event: "SetPlatformTotalAmount", logs: logs, sub: sub}, nil
+}
+
+// WatchSetPlatformTotalAmount is a free log subscription operation binding the contract event 0x80e6f836d38a6e36038f84a2fd7959cf8b24a756c66ef47152a131a5cd6178c7.
+//
+// Solidity: event SetPlatformTotalAmount(uint256 dealedEpoch, uint256 totalAmount)
+func (_Distributor *DistributorFilterer) WatchSetPlatformTotalAmount(opts *bind.WatchOpts, sink chan<- *DistributorSetPlatformTotalAmount) (event.Subscription, error) {
+
+	logs, sub, err := _Distributor.contract.WatchLogs(opts, "SetPlatformTotalAmount")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DistributorSetPlatformTotalAmount)
+				if err := _Distributor.contract.UnpackLog(event, "SetPlatformTotalAmount", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseSetPlatformTotalAmount is a log parse operation binding the contract event 0x80e6f836d38a6e36038f84a2fd7959cf8b24a756c66ef47152a131a5cd6178c7.
+//
+// Solidity: event SetPlatformTotalAmount(uint256 dealedEpoch, uint256 totalAmount)
+func (_Distributor *DistributorFilterer) ParseSetPlatformTotalAmount(log types.Log) (*DistributorSetPlatformTotalAmount, error) {
+	event := new(DistributorSetPlatformTotalAmount)
+	if err := _Distributor.contract.UnpackLog(event, "SetPlatformTotalAmount", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

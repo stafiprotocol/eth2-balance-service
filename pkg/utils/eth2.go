@@ -394,6 +394,11 @@ func DistributeWithdrawalsProposalNodeKey(sender common.Address, _dealedHeight, 
 	return StafiWithdrawProposalNodeKey(sender, proposalId)
 }
 
+func SetPlatformTotalAmountProposalNodeKey(sender common.Address, dealedEpoch, _platformAmount *big.Int) [32]byte {
+	proposalId := crypto.Keccak256Hash([]byte("setPlatformTotalAmount"), common.LeftPadBytes(dealedEpoch.Bytes(), 32), common.LeftPadBytes(_platformAmount.Bytes(), 32))
+	return StafiWithdrawProposalNodeKey(sender, proposalId)
+}
+
 func StafiDistributorProposalNodeKey(sender common.Address, proposalId [32]byte) [32]byte {
 	return crypto.Keccak256Hash([]byte("stafiDistributor.proposal.node.key"), proposalId[:], sender.Bytes())
 }
