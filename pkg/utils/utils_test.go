@@ -279,6 +279,7 @@ func TestGetUserNodePlatformReward(t *testing.T) {
 
 func TestStorage(t *testing.T) {
 	client, err := ethclient.Dial("https://mainnet-rpc.wetez.io/eth/v1/601083a01bf2f40729c5f75e62042208")
+	// client, err := ethclient.Dial("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -289,16 +290,19 @@ func TestStorage(t *testing.T) {
 	}
 	reserveEthProposalId := utils.ReserveEthForWithdrawProposalId(big.NewInt(19473))
 
+	end := uint64(18654933)
 	iter, err := withdrawPoolContract.FilterProposalExecuted(&bind.FilterOpts{
 		Context: context.Background(),
+		Start:   18654018,
+		End:     &end,
 	}, [][32]byte{reserveEthProposalId})
 
 	if err != nil {
-		t.Log(err)
+		t.Fatal(err)
 	}
 
 	for iter.Next() {
-		t.Log(iter.Event.ProposalId)
+		t.Fatal(iter.Event.ProposalId)
 	}
 	return
 	s, err := storage.NewStorage(common.HexToAddress("0x126d3C08Fb282d5417793B7677E3F7DA8347A384"), client)
