@@ -160,20 +160,6 @@ func (task *Task) syncValidatorLatestInfo() error {
 				return fmt.Errorf("unsupported validator status %d", status.Status)
 			}
 
-			// cal total withdrawal
-			totalWithdrawal, err := dao_node.GetValidatorTotalWithdrawalBeforeSlot(task.db, validator.ValidatorIndex, utils.StartSlotOfEpoch(task.eth2Config, finalEpoch))
-			if err != nil {
-				return err
-			}
-			validator.TotalWithdrawal = totalWithdrawal
-
-			// cal total fee
-			totalFee, err := task.calTotalFeeOfValidator(validator.ValidatorIndex, validator.NodeType, finalEpoch)
-			if err != nil {
-				return err
-			}
-			validator.TotalFee = totalFee
-
 			err = dao_node.UpOrInValidator(task.db, validator)
 			if err != nil {
 				return err
@@ -233,6 +219,26 @@ func (task *Task) syncValidatorLatestInfo() error {
 		return err
 	}
 	for _, val := range allValidatorList {
+		if val.ValidatorIndex > 0 {
+			// cal total withdrawal
+			totalWithdrawal, err := dao_node.GetValidatorTotalWithdrawalBeforeSlot(task.db, val.ValidatorIndex, utils.StartSlotOfEpoch(task.eth2Config, finalEpoch))
+			if err != nil {
+				return err
+			}
+			val.TotalWithdrawal = totalWithdrawal
+
+			// cal total fee
+			totalFee, err := task.calTotalFeeOfValidator(val.ValidatorIndex, val.NodeType, finalEpoch)
+			if err != nil {
+				return err
+			}
+			val.TotalFee = totalFee
+			err = dao_node.UpOrInValidator(task.db, val)
+			if err != nil {
+				return err
+			}
+		}
+
 		slashAmount, err := dao_node.GetTotalSlashAmountOfValidator(task.db, val.ValidatorIndex, task.slashStartEpoch)
 		if err != nil {
 			return err
