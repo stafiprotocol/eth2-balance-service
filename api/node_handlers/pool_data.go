@@ -129,6 +129,9 @@ func (h *Handler) HandleGetPoolData(c *gin.Context) {
 
 				totalPlatformEth += v1PlatformDeci.BigInt().Uint64()
 				totalPlatformEth += v2PlatformDeci.BigInt().Uint64()
+
+				logrus.Debug(fmt.Printf("api cal totalPlatformEth: %d, validator: %d total: %d Balance: %d  TotalFee: %d  TotalWithdrawal: %d v1PlatformDeci: %s v2PlatformDeci: %s",
+					totalPlatformEth, l.ValidatorIndex, total, l.Balance, l.TotalFee, l.TotalWithdrawal, v1PlatformDeci.StringFixed(0), v2PlatformDeci.StringFixed(0)))
 			}
 		}
 
