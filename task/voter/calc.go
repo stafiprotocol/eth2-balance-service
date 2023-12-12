@@ -11,7 +11,7 @@ import (
 )
 
 // return unwithdrawed stakingEth and stakingEth + reward (Gwei)
-func (task *Task) getUserEthInfoFromValidatorBalance(validator *dao_node.Validator, targetEpoch uint64) (userStakingEth uint64, userAllEth uint64, err error) {
+func (task *Task) getUserEthInfoFromValidatorBalance(validator *dao_node.Validator, targetEpoch, targetBlock uint64) (userStakingEth uint64, userAllEth uint64, err error) {
 	switch validator.Status {
 	case utils.ValidatorStatusDeposited, utils.ValidatorStatusWithdrawMatch, utils.ValidatorStatusWithdrawUnmatch, utils.ValidatorStatusOffBoard, utils.ValidatorStatusOffBoardCanWithdraw, utils.ValidatorStatusOffBoardWithdrawed:
 		switch validator.NodeType {
@@ -25,11 +25,34 @@ func (task *Task) getUserEthInfoFromValidatorBalance(validator *dao_node.Validat
 		}
 
 	case utils.ValidatorStatusStaked, utils.ValidatorStatusWaiting:
+		if validator.StakeBlockHeight > targetBlock {
+			switch validator.NodeType {
+			case utils.NodeTypeLight:
+				return 0, 0, nil
+			case utils.NodeTypeSuper:
+				return utils.StandardSuperNodeFakeDepositBalance, utils.StandardSuperNodeFakeDepositBalance, nil
+			default:
+				// common node and trust node should not happen here
+				return 0, 0, fmt.Errorf("unknow node type: %d", validator.NodeType)
+			}
+		}
 		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
 		return userDepositBalance, userDepositBalance, nil
 
 	case utils.ValidatorStatusActive, utils.ValidatorStatusExited, utils.ValidatorStatusWithdrawable, utils.ValidatorStatusWithdrawDone,
 		utils.ValidatorStatusActiveSlash, utils.ValidatorStatusExitedSlash, utils.ValidatorStatusWithdrawableSlash, utils.ValidatorStatusWithdrawDoneSlash:
+		
+		if validator.StakeBlockHeight > targetBlock {
+			switch validator.NodeType {
+			case utils.NodeTypeLight:
+				return 0, 0, nil
+			case utils.NodeTypeSuper:
+				return utils.StandardSuperNodeFakeDepositBalance, utils.StandardSuperNodeFakeDepositBalance, nil
+			default:
+				// common node and trust node should not happen here
+				return 0, 0, fmt.Errorf("unknow node type: %d", validator.NodeType)
+			}
+		}
 
 		userDepositBalance := utils.StandardEffectiveBalance - validator.NodeDepositAmount
 		// case: activeEpoch 155747 > targetEpoch 155700

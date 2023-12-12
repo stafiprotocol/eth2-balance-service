@@ -14,7 +14,7 @@ import (
 
 const balancesEpochOffset = uint64(1e10)
 
-var maxRateChangeDeci = decimal.NewFromInt(22e14) //0.0022
+var maxRateChangeDeci = decimal.NewFromInt(11e14) //0.0011
 
 // update rate every rewardEpochInterval(default: 75 epoch)
 func (task *Task) voteRate() error {
@@ -61,7 +61,7 @@ func (task *Task) voteRate() error {
 	totalUserEthFromValidator := uint64(0)
 	totalStakingEthFromValidator := uint64(0)
 	for _, validator := range validatorDepositedList {
-		userStakingEth, userAllEth, err := task.getUserEthInfoFromValidatorBalance(validator, targetEpoch)
+		userStakingEth, userAllEth, err := task.getUserEthInfoFromValidatorBalance(validator, targetEpoch, targetEth1BlockHeight)
 		if err != nil {
 			return err
 		}
