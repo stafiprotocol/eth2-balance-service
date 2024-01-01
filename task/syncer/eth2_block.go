@@ -443,7 +443,7 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 		return errors.Wrapf(err, "Eth1Client().BalanceAt: %d", curBlockNumber)
 	}
 
-	decreaseAmount := big.NewInt(0)
+	lightNodeDecreaseAmount := big.NewInt(0)
 	curBlockNumberUint := curBlockNumber.Uint64()
 	lightNodeIter, err := task.lightNodeFeePoolContract.FilterEtherWithdrawn(&bind.FilterOpts{
 		Start:   curBlockNumberUint,
@@ -454,9 +454,10 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 		return errors.Wrapf(err, "lightNodeFeePoolContract.FilterEtherWithdrawn, block: %d", curBlockNumberUint)
 	}
 	for lightNodeIter.Next() {
-		decreaseAmount = new(big.Int).Add(decreaseAmount, lightNodeIter.Event.Amount)
+		lightNodeDecreaseAmount = new(big.Int).Add(lightNodeDecreaseAmount, lightNodeIter.Event.Amount)
 	}
 
+	superNodeDecreaseAmount := big.NewInt(0)
 	superNodeIter, err := task.superNodeFeePoolContract.FilterEtherWithdrawn(&bind.FilterOpts{
 		Start:   curBlockNumberUint,
 		End:     &curBlockNumberUint,
@@ -466,13 +467,15 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 		return errors.Wrapf(err, "superNodeFeePoolContract.FilterEtherWithdrawn, block: %d", curBlockNumberUint)
 	}
 	for superNodeIter.Next() {
-		decreaseAmount = new(big.Int).Add(decreaseAmount, superNodeIter.Event.Amount)
+		superNodeDecreaseAmount = new(big.Int).Add(superNodeDecreaseAmount, superNodeIter.Event.Amount)
 	}
 
 	totalCurBalance := new(big.Int).Add(lightNodeCurBalance, superNodeCurBalance)
 	totalPreBalance := new(big.Int).Add(lightNodePreBalance, superNodePreBalance)
 
-	totalPreBalanceAddDecrease := new(big.Int).Add(totalPreBalance, decreaseAmount)
+	totalDecreaseAmount := new(big.Int).Add(lightNodeDecreaseAmount, superNodeDecreaseAmount)
+	totalPreBalanceAddDecrease := new(big.Int).Add(totalPreBalance, totalDecreaseAmount)
+	superNodePreBalanceAddDecrease := new(big.Int).Add(superNodePreBalance, superNodeDecreaseAmount)
 
 	switch {
 	case totalCurBalance.Cmp(totalPreBalanceAddDecrease) == 0:
@@ -483,7 +486,7 @@ func (task *Task) saveProposedBlockAndRecipientUnMatchEvent(slot, epoch uint64, 
 		shouldSlash = false
 		proposedBlock.FeeAmount = decimal.NewFromBigInt(new(big.Int).Sub(totalCurBalance, totalPreBalanceAddDecrease), 0).StringFixed(0)
 		if proposedBlock.FeeRecipient != task.superNodeFeePoolAddress.String() && proposedBlock.FeeRecipient != task.lightNodeFeePoolAddress.String() {
-			if validator.NodeType == utils.NodeTypeTrust || validator.NodeType == utils.NodeTypeSuper {
+			if superNodeCurBalance.Cmp(superNodePreBalanceAddDecrease) > 0 {
 				proposedBlock.FeeRecipient = task.superNodeFeePoolAddress.String()
 			} else {
 				proposedBlock.FeeRecipient = task.lightNodeFeePoolAddress.String()

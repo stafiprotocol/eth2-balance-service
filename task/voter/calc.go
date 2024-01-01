@@ -41,7 +41,7 @@ func (task *Task) getUserEthInfoFromValidatorBalance(validator *dao_node.Validat
 
 	case utils.ValidatorStatusActive, utils.ValidatorStatusExited, utils.ValidatorStatusWithdrawable, utils.ValidatorStatusWithdrawDone,
 		utils.ValidatorStatusActiveSlash, utils.ValidatorStatusExitedSlash, utils.ValidatorStatusWithdrawableSlash, utils.ValidatorStatusWithdrawDoneSlash:
-		
+
 		if validator.StakeBlockHeight > targetBlock {
 			switch validator.NodeType {
 			case utils.NodeTypeLight:
