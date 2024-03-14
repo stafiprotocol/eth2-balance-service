@@ -18,8 +18,8 @@ import (
 )
 
 func TestCallOpts(t *testing.T) {
-	c, err := shared.NewConnection("https://mainnet-rpc.wetez.io/eth/v1/601083a01bf2f40729c5f75e62042208", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
-	// c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
+	// c, err := shared.NewConnection("https://mainnet-rpc.wetez.io/eth/v1/601083a01bf2f40729c5f75e62042208", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
+	c, err := shared.NewConnection("https://eth-mainnet.g.alchemy.com/v2/3whje5yFZZxg9BqsldHTRku-VXWuf88E", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
