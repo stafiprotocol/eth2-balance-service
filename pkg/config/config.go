@@ -22,6 +22,7 @@ type Config struct {
 	UnstakingStartTimestamp uint64 // used by api server
 	RunClientStartTimestamp uint64 // used by api server
 	StafiInfoEndpoint       string // used by api server
+	ValidatorWhiteList      []uint64
 
 	EraCount uint64 // used for statistic
 

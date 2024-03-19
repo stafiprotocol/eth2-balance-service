@@ -49,6 +49,8 @@ type Task struct {
 	distributeSuperNodeFeeInitDealedHeight int64
 	distributeWithdrawalInitDealedHeight   int64
 
+	validatorWhiteList map[uint64]bool
+
 	dev bool
 
 	// need init on start()
@@ -95,6 +97,11 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		return nil, fmt.Errorf("max gas price is zero")
 	}
 
+	validatorWhiteList := make(map[uint64]bool)
+	for _, value := range cfg.ValidatorWhiteList {
+		validatorWhiteList[value] = true
+	}
+
 	s := &Task{
 		taskTicker:             15,
 		stop:                   make(chan struct{}),
@@ -115,6 +122,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb, keyPair *secp256k1.Keypair) (*T
 		distributeFeeInitDealedHeight:          16638921,
 		distributeSuperNodeFeeInitDealedHeight: 17024852,
 		distributeWithdrawalInitDealedHeight:   1,
+		validatorWhiteList:                     validatorWhiteList,
 	}
 
 	return s, nil

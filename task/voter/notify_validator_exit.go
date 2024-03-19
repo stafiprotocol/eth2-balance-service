@@ -242,6 +242,11 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 	superValidtors := make([]*dao_node.Validator, 0)
 	solo12Validtors := make([]*dao_node.Validator, 0)
 	for _, val := range notExitValidatorList {
+		// skip white list
+		if task.validatorWhiteList[val.ValidatorIndex] {
+			continue
+		}
+
 		if !mustSelect {
 			// sip if actived less than 2 months
 			if val.ActiveEpoch+60*225 > targetEpoch {
