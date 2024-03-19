@@ -97,7 +97,10 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 					return errors.Wrap(err, "fetchWithdrawContractEvents GetValidatorExitElection failed")
 				}
 			} else {
-				return fmt.Errorf("fetchWithdrawContractEvents ValidatorExitElection %d already exist", validator.Int64())
+				if election.WithdrawCycle != iterElection.Event.WithdrawCycle.Uint64() {
+					return fmt.Errorf("fetchWithdrawContractEvents ValidatorExitElection %d already exist, elect cycle: %d, current cycle: %d",
+						validator.Int64(), election.WithdrawCycle, iterElection.Event.WithdrawCycle.Uint64())
+				}
 			}
 
 			election.NotifyBlockNumber = iterElection.Event.Raw.BlockNumber
