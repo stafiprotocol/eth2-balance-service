@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/dao/staker"
 	"gorm.io/gorm"
@@ -98,7 +99,7 @@ func (task *Task) fetchWithdrawContractEvents(start, end uint64) error {
 				}
 			} else {
 				if election.WithdrawCycle != iterElection.Event.WithdrawCycle.Uint64() {
-					return fmt.Errorf("fetchWithdrawContractEvents ValidatorExitElection %d already exist, elect cycle: %d, current cycle: %d",
+					logrus.Warnf("fetchWithdrawContractEvents ValidatorExitElection %d already exist, elect cycle: %d, current cycle: %d",
 						validator.Int64(), election.WithdrawCycle, iterElection.Event.WithdrawCycle.Uint64())
 				}
 			}
