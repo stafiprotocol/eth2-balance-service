@@ -273,10 +273,13 @@ func (task *Task) selectValidatorsForExit(totalMissingAmount decimal.Decimal, ta
 		case utils.NodeDepositAmount0:
 			superValidtors = append(superValidtors, val)
 		case utils.NodeDepositAmount4:
+			continue
 			solo4Validtors = append(solo4Validtors, val)
 		case utils.NodeDepositAmount8:
+			continue
 			solo8Validtors = append(solo8Validtors, val)
 		case utils.NodeDepositAmount12:
+			continue
 			solo12Validtors = append(solo12Validtors, val)
 		default:
 			return nil, fmt.Errorf("unknown nodeposit amount: %d", val.NodeDepositAmount)
