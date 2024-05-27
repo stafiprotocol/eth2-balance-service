@@ -391,6 +391,17 @@ func (task *Task) waitTxOkCommon(client *ethclient.Client, txHash common.Hash) (
 						return fmt.Errorf("TransactionReceipt %s reach retry limit", txHash.String())
 					}
 
+					latestBlock, err := client.BlockNumber(context.Background())
+					if err != nil {
+						logrus.WithFields(logrus.Fields{
+							"err": err.Error(),
+						}).Warn("BlockNumber")
+
+						time.Sleep(utils.RetryInterval)
+						subRetry++
+						continue
+					}
+
 					receipt, err = client.TransactionReceipt(context.Background(), txHash)
 					if err != nil {
 						logrus.WithFields(logrus.Fields{
@@ -402,6 +413,12 @@ func (task *Task) waitTxOkCommon(client *ethclient.Client, txHash common.Hash) (
 						subRetry++
 						continue
 					}
+
+					if receipt.BlockNumber.Uint64()+3 > latestBlock {
+						time.Sleep(utils.RetryInterval)
+						continue
+					}
+
 					break
 				}
 
