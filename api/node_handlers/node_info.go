@@ -83,7 +83,6 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	}
 
 	selfDepositedEth := uint64(0)
-	selfRewardEth := uint64(0)
 	totalManagedEth := uint64(0)
 
 	pendingCount := int64(0)
@@ -92,6 +91,7 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 
 	valIndexList := make([]uint64, 0)
 	slashCount := int64(0)
+
 	for _, l := range totalList {
 		valIndexList = append(valIndexList, l.ValidatorIndex)
 		if l.EverSlashed == utils.ValidatorEverSlashedTrue {
@@ -124,11 +124,6 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 			exitedCount++
 		}
 
-		// cal self reward
-		totalReward := utils.GetValidatorTotalReward(l.Balance, l.TotalWithdrawal, l.TotalFee)
-		_, nodeReward, _ := utils.GetUserNodePlatformRewardV2(l.NodeDepositAmount, decimal.NewFromInt(int64(totalReward)))
-		selfRewardEth += nodeReward.BigInt().Uint64()
-
 		// balance is zero after exited
 		totalManagedEth += utils.GetNodeManagedEth(l.NodeDepositAmount, l.Balance, l.Status)
 
@@ -137,8 +132,45 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 			"nodeDepositAmount": l.NodeDepositAmount,
 			"effectiveBalance":  l.EffectiveBalance,
 			"nodeType":          l.NodeType,
-			"selfRewardEth":     selfRewardEth,
 		}).Debug("GetNodeReward")
+	}
+
+	valBalanceAtRewardV1EndEpoch, err := dao_node.GetValidatorsBalanceListByEpoch(h.db, utils.RewardV1EndEpoch, valIndexList)
+	if err != nil {
+		utils.Err(c, utils.CodeInternalErr, err.Error())
+		logrus.Errorf("GetValidatorsBalanceListByEpoch err %v", err)
+		return
+	}
+	valBalanceAtRewardV1EndEpochMap := make(map[uint64]*dao_node.ValidatorBalance)
+	for _, val := range valBalanceAtRewardV1EndEpoch {
+		valBalanceAtRewardV1EndEpochMap[val.ValidatorIndex] = val
+	}
+
+	overallRewardAmountDeci := decimal.Zero
+	for _, val := range totalList {
+		// cal overall
+		validatorTotalReward := utils.GetValidatorTotalReward(val.Balance, val.TotalWithdrawal, val.TotalFee)
+
+		// ---------calc total self reward by two sections
+		validatorRewardV1TotalReward := uint64(0)
+		validatorRewardV2TotalReward := uint64(0)
+		valBalanceAtRewardV1EndEpoch, exist := valBalanceAtRewardV1EndEpochMap[val.ValidatorIndex]
+		if exist {
+			validatorRewardV1TotalReward = utils.GetValidatorTotalReward(valBalanceAtRewardV1EndEpoch.Balance, valBalanceAtRewardV1EndEpoch.TotalWithdrawal, valBalanceAtRewardV1EndEpoch.TotalFee)
+		}
+		// maybe not exist
+		// this case validatorRewardV1TotalReward = 0
+
+		if validatorTotalReward > validatorRewardV1TotalReward {
+			validatorRewardV2TotalReward = validatorTotalReward - validatorRewardV1TotalReward
+		}
+
+		_, nodeRewardV1OfThisValidator, _ := utils.GetUserNodePlatformRewardV1(val.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV1TotalReward)))
+		_, nodeRewardV2OfThisValidator, _ := utils.GetUserNodePlatformRewardV2(val.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV2TotalReward)))
+
+		nodeRewardOfThisValidatorDeci := nodeRewardV1OfThisValidator.Add(nodeRewardV2OfThisValidator)
+
+		overallRewardAmountDeci = overallRewardAmountDeci.Add(nodeRewardOfThisValidatorDeci)
 	}
 
 	totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(h.db, valIndexList, utils.CacheSlashStartEpoch)
@@ -166,6 +198,7 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		logrus.Errorf("dao.GetPoolInfo err %v", err)
 		return
 	}
+
 	ethPriceDeci, err := decimal.NewFromString(poolInfo.EthPrice)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -177,19 +210,19 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	logrus.WithFields(logrus.Fields{
 		"list":             list,
 		"selfDepositedEth": selfDepositedEth,
-		"selfRewardEth":    selfRewardEth,
+		"selfRewardEth":    overallRewardAmountDeci.String(),
 		"totalmanagedEth":  totalManagedEth,
 		"ethPrice":         ethPrice,
 	}).Debug("rsp info")
 
 	rsp.TotalCount = totalCount
 	rsp.SelfDepositedEth = decimal.NewFromInt(int64(selfDepositedEth)).Mul(utils.GweiDeci).StringFixed(0)
-	rsp.SelfRewardEth = decimal.NewFromInt(int64(selfRewardEth)).Mul(utils.GweiDeci).StringFixed(0)
+	rsp.SelfRewardEth = overallRewardAmountDeci.Mul(utils.GweiDeci).StringFixed(0)
 	rsp.TotalManagedEth = decimal.NewFromInt(int64(totalManagedEth)).Mul(utils.GweiDeci).StringFixed(0)
 	rsp.TotalSlashAmount = decimal.NewFromInt(int64(totalSlashAmount)).Mul(utils.GweiDeci).StringFixed(0)
 	rsp.EthPrice = ethPrice
-	for _, l := range list {
 
+	for _, l := range list {
 		rsp.List = append(rsp.List, ResPubkey{
 			Status:      l.Status,
 			Pubkey:      l.Pubkey,
