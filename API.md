@@ -5,14 +5,14 @@
 response status code:
 
 ```go
-	CodeParamParseErr            = "80001"
-	CodeSymbolErr                = "80002"
-	CodeInternalErr              = "80003"
-	CodeParamErr                 = "80004"
-	CodePriceEmptyErr            = "80005"
-	CodeAddressNotExist          = "80005"
-	CodeValidatorNotExist        = "80006"
-	CodeStakerUnstakingPlanExist = "80007"
+ CodeParamParseErr            = "80001"
+ CodeSymbolErr                = "80002"
+ CodeInternalErr              = "80003"
+ CodeParamErr                 = "80004"
+ CodePriceEmptyErr            = "80005"
+ CodeAddressNotExist          = "80005"
+ CodeValidatorNotExist        = "80006"
+ CodeStakerUnstakingPlanExist = "80007"
 ```
 
 validator status detail:
@@ -29,7 +29,8 @@ slash : 51 52 53 54 55
 
 ### (1) description
 
-*  get node info
+* get node info
+
 ### (2) path
 
 * /reth/v1/nodeInfo
@@ -38,7 +39,7 @@ slash : 51 52 53 54 55
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 * data format: application/json
 * data detail:
@@ -50,12 +51,11 @@ slash : 51 52 53 54 55
 | statusList  | number list | status list maybe include: {9 active 10 exited 20 pending 30 slash}                             |
 | pageIndex   | number      | page index                                                                                      |
 | pageCount   | number      | page count                                                                                      |
- 
 
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2          | grade 3     | type   | must exist? | encode type | description                               |
 | :------ | :--------------- | :---------- | :----- | :---------- | :---------- | :---------------------------------------- |
@@ -65,6 +65,7 @@ slash : 51 52 53 54 55
 |         | selfDepositedEth | N/A         | string | Yes         | null        | decimal format string, self deposited eth |
 |         | totalManagedEth  | N/A         | string | Yes         | null        | decimal format string, total managed eth  |
 |         | selfRewardEth    | N/A         | string | Yes         | null        | decimal format string, self node reward   |
+|         | totalRewardAmount| N/A         | string | Yes         |null         | total reward amount decimals 18           |
 |         | totalSlashAmount | N/A         | string | Yes         | null        | decimal format string, total slash amount |
 |         | ethPrice         | N/A         | number | Yes         | null        | eth price                                 |
 |         | pendingCount     | N/A         | number | Yes         | null        | node total pending count                  |
@@ -77,12 +78,11 @@ slash : 51 52 53 54 55
 |         |                  | status      | number | Yes         | null        | see notice                                |
 |         |                  | everSlashed | bool   | Yes         | null        | ever been slashed                         |
 
-
 ## 2. reward info
 
 ### (1) description
 
-*  get node reward info
+* get node reward info
 
 ### (2) path
 
@@ -92,7 +92,7 @@ slash : 51 52 53 54 55
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 * data format: application/json
 * data detail:
@@ -104,11 +104,10 @@ slash : 51 52 53 54 55
 | pageIndex      | number | page index                |
 | pageCount      | number | page count                |
 
-
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2          | grade 3        | type        | must exist? | encode type | description                                                             |
 | :------ | :--------------- | :------------- | :---------- | :---------- | :---------- | :---------------------------------------------------------------------- |
@@ -133,7 +132,7 @@ slash : 51 52 53 54 55
 
 ### (1) description
 
-*  get pubkey detail
+* get pubkey detail
 
 ### (2) path
 
@@ -143,7 +142,7 @@ slash : 51 52 53 54 55
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 * data format: application/json
 * data detail:
@@ -155,11 +154,10 @@ slash : 51 52 53 54 55
 | pageIndex      | number | page index, start from 0  |
 | pageCount      | number | page count                |
 
-
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2           | grade 3        | type        | must exist? | encode type | description                                                                                             |
 | :------ | :---------------- | :------------- | :---------- | :---------- | :---------- | :------------------------------------------------------------------------------------------------------ |
@@ -194,7 +192,7 @@ slash : 51 52 53 54 55
 
 ### (1) description
 
-*  get pool data
+* get pool data
 
 ### (2) path
 
@@ -204,14 +202,14 @@ slash : 51 52 53 54 55
 
 * get
 
-### (4) request payload 
+### (4) request payload
 
 no
 
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2           | grade 3 | type   | must exist? | encode type | description           |
 | :------ | :---------------- | :------ | :----- | :---------- | :---------- | :-------------------- |
@@ -234,7 +232,7 @@ no
 
 ### (1) description
 
-*  get gas price
+* get gas price
 
 ### (2) path
 
@@ -244,14 +242,14 @@ no
 
 * get
 
-### (4) request payload 
+### (4) request payload
 
 no
 
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2     | grade 3 | type   | must exist? | encode type | description |
 | :------ | :---------- | :------ | :----- | :---------- | :---------- | :---------- |
@@ -262,13 +260,11 @@ no
 |         | priorityFee | N/A     | number | Yes         | null        | number      |
 |         | ethPrice    | N/A     | number | Yes         | null        | number      |
 
-
-
 ## 6. pubkey status list
 
 ### (1) description
 
-*  get pubkey status list
+* get pubkey status list
 
 ### (2) path
 
@@ -278,7 +274,7 @@ no
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 * data format: application/json
 * data detail:
@@ -287,11 +283,10 @@ no
 | :--------- | :---------- | :---------------------- |
 | pubkeyList | string list | pubkey list, hex string |
 
-
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2               | grade 3 | type        | must exist? | encode type | description                      |
 | :------ | :-------------------- | :------ | :---------- | :---------- | :---------- | :------------------------------- |
@@ -300,6 +295,7 @@ no
 | data    | N/A                   | N/A     | object      | Yes         | null        | data                             |
 |         | statusList            | N/A     | number list | Yes         | null        | see notice                       |
 |         | nodeDepositAmountList | N/A     | string list | Yes         | null        | node deposit amount, decimals 18 |
+
 ## 7. upload staker unstaking plan
 
 ### (1) description
@@ -314,7 +310,7 @@ no
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 * data format: application/json
 * data detail:
@@ -324,11 +320,10 @@ no
 | stakerAddress | string | staker address, hex string         |
 | amount        | string | reth amount, decimal format string |
 
-
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2 | grade 3 | type   | must exist? | encode type | description |
 | :------ | :------ | :------ | :----- | :---------- | :---------- | :---------- |
@@ -336,12 +331,11 @@ no
 | message | N/A     | N/A     | string | Yes         | null        | status info |
 | data    | N/A     | N/A     | object | Yes         | null        | data        |
 
-
 ## 8. staker unstaking left seconds
 
 ### (1) description
 
-*  get unstaking left seconds
+* get unstaking left seconds
 
 ### (2) path
 
@@ -351,14 +345,14 @@ no
 
 * get
 
-### (4) request payload 
+### (4) request payload
 
 no
 
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2     | grade 3 | type   | must exist? | encode type | description                   |
 | :------ | :---------- | :------ | :----- | :---------- | :---------- | :---------------------------- |
@@ -381,7 +375,7 @@ no
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 * data format: application/json
 * data detail:
@@ -390,11 +384,10 @@ no
 | :------------ | :----- | :------------------------- |
 | stakerAddress | string | staker address, hex string |
 
-
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2 | grade 3 | type   | must exist? | encode type | description                 |
 | :------ | :------ | :------ | :----- | :---------- | :---------- | :-------------------------- |
@@ -403,12 +396,11 @@ no
 | data    | N/A     | N/A     | object | Yes         | null        | data                        |
 |         | exist   | N/A     | bool   | Yes         | null        | staker unstaking plan exist |
 
-
 ## 10. validator exit election list
 
 ### (1) description
 
-*  validator exit election list
+* validator exit election list
 
 ### (2) path
 
@@ -418,7 +410,7 @@ no
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 | field       | type   | notice                                                             |
 | :---------- | :----- | :----------------------------------------------------------------- |
@@ -426,11 +418,10 @@ no
 | pageIndex   | string | page index                                                         |
 | pageCount   | string | page count                                                         |
 
-
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2      | grade 3     | type   | must exist? | encode type | description                    |
 | :------ | :----------- | :---------- | :----- | :---------- | :---------- | :----------------------------- |
@@ -459,7 +450,7 @@ no
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 * data format: application/json
 * data detail:
@@ -468,11 +459,10 @@ no
 | :------------ | :----- | :------------------------- |
 | stakerAddress | string | staker address, hex string |
 
-
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2          | grade 3 | type   | must exist? | encode type | description                                                                   |
 | :------ | :--------------- | :------ | :----- | :---------- | :---------- | :---------------------------------------------------------------------------- |
@@ -485,7 +475,7 @@ no
 
 ### (1) description
 
-*  get proof of claim
+* get proof of claim
 
 ### (2) path
 
@@ -495,7 +485,7 @@ no
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 * data format: application/json
 * data detail:
@@ -504,11 +494,10 @@ no
 | :---------- | :----- | :---------------------- |
 | nodeAddress | string | node addres, hex string |
 
- 
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format,data must be object
-
 
 | grade 1 | grade 2                  | type        | must exist? | encode type | description                                |
 | :------ | :----------------------- | :---------- | :---------- | :---------- | :----------------------------------------- |
@@ -526,12 +515,11 @@ no
 |         | overallExitDepositAmount | string      | Yes         | null        | overall amount(self deposit)               |
 |         | overallSlashAmount       | string      | Yes         | null        | overall amount(slash)                      |
 
-
 ## 13. unstake pool data
 
 ### (1) description
 
-*  get unstake pool data
+* get unstake pool data
 
 ### (2) path
 
@@ -541,14 +529,14 @@ no
 
 * get
 
-### (4) request payload 
+### (4) request payload
 
 no
 
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2               | grade 3       | type   | must exist? | encode type | description           |
 | :------ | :-------------------- | :------------ | :----- | :---------- | :---------- | :-------------------- |
@@ -570,7 +558,7 @@ no
 
 ### (1) description
 
-*  validator propose block election list
+* validator propose block election list
 
 ### (2) path
 
@@ -580,7 +568,7 @@ no
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 | field       | type   | notice                                                             |
 | :---------- | :----- | :----------------------------------------------------------------- |
@@ -588,11 +576,10 @@ no
 | pageIndex   | string | page index                                                         |
 | pageCount   | string | page count                                                         |
 
-
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2      | grade 3     | type   | must exist? | encode type | description                    |
 | :------ | :----------- | :---------- | :----- | :---------- | :---------- | :----------------------------- |
@@ -610,7 +597,7 @@ no
 
 ### (1) description
 
-*  get node withdraw info
+* get node withdraw info
 
 ### (2) path
 
@@ -620,7 +607,7 @@ no
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 * data format: application/json
 * data detail:
@@ -631,11 +618,10 @@ no
 | pageIndex   | number | page index               |
 | pageCount   | number | page count               |
 
-
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2      | grade 3          | type   | must exist? | encode type | description                                     |
 | :------ | :----------- | :--------------- | :----- | :---------- | :---------- | :---------------------------------------------- |
@@ -653,11 +639,12 @@ no
 |         |              | txHash           | string | Yes         | null        | txhash(apply when status is claimed/withdrawed) |
 |         |              | status           | number | Yes         | null        | 1 exiting 2 exited 3 claimed 4 withdrawed       |
 |         | totalCount   | N/A              | number | Yes         | null        | total count                                     |
+
 ## 16. notify msg list
 
 ### (1) description
 
-*  notify node msg list
+* notify node msg list
 
 ### (2) path
 
@@ -667,7 +654,7 @@ no
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 * data format: application/json
 * data detail:
@@ -677,9 +664,9 @@ no
 | nodeAddress | string | user address, hex string |
 
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2 | grade 3 | type        | must exist? | encode type | description                                                                                              |
 | :------ | :------ | :------ | :---------- | :---------- | :---------- | :------------------------------------------------------------------------------------------------------- |
@@ -700,7 +687,7 @@ no
 
 ### (1) description
 
-*  ejector uptim e
+* ejector uptim e
 
 ### (2) path
 
@@ -710,7 +697,7 @@ no
 
 * post
 
-### (4) request payload 
+### (4) request payload
 
 * data format: application/json
 * data detail:
@@ -720,9 +707,9 @@ no
 | validatorIndexList | number list | validator index list. Will return all active validators uptime list if empty |
 
 ### (5) response
+
 * include status、data、message fields
 * status、message must be string format, data must be object
-
 
 | grade 1 | grade 2    | grade 3         | type   | must exist? | encode type | description             |
 | :------ | :--------- | :-------------- | :----- | :---------- | :---------- | :---------------------- |

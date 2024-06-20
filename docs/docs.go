@@ -1129,6 +1129,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "selfRewardEth": {
+                    "description": "proofclaim+lock+slash",
                     "type": "string"
                 },
                 "slashCount": {
@@ -1138,6 +1139,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalManagedEth": {
+                    "type": "string"
+                },
+                "totalRewardAmount": {
+                    "description": "proof claim",
                     "type": "string"
                 },
                 "totalSlashAmount": {

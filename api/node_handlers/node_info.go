@@ -12,6 +12,7 @@ import (
 	"github.com/stafiprotocol/eth2-balance-service/dao/chaos"
 	"github.com/stafiprotocol/eth2-balance-service/dao/node"
 	"github.com/stafiprotocol/eth2-balance-service/pkg/utils"
+	"gorm.io/gorm"
 )
 
 type ReqNodeInfo struct {
@@ -23,17 +24,18 @@ type ReqNodeInfo struct {
 }
 
 type RspNodeInfo struct {
-	TotalCount       int64       `json:"totalCount"`
-	PendingCount     int64       `json:"pendingCount"`
-	ActiveCount      int64       `json:"activeCount"`
-	ExitedCount      int64       `json:"exitedCount"`
-	SlashCount       int64       `json:"slashCount"`
-	SelfDepositedEth string      `json:"selfDepositedEth"`
-	SelfRewardEth    string      `json:"selfRewardEth"`
-	TotalManagedEth  string      `json:"totalManagedEth"`
-	TotalSlashAmount string      `json:"totalSlashAmount"`
-	EthPrice         float64     `json:"ethPrice"`
-	List             []ResPubkey `json:"pubkeyList"`
+	TotalCount        int64       `json:"totalCount"`
+	PendingCount      int64       `json:"pendingCount"`
+	ActiveCount       int64       `json:"activeCount"`
+	ExitedCount       int64       `json:"exitedCount"`
+	SlashCount        int64       `json:"slashCount"`
+	SelfDepositedEth  string      `json:"selfDepositedEth"`
+	SelfRewardEth     string      `json:"selfRewardEth"`     // proofclaim+lock+slash
+	TotalRewardAmount string      `json:"totalRewardAmount"` //proof claim
+	TotalManagedEth   string      `json:"totalManagedEth"`
+	TotalSlashAmount  string      `json:"totalSlashAmount"`
+	EthPrice          float64     `json:"ethPrice"`
+	List              []ResPubkey `json:"pubkeyList"`
 }
 
 type ResPubkey struct {
@@ -199,6 +201,18 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		return
 	}
 
+	totalRewardAmount := "0"
+	proof, err := dao_node.GetProof(h.db, poolInfo.LatestMerkleTreeEpoch, req.NodeAddress)
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			utils.Err(c, utils.CodeInternalErr, err.Error())
+			logrus.Errorf("dao_claim.GetProof failed,err: %v", err)
+			return
+		}
+	} else {
+		totalRewardAmount = proof.TotalRewardAmount
+	}
+
 	ethPriceDeci, err := decimal.NewFromString(poolInfo.EthPrice)
 	if err != nil {
 		utils.Err(c, utils.CodeInternalErr, err.Error())
@@ -218,6 +232,7 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	rsp.TotalCount = totalCount
 	rsp.SelfDepositedEth = decimal.NewFromInt(int64(selfDepositedEth)).Mul(utils.GweiDeci).StringFixed(0)
 	rsp.SelfRewardEth = overallRewardAmountDeci.Mul(utils.GweiDeci).StringFixed(0)
+	rsp.TotalRewardAmount = totalRewardAmount
 	rsp.TotalManagedEth = decimal.NewFromInt(int64(totalManagedEth)).Mul(utils.GweiDeci).StringFixed(0)
 	rsp.TotalSlashAmount = decimal.NewFromInt(int64(totalSlashAmount)).Mul(utils.GweiDeci).StringFixed(0)
 	rsp.EthPrice = ethPrice
