@@ -104,8 +104,9 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 	}
 
 	minWithdrawAbleEpoch := uint64(math.MaxUint64)
-	overallRewardAmountDeci := decimal.Zero
+	// overallRewardAmountDeci := decimal.Zero
 	overallExitDepositAmountDeci := decimal.Zero
+	overallRewardAmountUint := uint64(0)
 	for _, val := range valList {
 		// cal overall
 		validatorTotalReward := utils.GetValidatorTotalReward(val.Balance, val.TotalWithdrawal, val.TotalFee)
@@ -130,9 +131,10 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		_, nodeRewardV1OfThisValidator, _ := utils.GetUserNodePlatformRewardV1(val.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV1TotalReward)))
 		_, nodeRewardV2OfThisValidator, _ := utils.GetUserNodePlatformRewardV2(val.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV2TotalReward)))
 
-		nodeRewardOfThisValidatorDeci := nodeRewardV1OfThisValidator.Add(nodeRewardV2OfThisValidator)
+		// nodeRewardOfThisValidatorDeci := nodeRewardV1OfThisValidator.Add(nodeRewardV2OfThisValidator)
 
-		overallRewardAmountDeci = overallRewardAmountDeci.Add(nodeRewardOfThisValidatorDeci)
+		// overallRewardAmountDeci = overallRewardAmountDeci.Add(nodeRewardOfThisValidatorDeci)
+		overallRewardAmountUint += (nodeRewardV1OfThisValidator.BigInt().Uint64() + nodeRewardV2OfThisValidator.BigInt().Uint64())
 
 		// only deal after sending exit msg
 		if val.ExitEpoch != 0 {
@@ -145,7 +147,7 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		}
 	}
 	overallExitDepositAmountDeci = overallExitDepositAmountDeci.Mul(utils.GweiDeci)
-	overallRewardAmountDeci = overallRewardAmountDeci.Mul(utils.GweiDeci)
+	overallRewardAmountDeci := decimal.NewFromInt(int64(overallRewardAmountUint)).Mul(utils.GweiDeci)
 
 	totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(h.db, valIndexList, utils.CacheSlashStartEpoch)
 	if err != nil {

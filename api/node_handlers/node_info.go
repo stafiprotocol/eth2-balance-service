@@ -148,7 +148,8 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		valBalanceAtRewardV1EndEpochMap[val.ValidatorIndex] = val
 	}
 
-	overallRewardAmountDeci := decimal.Zero
+	// overallRewardAmountDeci := decimal.Zero
+	overallRewardAmountUint := uint64(0)
 	for _, val := range totalList {
 		// cal overall
 		validatorTotalReward := utils.GetValidatorTotalReward(val.Balance, val.TotalWithdrawal, val.TotalFee)
@@ -170,10 +171,14 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 		_, nodeRewardV1OfThisValidator, _ := utils.GetUserNodePlatformRewardV1(val.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV1TotalReward)))
 		_, nodeRewardV2OfThisValidator, _ := utils.GetUserNodePlatformRewardV2(val.NodeDepositAmount, decimal.NewFromInt(int64(validatorRewardV2TotalReward)))
 
-		nodeRewardOfThisValidatorDeci := nodeRewardV1OfThisValidator.Add(nodeRewardV2OfThisValidator)
+		// nodeRewardOfThisValidatorDeci := nodeRewardV1OfThisValidator.Add(nodeRewardV2OfThisValidator)
 
-		overallRewardAmountDeci = overallRewardAmountDeci.Add(nodeRewardOfThisValidatorDeci)
+		// overallRewardAmountDeci = overallRewardAmountDeci.Add(nodeRewardOfThisValidatorDeci)
+
+		overallRewardAmountUint += (nodeRewardV1OfThisValidator.BigInt().Uint64() + nodeRewardV2OfThisValidator.BigInt().Uint64())
 	}
+
+	// logrus.Infof("overallRewardAmountUint %d, overallRewardAmountDeci: %s, %s", overallRewardAmountUint, overallRewardAmountDeci.StringFixed(0), overallRewardAmountDeci.String())
 
 	totalSlashAmount, err := dao_node.GetTotalSlashAmountWithIndexList(h.db, valIndexList, utils.CacheSlashStartEpoch)
 	if err != nil {
@@ -224,14 +229,14 @@ func (h *Handler) HandlePostNodeInfo(c *gin.Context) {
 	logrus.WithFields(logrus.Fields{
 		"list":             list,
 		"selfDepositedEth": selfDepositedEth,
-		"selfRewardEth":    overallRewardAmountDeci.String(),
+		"selfRewardEth":    overallRewardAmountUint,
 		"totalmanagedEth":  totalManagedEth,
 		"ethPrice":         ethPrice,
 	}).Debug("rsp info")
 
 	rsp.TotalCount = totalCount
 	rsp.SelfDepositedEth = decimal.NewFromInt(int64(selfDepositedEth)).Mul(utils.GweiDeci).StringFixed(0)
-	rsp.SelfRewardEth = overallRewardAmountDeci.Mul(utils.GweiDeci).StringFixed(0)
+	rsp.SelfRewardEth = decimal.NewFromInt(int64(overallRewardAmountUint)).Mul(utils.GweiDeci).StringFixed(0)
 	rsp.TotalRewardAmount = totalRewardAmount
 	rsp.TotalManagedEth = decimal.NewFromInt(int64(totalManagedEth)).Mul(utils.GweiDeci).StringFixed(0)
 	rsp.TotalSlashAmount = decimal.NewFromInt(int64(totalSlashAmount)).Mul(utils.GweiDeci).StringFixed(0)
