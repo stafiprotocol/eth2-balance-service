@@ -113,7 +113,7 @@ func (h *Handler) HandlePostProof(c *gin.Context) {
 		// ---------calc total self reward by two sections
 		validatorRewardV1TotalReward := uint64(0)
 		validatorRewardV2TotalReward := uint64(0)
-		if valInfoMeta.DealedBlockHeight <= utils.RewardV1EndEpoch {
+		if valInfoMeta.DealedEpoch <= utils.RewardV1EndEpoch {
 			validatorRewardV1TotalReward = validatorTotalReward
 		} else {
 			valBalanceAtRewardV1EndEpoch, exist := valBalanceAtRewardV1EndEpochMap[val.ValidatorIndex]
