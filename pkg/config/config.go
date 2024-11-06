@@ -26,6 +26,8 @@ type Config struct {
 
 	EraCount uint64 // used for statistic
 
+	Replace Replace
+
 	Contracts Contracts
 
 	Db Db
@@ -33,6 +35,11 @@ type Config struct {
 
 type Contracts struct {
 	StorageContractAddress string
+}
+
+type Replace struct {
+	OldAddress string
+	NewAddress string
 }
 
 type Db struct {

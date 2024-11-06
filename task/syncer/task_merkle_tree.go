@@ -107,6 +107,11 @@ func (task *Task) calcMerkleTree() error {
 		proof.TotalExitDepositAmount = finalTotalExitDepositAmountDeci.StringFixed(0)
 		proof.TotalRewardAmount = finalTotalClaimableNodeRewardAmountDeci.StringFixed(0)
 
+		// replace address
+		if newAddress, find := task.replaceMap[strings.ToLower(proof.Address)]; find {
+			proof.Address = newAddress
+		}
+
 		proofList[i] = proof
 	}
 

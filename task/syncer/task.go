@@ -74,11 +74,19 @@ type Task struct {
 	superNodeFeePoolAddress common.Address
 
 	eth2Config beacon.Eth2Config
+
+	replaceMap map[string]string
 }
 
 func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("contracts address fmt err")
+	}
+	if !common.IsHexAddress(cfg.Replace.OldAddress) {
+		return nil, fmt.Errorf("replace address fmt err")
+	}
+	if !common.IsHexAddress(cfg.Replace.NewAddress) {
+		return nil, fmt.Errorf("replace address fmt err")
 	}
 
 	s := &Task{
@@ -96,6 +104,7 @@ func NewTask(cfg *config.Config, dao *db.WrapDb) (*Task, error) {
 		rewardEpochInterval:    utils.RewardEpochInterval,
 		calMerkleTreeDu:        utils.RewardEpochInterval * 3, // 24 h
 		storageContractAddress: common.HexToAddress(cfg.Contracts.StorageContractAddress),
+		replaceMap:             map[string]string{strings.ToLower(cfg.Replace.OldAddress): cfg.Replace.NewAddress},
 	}
 
 	return s, nil
